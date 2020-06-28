@@ -233,12 +233,12 @@ namespace Hive.Utilities
         /// <returns>The concatenated <see cref="StringView"/>.</returns>
         public static StringView Concat(IEnumerable<StringView> views)
         {
-            var list = views.ToList(); // evaluate the parameter exactly once
-            if (list.Count == 0) return "";
+            var list = views.ToArray(); // evaluate the parameter exactly once
+            if (list.Length == 0) return "";
 
             int i = 0;
             var root = list[i++];
-            for (; i < list.Count; i++)
+            for (; i < list.Length; i++)
             {
                 var view = list[i];
                 if (ReferenceEquals(root.BaseString, view.BaseString))
@@ -246,6 +246,11 @@ namespace Hive.Utilities
                     if (root.Start + root.Length == view.Start)
                     { // and view starts immediately after root
                         root = new StringView(root.BaseString, root.Start, root.Length + view.Length);
+                        continue;
+                    }
+                    else if (view.Start + view.Length == root.Start)
+                    {
+                        root = new StringView(view.BaseString, view.Start, root.Length + view.Length);
                         continue;
                     }
                 }
@@ -273,7 +278,7 @@ namespace Hive.Utilities
         BuildWithNewAllocation:
 
             var sb = new StringBuilder(root.ToString(), list.Select(v => v.Length).Sum());
-            for (; i < list.Count; i++)
+            for (; i < list.Length; i++)
             {
                 var sv = list[i];
                 if (sv.Length == 0) continue;
