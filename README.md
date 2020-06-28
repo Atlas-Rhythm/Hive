@@ -6,7 +6,7 @@ A general backend project for modding communities.
 
 ### Dependencies
 
-- Visual Studio >= 16.5
+- Visual Studio >= 16.6
   - Ensure .NET 5.0 is enabled
   - If on a version of Visual Studio earlier than Visual Studio Preview 1:
     - Ensure preview .NET is enabled, from `Tools/Options/Preview Features`)
