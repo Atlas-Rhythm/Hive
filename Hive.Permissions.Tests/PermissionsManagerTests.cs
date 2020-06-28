@@ -1,4 +1,4 @@
-﻿using Hive.Permissions;
+using Hive.Permissions;
 using Hive.Permissions.Logging;
 using Hive.Utilities;
 using MathExpr.Compiler.Compilation;
@@ -105,7 +105,7 @@ namespace Hive.Permissions.Tests
             // We should not be able to successfully compile this at all, so it should default to return false
             Assert.False(manager.CanDo("hive.mod", new Context { HiveMod = true }, ref modState));
 
-            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), "hive.mod", hiveModRuleInvalid, manager));
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), "hive.mod", hiveModRuleInvalid, manager), Times.Once);
         }
 
         [Fact]
@@ -128,7 +128,7 @@ namespace Hive.Permissions.Tests
             // We should not be able to successfully compile this at all, so it should default to return false
             Assert.False(manager.CanDo("hive.mod", new Context { HiveMod = true }, ref modState));
 
-            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is SyntaxException), "hive.mod", hiveModRuleInvalid, manager));
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is SyntaxException), "hive.mod", hiveModRuleInvalid, manager), Times.Once);
         }
 
         [Fact]
