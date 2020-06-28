@@ -7,11 +7,7 @@ A general backend project for modding communities.
 ### Dependencies
 
 - Visual Studio >= 16.6
-  - Ensure .NET 5.0 is enabled
-  - If on a version of Visual Studio earlier than Visual Studio Preview 1:
-    - Ensure preview .NET is enabled, from `Tools/Options/Preview Features`)
-  - If on a version of Visual Studio later than Visual Studio Preview 1:
-    - .NET 5.0 is enabled by default
+  - If not on Visual Studio Preview 1 or later, enable `.NET Core Preview` from `Tools/Options/Environment/Preview Features`
 
 ### Restoring Packages
 
@@ -20,12 +16,12 @@ A general backend project for modding communities.
 - Copy the following into the `configuration` node:
 
 ```xml
-<packageSourceCredentials>
-    <github>
-    <add key="Username" value="your username here" />
-    <add key="ClearTextPassword" value="your personal access token here" />
-    </github>
-</packageSourceCredentials>
+    <packageSourceCredentials>
+        <github>
+            <add key="Username" value="your username here" />
+            <add key="ClearTextPassword" value="your personal access token here" />
+        </github>
+    </packageSourceCredentials>
 ```
 
 - Change the `Username` to your own github username, and your `ClearTextPassword` to your newly made PAT.
