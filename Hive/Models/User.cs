@@ -8,6 +8,8 @@ namespace Hive.Models
     // User would ideally come from the auth server, and be a thin proxy to the appropriate RPC calls
     public class User
     {
+        // TODO: this should be from the authentication client library
+
         // this should have at least:
         // - name
         // - unique id (might be name?)
