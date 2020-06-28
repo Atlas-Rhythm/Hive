@@ -1,4 +1,4 @@
-using Hive.Permissions;
+﻿using Hive.Permissions;
 using Hive.Permissions.Logging;
 using Hive.Utilities;
 using MathExpr.Compiler.Compilation;
@@ -132,7 +132,7 @@ namespace Hive.Permissions.Tests
         }
 
         [Fact]
-        public void TestSeparator()
+        public void TestSimpleSeparator()
         {
             var mock = MockRuleProvider();
 
@@ -150,6 +150,27 @@ namespace Hive.Permissions.Tests
             Assert.True(permManager.CanDo("hive/mod/upload", new Context { Hive = true }, ref state));
             Assert.True(permManager.CanDo("hive/mod/upload", new Context { HiveMod = true }, ref state));
             Assert.True(permManager.CanDo("hive/mod/upload", new Context { HiveModUpload = true }, ref state));
+        }
+
+        [Fact]
+        public void TestComplexSeparator()
+        {
+            var mock = MockRuleProvider();
+
+            var hiveRule = new Rule("hive", "ctx.Hive | next(false)");
+            var hiveModRule = new Rule("hiveakljsdfgvhbakjfghmod", "ctx.HiveMod | next(false)");
+            var hiveModUploadRule = new Rule("hiveakljsdfgvhbakjfghmodakljsdfgvhbakjfghupload", "ctx.HiveModUpload | next(false)");
+            mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
+            mock.Setup(rules => rules.TryGetRule(hiveModRule.Name, out hiveModRule)).Returns(true);
+            mock.Setup(rules => rules.TryGetRule(hiveModUploadRule.Name, out hiveModUploadRule)).Returns(true);
+
+            var permManager = new PermissionsManager<Context>(mock.Object, logger, "akljsdfgvhbakjfgh");
+
+            PermissionActionParseState state;
+            Assert.False(permManager.CanDo("hiveakljsdfgvhbakjfghmodakljsdfgvhbakjfghupload", new Context(), ref state));
+            Assert.True(permManager.CanDo("hiveakljsdfgvhbakjfghmodakljsdfgvhbakjfghupload", new Context { Hive = true }, ref state));
+            Assert.True(permManager.CanDo("hiveakljsdfgvhbakjfghmodakljsdfgvhbakjfghupload", new Context { HiveMod = true }, ref state));
+            Assert.True(permManager.CanDo("hiveakljsdfgvhbakjfghmodakljsdfgvhbakjfghupload", new Context { HiveModUpload = true }, ref state));
         }
 
         [Fact]
