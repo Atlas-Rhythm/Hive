@@ -1,6 +1,7 @@
 ﻿using Hive.Permissions;
 using Hive.Permissions.Logging;
 using Hive.Utilities;
+using MathExpr.Compiler.Compilation;
 using MathExpr.Syntax;
 using MathExpr.Utilities;
 using Moq;
@@ -8,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -27,6 +29,7 @@ namespace Hive.Permissions.Tests
         private class OutputWrapper : ILogger
         {
             private readonly ITestOutputHelper output;
+
             public OutputWrapper(ITestOutputHelper outp) => output = outp;
 
             public void Info(string message, object[] messageInfo, StringView action, Rule? currentRule, object manager)
@@ -83,6 +86,71 @@ namespace Hive.Permissions.Tests
         }
 
         [Fact]
+        public void TestCompilationException()
+        {
+            var mock = MockRuleProvider();
+            var mockLogger = MockLogger<ILogger>();
+
+            var hiveRule = new Rule("hive", "ctx.Hive | next(false)");
+            var hiveModRuleInvalid = new Rule("hive.mod", "ctx.HiveMod | ctx.Invalid");
+            mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
+            mock.Setup(rules => rules.TryGetRule(hiveModRuleInvalid.Name, out hiveModRuleInvalid)).Returns(true);
+
+            var manager = new PermissionsManager<Context>(mock.Object, mockLogger.Object, ".");
+
+            PermissionActionParseState state;
+            // We should be able to successfully compile this to a true
+            Assert.True(manager.CanDo("hive", new Context { Hive = true }, ref state));
+            // We should not be able to successfully compile this at all, so it should default to return false
+            Assert.False(manager.CanDo("hive.mod", new Context { HiveMod = true }, ref state));
+
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), new object[] { It.IsAny<CompilationException>() }, "hive.mod", hiveModRuleInvalid, manager));
+        }
+
+        [Fact]
+        public void TestSyntaxException()
+        {
+            var mock = MockRuleProvider();
+            var mockLogger = MockLogger<ILogger>();
+
+            var hiveRule = new Rule("hive", "ctx.Hive | next(false)");
+            var hiveModRuleInvalid = new Rule("hive.mod", "ctx.HiveMod |");
+            mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
+            mock.Setup(rules => rules.TryGetRule(hiveModRuleInvalid.Name, out hiveModRuleInvalid)).Returns(true);
+
+            var manager = new PermissionsManager<Context>(mock.Object, mockLogger.Object, ".");
+
+            PermissionActionParseState state;
+            // We should be able to successfully compile this to a true
+            Assert.True(manager.CanDo("hive", new Context { Hive = true }, ref state));
+            // We should not be able to successfully compile this at all, so it should default to return false
+            Assert.False(manager.CanDo("hive.mod", new Context { HiveMod = true }, ref state));
+
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), new object[] { It.IsAny<SyntaxException>() }, "hive.mod", hiveModRuleInvalid, manager));
+        }
+
+        [Fact]
+        public void TestSeparator()
+        {
+            var mock = MockRuleProvider();
+
+            var hiveRule = new Rule("hive", "ctx.Hive | next(false)");
+            var hiveModRule = new Rule("hive/mod", "ctx.HiveMod | next(false)");
+            var hiveModUploadRule = new Rule("hive/mod/upload", "ctx.HiveModUpload | next(false)");
+            mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
+            mock.Setup(rules => rules.TryGetRule(hiveModRule.Name, out hiveModRule)).Returns(true);
+            mock.Setup(rules => rules.TryGetRule(hiveModUploadRule.Name, out hiveModUploadRule)).Returns(true);
+
+            var permManager = new PermissionsManager<Context>(mock.Object, logger, "/");
+
+            PermissionActionParseState state;
+            Assert.False(permManager.CanDo("hive/mod/upload", new Context(), ref state));
+            Assert.True(permManager.CanDo("hive/mod/upload", new Context { Hive = true }, ref state));
+            Assert.True(permManager.CanDo("hive/mod/upload", new Context { HiveMod = true }, ref state));
+            Assert.True(permManager.CanDo("hive/mod/upload", new Context { HiveModUpload = true }, ref state));
+        }
+
+        [Fact]
         public void TestUserBuiltin()
         {
             var mock = MockRuleProvider();
@@ -117,6 +185,7 @@ namespace Hive.Permissions.Tests
         }
 
         private Mock<IRuleProvider> MockRuleProvider() => MockRuleProvider<IRuleProvider>();
+
         private Mock<T> MockRuleProvider<T>() where T : class, IRuleProvider
         {
             var mock = new Mock<T>();
@@ -124,6 +193,13 @@ namespace Hive.Permissions.Tests
             mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.IsAny<DateTime>())).Returns(false);
             mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<Rule>(), It.IsAny<DateTime>())).Returns(false);
             mock.Setup(rules => rules.TryGetRule(It.IsAny<StringView>(), out It.Ref<Rule>.IsAny!)).Returns(false);
+            return mock;
+        }
+
+        private Mock<T> MockLogger<T>() where T : class, ILogger
+        {
+            var mock = new Mock<T>();
+            // Add setup here if ever needed
             return mock;
         }
     }
