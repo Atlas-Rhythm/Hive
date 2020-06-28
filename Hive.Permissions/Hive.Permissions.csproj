@@ -5,11 +5,15 @@
     
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
-  <Import Project="..\Hive.props"/>
+  <Import Project="..\Hive.props" />
 
   <ItemGroup>
     <PackageReference Include="FastExpressionCompiler" Version="2.0.0" />
     <PackageReference Include="MathExpr" Version="0.4.0-nightly.2006240242" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hive.Utilities\Hive.Utilities.csproj" />
   </ItemGroup>
 
 </Project>

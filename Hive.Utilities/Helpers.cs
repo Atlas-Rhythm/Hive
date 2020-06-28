@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Hive.Permissions.Utility
+namespace Hive.Utilities
 {
-    internal static class Helpers
+    public static class Helpers
     {
         public static IEnumerable<T> InterleaveWith<T>(this IEnumerable<T> first, IEnumerable<T> second)
         {

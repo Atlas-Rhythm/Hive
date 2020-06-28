@@ -1,4 +1,4 @@
-﻿using Hive.Permissions.Utility;
+﻿using Hive.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;

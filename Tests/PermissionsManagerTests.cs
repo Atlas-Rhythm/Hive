@@ -1,6 +1,6 @@
 ﻿using Hive.Permissions;
 using Hive.Permissions.Logging;
-using Hive.Permissions.Utility;
+using Hive.Utilities;
 using MathExpr.Syntax;
 using MathExpr.Utilities;
 using Moq;
@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using Helpers = MathExpr.Utilities.Helpers;
 
 namespace Hive.Permissions.Tests
 {

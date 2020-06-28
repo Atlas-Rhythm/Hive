@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Hive.Permissions.Utility
+namespace Hive.Utilities
 {
     /// <summary>
     /// A relatively light weight view into a string.

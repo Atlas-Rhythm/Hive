@@ -15,6 +15,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		nuget.config = nuget.config
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Utilities", "Hive.Utilities\Hive.Utilities.csproj", "{3C265E15-AFDF-47B1-9893-7957F9A43818}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Utilities.Tests", "Hive.Utilities.Tests\Hive.Utilities.Tests.csproj", "{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{7043FF4B-1731-48A6-BC0D-6BE7BB8224B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7043FF4B-1731-48A6-BC0D-6BE7BB8224B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7043FF4B-1731-48A6-BC0D-6BE7BB8224B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C265E15-AFDF-47B1-9893-7957F9A43818}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C265E15-AFDF-47B1-9893-7957F9A43818}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C265E15-AFDF-47B1-9893-7957F9A43818}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C265E15-AFDF-47B1-9893-7957F9A43818}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,4 @@
-﻿using Hive.Permissions.Utility;
+﻿using Hive.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Sdk;
 
-namespace Hive.Permissions.Tests
+namespace Hive.Utilities.Tests
 {
     public class StringViewTests
     {
