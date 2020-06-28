@@ -33,6 +33,8 @@ namespace Hive.Models
         // this would be a JSON string, encoding arbitrary data (this should be some type that better represents that JSON data though)
         public string? AdditionalData { get; }
 
+        public List<(string Name, Uri Url)> Links { get; } = new List<(string, Uri)>();
+
         public Uri DownloadLink { get; } = null!;
 
         #region DB Schema stuff
