@@ -99,12 +99,13 @@ namespace Hive.Permissions.Tests
             var manager = new PermissionsManager<Context>(mock.Object, mockLogger.Object, ".");
 
             PermissionActionParseState state;
+            PermissionActionParseState modState;
             // We should be able to successfully compile this to a true
             Assert.True(manager.CanDo("hive", new Context { Hive = true }, ref state));
             // We should not be able to successfully compile this at all, so it should default to return false
-            Assert.False(manager.CanDo("hive.mod", new Context { HiveMod = true }, ref state));
+            Assert.False(manager.CanDo("hive.mod", new Context { HiveMod = true }, ref modState));
 
-            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), new object[] { It.IsAny<CompilationException>() }, "hive.mod", hiveModRuleInvalid, manager));
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), "hive.mod", hiveModRuleInvalid, manager));
         }
 
         [Fact]
@@ -121,12 +122,13 @@ namespace Hive.Permissions.Tests
             var manager = new PermissionsManager<Context>(mock.Object, mockLogger.Object, ".");
 
             PermissionActionParseState state;
+            PermissionActionParseState modState;
             // We should be able to successfully compile this to a true
             Assert.True(manager.CanDo("hive", new Context { Hive = true }, ref state));
             // We should not be able to successfully compile this at all, so it should default to return false
-            Assert.False(manager.CanDo("hive.mod", new Context { HiveMod = true }, ref state));
+            Assert.False(manager.CanDo("hive.mod", new Context { HiveMod = true }, ref modState));
 
-            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), new object[] { It.IsAny<SyntaxException>() }, "hive.mod", hiveModRuleInvalid, manager));
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is SyntaxException), "hive.mod", hiveModRuleInvalid, manager));
         }
 
         [Fact]
