@@ -30,31 +30,35 @@ namespace Hive.Permissions
         private readonly LoggerWrapper logger;
 
         #region Constructors
+
         /// <summary>
-        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>, 
+        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>,
         /// using <c>.</c> as the action scope token.
         /// </summary>
         /// <param name="provider">The rule provider to get permission rules from.</param>
         public PermissionsManager(IRuleProvider provider)
             : this(provider, ".") { }
+
         /// <summary>
-        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>, 
+        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>,
         /// using the specified action scope token.
         /// </summary>
         /// <param name="provider">The rule provider to get permission rules from.</param>
         /// <param name="splitToken">The string to use as a seperator for action scopes.</param>
         public PermissionsManager(IRuleProvider provider, StringView splitToken)
             : this(provider, splitToken, Enumerable.Empty<(string, Delegate)>()) { }
+
         /// <summary>
-        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>, 
+        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>,
         /// using <c>.</c> as the action scope token.
         /// </summary>
         /// <param name="provider">The rule provider to get permission rules from.</param>
         /// <param name="builtinFunctions">A dictionary containing delegates that will be invoked when calling the builtin.</param>
         public PermissionsManager(IRuleProvider provider, IEnumerable<(string, Delegate)> builtinFunctions)
             : this(provider, ".", builtinFunctions) { }
+
         /// <summary>
-        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>, 
+        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>,
         /// using the specified action scope token and set of builtins.
         /// </summary>
         /// <param name="provider">The rule provider to get permission rules from.</param>
@@ -62,16 +66,18 @@ namespace Hive.Permissions
         /// <param name="builtinFunctions">A dictionary containing delegates that will be invoked when calling the builtin.</param>
         public PermissionsManager(IRuleProvider provider, StringView splitToken, IEnumerable<(string, Delegate)> builtinFunctions)
             : this(provider, null, splitToken, builtinFunctions) { }
+
         /// <summary>
-        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>, 
+        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>,
         /// using <c>.</c> as the action scope token.
         /// </summary>
         /// <param name="provider">The rule provider to get permission rules from.</param>
         /// <param name="logger">The logger to use with this instance.</param>
         public PermissionsManager(IRuleProvider provider, ILogger? logger)
             : this(provider, logger, ".") { }
+
         /// <summary>
-        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>, 
+        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>,
         /// using the specified action scope token.
         /// </summary>
         /// <param name="provider">The rule provider to get permission rules from.</param>
@@ -79,8 +85,9 @@ namespace Hive.Permissions
         /// <param name="splitToken">The string to use as a seperator for action scopes.</param>
         public PermissionsManager(IRuleProvider provider, ILogger? logger, StringView splitToken)
             : this(provider, logger, splitToken, Enumerable.Empty<(string, Delegate)>()) { }
+
         /// <summary>
-        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>, 
+        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>,
         /// using <c>.</c> as the action scope token.
         /// </summary>
         /// <param name="provider">The rule provider to get permission rules from.</param>
@@ -88,8 +95,9 @@ namespace Hive.Permissions
         /// <param name="builtinFunctions">A dictionary containing delegates that will be invoked when calling the builtin.</param>
         public PermissionsManager(IRuleProvider provider, ILogger? logger, IEnumerable<(string, Delegate)> builtinFunctions)
             : this(provider, logger, ".", builtinFunctions) { }
+
         /// <summary>
-        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>, 
+        /// Constructs a <see cref="PermissionsManager{TContext}"/> that gets its rules from the specified <see cref="IRuleProvider"/>,
         /// using the specified action scope token and set of builtins.
         /// </summary>
         /// <param name="provider">The rule provider to get permission rules from.</param>
@@ -103,7 +111,8 @@ namespace Hive.Permissions
             this.builtinFunctions = builtinFunctions;
             this.logger = new LoggerWrapper(logger, this);
         }
-        #endregion
+
+        #endregion Constructors
 
         /// <summary>
         /// Checks if an action is permitted, given <paramref name="context"/>.
@@ -300,6 +309,7 @@ namespace Hive.Permissions
         }
 
         internal delegate bool ContinueDelegate(bool defaultValue);
+
         internal delegate bool RuleImplDelegate(TContext context, ContinueDelegate next);
 
         private bool TryCompileRule(Rule rule, [MaybeNullWhen(false)] out RuleImplDelegate impl, out DateTime compiledAt, bool throwOnError)
