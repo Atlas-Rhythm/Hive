@@ -23,6 +23,38 @@ namespace Hive.Permissions.Logging
             this.manager = manager;
         }
 
+        public void Wrap(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (PermissionException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw Exception(e);
+            }
+        }
+
+        public T Wrap<T>(Func<T> action)
+        {
+            try
+            {
+                return action();
+            }
+            catch (PermissionException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw Exception(e);
+            }
+        }
+
         public PermissionException Exception(Exception e) => new PermissionException($"Error in {PublicApi}", e, CurrentAction, CurrentRule);
         public void Info(string message, params object[] info) => logger?.Info(message, info, CurrentAction, CurrentRule, manager);
         public void Warn(string message, params object[] info) => logger?.Warn(message, info, CurrentAction, CurrentRule, manager);

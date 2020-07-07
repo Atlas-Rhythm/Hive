@@ -140,15 +140,8 @@ namespace Hive.Permissions
                             using (logger.WithRule(order[i].Rule))
                             {
                                 if (TryPrepare(ref order[i], out var impl))
-                                {
-                                    try
-                                    {
-                                        return impl(context, GetContinueStartingAt(i + 1));
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        throw logger.Exception(e);
-                                    }
+                                { // TODO: measure perf impact of the additional delegate here
+                                    return logger.Wrap(() => impl(context, GetContinueStartingAt(i + 1)));
                                 }
                             }
                         }
@@ -173,7 +166,7 @@ namespace Hive.Permissions
                     try
                     {
                         // when it throws, its already the public exception api type
-                        _ = TryPrepare(ref order[i], out _, throwOnError: true);
+                        _ = logger.Wrap(() => TryPrepare(ref order[i], out _, throwOnError: true));
                     }
                     catch (Exception e)
                     {
@@ -192,7 +185,7 @@ namespace Hive.Permissions
             using (logger.WithRule(rule))
             {
                 // when it throws, its already the public exception api type
-                _ = TryCompileRule(rule, out _, out _, throwOnError: true);
+                _ = logger.Wrap(() => TryCompileRule(rule, out _, out _, throwOnError: true));
             }
         }
 
