@@ -202,10 +202,11 @@ namespace Hive.Permissions.Tests
             Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true }, ref state));
             Assert.True(permManager.CanDo("hive.mod", new Context { HiveMod = true }, ref state));
 
-            hiveRule = new Rule("hive.mod", "false");
-            mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
-            // Ideally, this only returns true for an explicit case on DateTime, ie. It should only return true the first time it is called
-            mock.Setup(rules => rules.HasRuleChangedSince(hiveRule, It.IsAny<DateTime>())).Returns(true);
+            var newHiveRule = new Rule("hive.mod", "false");
+            mock.Setup(rules => rules.TryGetRule(newHiveRule.Name, out newHiveRule)).Returns(true);
+
+            // always returning true is the correct behaviour, because hiveModRule is the old rule and is known to have changed
+            mock.Setup(rules => rules.HasRuleChangedSince(hiveModRule, It.IsAny<DateTime>())).Returns(true);
 
             // Shouldn't need to create a new permission manager
 
