@@ -55,7 +55,8 @@ namespace Hive.Permissions.Logging
             }
         }
 
-        public PermissionException Exception(Exception e) => new PermissionException($"Error in {PublicApi}", e, CurrentAction, CurrentRule);
+        public PermissionException Exception(Exception e) 
+            => e is PermissionException pe ? pe : new PermissionException($"Error in {PublicApi}", e, CurrentAction, CurrentRule);
         public void Info(string message, params object[] info) => logger?.Info(message, info, PublicApi, CurrentAction, CurrentRule, manager);
         public void Warn(string message, params object[] info) => logger?.Warn(message, info, PublicApi, CurrentAction, CurrentRule, manager);
 
