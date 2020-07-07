@@ -195,29 +195,31 @@ namespace Hive.Permissions
 
         private PermissionActionParseState.SearchEntry[] ParseAction(StringView action, ref PermissionActionParseState actionParseState)
         {
-            using var _ = logger.WithAction(action);
-
-            if (actionParseState.ContextType != null && actionParseState.ContextType != typeof(TContext))
+            using (logger.WithAction(action))
             {
-                logger.Warn(ErrInvalidParseContextType, typeof(TContext), actionParseState.ContextType);
-                // the existing compiled rules are invalid, so we will clear the parse state and retry it all
-                actionParseState.Reset();
-            }
 
-            if (actionParseState.SearchOrder == null)
-            { // build up our search order
-                var parts = action.Split(splitToken, ignoreEmpty: false).ToArray();
-                var combos = new PermissionActionParseState.SearchEntry[parts.Length];
-                for (int i = 0; i < parts.Length; i++)
+                if (actionParseState.ContextType != null && actionParseState.ContextType != typeof(TContext))
                 {
-                    combos[i].Name = StringView.Concat(parts.Take(i + 1).InterleaveWith(Helpers.Repeat(splitToken, i)));
-                    ruleProvider.TryGetRule(combos[i].Name, out combos[i].Rule);
+                    logger.Warn(ErrInvalidParseContextType, typeof(TContext), actionParseState.ContextType);
+                    // the existing compiled rules are invalid, so we will clear the parse state and retry it all
+                    actionParseState.Reset();
                 }
-                actionParseState.SearchOrder = combos;
-                actionParseState.ContextType = typeof(TContext);
-            }
 
-            return actionParseState.SearchOrder;
+                if (actionParseState.SearchOrder == null)
+                { // build up our search order
+                    var parts = action.Split(splitToken, ignoreEmpty: false).ToArray();
+                    var combos = new PermissionActionParseState.SearchEntry[parts.Length];
+                    for (int i = 0; i < parts.Length; i++)
+                    {
+                        combos[i].Name = StringView.Concat(parts.Take(i + 1).InterleaveWith(Helpers.Repeat(splitToken, i)));
+                        ruleProvider.TryGetRule(combos[i].Name, out combos[i].Rule);
+                    }
+                    actionParseState.SearchOrder = combos;
+                    actionParseState.ContextType = typeof(TContext);
+                }
+
+                return actionParseState.SearchOrder;
+            }
         }
 
         private bool TryPrepare(ref PermissionActionParseState.SearchEntry entry, [MaybeNullWhen(false)] out RuleImplDelegate del, bool throwOnError = false)
@@ -280,66 +282,68 @@ namespace Hive.Permissions
 
         private bool TryCompileRule(Rule rule, [MaybeNullWhen(false)] out RuleImplDelegate impl, out DateTime compiledAt, bool throwOnError)
         {
-            using var _ = logger.WithRule(rule);
-
-            if (rule.Compiled != null)
+            using (logger.WithRule(rule))
             {
-                if (rule.Compiled is RuleImplDelegate implDel)
+                if (rule.Compiled != null)
                 {
-                    impl = implDel;
-                    compiledAt = rule.CompiledAt;
+                    if (rule.Compiled is RuleImplDelegate implDel)
+                    {
+                        impl = implDel;
+                        compiledAt = rule.CompiledAt;
+                        return true;
+                    }
+                    else
+                    {
+                        logger.Warn(ErrIncompatableCompiledRule, rule.Compiled, typeof(TContext));
+                        rule.Compiled = null;
+                        rule.CompiledAt = default;
+                    }
+                }
+
+                try
+                {
+                    rule.Compiled = impl = CompileRule(rule, out compiledAt);
                     return true;
                 }
-                else
+                catch (Exception e)
                 {
-                    logger.Warn(ErrIncompatableCompiledRule, rule.Compiled, typeof(TContext));
-                    rule.Compiled = null;
-                    rule.CompiledAt = default;
+                    if (throwOnError)
+                        throw logger.Exception(e);
+
+                    logger.Warn(ErrCompilationFailed, e);
+
+                    impl = null;
+                    compiledAt = default;
+                    return false;
                 }
-            }
-
-            try
-            {
-                rule.Compiled = impl = CompileRule(rule, out compiledAt);
-                return true;
-            }
-            catch (Exception e)
-            {
-                if (throwOnError)
-                    throw logger.Exception(e);
-
-                logger.Warn(ErrCompilationFailed, e);
-
-                impl = null;
-                compiledAt = default;
-                return false;
             }
         }
 
         private RuleImplDelegate CompileRule(Rule rule, out DateTime time)
         {
-            using var _ = logger.WithRule(rule);
+            using (logger.WithRule(rule))
+            {
+                time = ruleProvider.CurrentTime;
+                rule.CompiledAt = time;
 
-            time = ruleProvider.CurrentTime;
-            rule.CompiledAt = time;
+                var compilerSettings = new RuleCompilationSettings(logger);
+                var nextFunc = new NextFunction("<>next");
+                compilerSettings.AddBuiltin(nextFunc);
 
-            var compilerSettings = new RuleCompilationSettings(logger);
-            var nextFunc = new NextFunction("<>next");
-            compilerSettings.AddBuiltin(nextFunc);
+                foreach (var (name, del) in builtinFunctions)
+                    compilerSettings.AddBuiltin(new UserBuiltinFunction(name, del));
 
-            foreach (var (name, del) in builtinFunctions)
-                compilerSettings.AddBuiltin(new UserBuiltinFunction(name, del));
+                var compiler = LinqExpressionCompiler.Create(
+                    new DefaultOptimizationSettings(),
+                    compilerSettings
+                );
 
-            var compiler = LinqExpressionCompiler.Create(
-                new DefaultOptimizationSettings(), 
-                compilerSettings
-            );
+                var expr = MathExpression.Parse(rule.Definition);
+                if (ruleProvider is IPreCompileRuleProvider precomp)
+                    expr = precomp.PreCompileTransform(expr);
 
-            var expr = MathExpression.Parse(rule.Definition);
-            if (ruleProvider is IPreCompileRuleProvider precomp)
-                expr = precomp.PreCompileTransform(expr);
-
-            return compiler.Compile<RuleImplDelegate>(expr, optimize: true, "ctx", nextFunc.DelegateArgumentName);
+                return compiler.Compile<RuleImplDelegate>(expr, optimize: true, "ctx", nextFunc.DelegateArgumentName);
+            }
         }
     }
 }

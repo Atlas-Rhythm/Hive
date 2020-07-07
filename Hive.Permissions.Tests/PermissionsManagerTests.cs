@@ -29,15 +29,15 @@ namespace Hive.Permissions.Tests
             private readonly ITestOutputHelper output;
             public OutputWrapper(ITestOutputHelper outp) => output = outp;
 
-            public void Info(string message, object[] messageInfo, StringView action, Rule? currentRule, object manager)
-                => Write("Info", message, messageInfo, action, currentRule);
+            public void Info(string message, object[] messageInfo, string api, StringView action, Rule? currentRule, object manager)
+                => Write("Info", message, messageInfo, api, action, currentRule);
 
-            public void Warn(string message, object[] messageInfo, StringView action, Rule? currentRule, object manager)
-                => Write("Warn", message, messageInfo, action, currentRule);
+            public void Warn(string message, object[] messageInfo, string api, StringView action, Rule? currentRule, object manager)
+                => Write("Warn", message, messageInfo, api, action, currentRule);
 
-            private void Write(string ident, string message, object[] messageInfo, StringView action, Rule? currentRule)
+            private void Write(string ident, string message, object[] messageInfo, string api, StringView action, Rule? currentRule)
             {
-                output.WriteLine($"[action: {action}]{(currentRule != null ? $"[rule: {currentRule.Name}]" : "")} {ident}: {message} {{ {string.Join(", ", messageInfo)} }}");
+                output.WriteLine($"[{api}][action: {action}]{(currentRule != null ? $"[rule: {currentRule.Name}]" : "")} {ident}: {message} {{ {string.Join(", ", messageInfo)} }}");
             }
         }
 
