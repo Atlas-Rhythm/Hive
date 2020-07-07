@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp5.0</TargetFramework>
+    <UserSecretsId>a7289d55-bdb8-47a6-8078-9d0de29ea78c</UserSecretsId>
     
   </PropertyGroup>
   
@@ -15,8 +16,12 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime" Version="5.0.0-preview6" />
     <PackageReference Include="Serilog" Version="2.10.0-dev-01191" />
     <PackageReference Include="Serilog.AspNetCore" Version="3.4.0-dev-00173" />
+    <PackageReference Include="Serilog.Enrichers.Demystify" Version="1.0.0-dev-00019" />
+    <PackageReference Include="Serilog.Exceptions.EntityFrameworkCore" Version="5.5.0" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="3.0.2-dev-10280" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="3.2.0-dev-00244" />
+    <PackageReference Include="Serilog.Sinks.Async" Version="1.4.1-dev-00073" />
+    <PackageReference Include="SerilogAnalyzer" Version="0.15.0" />
     <PackageReference Include="System.Text.Json" Version="5.0.0-preview.6.20305.6" />
   </ItemGroup>
   
