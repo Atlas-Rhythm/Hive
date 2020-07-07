@@ -48,12 +48,20 @@ namespace Hive.Permissions.Tests
 
         public class Context
         {
+            public class Inner
+            {
+                public bool DoesThing { get; set; } = false;
+
+                public static implicit operator bool(Inner _) => true;
+            }
+
             public bool Hive { get; set; } = false;
             public bool HiveMod { get; set; } = false;
             public bool HiveModUpload { get; set; } = false;
             public bool HiveModDelete { get; set; } = false;
             public bool IsHiveUser { get; set; } = false;
             public string NonTrivialFunction { get; set; } = string.Empty;
+            public Inner? NonTrivialObject { get; set; } = null;
 
             public static implicit operator bool(Context _) => true;
         }
@@ -109,7 +117,7 @@ namespace Hive.Permissions.Tests
             // We should not be able to successfully compile this at all, so it should default to return false
             Assert.False(manager.CanDo("hive.mod", new Context { HiveMod = true }, ref modState));
 
-            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), "hive.mod", hiveModRuleInvalid, manager), Times.Once);
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), hiveModRuleInvalid.Name, hiveModRuleInvalid, manager), Times.Once);
         }
 
         [Fact]
@@ -132,7 +140,7 @@ namespace Hive.Permissions.Tests
             // We should not be able to successfully compile this at all, so it should default to return false
             Assert.False(manager.CanDo("hive.mod", new Context { HiveMod = true }, ref modState));
 
-            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is SyntaxException), "hive.mod", hiveModRuleInvalid, manager), Times.Once);
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is SyntaxException), hiveModRuleInvalid.Name, hiveModRuleInvalid, manager), Times.Once);
         }
 
         [Fact]
@@ -176,8 +184,6 @@ namespace Hive.Permissions.Tests
             Assert.True(permManager.CanDo("hiveakljsdfgvhbakjfghmodakljsdfgvhbakjfghupload", new Context { HiveMod = true }, ref state));
             Assert.True(permManager.CanDo("hiveakljsdfgvhbakjfghmodakljsdfgvhbakjfghupload", new Context { HiveModUpload = true }, ref state));
         }
-
-        // TODO: Test changing rules and reevaluating, adding and taking away permissions, changing contexts
 
         [Fact]
         public void TestChangeRule()
@@ -276,10 +282,30 @@ namespace Hive.Permissions.Tests
 
             PermissionActionParseState state;
             Assert.False(permManager.CanDo("hive.mod", new Context { NonTrivialFunction = "ctx.Hive" }, ref state));
-            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), "hive.mod", hiveModRule, permManager), Times.Once);
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), hiveModRule.Name, hiveModRule, permManager), Times.Once);
             Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true, NonTrivialFunction = "ctx.Hive" }, ref state));
             Assert.False(permManager.CanDo("hive.mod", new Context { HiveMod = true, NonTrivialFunction = "ctx.HiveMod" }, ref state));
-            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), "hive.mod", hiveModRule, permManager), Times.Exactly(2));
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), hiveModRule.Name, hiveModRule, permManager), Times.Exactly(2));
+        }
+
+        [Fact]
+        public void TestNonTrivialObject()
+        {
+            var mock = MockRuleProvider();
+
+            var hiveRule = new Rule("hive", "ctx.Hive | next(false)");
+            var hiveModRule = new Rule("hive.mod", "ctx.NonTrivialObject.DoesThing");
+            mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
+            mock.Setup(rules => rules.TryGetRule(hiveModRule.Name, out hiveModRule)).Returns(true);
+
+            var permManager = new PermissionsManager<Context>(mock.Object, logger, ".");
+
+            PermissionActionParseState state;
+            // This will throw an NRE, because Context.NonTrivialObject is null
+            Assert.Throws<NullReferenceException>(() => permManager.CanDo("hive.mod", new Context(), ref state));
+            Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true }, ref state));
+            Assert.True(permManager.CanDo("hive.mod", new Context { NonTrivialObject = new Context.Inner { DoesThing = true } }, ref state));
+            Assert.False(permManager.CanDo("hive.mod", new Context { NonTrivialObject = new Context.Inner { DoesThing = false } }, ref state));
         }
 
         [Fact]
