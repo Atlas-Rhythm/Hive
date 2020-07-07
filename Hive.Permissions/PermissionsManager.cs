@@ -127,31 +127,41 @@ namespace Hive.Permissions
         /// <returns><see langword="true"/> if the action is permitted, <see langword="false"/> otherwise.</returns>
         public bool CanDo(StringView action, TContext context, ref PermissionActionParseState actionParseState)
         {
-            using var _ = logger.WithAction(action);
+            using (logger.InApi(nameof(CanDo)))
+            using (logger.WithAction(action))
+            {
+                var order = ParseAction(action, ref actionParseState);
 
-            var order = ParseAction(action, ref actionParseState);
-
-            ContinueDelegate GetContinueStartingAt(int idx)
-                => defaultValue =>
-                {
-                    for (int i = idx; i < order.Length; i++)
+                ContinueDelegate GetContinueStartingAt(int idx)
+                    => defaultValue =>
                     {
-                        using (logger.WithRule(order[i].Rule))
+                        for (int i = idx; i < order.Length; i++)
                         {
-                            if (TryPrepare(ref order[i], out var impl))
+                            using (logger.WithRule(order[i].Rule))
                             {
-                                return impl(context, GetContinueStartingAt(i + 1));
+                                if (TryPrepare(ref order[i], out var impl))
+                                {
+                                    try
+                                    {
+                                        return impl(context, GetContinueStartingAt(i + 1));
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        throw logger.Exception(e);
+                                    }
+                                }
                             }
                         }
-                    }
-                    return defaultValue;
-                };
+                        return defaultValue;
+                    };
 
-            return GetContinueStartingAt(0)(false);
+                return GetContinueStartingAt(0)(false);
+            }
         }
 
         public void PreCompile(StringView action)
         {
+            using (logger.InApi(nameof(PreCompile)))
             using (logger.WithAction(action))
             {
                 PermissionActionParseState state = default;
@@ -178,6 +188,7 @@ namespace Hive.Permissions
 
         public void PreCompile(Rule rule)
         {
+            using (logger.InApi(nameof(PreCompile)))
             using (logger.WithRule(rule))
             {
                 // when it throws, its already the public exception api type

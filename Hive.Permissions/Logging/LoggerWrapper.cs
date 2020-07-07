@@ -11,6 +11,8 @@ namespace Hive.Permissions.Logging
         private readonly object manager;
 
         [ThreadStatic]
+        private static string PublicApi = "";
+        [ThreadStatic]
         private static StringView CurrentAction = "";
         [ThreadStatic]
         private static Rule? CurrentRule = null;
@@ -21,12 +23,27 @@ namespace Hive.Permissions.Logging
             this.manager = manager;
         }
 
-        public Exception Exception(Exception e) => e;
+        public PermissionException Exception(Exception e) => new PermissionException($"Error in {PublicApi}", e, CurrentAction, CurrentRule);
         public void Info(string message, params object[] info) => logger?.Info(message, info, CurrentAction, CurrentRule, manager);
         public void Warn(string message, params object[] info) => logger?.Warn(message, info, CurrentAction, CurrentRule, manager);
 
+        public ApiScope InApi(string api) => new ApiScope(api);
         public ActionScope WithAction(StringView action) => new ActionScope(action);
         public RuleScope WithRule(Rule? rule) => new RuleScope(rule);
+
+        public struct ApiScope : IDisposable
+        {
+            private readonly string prevApi;
+            public ApiScope(string api)
+            {
+                prevApi = PublicApi;
+                PublicApi = api;
+            }
+            public void Dispose()
+            {
+                PublicApi = prevApi;
+            }
+        }
 
         public struct ActionScope : IDisposable
         {
