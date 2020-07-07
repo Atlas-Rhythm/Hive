@@ -8,9 +8,11 @@ using Moq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Mime;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using Xunit;
 using Xunit.Abstractions;
 using Helpers = MathExpr.Utilities.Helpers;
@@ -50,6 +52,8 @@ namespace Hive.Permissions.Tests
             public bool HiveMod { get; set; } = false;
             public bool HiveModUpload { get; set; } = false;
             public bool HiveModDelete { get; set; } = false;
+            public bool IsHiveUser { get; set; } = false;
+            public string NonTrivialFunction { get; set; } = string.Empty;
 
             public static implicit operator bool(Context _) => true;
         }
@@ -171,6 +175,111 @@ namespace Hive.Permissions.Tests
             Assert.True(permManager.CanDo("hiveakljsdfgvhbakjfghmodakljsdfgvhbakjfghupload", new Context { Hive = true }, ref state));
             Assert.True(permManager.CanDo("hiveakljsdfgvhbakjfghmodakljsdfgvhbakjfghupload", new Context { HiveMod = true }, ref state));
             Assert.True(permManager.CanDo("hiveakljsdfgvhbakjfghmodakljsdfgvhbakjfghupload", new Context { HiveModUpload = true }, ref state));
+        }
+
+        // TODO: Test changing rules and reevaluating, adding and taking away permissions, changing contexts
+
+        [Fact]
+        public void TestChangeRule()
+        {
+            var mock = MockRuleProvider();
+
+            var hiveRule = new Rule("hive", "ctx.Hive | next(false)");
+            var hiveModRule = new Rule("hive.mod", "ctx.HiveMod");
+            mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
+            mock.Setup(rules => rules.TryGetRule(hiveModRule.Name, out hiveModRule)).Returns(true);
+
+            var permManager = new PermissionsManager<Context>(mock.Object, logger, ".");
+
+            PermissionActionParseState state;
+            Assert.False(permManager.CanDo("hive.mod", new Context(), ref state));
+            Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true }, ref state));
+            Assert.True(permManager.CanDo("hive.mod", new Context { HiveMod = true }, ref state));
+
+            hiveRule = new Rule("hive.mod", "false");
+            mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
+
+            // Shouldn't need to create a new permission manager
+
+            PermissionActionParseState state2;
+            Assert.False(permManager.CanDo("hive.mod", new Context(), ref state2));
+            Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true }, ref state2));
+            Assert.False(permManager.CanDo("hive.mod", new Context { HiveMod = true }, ref state2));
+        }
+
+        [Fact]
+        public void TestAddPermission()
+        {
+            var mock = MockRuleProvider();
+
+            var hiveRule = new Rule("hive", "ctx.Hive | next(false)");
+            var hiveModRule = new Rule("hive.mod", "ctx.HiveMod");
+            mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
+            mock.Setup(rules => rules.TryGetRule(hiveModRule.Name, out hiveModRule)).Returns(true);
+
+            var permManager = new PermissionsManager<Context>(mock.Object, logger, ".");
+
+            PermissionActionParseState state;
+            Assert.False(permManager.CanDo("hive.mod", new Context { IsHiveUser = true }, ref state));
+            Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true, IsHiveUser = true }, ref state));
+            Assert.True(permManager.CanDo("hive.mod", new Context { HiveMod = true, IsHiveUser = true }, ref state));
+
+            hiveModRule = new Rule("hive.mod", "ctx.IsHiveUser");
+            mock.Setup(rules => rules.TryGetRule(hiveModRule.Name, out hiveModRule)).Returns(true);
+
+            PermissionActionParseState state2;
+            Assert.True(permManager.CanDo("hive.mod", new Context { IsHiveUser = true }, ref state2));
+            Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true, IsHiveUser = true }, ref state2));
+            Assert.True(permManager.CanDo("hive.mod", new Context { HiveMod = true, IsHiveUser = true }, ref state2));
+        }
+
+        [Fact]
+        public void TestRemovePermission()
+        {
+            var mock = MockRuleProvider();
+
+            var hiveRule = new Rule("hive", "ctx.Hive | next(false)");
+            var hiveModRule = new Rule("hive.mod", "ctx.HiveMod | ctx.IsHiveUser");
+            mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
+            mock.Setup(rules => rules.TryGetRule(hiveModRule.Name, out hiveModRule)).Returns(true);
+
+            var permManager = new PermissionsManager<Context>(mock.Object, logger, ".");
+
+            PermissionActionParseState state;
+            Assert.True(permManager.CanDo("hive.mod", new Context { IsHiveUser = true }, ref state));
+            Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true, IsHiveUser = true }, ref state));
+            Assert.True(permManager.CanDo("hive.mod", new Context { HiveMod = true, IsHiveUser = true }, ref state));
+
+            hiveModRule = new Rule("hive.mod", "ctx.HiveMod");
+            mock.Setup(rules => rules.TryGetRule(hiveModRule.Name, out hiveModRule)).Returns(true);
+
+            PermissionActionParseState state2;
+            Assert.False(permManager.CanDo("hive.mod", new Context { IsHiveUser = true }, ref state2));
+            Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true, IsHiveUser = true }, ref state2));
+            Assert.True(permManager.CanDo("hive.mod", new Context { HiveMod = true, IsHiveUser = true }, ref state2));
+        }
+
+        [Fact]
+        public void TestContextFunction()
+        {
+            var mock = MockRuleProvider();
+            var mockLogger = MockLogger<ILogger>();
+
+            var hiveRule = new Rule("hive", "ctx.Hive | next(false)");
+            var hiveModRule = new Rule("hive.mod", "ctx.NonTrivialFunction");
+            mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
+            mock.Setup(rules => rules.TryGetRule(hiveModRule.Name, out hiveModRule)).Returns(true);
+
+            var permManager = new PermissionsManager<Context>(mock.Object, mockLogger.Object, ".");
+
+            // Should not allow for permission injection
+
+            PermissionActionParseState state;
+            Assert.False(permManager.CanDo("hive.mod", new Context { NonTrivialFunction = "ctx.Hive" }, ref state));
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), "hive.mod", hiveModRule, permManager), Times.Once);
+            Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true, NonTrivialFunction = "ctx.Hive" }, ref state));
+            Assert.False(permManager.CanDo("hive.mod", new Context { HiveMod = true, NonTrivialFunction = "ctx.HiveMod" }, ref state));
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), "hive.mod", hiveModRule, permManager), Times.Exactly(2));
         }
 
         [Fact]
