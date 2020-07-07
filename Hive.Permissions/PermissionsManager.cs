@@ -196,7 +196,7 @@ namespace Hive.Permissions
                         { // we should re-grab the rule object
                             if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
                             {
-                                return TryCompileRule(entry.Rule, out entry.Rule.Compiled, out del, out entry.CheckedAt);
+                                return TryCompileRule(entry.Rule, out del, out entry.CheckedAt);
                             }
                             else
                             { // the rule no longer exists, so we clear out 
@@ -208,14 +208,14 @@ namespace Hive.Permissions
                         }
                     }
 
-                    return TryCompileRule(entry.Rule, out entry.Rule.Compiled, out del, out entry.CheckedAt);
+                    return TryCompileRule(entry.Rule, out del, out entry.CheckedAt);
                 }
             }
             else if (ruleProvider.HasRuleChangedSince(entry.Name, entry.CheckedAt))
             { // the rule was added
                 if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
                 {
-                    return TryCompileRule(entry.Rule, out entry.Rule.Compiled, out del, out entry.CheckedAt);
+                    return TryCompileRule(entry.Rule, out del, out entry.CheckedAt);
                 }
             }
 
@@ -227,12 +227,29 @@ namespace Hive.Permissions
         internal delegate bool ContinueDelegate(bool defaultValue);
         internal delegate bool RuleImplDelegate(TContext context, ContinueDelegate next);
 
-        private bool TryCompileRule(Rule rule, [MaybeNullWhen(false)] out Delegate storage, [MaybeNullWhen(false)] out RuleImplDelegate impl, out DateTime compiledAt, bool throwOnError = false)
+        private bool TryCompileRule(Rule rule, [MaybeNullWhen(false)] out RuleImplDelegate impl, out DateTime compiledAt, bool throwOnError = false)
         {
             using var _ = logger.WithRule(rule);
+
+            if (rule.Compiled != null)
+            {
+                if (rule.Compiled is RuleImplDelegate implDel)
+                {
+                    impl = implDel;
+                    compiledAt = rule.CompiledAt;
+                    return true;
+                }
+                else
+                {
+                    logger.Warn("Existing compiled rule delegate incompatable with current permission manager", rule.Compiled, typeof(TContext));
+                    rule.Compiled = null;
+                    rule.CompiledAt = default;
+                }
+            }
+
             try
             {
-                storage = impl = CompileRule(rule, out compiledAt);
+                rule.Compiled = impl = CompileRule(rule, out compiledAt);
                 return true;
             }
             catch (Exception e)
@@ -242,7 +259,7 @@ namespace Hive.Permissions
 
                 logger.Warn("Rule compilation failed", e);
 
-                storage = impl = null;
+                impl = null;
                 compiledAt = default;
                 return false;
             }
