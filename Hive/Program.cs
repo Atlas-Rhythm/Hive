@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Hive
 {
@@ -18,6 +19,11 @@ namespace Hive
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .UseSerilog((host, services, logger) => logger
+                    .ReadFrom.Configuration(host.Configuration)
+                    .MinimumLevel.Debug()
+                    .Enrich.FromLogContext()
+                    .WriteTo.Console())
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
