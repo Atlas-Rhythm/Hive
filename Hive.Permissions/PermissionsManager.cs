@@ -217,7 +217,6 @@ namespace Hive.Permissions
         {
             using (logger.WithAction(action))
             {
-
                 if (actionParseState.ContextType != null && actionParseState.ContextType != typeof(TContext))
                 {
                     logger.Warn(ErrInvalidParseContextType, typeof(TContext), actionParseState.ContextType);
@@ -269,10 +268,12 @@ namespace Hive.Permissions
                         { // we should re-grab the rule object
                             if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
                             {
+                                logger.ReplaceRule(entry.Rule);
                                 return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
                             }
                             else
                             { // the rule no longer exists, so we clear out 
+                                logger.ReplaceRule(null);
                                 entry.Rule = null;
                                 del = null;
                                 entry.CheckedAt = ruleProvider.CurrentTime;
@@ -288,7 +289,8 @@ namespace Hive.Permissions
             { // the rule was added
                 if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
                 {
-                    return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
+                    using (logger.WithRule(entry.Rule))
+                        return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
                 }
             }
 

@@ -63,6 +63,7 @@ namespace Hive.Permissions.Logging
         public ApiScope InApi(string api) => new ApiScope(api);
         public ActionScope WithAction(StringView action) => new ActionScope(action);
         public RuleScope WithRule(Rule? rule) => new RuleScope(rule);
+        public void ReplaceRule(Rule? rule) => CurrentRule = rule;
 
         public struct ApiScope : IDisposable
         {
@@ -95,14 +96,19 @@ namespace Hive.Permissions.Logging
         public struct RuleScope : IDisposable
         {
             private readonly Rule? prevRule;
+            private readonly bool revert;
+
             public RuleScope(Rule? rule)
             {
+                revert = CurrentRule != rule;
                 prevRule = CurrentRule;
-                CurrentRule = rule;
+                if (revert)
+                    CurrentRule = rule;
             }
             public void Dispose()
             {
-                CurrentRule = prevRule;
+                if (revert)
+                    CurrentRule = prevRule;
             }
         }
     }
