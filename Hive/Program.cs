@@ -7,6 +7,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Serilog.Exceptions;
+using Serilog.Exceptions.Core;
+using Serilog.Exceptions.EntityFrameworkCore.Destructurers;
 
 namespace Hive
 {
@@ -20,10 +23,14 @@ namespace Hive
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .UseSerilog((host, services, logger) => logger
-                    .ReadFrom.Configuration(host.Configuration)
                     .MinimumLevel.Debug()
                     .Enrich.FromLogContext()
-                    .WriteTo.Console())
+                    .Enrich.WithDemystifiedStackTraces()
+                    .Enrich.WithExceptionDetails(new DestructuringOptionsBuilder()
+                        .WithDefaultDestructurers()
+                        .WithDestructurers(new[] { new DbUpdateExceptionDestructurer() }))
+                    .WriteTo.Console()
+                    .ReadFrom.Configuration(host.Configuration))
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();

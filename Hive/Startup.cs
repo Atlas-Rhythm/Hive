@@ -27,9 +27,11 @@ namespace Hive
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
-            services.AddSingleton(sp =>
-                new PermissionsManager<PermissionContext>(sp.GetService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."));
+            services
+                .AddTransient<IRuleProvider, ConfigRuleProvider>()
+                .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
+                .AddSingleton(sp =>
+                    new PermissionsManager<PermissionContext>(sp.GetService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."));
 
             services.AddControllers();
         }
