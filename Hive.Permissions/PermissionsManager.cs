@@ -111,6 +111,7 @@ namespace Hive.Permissions
         /// <param name="action">The action being performed.</param>
         /// <param name="context">The context that it is acting in.</param>
         /// <returns><see langword="true"/> if the action is permitted, <see langword="false"/> otherwise.</returns>
+        /// <exception cref="PermissionException">Thrown when there is an exception when executing a rule.</exception>
         /// <seealso cref="CanDo(StringView, TContext, ref PermissionActionParseState)"/>
         public bool CanDo(StringView action, TContext context)
         {
@@ -125,6 +126,7 @@ namespace Hive.Permissions
         /// <param name="context">The context that it is acting in.</param>
         /// <param name="actionParseState">The cache for the action parse state.</param>
         /// <returns><see langword="true"/> if the action is permitted, <see langword="false"/> otherwise.</returns>
+        /// <exception cref="PermissionException">Thrown when there is an exception when executing a rule.</exception>
         public bool CanDo(StringView action, TContext context, ref PermissionActionParseState actionParseState)
         {
             using (logger.InApi(nameof(CanDo)))
@@ -152,6 +154,16 @@ namespace Hive.Permissions
             }
         }
 
+        /// <summary>
+        /// Attempts to pre-compile the rules for a given action.
+        /// </summary>
+        /// <remarks>
+        /// If this method returns normally, there are no issues with the rules.
+        /// </remarks>
+        /// <param name="action">The action to compile the rules for.</param>
+        /// <exception cref="PermissionException">Thrown if there was an error while compiling one of the rules for <paramref name="action"/>.</exception>
+        /// <exception cref="AggregateException">Thrown if there were errors while compiling multiple rules for <paramref name="action"/>. 
+        /// <see cref="AggregateException.InnerExceptions"/> will all be <see cref="PermissionException"/>s.</exception>
         public void PreCompile(StringView action)
         {
             using (logger.InApi(nameof(PreCompile)))
@@ -160,7 +172,7 @@ namespace Hive.Permissions
                 PermissionActionParseState state = default;
                 var order = ParseAction(action, ref state);
 
-                var exceptions = new List<Exception>(order.Length);
+                var exceptions = new List<PermissionException>(order.Length);
                 for (int i = 0; i < order.Length; i++)
                 {
                     try
@@ -168,7 +180,7 @@ namespace Hive.Permissions
                         // when it throws, its already the public exception api type
                         _ = logger.Wrap(() => TryPrepare(ref order[i], out _, throwOnError: true));
                     }
-                    catch (Exception e)
+                    catch (PermissionException e)
                     {
                         exceptions.Add(e);
                     }
@@ -179,6 +191,14 @@ namespace Hive.Permissions
             }
         }
 
+        /// <summary>
+        /// Attempts to pre-compile a rule.
+        /// </summary>
+        /// <remarks>
+        /// If this method returns normally, there are no issues with the rule.
+        /// </remarks>
+        /// <param name="rule">The rule to pre-compile.</param>
+        /// <exception cref="PermissionException">Thrown if there was an error while compiling <paramref name="rule"/>.</exception>
         public void PreCompile(Rule rule)
         {
             using (logger.InApi(nameof(PreCompile)))
