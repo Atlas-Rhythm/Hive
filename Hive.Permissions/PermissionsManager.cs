@@ -150,6 +150,41 @@ namespace Hive.Permissions
             return GetContinueStartingAt(0)(false);
         }
 
+        public void PreCompile(StringView action)
+        {
+            using (logger.WithAction(action))
+            {
+                PermissionActionParseState state = default;
+                var order = ParseAction(action, ref state);
+
+                var exceptions = new List<Exception>(order.Length);
+                for (int i = 0; i < order.Length; i++)
+                {
+                    try
+                    {
+                        // when it throws, its already the public exception api type
+                        _ = TryPrepare(ref order[i], out _, throwOnError: true);
+                    }
+                    catch (Exception e)
+                    {
+                        exceptions.Add(e);
+                    }
+                }
+
+                if (exceptions.Count > 0)
+                    throw new AggregateException(exceptions);
+            }
+        }
+
+        public void PreCompile(Rule rule)
+        {
+            using (logger.WithRule(rule))
+            {
+                // when it throws, its already the public exception api type
+                _ = TryCompileRule(rule, out _, out _, throwOnError: true);
+            }
+        }
+
         private const string ErrInvalidParseContextType = nameof(PermissionActionParseState) + " used when parsing action was previously used with a different context type!";
         private const string ErrIncompatableCompiledRule = "Existing compiled rule incompatable with current permission manager";
         private const string ErrCompilationFailed = "Rule compilation failed";
@@ -181,7 +216,7 @@ namespace Hive.Permissions
             return actionParseState.SearchOrder;
         }
 
-        private bool TryPrepare(ref PermissionActionParseState.SearchEntry entry, [MaybeNullWhen(false)] out RuleImplDelegate del)
+        private bool TryPrepare(ref PermissionActionParseState.SearchEntry entry, [MaybeNullWhen(false)] out RuleImplDelegate del, bool throwOnError = false)
         {
             if (entry.Rule != null)
             {
@@ -201,14 +236,14 @@ namespace Hive.Permissions
                                 logger.Warn(ErrIncompatableCompiledRule, entry.Rule.Compiled, typeof(TContext));
                                 entry.Rule.Compiled = null;
                                 entry.Rule.CompiledAt = default;
-                                return TryCompileRule(entry.Rule, out del, out entry.CheckedAt);
+                                return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
                             }
                         }
                         else
                         { // we should re-grab the rule object
                             if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
                             {
-                                return TryCompileRule(entry.Rule, out del, out entry.CheckedAt);
+                                return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
                             }
                             else
                             { // the rule no longer exists, so we clear out 
@@ -220,14 +255,14 @@ namespace Hive.Permissions
                         }
                     }
 
-                    return TryCompileRule(entry.Rule, out del, out entry.CheckedAt);
+                    return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
                 }
             }
             else if (ruleProvider.HasRuleChangedSince(entry.Name, entry.CheckedAt))
             { // the rule was added
                 if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
                 {
-                    return TryCompileRule(entry.Rule, out del, out entry.CheckedAt);
+                    return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
                 }
             }
 
@@ -239,7 +274,7 @@ namespace Hive.Permissions
         internal delegate bool ContinueDelegate(bool defaultValue);
         internal delegate bool RuleImplDelegate(TContext context, ContinueDelegate next);
 
-        private bool TryCompileRule(Rule rule, [MaybeNullWhen(false)] out RuleImplDelegate impl, out DateTime compiledAt, bool throwOnError = false)
+        private bool TryCompileRule(Rule rule, [MaybeNullWhen(false)] out RuleImplDelegate impl, out DateTime compiledAt, bool throwOnError)
         {
             using var _ = logger.WithRule(rule);
 
@@ -267,7 +302,7 @@ namespace Hive.Permissions
             catch (Exception e)
             {
                 if (throwOnError)
-                    throw;
+                    throw logger.Exception(e);
 
                 logger.Warn(ErrCompilationFailed, e);
 

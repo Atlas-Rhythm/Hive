@@ -21,6 +21,7 @@ namespace Hive.Permissions.Logging
             this.manager = manager;
         }
 
+        public Exception Exception(Exception e) => e;
         public void Info(string message, params object[] info) => logger?.Info(message, info, CurrentAction, CurrentRule, manager);
         public void Warn(string message, params object[] info) => logger?.Warn(message, info, CurrentAction, CurrentRule, manager);
 
