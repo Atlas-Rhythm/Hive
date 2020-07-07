@@ -13,6 +13,7 @@ namespace Hive.Permissions
     internal class RuleCompilationSettings :
         ICompileToLinqExpressionSettings<RuleCompilationSettings>,
         IWritableCompileToLinqExpressionSettings,
+        IBuiltinFunctionCompilerSettings<RuleCompilationSettings>,
         IBuiltinFunctionWritableCompilerSettings<RuleCompilationSettings>
     {
         public LoggerWrapper Logger { get; }

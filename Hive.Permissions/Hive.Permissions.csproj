@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="FastExpressionCompiler" Version="2.0.0" />
-    <PackageReference Include="MathExpr" Version="0.4.0-nightly.2006280642" />
+    <PackageReference Include="MathExpr" Version="0.4.0" />
   </ItemGroup>
 
   <ItemGroup>
