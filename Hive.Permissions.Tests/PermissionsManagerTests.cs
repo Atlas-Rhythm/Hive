@@ -204,6 +204,8 @@ namespace Hive.Permissions.Tests
 
             hiveRule = new Rule("hive.mod", "false");
             mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
+            // Ideally, this only returns true for an explicit case on DateTime, ie. It should only return true the first time it is called
+            mock.Setup(rules => rules.HasRuleChangedSince(hiveRule, It.IsAny<DateTime>())).Returns(true);
 
             // Shouldn't need to create a new permission manager
 
