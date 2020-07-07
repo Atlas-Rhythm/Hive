@@ -150,14 +150,17 @@ namespace Hive.Permissions
             return GetContinueStartingAt(0)(false);
         }
 
+        private const string ErrInvalidParseContextType = nameof(PermissionActionParseState) + " used when parsing action was previously used with a different context type!";
+        private const string ErrIncompatableCompiledRule = "Existing compiled rule incompatable with current permission manager";
+        private const string ErrCompilationFailed = "Rule compilation failed";
+
         private PermissionActionParseState.SearchEntry[] ParseAction(StringView action, ref PermissionActionParseState actionParseState)
         {
             using var _ = logger.WithAction(action);
 
             if (actionParseState.ContextType != null && actionParseState.ContextType != typeof(TContext))
             {
-                logger.Warn($"{nameof(PermissionActionParseState)} used when parsing action was previously used with a different context type!", 
-                    typeof(TContext), actionParseState.ContextType);
+                logger.Warn(ErrInvalidParseContextType, typeof(TContext), actionParseState.ContextType);
                 // the existing compiled rules are invalid, so we will clear the parse state and retry it all
                 actionParseState.Reset();
             }
@@ -180,17 +183,26 @@ namespace Hive.Permissions
 
         private bool TryPrepare(ref PermissionActionParseState.SearchEntry entry, [MaybeNullWhen(false)] out RuleImplDelegate del)
         {
-            // TODO: do the rules for when we check entry.CheckedAt vs rule.CompiledAt make sense?
             if (entry.Rule != null)
             {
                 using (logger.WithRule(entry.Rule))
                 {
                     if (entry.Rule.Compiled != null)
-                    {
+                    { // the rule has been compiled before
                         if (!ruleProvider.HasRuleChangedSince(entry.Rule, entry.Rule.CompiledAt))
                         {
-                            del = (RuleImplDelegate)entry.Rule.Compiled;
-                            return true;
+                            if (entry.Rule.Compiled is RuleImplDelegate implDel)
+                            {
+                                del = implDel;
+                                return true;
+                            }
+                            else
+                            {
+                                logger.Warn(ErrIncompatableCompiledRule, entry.Rule.Compiled, typeof(TContext));
+                                entry.Rule.Compiled = null;
+                                entry.Rule.CompiledAt = default;
+                                return TryCompileRule(entry.Rule, out del, out entry.CheckedAt);
+                            }
                         }
                         else
                         { // we should re-grab the rule object
@@ -202,7 +214,7 @@ namespace Hive.Permissions
                             { // the rule no longer exists, so we clear out 
                                 entry.Rule = null;
                                 del = null;
-                                entry.CheckedAt = default;
+                                entry.CheckedAt = ruleProvider.CurrentTime;
                                 return false;
                             }
                         }
@@ -220,7 +232,7 @@ namespace Hive.Permissions
             }
 
             del = null;
-            entry.CheckedAt = default;
+            entry.CheckedAt = ruleProvider.CurrentTime;
             return false;
         }
 
@@ -241,7 +253,7 @@ namespace Hive.Permissions
                 }
                 else
                 {
-                    logger.Warn("Existing compiled rule delegate incompatable with current permission manager", rule.Compiled, typeof(TContext));
+                    logger.Warn(ErrIncompatableCompiledRule, rule.Compiled, typeof(TContext));
                     rule.Compiled = null;
                     rule.CompiledAt = default;
                 }
@@ -257,7 +269,7 @@ namespace Hive.Permissions
                 if (throwOnError)
                     throw;
 
-                logger.Warn("Rule compilation failed", e);
+                logger.Warn(ErrCompilationFailed, e);
 
                 impl = null;
                 compiledAt = default;
