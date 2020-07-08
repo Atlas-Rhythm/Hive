@@ -302,6 +302,7 @@ components:
             $ref: '#/components/schemas/ModIdentifier'
         conflictingIDs:
           type: array
+          items:
             $ref: '#/components/schemas/ModIdentifier'
       required:
         - id
