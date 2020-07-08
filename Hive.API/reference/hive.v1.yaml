@@ -302,11 +302,11 @@ components:
           type: object
         localizedData:
           $ref: '#/components/schemas/LocalizedModData'
-        dependencyIDs:
+        dependencies:
           type: array
           items:
             $ref: '#/components/schemas/ModIdentifier'
-        conflictingIDs:
+        conflicts:
           type: array
           items:
             $ref: '#/components/schemas/ModIdentifier'
@@ -321,8 +321,8 @@ components:
         - downloadLink
         - additionalData
         - localizedData
-        - dependencyIDs
-        - conflictingIDs
+        - dependencies
+        - conflicts
     LocalizedModData:
       type: object
       title: LocalizedModData
