@@ -33,5 +33,181 @@ paths:
                     type: string
               examples: {}
       operationId: get-users-userId
+  /mods:
+    get:
+      summary: |
+        Gets all of the mods in the specified channel(s), or a default if none is specified.
+      parameters:
+      - name: channelId
+        description: |
+          The ID of the channel to look up mods in.
+        in: query
+        required: false
+        schema: 
+          type: string
+      - name: channelIds
+        description: |
+          The IDs of the channels to look up mods in.
+        in: query
+        required: false
+        schema:
+          type: array
+          items: 
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  $ref: '#/components/schemas/Mod'
+              
+  
+  '/mod/{modId}':
+    parameters:
+      - schema:
+          type: string
+        name: modId
+        in: path
+        required: true
+    get:
+      summary: Gets a mod from the ID specified
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mod'
+      operationId: get-mod-modId
+    patch:
+      summary: Updates a mod with the specified ID
+      tags: []
+      responses:
+        '204':
+          description: No Content
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      operationId: patch-mod
+    delete:
+      summary: Deletes a mod with the specified ID
+      tags: []
+      responses:
+        '204':
+          description: No Content
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      operationId: delete-mod
+    
+
 components:
-  schemas: {}
+  schemas:
+    Channel:
+      type: object
+      title: Channel
+      additionalProperties: false
+      description: A channel object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        isPublic:
+          type: boolean
+        additionalData:
+          type: object
+      required:
+        - name
+        - isPublic
+        - additionalData
+    Mod:
+      type: object
+      title: Mod
+      description: A mod
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        version:
+          type: string
+        uploaderId:
+          type: string
+        authorIds:
+          type: array
+          items:
+            type: string
+        contributorIds:
+          type: array
+          items:
+            type: string
+        channelId:
+          type: string
+        links:
+          type: array
+          minItems: 0
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              url:
+                type: string
+            required:
+              - name
+              - url
+        downloadLink:
+          type: string
+        additionalData:
+          type: object
+        localizedData:
+          $ref: '#/components/schemas/LocalizedModData'
+      required:
+        - id
+        - version
+        - uploaderId
+        - authorIds
+        - contributorIds
+        - channelId
+        - links
+        - downloadLink
+        - additionalData
+        - localizedData
+    LocalizedModData:
+      type: object
+      title: LocalizedModData
+      description: Localized data of a mod
+      additionalProperties: false
+      properties:
+        language:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        changelog:
+          type: string
+        credits:
+          type: string
+      required:
+        - language
+        - name
+        - description
+    GameVersion:
+      type: object
+      title: GameVersion
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        additionalData:
+          type: object
+      required:
+        - name
+        - additionalData
+  securitySchemes: {}
