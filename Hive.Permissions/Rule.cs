@@ -39,7 +39,7 @@ namespace Hive.Permissions
 
         // This is used as a cache for the PermissionsManager.
         internal Delegate? Compiled = null;
-        internal Instant CompiledAt = default;
+        internal Instant CompiledAt = Instant.MinValue;
     }
 
     /// <summary>

@@ -38,7 +38,8 @@ namespace Hive.Permissions
         /// <param name="name">The name of the rule to check.</param>
         /// <param name="time">The last time that the rule was checked.</param>
         /// <returns><see langword="true"/> if the rule has changed, <see langword="false"/> otherwise.</returns>
-        // both of these operations should be idempotent.
+        // both of these operations should be idempotent. they should return *true* if this is the first time it is asked for a present perm,
+        //   which means that *time* will be Instant.MinValue
         bool HasRuleChangedSince(StringView name, Instant time);
 
         /// <summary>

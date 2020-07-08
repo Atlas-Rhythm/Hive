@@ -299,8 +299,11 @@ namespace Hive.Permissions.Tests
         private Mock<T> MockRuleProvider<T>() where T : class, IRuleProvider
         {
             var mock = new Mock<T>();
+
+            var start = SystemClock.Instance.GetCurrentInstant();
             mock.Setup(rules => rules.CurrentTime).Returns(() => SystemClock.Instance.GetCurrentInstant());
             mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.IsAny<Instant>())).Returns(false);
+            mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.Is<Instant>(i => i < start))).Returns(true);
             mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<Rule>(), It.IsAny<Instant>())).Returns(false);
             mock.Setup(rules => rules.TryGetRule(It.IsAny<StringView>(), out It.Ref<Rule>.IsAny!)).Returns(false);
             return mock;

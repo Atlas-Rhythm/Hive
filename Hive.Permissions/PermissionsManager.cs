@@ -240,8 +240,8 @@ namespace Hive.Permissions
                     var combos = new PermissionActionParseState.SearchEntry[parts.Length];
                     for (int i = 0; i < parts.Length; i++)
                     {
-                        combos[i].Name = StringView.Concat(parts.Take(i + 1).InterleaveWith(Helpers.Repeat(splitToken, i)));
-                        ruleProvider.TryGetRule(combos[i].Name, out combos[i].Rule);
+                        combos[i] = new PermissionActionParseState.SearchEntry(
+                            StringView.Concat(parts.Take(i + 1).InterleaveWith(Helpers.Repeat(splitToken, i))));
                     }
                     actionParseState.SearchOrder = combos;
                     actionParseState.ContextType = typeof(TContext);
@@ -253,60 +253,68 @@ namespace Hive.Permissions
 
         private bool TryPrepare(ref PermissionActionParseState.SearchEntry entry, [MaybeNullWhen(false)] out RuleImplDelegate del, bool throwOnError = false)
         {
-            if (entry.Rule != null)
+            using (logger.WithRule(entry.Rule))
             {
-                using (logger.WithRule(entry.Rule))
-                {
-                    if (entry.Rule.Compiled != null)
-                    { // the rule has been compiled before
-                        if (!ruleProvider.HasRuleChangedSince(entry.Rule, entry.Rule.CompiledAt))
+                if (entry.Rule?.Compiled != null)
+                { // rule exists and has been compiled before
+                    if (!ruleProvider.HasRuleChangedSince(entry.Rule, entry.Rule.CompiledAt))
+                    {
+                        if (entry.Rule.Compiled is RuleImplDelegate implDel)
                         {
-                            if (entry.Rule.Compiled is RuleImplDelegate implDel)
-                            {
-                                del = implDel;
-                                return true;
-                            }
-                            else
-                            {
-                                logger.Warn(ErrIncompatableCompiledRule, entry.Rule.Compiled, typeof(TContext));
-                                entry.Rule.Compiled = null;
-                                entry.Rule.CompiledAt = default;
-                                return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
-                            }
+                            del = implDel;
+                            return true;
                         }
                         else
-                        { // we should re-grab the rule object
-                            if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
-                            {
-                                logger.ReplaceRule(entry.Rule);
-                                return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
-                            }
-                            else
-                            { // the rule no longer exists, so we clear out 
-                                logger.ReplaceRule(null);
-                                entry.Rule = null;
-                                del = null;
-                                entry.CheckedAt = ruleProvider.CurrentTime;
-                                return false;
-                            }
+                        {
+                            logger.Warn(ErrIncompatableCompiledRule, entry.Rule.Compiled, typeof(TContext));
+                            entry.Rule.Compiled = null;
+                            entry.Rule.CompiledAt = Instant.MinValue;
+                            return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
                         }
                     }
-
+                    else
+                    { // we should re-grab the rule object
+                        if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
+                        {
+                            logger.ReplaceRule(entry.Rule);
+                            return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
+                        }
+                        else
+                        { // the rule no longer exists, so we clear out 
+                            logger.ReplaceRule(null);
+                            entry.Rule = null;
+                            del = null;
+                            entry.CheckedAt = ruleProvider.CurrentTime;
+                            return false;
+                        }
+                    }
+                }
+                else if (ruleProvider.HasRuleChangedSince(entry.Name, entry.CheckedAt))
+                {
+                    if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
+                    {
+                        logger.ReplaceRule(entry.Rule);
+                        return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
+                    }
+                    else
+                    { // the rule changed, and so its removed (this is only triggered when a given rule wasn't compiled)
+                        logger.ReplaceRule(null);
+                        entry.Rule = null;
+                        del = null;
+                        entry.CheckedAt = ruleProvider.CurrentTime;
+                        return false;
+                    }
+                }
+                else if (entry.Rule != null && entry.Rule.Compiled == null)
+                { // never compiled, unchanged, but exists
+                    // I don't think this path will ever be taken in normal execution
                     return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
                 }
-            }
-            else if (ruleProvider.HasRuleChangedSince(entry.Name, entry.CheckedAt))
-            { // the rule was added
-                if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
-                {
-                    using (logger.WithRule(entry.Rule))
-                        return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
-                }
-            }
 
-            del = null;
-            entry.CheckedAt = ruleProvider.CurrentTime;
-            return false;
+                del = null;
+                entry.CheckedAt = ruleProvider.CurrentTime;
+                return false;
+            }
         }
 
         internal delegate bool ContinueDelegate(bool defaultValue);
@@ -329,7 +337,7 @@ namespace Hive.Permissions
                     {
                         logger.Warn(ErrIncompatableCompiledRule, rule.Compiled, typeof(TContext));
                         rule.Compiled = null;
-                        rule.CompiledAt = default;
+                        rule.CompiledAt = Instant.MinValue;
                     }
                 }
 
@@ -346,7 +354,7 @@ namespace Hive.Permissions
                     logger.Warn(ErrCompilationFailed, e);
 
                     impl = null;
-                    compiledAt = default;
+                    compiledAt = Instant.MinValue;
                     return false;
                 }
             }

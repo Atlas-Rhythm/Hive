@@ -17,6 +17,13 @@ namespace Hive.Permissions
             public StringView Name;
             public Rule? Rule;
             public Instant CheckedAt;
+
+            public SearchEntry(StringView name)
+            {
+                Name = name;
+                Rule = null;
+                CheckedAt = Instant.MinValue;
+            }
         }
 
         internal Type? ContextType;
