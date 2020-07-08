@@ -211,19 +211,24 @@ paths:
                     type: string
                   missing:
                     type: array
+                    minItems: 0
                     items:
                       $ref: '#/components/schemas/Mod'
                   conflicts:
                     type: array
+                    minItems: 0
                     items:
                       $ref: '#/components/schemas/Mod'
                   versionMismatching:
                     type: array
+                    minItems: 0
                     items:
                       $ref: '#/components/schemas/Mod'
                 required:
                   - message
                   - missing
+                  - conflicts
+                  - versionMismatching
       description: |-
         Returns a list of mods that should be installed to resolve all dependencies.
         If the dependencies cannot be resolved, returns a non-200 status code and an empty array.
