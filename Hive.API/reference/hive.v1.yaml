@@ -234,7 +234,7 @@ paths:
             schema:
               type: array
               items:
-		        $ref: '#/components/schemas/ModIdentifier'
+                $ref: '#/components/schemas/ModIdentifier'
         description: Mods to resolve
 components:
   schemas:
@@ -296,14 +296,13 @@ components:
           type: object
         localizedData:
           $ref: '#/components/schemas/LocalizedModData'
-		dependencyIDs:
+        dependencyIDs:
           type: array
           items:
-		    $ref: '#/components/schemas/ModIdentifier'
-		conflictingIDs:
+            $ref: '#/components/schemas/ModIdentifier'
+        conflictingIDs:
           type: array
-          items:
-		    $ref: '#/components/schemas/ModIdentifier'
+            $ref: '#/components/schemas/ModIdentifier'
       required:
         - id
         - version
@@ -348,11 +347,11 @@ components:
         - name
         - additionalData
     ModIdentifier:
-	  type: object
+      type: object
       title: ModIdentifier
       description: A mod ID paired with a version range.
       additionalProperties: false
-	  properties:
+      properties:
         name:
           type: string
         versionRange:
