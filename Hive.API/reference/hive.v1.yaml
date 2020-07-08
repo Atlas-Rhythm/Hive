@@ -9,7 +9,7 @@ paths:
     get:
       summary: OUR GET endpoint
       tags: []
-      responses: # TODO i guess (no this is final)
+      responses:
         '418':
           description: "I'm a teapot (RFC 2324)"
       operationId: get-users
@@ -282,6 +282,7 @@ components:
           minItems: 0
           items:
             type: object
+            additionalProperties: false
             properties:
               name:
                 type: string
@@ -315,6 +316,8 @@ components:
         - downloadLink
         - additionalData
         - localizedData
+        - dependencyIDs
+        - conflictingIDs
     LocalizedModData:
       type: object
       title: LocalizedModData
@@ -360,5 +363,4 @@ components:
       required:
         - name
         - versionRange
-        
   securitySchemes: {}
