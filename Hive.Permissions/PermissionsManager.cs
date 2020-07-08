@@ -354,7 +354,7 @@ namespace Hive.Permissions
                     logger.Warn(ErrCompilationFailed, e);
 
                     impl = null;
-                    compiledAt = Instant.MinValue;
+                    compiledAt = ruleProvider.CurrentTime; // TODO: should this be current time, or pull from what the rule says?
                     return false;
                 }
             }
