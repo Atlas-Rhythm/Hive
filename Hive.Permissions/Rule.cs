@@ -1,4 +1,5 @@
 ﻿using Hive.Utilities;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -38,7 +39,7 @@ namespace Hive.Permissions
 
         // This is used as a cache for the PermissionsManager.
         internal Delegate? Compiled = null;
-        internal DateTime CompiledAt = default;
+        internal Instant CompiledAt = default;
     }
 
     /// <summary>

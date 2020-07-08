@@ -7,6 +7,7 @@ using MathExpr.Compiler.Compilation.Passes;
 using MathExpr.Compiler.Compilation.Settings;
 using MathExpr.Compiler.Optimization.Settings;
 using MathExpr.Syntax;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -312,7 +313,7 @@ namespace Hive.Permissions
 
         internal delegate bool RuleImplDelegate(TContext context, ContinueDelegate next);
 
-        private bool TryCompileRule(Rule rule, [MaybeNullWhen(false)] out RuleImplDelegate impl, out DateTime compiledAt, bool throwOnError)
+        private bool TryCompileRule(Rule rule, [MaybeNullWhen(false)] out RuleImplDelegate impl, out Instant compiledAt, bool throwOnError)
         {
             using (logger.WithRule(rule))
             {
@@ -351,7 +352,7 @@ namespace Hive.Permissions
             }
         }
 
-        private RuleImplDelegate CompileRule(Rule rule, out DateTime time)
+        private RuleImplDelegate CompileRule(Rule rule, out Instant time)
         {
             using (logger.WithRule(rule))
             {

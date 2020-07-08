@@ -5,6 +5,7 @@ using MathExpr.Compiler.Compilation;
 using MathExpr.Syntax;
 using MathExpr.Utilities;
 using Moq;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -206,7 +207,7 @@ namespace Hive.Permissions.Tests
             mock.Setup(rules => rules.TryGetRule(newHiveRule.Name, out newHiveRule)).Returns(true);
 
             // always returning true is the correct behaviour, because hiveModRule is the old rule and is known to have changed
-            mock.Setup(rules => rules.HasRuleChangedSince(hiveModRule, It.IsAny<DateTime>())).Returns(true);
+            mock.Setup(rules => rules.HasRuleChangedSince(hiveModRule, It.IsAny<Instant>())).Returns(true);
 
             // Shouldn't need to create a new permission manager
 
@@ -298,9 +299,9 @@ namespace Hive.Permissions.Tests
         private Mock<T> MockRuleProvider<T>() where T : class, IRuleProvider
         {
             var mock = new Mock<T>();
-            mock.Setup(rules => rules.CurrentTime).Returns(() => DateTime.Now);
-            mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.IsAny<DateTime>())).Returns(false);
-            mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<Rule>(), It.IsAny<DateTime>())).Returns(false);
+            mock.Setup(rules => rules.CurrentTime).Returns(() => SystemClock.Instance.GetCurrentInstant());
+            mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.IsAny<Instant>())).Returns(false);
+            mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<Rule>(), It.IsAny<Instant>())).Returns(false);
             mock.Setup(rules => rules.TryGetRule(It.IsAny<StringView>(), out It.Ref<Rule>.IsAny!)).Returns(false);
             return mock;
         }

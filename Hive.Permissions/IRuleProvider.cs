@@ -1,5 +1,6 @@
 ﻿using Hive.Utilities;
 using MathExpr.Syntax;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -38,7 +39,7 @@ namespace Hive.Permissions
         /// <param name="time">The last time that the rule was checked.</param>
         /// <returns><see langword="true"/> if the rule has changed, <see langword="false"/> otherwise.</returns>
         // both of these operations should be idempotent.
-        bool HasRuleChangedSince(StringView name, DateTime time);
+        bool HasRuleChangedSince(StringView name, Instant time);
 
         /// <summary>
         /// Checks whether or not a rule has changed since the provided time.
@@ -54,7 +55,7 @@ namespace Hive.Permissions
         /// <param name="time">The last time that the rule was checked.</param>
         /// <returns><see langword="true"/> if the rule has changed, <see langword="false"/> otherwise.</returns>
         // this overload is for convenience, as the Rule may contain a reference to something useful for the provider
-        bool HasRuleChangedSince(Rule rule, DateTime time);
+        bool HasRuleChangedSince(Rule rule, Instant time);
 
         /// <summary>
         /// Gets the current time, according to the provider.
@@ -64,7 +65,7 @@ namespace Hive.Permissions
         /// whatever time source you store to keep track of changes.</para>
         /// </remarks>
         // this should pull from a time source that is synced with the underlying rule store
-        DateTime CurrentTime => DateTime.Now;
+        Instant CurrentTime => SystemClock.Instance.GetCurrentInstant();
     }
 
     /// <summary>
