@@ -234,17 +234,7 @@ paths:
             schema:
               type: array
               items:
-                type: object
-                additionalProperties: false
-                properties:
-                  id:
-                    type: string
-                  version:
-                    type: string
-                    description: 'A version string to match (ex:  ^0.0.0)'
-                required:
-                  - id
-                  - version
+		        $ref: '#/components/schemas/ModIdentifier'
         description: Mods to resolve
 components:
   schemas:
@@ -306,6 +296,14 @@ components:
           type: object
         localizedData:
           $ref: '#/components/schemas/LocalizedModData'
+		dependencyIDs:
+          type: array
+          items:
+		    $ref: '#/components/schemas/ModIdentifier'
+		conflictingIDs:
+          type: array
+          items:
+		    $ref: '#/components/schemas/ModIdentifier'
       required:
         - id
         - version
@@ -349,4 +347,18 @@ components:
       required:
         - name
         - additionalData
+    ModIdentifier:
+	  type: object
+      title: ModIdentifier
+      description: A mod ID paired with a version range.
+      additionalProperties: false
+	  properties:
+        name:
+          type: string
+        versionRange:
+          type: string
+      required:
+        - name
+        - versionRange
+        
   securitySchemes: {}
