@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Hive.Permissions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace Hive.Controllers
 {
@@ -17,14 +16,12 @@ namespace Hive.Controllers
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
 
-        private readonly ILogger<WeatherForecastController> _logger;
         private readonly Serilog.ILogger log;
         private readonly PermissionsManager<PermissionContext> permissions;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger, Serilog.ILogger log, PermissionsManager<PermissionContext> perms)
+        public WeatherForecastController(Serilog.ILogger log, PermissionsManager<PermissionContext> perms)
         {
-            _logger = logger;
-            this.log = log;
+            this.log = log.ForContext<WeatherForecastController>();
             permissions = perms;
         }
 

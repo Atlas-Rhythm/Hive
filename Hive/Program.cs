@@ -23,14 +23,13 @@ namespace Hive
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .UseSerilog((host, services, logger) => logger
-                    .MinimumLevel.Debug()
+                    .ReadFrom.Configuration(host.Configuration)
                     .Enrich.FromLogContext()
                     .Enrich.WithDemystifiedStackTraces()
                     .Enrich.WithExceptionDetails(new DestructuringOptionsBuilder()
                         .WithDefaultDestructurers()
                         .WithDestructurers(new[] { new DbUpdateExceptionDestructurer() }))
-                    .WriteTo.Console()
-                    .ReadFrom.Configuration(host.Configuration))
+                    .WriteTo.Console())
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
