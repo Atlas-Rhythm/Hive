@@ -241,6 +241,25 @@ paths:
               items:
                 $ref: '#/components/schemas/ModIdentifier'
         description: Mods to resolve
+  '/mod/move/{channelId}':
+    parameters:
+      - schema:
+          type: string
+        name: channelId
+        in: path
+        required: true
+    post:
+      summary: ''
+      operationId: post-mod-move-channelId
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModIdentifier'
+      description: Moves a mod to the provided channelId
 components:
   schemas:
     Channel:
