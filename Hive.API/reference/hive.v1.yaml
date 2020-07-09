@@ -258,7 +258,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ModIdentifier'
+              type: object
+              properties:
+                id:
+                  type: string
+                version:
+                  type: string
+            examples: {}
       description: Moves a mod to the provided channelId
 components:
   schemas:
