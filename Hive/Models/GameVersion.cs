@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -20,6 +21,14 @@ namespace Hive.Models
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Guid { get; set; }
         #endregion
+
+        public static void Configure(ModelBuilder b)
+        {
+            b.Entity<GameVersion>()
+                .HasIndex(v => new { v.Name })
+                .IsUnique();
+            // SupportedMods is set up by Mod
+        }
     }
 
     internal class GameVersion_Mod_Joiner
