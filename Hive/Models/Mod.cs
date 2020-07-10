@@ -5,6 +5,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Version = SemVer.Version;
 using VerRange = SemVer.Range;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace Hive.Models
 {
@@ -30,24 +34,49 @@ namespace Hive.Models
         // many to many (this needs to use a join type, and needs modification to be put into EF)
         public List<GameVersion> SupportedVersions { get; } = new List<GameVersion>();
 
+        [Column(TypeName = "jsonb")]
         public List<ModReference> Dependencies { get; } = new List<ModReference>();
 
+        [Column(TypeName = "jsonb")]
         public List<ModReference> Conflicts { get; } = new List<ModReference>();
 
         // many to one
         public Channel Channel { get; } = null!;
 
         // this would be a JSON string, encoding arbitrary data (this should be some type that better represents that JSON data though)
-        public string? AdditionalData { get; }
+        public JsonElement AdditionalData { get; }
 
+        [Column(TypeName = "jsonb")] // use jsonb here because that will let the db handle it sanely
         public List<(string Name, Uri Url)> Links { get; } = new List<(string, Uri)>();
 
         public Uri DownloadLink { get; } = null!;
 
         #region DB Schema stuff
         // this would be the primary key for this row
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Guid { get; }
         #endregion
+
+        public static void Configure(ModelBuilder b)
+        {
+            b.Entity<Mod>()
+                .HasIndex(m => new { m.ID, m.Version })
+                .IsUnique()
+                .IncludeProperties(m => new { m.Channel, m.Localizations })
+                .HasName("mod_IdVersionUnique");
+            b.Entity<Mod>()
+                .HasMany(m => m.Localizations)
+                .WithOne(l => l.OwningMod)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
+            b.Entity<Mod>()
+                .HasMany(m => m.SupportedVersions)
+                .WithMany(v => v.SupportedMods)
+                .UsingEntity<GameVersion_Mod_Joiner>(
+                    rb => rb.HasOne(j => j.Version).WithMany().OnDelete(DeleteBehavior.Cascade),
+                    lb => lb.HasOne(j => j.Mod).WithMany().OnDelete(DeleteBehavior.Cascade)
+                );
+        }
     }
 
     public struct ModReference
@@ -55,5 +84,11 @@ namespace Hive.Models
         public string ModID { get; }
 
         public VerRange Versions { get; }
+
+        public ModReference(string id, VerRange range)
+        {
+            ModID = id;
+            Versions = range;
+        }
     }
 }

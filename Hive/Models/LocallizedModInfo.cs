@@ -18,9 +18,13 @@ namespace Hive.Models
 
         public string? Credits { get; }
 
+        public Mod OwningMod { get; } = null!;
+
+#if false
         #region DB Schema stuff
         // this would be a foreign key back to the Mod object this is associated with
         public Guid ModVersionGuid { get; }
         #endregion
+#endif
     }
 }
