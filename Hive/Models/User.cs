@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -18,5 +19,8 @@ namespace Hive.Models
         // - links to various info about the user
         // - a prfile pic
         // - an extra data object like Mod.AdditionalData
+
+        [Key]
+        public string DumbId { get; set; } = null!;
     }
 }

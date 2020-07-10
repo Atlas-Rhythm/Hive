@@ -38,10 +38,10 @@ namespace Hive.Models
         public static void Configure(ModelBuilder b)
         {
             // OwningMod is configured by Mod
-            b.Entity<LocalizedModInfo>()
+            /*b.Entity<LocalizedModInfo>()
                 .HasIndex(l => new { l.OwningMod, l.Language })
                 .IsUnique()
-                .IncludeProperties(l => new { l.Name });
+                .IncludeProperties(l => new { l.Name });*/
             b.Entity<LocalizedModInfo>()
                 .Property(l => l.Language)
                 .HasConversion(

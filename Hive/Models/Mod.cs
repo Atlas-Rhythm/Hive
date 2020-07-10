@@ -65,11 +65,6 @@ namespace Hive.Models
         public static void Configure(ModelBuilder b)
         {
             b.Entity<Mod>()
-                .HasIndex(m => new { m.ID, m.Version })
-                .IsUnique()
-                .IncludeProperties(m => new { m.Channel, m.Localizations })
-                .HasName("mod_IdVersionUnique");
-            b.Entity<Mod>()
                 .HasMany(m => m.Localizations)
                 .WithOne(l => l.OwningMod)
                 .IsRequired()
@@ -80,7 +75,17 @@ namespace Hive.Models
                 .UsingEntity<GameVersion_Mod_Joiner>(
                     rb => rb.HasOne(j => j.Version).WithMany().OnDelete(DeleteBehavior.Cascade),
                     lb => lb.HasOne(j => j.Mod).WithMany().OnDelete(DeleteBehavior.Cascade)
+                )
+                .HasNoKey();
+            b.Entity<Mod>()
+                .Property(m => m.Version)
+                .HasConversion( // TODO: maybe encode this differently (say in a json structure?)
+                    v => v.ToString(),
+                    s => new Version(s, false)
                 );
+            b.Entity<Mod>()
+                .HasIndex(m => new { m.ID, m.Version })
+                .IsUnique();
         }
     }
 
