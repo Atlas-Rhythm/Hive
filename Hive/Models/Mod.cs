@@ -1,7 +1,10 @@
-﻿using System;
+﻿using SemVer;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Version = SemVer.Version;
+using VerRange = SemVer.Range;
 
 namespace Hive.Models
 {
@@ -27,6 +30,10 @@ namespace Hive.Models
         // many to many (this needs to use a join type, and needs modification to be put into EF)
         public List<GameVersion> SupportedVersions { get; } = new List<GameVersion>();
 
+        public List<ModReference> Dependencies { get; } = new List<ModReference>();
+
+        public List<ModReference> Conflicts { get; } = new List<ModReference>();
+
         // many to one
         public Channel Channel { get; } = null!;
 
@@ -41,5 +48,12 @@ namespace Hive.Models
         // this would be the primary key for this row
         public Guid Guid { get; }
         #endregion
+    }
+
+    public struct ModReference
+    {
+        public string ModID { get; }
+
+        public VerRange Versions { get; }
     }
 }
