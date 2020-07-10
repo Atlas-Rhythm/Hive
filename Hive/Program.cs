@@ -7,13 +7,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Serilog.Configuration;
 using Serilog.Exceptions;
 using Serilog.Exceptions.Core;
 using Serilog.Exceptions.EntityFrameworkCore.Destructurers;
 
 namespace Hive
 {
-    public class Program
+    public static class Program
     {
         public static void Main(string[] args)
         {
@@ -24,6 +25,7 @@ namespace Hive
             Host.CreateDefaultBuilder(args)
                 .UseSerilog((host, services, logger) => logger
                     .ReadFrom.Configuration(host.Configuration)
+                    .Destructure.LibraryTypes()
                     .Enrich.FromLogContext()
                     .Enrich.WithDemystifiedStackTraces()
                     .Enrich.WithExceptionDetails(new DestructuringOptionsBuilder()
@@ -34,5 +36,9 @@ namespace Hive
                 {
                     webBuilder.UseStartup<Startup>();
                 });
+
+        private static LoggerConfiguration LibraryTypes(this LoggerDestructuringConfiguration conf)
+            => conf.AsScalar<SemVer.Version>()
+            .Destructure.AsScalar<SemVer.Range>();
     }
 }
