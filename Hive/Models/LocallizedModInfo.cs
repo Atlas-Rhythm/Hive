@@ -11,17 +11,17 @@ namespace Hive.Models
 {
     public class LocalizedModInfo
     {
-        public CultureInfo Language { get; } = null!;
+        public CultureInfo Language { get; set; } = null!;
 
-        public string Name { get; } = null!;
+        public string Name { get; set; } = null!;
 
-        public string Description { get; } = null!;
+        public string Description { get; set; } = null!;
 
-        public string? Changelog { get; }
+        public string? Changelog { get; set; }
 
-        public string? Credits { get; }
+        public string? Credits { get; set; }
 
-        public Mod OwningMod { get; } = null!;
+        public Mod OwningMod { get; set; } = null!;
 
 #if false
         #region DB Schema stuff
@@ -32,7 +32,7 @@ namespace Hive.Models
         #region DB Schema stuff
         // this would be the primary key for this row
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid Guid { get; }
+        public Guid Guid { get; set; }
         #endregion
 
         public static void Configure(ModelBuilder b)

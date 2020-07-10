@@ -8,17 +8,17 @@ namespace Hive.Models
 {
     public class GameVersion
     {
-        public string Name { get; } = null!;
+        public string Name { get; set; } = null!;
 
         // like Mod's
-        public JsonElement AdditionalData { get; }
+        public JsonElement AdditionalData { get; set; }
 
-        public List<Mod> SupportedMods { get; } = new List<Mod>();
+        public List<Mod> SupportedMods { get; set; } = new List<Mod>();
 
         #region DB Schema stuff
         // this would be the primary key for this row
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid Guid { get; }
+        public Guid Guid { get; set; }
         #endregion
     }
 
