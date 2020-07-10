@@ -10,6 +10,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using NodaTime;
+using Hive.Converters;
 
 namespace Hive.Models
 {
@@ -86,6 +87,15 @@ namespace Hive.Models
             b.Entity<Mod>()
                 .HasIndex(m => new { m.ID, m.Version })
                 .IsUnique();
+            b.Entity<Mod>()
+                .Property(m => m.Uploader)
+                .IsVaulthUser();
+            b.Entity<Mod>()
+                .Property(m => m.Authors)
+                .IsVaulthUsers();
+            b.Entity<Mod>()
+                .Property(m => m.Contributors)
+                .IsVaulthUsers();
         }
     }
 
