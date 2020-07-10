@@ -8,6 +8,11 @@ namespace Hive.Models
 {
     public class ModsContext : DbContext
     {
+        public ModsContext(DbContextOptions<ModsContext> options) : base(options)
+        {
+
+        }
+
         public DbSet<Mod> Mods { get; set; } = null!;
 
         public DbSet<LocalizedModInfo> ModLocalizations { get; set; } = null!;

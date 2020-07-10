@@ -9,6 +9,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using NodaTime;
 
 namespace Hive.Models
 {
@@ -22,6 +23,10 @@ namespace Hive.Models
         // this would ideally be a SemVer version object from somewhere
         public Version Version { get; set; } = null!;
 
+        public Instant UploadedAt { get; set; }
+
+        public Instant? EditedAt { get; set; }
+        
         // many to one
         public User Uploader { get; set; } = null!;
 
