@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using NodaTime;
 using Hive.Converters;
+using System.Text.Json.Serialization;
 
 namespace Hive.Models
 {
@@ -103,6 +104,7 @@ namespace Hive.Models
     {
         public string ModID { get; }
 
+        [JsonConverter(typeof(JsonVersionRangeConverter))]
         public VerRange Versions { get; }
 
         public ModReference(string id, VerRange range)
