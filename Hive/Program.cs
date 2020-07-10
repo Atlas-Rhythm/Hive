@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Hive.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -18,7 +20,30 @@ namespace Hive
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            var host = CreateHostBuilder(args).Build();
+
+            using (var scope = host.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                var log = services.GetRequiredService<Serilog.ILogger>();
+                try
+                {
+                    log.Debug("Configuring database");
+
+                    var context = services.GetRequiredService<ModsContext>();
+                    context.Database.EnsureCreated();
+
+                    log.Debug("Database prepared");
+                }
+                catch (Exception e)
+                {
+                    log.Fatal(e, "An error ocurred while setting up the database");
+                    Environment.Exit(1);
+                    return;
+                }
+            }
+                
+            host.Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
