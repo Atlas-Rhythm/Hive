@@ -14,7 +14,7 @@ namespace Hive.Models
         // like Mod's
         public JsonElement AdditionalData { get; set; }
 
-        public List<Mod> SupportedMods { get; set; } = new List<Mod>();
+        public IList<Mod> SupportedMods { get; set; } = new List<Mod>();
 
         #region DB Schema stuff
         // this would be the primary key for this row

@@ -11,7 +11,7 @@ namespace Hive.Converters
     {
         public static PropertyBuilder<User> IsVaulthUser(this PropertyBuilder<User> b)
             => b.HasConversion(new VaulthUserConverter());
-        public static PropertyBuilder<List<User>> IsVaulthUsers(this PropertyBuilder<List<User>> b)
+        public static PropertyBuilder<IList<User>> IsVaulthUsers(this PropertyBuilder<IList<User>> b)
             => b.HasConversion(new VaulthUsersConverter());
     }
 }

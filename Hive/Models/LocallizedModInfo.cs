@@ -21,7 +21,19 @@ namespace Hive.Models
 
         public string? Credits { get; set; }
 
-        public Mod OwningMod { get; set; } = null!;
+
+        private Mod? owningMod = null;
+        public Mod OwningMod
+        {
+            get => owningMod ?? throw new InvalidOperationException();
+            set
+            {
+                owningMod?.Localizations.Remove(this);
+                owningMod = value;
+                if (!owningMod.Localizations.Contains(this))
+                    owningMod.Localizations.Add(this);
+            }
+        }
 
 #if false
         #region DB Schema stuff

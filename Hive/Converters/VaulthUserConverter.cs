@@ -14,7 +14,7 @@ namespace Hive.Converters
         {
         }
     }
-    public class VaulthUsersConverter : ValueConverter<List<User>, string[]>
+    public class VaulthUsersConverter : ValueConverter<IList<User>, string[]>
     {
         public VaulthUsersConverter() : base(u => u.Select(u => u.DumbId).ToArray(), s => s.Select(s => new User { DumbId = s }).ToList(), null)
         {

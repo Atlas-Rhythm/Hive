@@ -20,7 +20,7 @@ namespace Hive.Models
         public string ID { get; set; } = null!;
 
         // one to many
-        public List<LocalizedModInfo> Localizations { get; set; } = new List<LocalizedModInfo>();
+        public IList<LocalizedModInfo> Localizations { get; set; } = new List<LocalizedModInfo>();
 
         // this would ideally be a SemVer version object from somewhere
         public Version Version { get; set; } = null!;
@@ -33,19 +33,19 @@ namespace Hive.Models
         public User Uploader { get; set; } = null!;
 
         // many to many
-        public List<User> Authors { get; set; } = new List<User>();
+        public IList<User> Authors { get; set; } = new List<User>();
 
         // many to many
-        public List<User> Contributors { get; set; } = new List<User>();
+        public IList<User> Contributors { get; set; } = new List<User>();
 
         // many to many (this needs to use a join type, and needs modification to be put into EF)
-        public List<GameVersion> SupportedVersions { get; set; } = new List<GameVersion>();
+        public IList<GameVersion> SupportedVersions { get; set; } = new List<GameVersion>();
 
         [Column(TypeName = "jsonb")]
-        public List<ModReference> Dependencies { get; set; } = new List<ModReference>();
+        public IList<ModReference> Dependencies { get; set; } = new List<ModReference>();
 
         [Column(TypeName = "jsonb")]
-        public List<ModReference> Conflicts { get; set; } = new List<ModReference>();
+        public IList<ModReference> Conflicts { get; set; } = new List<ModReference>();
 
         // many to one
         public Channel Channel { get; set; } = null!;
@@ -54,7 +54,7 @@ namespace Hive.Models
         public JsonElement AdditionalData { get; set; }
 
         [Column(TypeName = "jsonb")] // use jsonb here because that will let the db handle it sanely
-        public List<(string Name, Uri Url)> Links { get; set; } = new List<(string, Uri)>();
+        public IList<(string Name, Uri Url)> Links { get; set; } = new List<(string, Uri)>();
 
         public Uri DownloadLink { get; set; } = null!;
 
