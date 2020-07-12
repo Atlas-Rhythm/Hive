@@ -41,6 +41,7 @@ namespace Hive.Controllers
 
             var mod = context.Mods
                 .Include(m => m.Localizations)
+                .Include(m => m.SupportedVersions)
                 .AsEnumerable()
                 .Where(m => m.Localizations.Any(l => l.Language.Name == "en-US"))
                 .Select(m => new { Mod = m, Info = m.Localizations.First(l => l.Language.Name == "en-US") })

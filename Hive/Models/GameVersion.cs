@@ -14,7 +14,7 @@ namespace Hive.Models
         // like Mod's
         public JsonElement AdditionalData { get; set; }
 
-        public IList<Mod> SupportedMods { get; set; } = new List<Mod>();
+        public virtual ICollection<Mod> SupportedMods { get; set; } = new List<Mod>();
 
         #region DB Schema stuff
         // this would be the primary key for this row
@@ -31,9 +31,13 @@ namespace Hive.Models
         }
     }
 
+    // FIXME: waiting on EF Core 5 preview 7 for full many-to-many support
     internal class GameVersion_Mod_Joiner
     {
-        public Mod Mod { get; } = null!;
-        public GameVersion Version { get; } = null!;
+        [Key]
+        public Mod Mod { get; set; } = null!;
+
+        [Key]
+        public GameVersion Version { get; set; } = null!;
     }
 }

@@ -39,7 +39,7 @@ namespace Hive.Models
         public IList<User> Contributors { get; set; } = new List<User>();
 
         // many to many (this needs to use a join type, and needs modification to be put into EF)
-        public IList<GameVersion> SupportedVersions { get; set; } = new List<GameVersion>();
+        public virtual ICollection<GameVersion> SupportedVersions { get; set; } = new List<GameVersion>();
 
         [Column(TypeName = "jsonb")]
         public IList<ModReference> Dependencies { get; set; } = new List<ModReference>();
@@ -63,6 +63,20 @@ namespace Hive.Models
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Guid { get; set; }
         #endregion
+
+        public void AddGameVersion(GameVersion ver)
+        {
+            if (!SupportedVersions.Contains(ver))
+                SupportedVersions.Add(ver);
+            if (!ver.SupportedMods.Contains(this))
+                ver.SupportedMods.Add(this);
+        }
+
+        public void RemoveGameVersion(GameVersion ver)
+        {
+            SupportedVersions.Remove(ver);
+            ver.SupportedMods.Remove(this);
+        }
 
         public static void Configure(ModelBuilder b)
         {

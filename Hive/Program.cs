@@ -85,6 +85,9 @@ namespace Hive
                 var channel = new Channel { Name = "default", AdditionalData = emptyObject };
                 context.Channels.Add(channel);
 
+                var gameVersion = new GameVersion { Name = "1.0.0", AdditionalData = emptyObject };
+                context.GameVersions.Add(gameVersion);
+
                 var mod = new Mod
                 {
                     ID = "test-mod",
@@ -106,6 +109,7 @@ namespace Hive
                 var mr = new ModReference("dep-id", new SemVer.Range("^1.0.0"));
 
                 mod.Dependencies.Add(mr);
+                mod.AddGameVersion(gameVersion);
 
                 context.ModLocalizations.Add(loc);
                 context.Mods.Add(mod);
