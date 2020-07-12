@@ -82,7 +82,7 @@ namespace Hive
             {
                 var emptyObject = JsonDocument.Parse("{}").RootElement.Clone();
 
-                var channel = new Channel { Name = "default", IsPublic = true, AdditionalData = emptyObject };
+                var channel = new Channel { Name = "default", AdditionalData = emptyObject };
                 context.Channels.Add(channel);
 
                 var mod = new Mod

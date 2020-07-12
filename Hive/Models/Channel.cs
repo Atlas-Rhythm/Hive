@@ -14,8 +14,6 @@ namespace Hive.Models
         // like Mod's
         public JsonElement AdditionalData { get; set; }
 
-        public bool IsPublic { get; set; } = true;
-
         // TODO: is there anything else that needs to be on any particular channel object?
 
         public static void Configure(ModelBuilder b)
