@@ -38,7 +38,7 @@ namespace Hive
 
                     log.Debug("Database prepared");
 
-                    DemoData(log, context);
+                    DemoData(log, context, services);
                 }
                 catch (Exception e)
                 {
@@ -72,7 +72,7 @@ namespace Hive
             .Destructure.AsScalar<SemVer.Range>();
 
         [Conditional("DEBUG")]
-        private static void DemoData(Serilog.ILogger log, ModsContext context)
+        private static void DemoData(Serilog.ILogger log, ModsContext context, IServiceProvider services)
         {
             if (context.Mods.Any()) return;
 
@@ -84,7 +84,6 @@ namespace Hive
 
                 var channel = new Channel { Name = "default", IsPublic = true, AdditionalData = emptyObject };
                 context.Channels.Add(channel);
-                context.SaveChanges();
 
                 var mod = new Mod
                 {
@@ -104,7 +103,9 @@ namespace Hive
                     OwningMod = mod
                 };
 
-                mod.Dependencies.Add(new ModReference("dep-id", new SemVer.Range("^1.0.0")));
+                var mr = new ModReference("dep-id", new SemVer.Range("^1.0.0"));
+
+                mod.Dependencies.Add(mr);
 
                 context.ModLocalizations.Add(loc);
                 context.Mods.Add(mod);

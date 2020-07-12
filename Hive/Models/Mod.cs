@@ -100,17 +100,18 @@ namespace Hive.Models
         }
     }
 
-    public struct ModReference
+    public readonly struct ModReference
     {
         public string ModID { get; }
 
-        [JsonConverter(typeof(JsonVersionRangeConverter))]
+        [JsonConverter(typeof(VersionRangeJsonConverter))]
         public VerRange Versions { get; }
 
-        public ModReference(string id, VerRange range)
+        [JsonConstructor]
+        public ModReference(string modID, VerRange versions)
         {
-            ModID = id;
-            Versions = range;
+            ModID = modID;
+            Versions = versions;
         }
     }
 }

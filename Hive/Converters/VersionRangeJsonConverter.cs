@@ -10,7 +10,7 @@ using VerRange = SemVer.Range;
 
 namespace Hive.Converters
 {
-    public class JsonVersionRangeConverter : JsonConverter<VerRange>
+    public class VersionRangeJsonConverter : JsonConverter<VerRange>
     {
         [return: MaybeNull]
         public override VerRange? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
