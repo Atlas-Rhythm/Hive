@@ -6,7 +6,12 @@
     <Tests>true</Tests>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+  
   <Import Project="..\Hive.props" />
+  
+  <ItemGroup>
+    <PackageReference Include="NodaTime.Testing" Version="3.0.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Hive.Permissions\Hive.Permissions.csproj" />

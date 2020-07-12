@@ -5,6 +5,7 @@ using MathExpr.Compiler.Compilation;
 using MathExpr.Syntax;
 using MathExpr.Utilities;
 using Moq;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,15 +35,15 @@ namespace Hive.Permissions.Tests
 
             public OutputWrapper(ITestOutputHelper outp) => output = outp;
 
-            public void Info(string message, object[] messageInfo, StringView action, Rule? currentRule, object manager)
-                => Write("Info", message, messageInfo, action, currentRule);
+            public void Info(string message, object[] messageInfo, string api, StringView action, Rule? currentRule, object manager)
+                => Write("Info", message, messageInfo, api, action, currentRule);
 
-            public void Warn(string message, object[] messageInfo, StringView action, Rule? currentRule, object manager)
-                => Write("Warn", message, messageInfo, action, currentRule);
+            public void Warn(string message, object[] messageInfo, string api, StringView action, Rule? currentRule, object manager)
+                => Write("Warn", message, messageInfo, api, action, currentRule);
 
-            private void Write(string ident, string message, object[] messageInfo, StringView action, Rule? currentRule)
+            private void Write(string ident, string message, object[] messageInfo, string api, StringView action, Rule? currentRule)
             {
-                output.WriteLine($"[action: {action}]{(currentRule != null ? $"[rule: {currentRule.Name}]" : "")} {ident}: {message} {{ {string.Join(", ", messageInfo)} }}");
+                output.WriteLine($"[{api}][action: {action}]{(currentRule != null ? $"[rule: {currentRule.Name}]" : "")} {ident}: {message} {{ {string.Join(", ", messageInfo)} }}");
             }
         }
 
@@ -117,7 +118,7 @@ namespace Hive.Permissions.Tests
             // We should not be able to successfully compile this at all, so it should default to return false
             Assert.False(manager.CanDo("hive.mod", new Context { HiveMod = true }, ref modState));
 
-            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), hiveModRuleInvalid.Name, hiveModRuleInvalid, manager), Times.Once);
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), "CanDo", hiveModRuleInvalid.Name, hiveModRuleInvalid, manager), Times.Once);
         }
 
         [Fact]
@@ -140,7 +141,7 @@ namespace Hive.Permissions.Tests
             // We should not be able to successfully compile this at all, so it should default to return false
             Assert.False(manager.CanDo("hive.mod", new Context { HiveMod = true }, ref modState));
 
-            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is SyntaxException), hiveModRuleInvalid.Name, hiveModRuleInvalid, manager), Times.Once);
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is SyntaxException), "CanDo", hiveModRuleInvalid.Name, hiveModRuleInvalid, manager), Times.Once);
         }
 
         [Fact]
@@ -206,7 +207,7 @@ namespace Hive.Permissions.Tests
             mock.Setup(rules => rules.TryGetRule(newHiveRule.Name, out newHiveRule)).Returns(true);
 
             // always returning true is the correct behaviour, because hiveModRule is the old rule and is known to have changed
-            mock.Setup(rules => rules.HasRuleChangedSince(hiveModRule, It.IsAny<DateTime>())).Returns(true);
+            mock.Setup(rules => rules.HasRuleChangedSince(hiveModRule, It.IsAny<Instant>())).Returns(true);
 
             // Shouldn't need to create a new permission manager
 
@@ -233,10 +234,10 @@ namespace Hive.Permissions.Tests
 
             PermissionActionParseState state;
             Assert.False(permManager.CanDo("hive.mod", new Context { ArbitraryString = "ctx.Hive" }, ref state));
-            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), hiveModRule.Name, hiveModRule, permManager), Times.Once);
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), "CanDo", hiveModRule.Name, hiveModRule, permManager), Times.Once);
             Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true, ArbitraryString = "ctx.Hive" }, ref state));
             Assert.False(permManager.CanDo("hive.mod", new Context { HiveMod = true, ArbitraryString = "ctx.HiveMod" }, ref state));
-            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), hiveModRule.Name, hiveModRule, permManager), Times.Exactly(2));
+            mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), "CanDo", hiveModRule.Name, hiveModRule, permManager), Times.Exactly(2));
         }
 
         [Fact]
@@ -252,8 +253,8 @@ namespace Hive.Permissions.Tests
             var permManager = new PermissionsManager<Context>(mock.Object, logger, ".");
 
             PermissionActionParseState state;
-            // This will throw an NRE, because Context.NonTrivialObject is null
-            Assert.Throws<NullReferenceException>(() => permManager.CanDo("hive.mod", new Context(), ref state));
+            // This will throw a PermissionException containing an NRE, because Context.NonTrivialObject is null
+            Assert.Throws<PermissionException>(() => permManager.CanDo("hive.mod", new Context(), ref state));
             Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true }, ref state));
             Assert.True(permManager.CanDo("hive.mod", new Context { NonTrivialObject = new Context.Inner { DoesThing = true } }, ref state));
             Assert.False(permManager.CanDo("hive.mod", new Context { NonTrivialObject = new Context.Inner { DoesThing = false } }, ref state));
@@ -298,9 +299,12 @@ namespace Hive.Permissions.Tests
         private Mock<T> MockRuleProvider<T>() where T : class, IRuleProvider
         {
             var mock = new Mock<T>();
-            mock.Setup(rules => rules.CurrentTime).Returns(() => DateTime.Now);
-            mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.IsAny<DateTime>())).Returns(false);
-            mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<Rule>(), It.IsAny<DateTime>())).Returns(false);
+
+            var start = SystemClock.Instance.GetCurrentInstant();
+            mock.Setup(rules => rules.CurrentTime).Returns(() => SystemClock.Instance.GetCurrentInstant());
+            mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.IsAny<Instant>())).Returns(false);
+            mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.Is<Instant>(i => i < start))).Returns(true);
+            mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<Rule>(), It.IsAny<Instant>())).Returns(false);
             mock.Setup(rules => rules.TryGetRule(It.IsAny<StringView>(), out It.Ref<Rule>.IsAny!)).Returns(false);
             return mock;
         }

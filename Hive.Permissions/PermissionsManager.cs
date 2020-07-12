@@ -7,6 +7,7 @@ using MathExpr.Compiler.Compilation.Passes;
 using MathExpr.Compiler.Compilation.Settings;
 using MathExpr.Compiler.Optimization.Settings;
 using MathExpr.Syntax;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -120,6 +121,7 @@ namespace Hive.Permissions
         /// <param name="action">The action being performed.</param>
         /// <param name="context">The context that it is acting in.</param>
         /// <returns><see langword="true"/> if the action is permitted, <see langword="false"/> otherwise.</returns>
+        /// <exception cref="PermissionException">Thrown when there is an exception when executing a rule.</exception>
         /// <seealso cref="CanDo(StringView, TContext, ref PermissionActionParseState)"/>
         public bool CanDo(StringView action, TContext context)
         {
@@ -134,154 +136,255 @@ namespace Hive.Permissions
         /// <param name="context">The context that it is acting in.</param>
         /// <param name="actionParseState">The cache for the action parse state.</param>
         /// <returns><see langword="true"/> if the action is permitted, <see langword="false"/> otherwise.</returns>
+        /// <exception cref="PermissionException">Thrown when there is an exception when executing a rule.</exception>
         public bool CanDo(StringView action, TContext context, ref PermissionActionParseState actionParseState)
         {
-            using var _ = logger.WithAction(action);
+            using (logger.InApi(nameof(CanDo)))
+            using (logger.WithAction(action))
+            {
+                var order = ParseAction(action, ref actionParseState);
 
-            var order = ParseAction(action, ref actionParseState);
-
-            ContinueDelegate GetContinueStartingAt(int idx)
-                => defaultValue =>
-                {
-                    for (int i = idx; i < order.Length; i++)
+                ContinueDelegate GetContinueStartingAt(int idx)
+                    => defaultValue =>
                     {
-                        using (logger.WithRule(order[i].Rule))
+                        for (int i = idx; i < order.Length; i++)
                         {
-                            if (TryPrepare(ref order[i], out var impl))
+                            using (logger.WithRule(order[i].Rule))
                             {
-                                return impl(context, GetContinueStartingAt(i + 1));
+                                if (TryPrepare(ref order[i], out var impl))
+                                { // TODO: measure perf impact of the additional delegate here
+                                    return logger.Wrap(() => impl(context, GetContinueStartingAt(i + 1)));
+                                }
                             }
                         }
-                    }
-                    return defaultValue;
-                };
+                        return defaultValue;
+                    };
 
-            return GetContinueStartingAt(0)(false);
+                return GetContinueStartingAt(0)(false);
+            }
         }
+
+        /// <summary>
+        /// Attempts to pre-compile the rules for a given action.
+        /// </summary>
+        /// <remarks>
+        /// If this method returns normally, there are no issues with the rules.
+        /// </remarks>
+        /// <param name="action">The action to compile the rules for.</param>
+        /// <exception cref="PermissionException">Thrown if there was an error while compiling one of the rules for <paramref name="action"/>.</exception>
+        /// <exception cref="AggregateException">Thrown if there were errors while compiling multiple rules for <paramref name="action"/>. 
+        /// <see cref="AggregateException.InnerExceptions"/> will all be <see cref="PermissionException"/>s.</exception>
+        public void PreCompile(StringView action)
+        {
+            using (logger.InApi(nameof(PreCompile)))
+            using (logger.WithAction(action))
+            {
+                PermissionActionParseState state = default;
+                var order = ParseAction(action, ref state);
+
+                var exceptions = new List<PermissionException>(order.Length);
+                for (int i = 0; i < order.Length; i++)
+                {
+                    try
+                    {
+                        // when it throws, its already the public exception api type
+                        _ = logger.Wrap(() => TryPrepare(ref order[i], out _, throwOnError: true));
+                    }
+                    catch (PermissionException e)
+                    {
+                        exceptions.Add(e);
+                    }
+                }
+
+                if (exceptions.Count > 0)
+                    throw new AggregateException(exceptions);
+            }
+        }
+
+        /// <summary>
+        /// Attempts to pre-compile a rule.
+        /// </summary>
+        /// <remarks>
+        /// If this method returns normally, there are no issues with the rule.
+        /// </remarks>
+        /// <param name="rule">The rule to pre-compile.</param>
+        /// <exception cref="PermissionException">Thrown if there was an error while compiling <paramref name="rule"/>.</exception>
+        public void PreCompile(Rule rule)
+        {
+            using (logger.InApi(nameof(PreCompile)))
+            using (logger.WithRule(rule))
+            {
+                // when it throws, its already the public exception api type
+                _ = logger.Wrap(() => TryCompileRule(rule, out _, out _, throwOnError: true));
+            }
+        }
+
+        private const string ErrInvalidParseContextType = nameof(PermissionActionParseState) + " used when parsing action was previously used with a different context type!";
+        private const string ErrIncompatableCompiledRule = "Existing compiled rule incompatable with current permission manager";
+        private const string ErrCompilationFailed = "Rule compilation failed";
 
         private PermissionActionParseState.SearchEntry[] ParseAction(StringView action, ref PermissionActionParseState actionParseState)
         {
-            using var _ = logger.WithAction(action);
-
-            if (actionParseState.ContextType != null && actionParseState.ContextType != typeof(TContext))
+            using (logger.WithAction(action))
             {
-                logger.Warn($"{nameof(PermissionActionParseState)} used when parsing action was previously used with a different context type!",
-                    typeof(TContext), actionParseState.ContextType);
-                // the existing compiled rules are invalid, so we will clear the parse state and retry it all
-                actionParseState.Reset();
-            }
-
-            if (actionParseState.SearchOrder == null)
-            { // build up our search order
-                var parts = action.Split(splitToken, ignoreEmpty: false).ToArray();
-                var combos = new PermissionActionParseState.SearchEntry[parts.Length];
-                for (int i = 0; i < parts.Length; i++)
+                if (actionParseState.ContextType != null && actionParseState.ContextType != typeof(TContext))
                 {
-                    combos[i].Name = StringView.Concat(parts.Take(i + 1).InterleaveWith(Helpers.Repeat(splitToken, i)));
-                    ruleProvider.TryGetRule(combos[i].Name, out combos[i].Rule);
+                    logger.Warn(ErrInvalidParseContextType, typeof(TContext), actionParseState.ContextType);
+                    // the existing compiled rules are invalid, so we will clear the parse state and retry it all
+                    actionParseState.Reset();
                 }
-                actionParseState.SearchOrder = combos;
-                actionParseState.ContextType = typeof(TContext);
-            }
 
-            return actionParseState.SearchOrder;
+                if (actionParseState.SearchOrder == null)
+                { // build up our search order
+                    var parts = action.Split(splitToken, ignoreEmpty: false).ToArray();
+                    var combos = new PermissionActionParseState.SearchEntry[parts.Length];
+                    for (int i = 0; i < parts.Length; i++)
+                    {
+                        combos[i] = new PermissionActionParseState.SearchEntry(
+                            StringView.Concat(parts.Take(i + 1).InterleaveWith(Helpers.Repeat(splitToken, i))));
+                    }
+                    actionParseState.SearchOrder = combos;
+                    actionParseState.ContextType = typeof(TContext);
+                }
+
+                return actionParseState.SearchOrder;
+            }
         }
 
-        private bool TryPrepare(ref PermissionActionParseState.SearchEntry entry, [MaybeNullWhen(false)] out RuleImplDelegate del)
+        private bool TryPrepare(ref PermissionActionParseState.SearchEntry entry, [MaybeNullWhen(false)] out RuleImplDelegate del, bool throwOnError = false)
         {
-            // TODO: do the rules for when we check entry.CheckedAt vs rule.CompiledAt make sense?
-            if (entry.Rule != null)
+            using (logger.WithRule(entry.Rule))
             {
-                using (logger.WithRule(entry.Rule))
-                {
-                    if (entry.Rule.Compiled != null)
+                if (entry.Rule?.Compiled != null)
+                { // rule exists and has been compiled before
+                    if (!ruleProvider.HasRuleChangedSince(entry.Rule, entry.Rule.CompiledAt))
                     {
-                        if (!ruleProvider.HasRuleChangedSince(entry.Rule, entry.Rule.CompiledAt))
+                        if (entry.Rule.Compiled is RuleImplDelegate implDel)
                         {
-                            del = (RuleImplDelegate)entry.Rule.Compiled;
+                            del = implDel;
                             return true;
                         }
                         else
-                        { // we should re-grab the rule object
-                            if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
-                            {
-                                return TryCompileRule(entry.Rule, out entry.Rule.Compiled, out del, out entry.CheckedAt);
-                            }
-                            else
-                            { // the rule no longer exists, so we clear out
-                                entry.Rule = null;
-                                del = null;
-                                entry.CheckedAt = default;
-                                return false;
-                            }
+                        {
+                            logger.Warn(ErrIncompatableCompiledRule, entry.Rule.Compiled, typeof(TContext));
+                            entry.Rule.Compiled = null;
+                            entry.Rule.CompiledAt = Instant.MinValue;
+                            return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
                         }
                     }
-
-                    return TryCompileRule(entry.Rule, out entry.Rule.Compiled, out del, out entry.CheckedAt);
+                    else
+                    { // we should re-grab the rule object
+                        if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
+                        {
+                            logger.ReplaceRule(entry.Rule);
+                            return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
+                        }
+                        else
+                        { // the rule no longer exists, so we clear out 
+                            logger.ReplaceRule(null);
+                            entry.Rule = null;
+                            del = null;
+                            entry.CheckedAt = ruleProvider.CurrentTime;
+                            return false;
+                        }
+                    }
                 }
-            }
-            else if (ruleProvider.HasRuleChangedSince(entry.Name, entry.CheckedAt))
-            { // the rule was added
-                if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
+                else if (ruleProvider.HasRuleChangedSince(entry.Name, entry.CheckedAt))
                 {
-                    return TryCompileRule(entry.Rule, out entry.Rule.Compiled, out del, out entry.CheckedAt);
+                    if (ruleProvider.TryGetRule(entry.Name, out entry.Rule))
+                    {
+                        logger.ReplaceRule(entry.Rule);
+                        return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
+                    }
+                    else
+                    { // the rule changed, and so its removed (this is only triggered when a given rule wasn't compiled)
+                        logger.ReplaceRule(null);
+                        entry.Rule = null;
+                        del = null;
+                        entry.CheckedAt = ruleProvider.CurrentTime;
+                        return false;
+                    }
                 }
-            }
+                else if (entry.Rule != null && entry.Rule.Compiled == null)
+                { // never compiled, unchanged, but exists
+                    // I don't think this path will ever be taken in normal execution
+                    return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
+                }
 
-            del = null;
-            entry.CheckedAt = default;
-            return false;
+                del = null;
+                entry.CheckedAt = ruleProvider.CurrentTime;
+                return false;
+            }
         }
 
         internal delegate bool ContinueDelegate(bool defaultValue);
 
         internal delegate bool RuleImplDelegate(TContext context, ContinueDelegate next);
 
-        private bool TryCompileRule(Rule rule, [MaybeNullWhen(false)] out Delegate storage, [MaybeNullWhen(false)] out RuleImplDelegate impl, out DateTime compiledAt, bool throwOnError = false)
+        private bool TryCompileRule(Rule rule, [MaybeNullWhen(false)] out RuleImplDelegate impl, out Instant compiledAt, bool throwOnError)
         {
-            using var _ = logger.WithRule(rule);
-            try
+            using (logger.WithRule(rule))
             {
-                storage = impl = CompileRule(rule, out compiledAt);
-                return true;
-            }
-            catch (Exception e)
-            {
-                if (throwOnError)
-                    throw;
+                if (rule.Compiled != null)
+                {
+                    if (rule.Compiled is RuleImplDelegate implDel)
+                    {
+                        impl = implDel;
+                        compiledAt = rule.CompiledAt;
+                        return true;
+                    }
+                    else
+                    {
+                        logger.Warn(ErrIncompatableCompiledRule, rule.Compiled, typeof(TContext));
+                        rule.Compiled = null;
+                        rule.CompiledAt = Instant.MinValue;
+                    }
+                }
 
-                logger.Warn("Rule compilation failed", e);
+                try
+                {
+                    rule.Compiled = impl = CompileRule(rule, out compiledAt);
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    if (throwOnError)
+                        throw logger.Exception(e);
 
-                storage = impl = null;
-                compiledAt = default;
-                return false;
+                    logger.Warn(ErrCompilationFailed, e);
+
+                    impl = null;
+                    compiledAt = ruleProvider.CurrentTime; // TODO: should this be current time, or pull from what the rule says?
+                    return false;
+                }
             }
         }
 
-        private RuleImplDelegate CompileRule(Rule rule, out DateTime time)
+        private RuleImplDelegate CompileRule(Rule rule, out Instant time)
         {
-            using var _ = logger.WithRule(rule);
+            using (logger.WithRule(rule))
+            {
+                time = ruleProvider.CurrentTime;
+                rule.CompiledAt = time;
 
-            time = ruleProvider.CurrentTime;
-            rule.CompiledAt = time;
+                var compilerSettings = new RuleCompilationSettings(logger);
+                var nextFunc = new NextFunction("<>next");
+                compilerSettings.AddBuiltin(nextFunc);
 
-            var compilerSettings = new RuleCompilationSettings(logger);
-            var nextFunc = new NextFunction("<>next");
-            compilerSettings.AddBuiltin(nextFunc);
+                foreach (var (name, del) in builtinFunctions)
+                    compilerSettings.AddBuiltin(new UserBuiltinFunction(name, del));
 
-            foreach (var (name, del) in builtinFunctions)
-                compilerSettings.AddBuiltin(new UserBuiltinFunction(name, del));
+                var compiler = LinqExpressionCompiler.Create(
+                    new DefaultOptimizationSettings(),
+                    compilerSettings
+                );
 
-            var compiler = LinqExpressionCompiler.Create(
-                new DefaultOptimizationSettings(),
-                compilerSettings
-            );
+                var expr = MathExpression.Parse(rule.Definition);
+                if (ruleProvider is IPreCompileRuleProvider precomp)
+                    expr = precomp.PreCompileTransform(expr);
 
-            var expr = MathExpression.Parse(rule.Definition);
-            if (ruleProvider is IPreCompileRuleProvider precomp)
-                expr = precomp.PreCompileTransform(expr);
-
-            return compiler.Compile<RuleImplDelegate>(expr, optimize: true, "ctx", nextFunc.DelegateArgumentName);
+                return compiler.Compile<RuleImplDelegate>(expr, optimize: true, "ctx", nextFunc.DelegateArgumentName);
+            }
         }
     }
 }

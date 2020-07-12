@@ -1,4 +1,5 @@
 ﻿using Hive.Utilities;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -15,7 +16,14 @@ namespace Hive.Permissions
         {
             public StringView Name;
             public Rule? Rule;
-            public DateTime CheckedAt;
+            public Instant CheckedAt;
+
+            public SearchEntry(StringView name)
+            {
+                Name = name;
+                Rule = null;
+                CheckedAt = Instant.MinValue;
+            }
         }
 
         internal Type? ContextType;
