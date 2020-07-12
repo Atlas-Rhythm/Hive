@@ -310,6 +310,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ModIdentifier'
+        gameVersions:
+          type: array
+          items:
+            type: string
       required:
         - id
         - version
@@ -323,6 +327,7 @@ components:
         - localizedData
         - dependencies
         - conflicts
+        - gameVersions
     LocalizedModData:
       type: object
       title: LocalizedModData
