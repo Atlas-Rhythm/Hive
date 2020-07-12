@@ -38,15 +38,15 @@ spelled with only one character, so it looks like `=` instead of `==`.
 <a name="next_bool_" />
 
 When executing a rule, the first rule will be executed, and additional rules will only be executed if that rule
-contains a call to `next(bool)`. `next(bool)` is a builtin function that is always avaliable that calls the next
+contains a call to `next(bool)`. `next(bool)` is a builtin function that is always available that calls the next
 rule in the execution chain, and returns its result, or if there is no next rule, its parameter. Its parameter
 can be any arbitrary expression, or, specially, the identifiers `true` or `false` if there does not need to be
 an expression evaluated for the default value.
 
 With the example of `hive.mod.edit`, if the rule `hive` was defined as `ctx.User.IsSuperAdmin | next(false)`,
-when `ctx.User.IsSuperAdmin` is falsey, `hive.mod` would be evaluated if it existed. If it did not, `hive.mod.edit`
-would be evaluated. If that also did not, since that is the last rule in the chain, `next(bool)` would return
-`false`, since that is its parameter.
+when `ctx.User.IsSuperAdmin` is falsey, `hive.mod` would be evaluated if it existed. If it did not exist,
+`hive.mod.edit` would be evaluated. If that also did not, since that is the last rule in the chain, `next(bool)`
+would return `false`, since that is its parameter.
 
 ### <a name="writing_functions" /> Functions
 
@@ -90,4 +90,4 @@ permissionsManager.CanDo("action.name.here", context, ref actionParseState)
 This caches the parsed action and rule information in `actionParseState`, which is stored inline wherever it
 is declared. Each parse state **must** correspond to one and only one action, otherwise the wrong action will
 be queried, as the manager does not verify that the cache actually matches the action string. Typically, however,
-this should not be an issue, as actions should be string literals, and not dynamically generated regardless.
+this should not be an issue, as actions should be string literals, and not dynamically generated.
