@@ -23,6 +23,8 @@ namespace Hive.Models
 
 
         private Mod? owningMod = null;
+
+        [BackingField(nameof(owningMod))]
         public Mod OwningMod
         {
             get => owningMod ?? throw new InvalidOperationException();
