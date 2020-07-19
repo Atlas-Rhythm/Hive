@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -13,6 +14,8 @@ namespace Hive.Models
 
         // like Mod's
         public JsonElement AdditionalData { get; set; }
+
+        public Instant CreationTime { get; set; }
 
         public virtual ICollection<Mod> SupportedMods { get; set; } = new List<Mod>();
 

@@ -85,7 +85,7 @@ namespace Hive
                 var channel = new Channel { Name = "default", AdditionalData = emptyObject };
                 context.Channels.Add(channel);
 
-                var gameVersion = new GameVersion { Name = "1.0.0", AdditionalData = emptyObject };
+                var gameVersion = new GameVersion { Name = "1.0.0", AdditionalData = emptyObject, CreationTime = SystemClock.Instance.GetCurrentInstant() };
                 context.GameVersions.Add(gameVersion);
 
                 var mod = new Mod
