@@ -19,7 +19,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities", "Hive.Util
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities.Tests", "Hive.Utilities.Tests\Hive.Utilities.Tests.csproj", "{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Hive.Dependencies", "Hive.Dependencies\Hive.Dependencies.fsproj", "{14DA7AF2-7B06-4E06-864E-0284269D9655}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Hive.Dependencies", "Hive.Dependencies\Hive.Dependencies.fsproj", "{14DA7AF2-7B06-4E06-864E-0284269D9655}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Dependencies.Tests", "Hive.Dependencies.Tests\Hive.Dependencies.Tests.csproj", "{9086B6A4-8162-4CEC-B05A-D3222542EC4A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{14DA7AF2-7B06-4E06-864E-0284269D9655}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14DA7AF2-7B06-4E06-864E-0284269D9655}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14DA7AF2-7B06-4E06-864E-0284269D9655}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9086B6A4-8162-4CEC-B05A-D3222542EC4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9086B6A4-8162-4CEC-B05A-D3222542EC4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9086B6A4-8162-4CEC-B05A-D3222542EC4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9086B6A4-8162-4CEC-B05A-D3222542EC4A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

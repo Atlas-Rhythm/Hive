@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+
+    <Tests>true</Tests>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <Import Project="..\Hive.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hive.Dependencies\Hive.Dependencies.fsproj" />
+  </ItemGroup>
+
+</Project>
