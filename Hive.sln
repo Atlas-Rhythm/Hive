@@ -15,9 +15,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		nuget.config = nuget.config
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Utilities", "Hive.Utilities\Hive.Utilities.csproj", "{3C265E15-AFDF-47B1-9893-7957F9A43818}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities", "Hive.Utilities\Hive.Utilities.csproj", "{3C265E15-AFDF-47B1-9893-7957F9A43818}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Utilities.Tests", "Hive.Utilities.Tests\Hive.Utilities.Tests.csproj", "{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities.Tests", "Hive.Utilities.Tests\Hive.Utilities.Tests.csproj", "{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Hive.Dependencies", "Hive.Dependencies\Hive.Dependencies.fsproj", "{14DA7AF2-7B06-4E06-864E-0284269D9655}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14DA7AF2-7B06-4E06-864E-0284269D9655}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14DA7AF2-7B06-4E06-864E-0284269D9655}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14DA7AF2-7B06-4E06-864E-0284269D9655}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14DA7AF2-7B06-4E06-864E-0284269D9655}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
