@@ -26,7 +26,7 @@ type private ResolveImpl<'Mod, 'ModRef, 'Version, 'VerRange>(access: IValueAcces
         let access = access
         let deps = this.collectDeps mods
         let conflicts = this.collectConflicts mods
-        Helpers.mapMerge (fun a b -> Helpers.unwrapMap2 access.And a (ValueOption.map access.Not b)) deps conflicts
+        Helpers.mapMerge (fun dep conflict -> Helpers.unwrapMap2 access.And dep (ValueOption.map access.Not conflict)) deps conflicts
         |> Helpers.mapKeyValues
         |> Seq.map (fun struct(id, range) ->
             match range with

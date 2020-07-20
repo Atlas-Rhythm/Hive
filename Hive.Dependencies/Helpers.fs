@@ -15,12 +15,13 @@ module internal Helpers =
     let mapKeyValues (m: Map<'a, 'b>) =
         m |> Seq.map (fun k -> struct(k.Key, k.Value))
 
+    /// Merges 2 maps using the specified value merger, starting with a base of the first argument.
     let mapMerge valueMerge a b =
-        a
-        |> Map.fold (fun s k v ->
+        b
+        |> Map.fold (fun s k v2 ->
             match Map.tryFind k s with
-            | Some(v2) -> Map.add k (valueMerge v v2) s
-            | None -> Map.add k v s) b
+            | Some(v) -> Map.add k (valueMerge v v2) s
+            | None -> Map.add k v2 s) a
 
     /// Transforms a sequence of Async's to an Async of a sequence
     let asyncSeq seq =
