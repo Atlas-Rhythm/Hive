@@ -7,7 +7,7 @@ open System
 type private ResolveImpl<'Mod, 'ModRef, 'Version, 'VerRange>(access: IValueAccessor<'Mod, 'ModRef, 'Version, 'VerRange>) =
     
     /// Collects the references from the specified member using the specified joiner.
-    member inline private _.collectTypeReqs mem join mods =
+    member private _.collectTypeReqs mem join mods =
         let access = access
         mods
         |> Seq.collect mem
@@ -22,6 +22,7 @@ type private ResolveImpl<'Mod, 'ModRef, 'Version, 'VerRange>(access: IValueAcces
     member private this.collectConflicts mods =
         this.collectTypeReqs access.Conflicts (ValueOption.map2 access.Either) mods
 
+    /// Aggregates all of the requirements from the input list of mods into a single sequence of requirements.
     member private this.collectReqs mods =
         let access = access
         let deps = this.collectDeps mods
@@ -33,6 +34,7 @@ type private ResolveImpl<'Mod, 'ModRef, 'Version, 'VerRange>(access: IValueAcces
             | ValueSome(r) -> access.CreateRef id r
             | _ -> raise (DependencyRangeInvalidException id))
 
+    /// The primary recursive function that resolves dependencies.
     static member private resolveLoop (access: IValueAccessor<'Mod, 'ModRef, 'Version, 'VerRange>) collectReqs mods =
         async {
             let allRefs = (mods
@@ -63,7 +65,7 @@ type private ResolveImpl<'Mod, 'ModRef, 'Version, 'VerRange>(access: IValueAcces
                 raise (errors
                         |> Seq.map VersionNotFoundException
                         |> Seq.cast
-                        |> AggregateException)
+                        |> Helpers.singleOr (AggregateException >> (fun e -> e :> exn)) Helpers.identity)
 
             let justMods = moreMods |> Seq.choose (function | Ok v -> Some v | _ -> None) |> Seq.toList
             if List.length justMods > 0 then
@@ -74,6 +76,7 @@ type private ResolveImpl<'Mod, 'ModRef, 'Version, 'VerRange>(access: IValueAcces
                 return justMods |> Seq.append mods
         }
 
+    /// The entry point member that triggers resolution, and evaluates it as a Task.
     member this.resolve mods =
         ResolveImpl.resolveLoop access this.collectReqs mods |> Helpers.asyncStartAsTask
 

@@ -78,3 +78,13 @@ module internal Helpers =
     /// Starts an async as a Task
     let asyncStartAsTask async =
         async |> Async.StartImmediateAsTask
+
+    /// Invokes one of the parameter functions depending on whether the sequence contains only one item or more than one.
+    let singleOr multiInvoke singleInvoke seq =
+        let list = Seq.toList seq
+        match list with
+        | [item] -> singleInvoke item
+        | all -> multiInvoke all
+
+    /// The identity function.
+    let identity a = a
