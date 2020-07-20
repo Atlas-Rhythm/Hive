@@ -7,7 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Exceptions.fs" />
     <Compile Include="IValueAccessor.fs" />
+    <Compile Include="Resolver.fsi" />
   </ItemGroup>
 
 </Project>
