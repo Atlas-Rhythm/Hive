@@ -40,11 +40,13 @@ type private ResolveImpl<'Mod, 'ModRef, 'Version, 'VerRange>(access: IValueAcces
                 |> Seq.filter (fun (r: 'ModRef) -> 
                     Seq.exists (fun (m: 'Mod) -> 
                         (access.ID m) = (access.ID r) && (access.Matches (access.Range r) (access.Version m))
-                    ) mods |> not))
+                    ) mods |> not)
+                |> Seq.toList)
 
             let mods = (mods
                 |> Seq.filter (fun (m: 'Mod) ->
-                    Seq.exists (fun (r: 'ModRef) -> (access.ID r) = (access.ID m)) allRefs |> not))
+                    Seq.exists (fun (r: 'ModRef) -> (access.ID r) = (access.ID m)) allRefs |> not)
+                |> Seq.toList)
 
             let! moreMods = (allRefs
                     |> Seq.map (fun ref -> struct(ref, access.ModsMatching ref |> Async.AwaitTask))
