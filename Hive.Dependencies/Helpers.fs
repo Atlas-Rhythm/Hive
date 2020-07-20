@@ -15,6 +15,13 @@ module internal Helpers =
     let mapKeyValues (m: Map<'a, 'b>) =
         m |> Seq.map (fun k -> struct(k.Key, k.Value))
 
+    let mapMerge valueMerge a b =
+        a
+        |> Map.fold (fun s k v ->
+            match Map.tryFind k s with
+            | Some(v2) -> Map.add k (valueMerge v v2) s
+            | None -> Map.add k v s) b
+
     /// Transforms a sequence of Async's to an Async of a sequence
     let asyncSeq seq =
         async {
@@ -22,7 +29,7 @@ module internal Helpers =
             for item in seq do
                 let! result = item
                 results <- results @ [result]
-            return results :> seq<_>
+            return results
         }
         
     /// Transforms a tuple of Async's to an Async of a tuple
@@ -66,3 +73,7 @@ module internal Helpers =
     /// Fins the mod with the highest version in the sequence.
     let maxMod access seq =
         maxOfSeq (compareMods access) seq
+
+    /// Starts an async as a Task
+    let asyncStartAsTask async =
+        async |> Async.StartImmediateAsTask
