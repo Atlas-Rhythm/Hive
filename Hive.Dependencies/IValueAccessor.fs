@@ -28,7 +28,7 @@ type IValueAccessor<'Mod, 'ModRef, 'Version, 'VerRange> =
 
         // Combiners
         abstract member Either : a:'VerRange -> b:'VerRange -> 'VerRange
-        abstract member And : a:'VerRange -> b:'VerRange -> 'VerRange
+        abstract member And : a:'VerRange -> b:'VerRange -> 'VerRange voption
         abstract member Not : a:'VerRange -> 'VerRange
 
         // External

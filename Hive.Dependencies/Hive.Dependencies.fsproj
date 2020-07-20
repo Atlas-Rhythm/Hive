@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="Exceptions.fs" />
     <Compile Include="IValueAccessor.fs" />
+    <Compile Include="Helpers.fs" />
     <Compile Include="Resolver.fsi" />
   </ItemGroup>
 
