@@ -55,6 +55,8 @@ namespace Hive
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseExceptionHandlingMiddleware();
+
             app.UseSerilogRequestLogging(options =>
             {
             });
