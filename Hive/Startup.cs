@@ -40,7 +40,7 @@ namespace Hive
                     new PermissionsManager<PermissionContext>(sp.GetService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."))
                 .AddSingleton(sp => new PermissionsService(sp.GetService<PermissionsManager<PermissionContext>>()));
 
-            services.AddDbContext<ModsContext>(options =>
+            services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
 

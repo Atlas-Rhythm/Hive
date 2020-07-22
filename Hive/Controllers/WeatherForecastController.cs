@@ -1,11 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Hive.Models;
 using Hive.Permissions;
 using Hive.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,11 +18,11 @@ namespace Hive.Controllers
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
 
-        private readonly ModsContext context;
+        private readonly HiveContext context;
         private readonly Serilog.ILogger log;
         private readonly PermissionsService permissions;
 
-        public WeatherForecastController(Serilog.ILogger log, PermissionsService perms, ModsContext ctx)
+        public WeatherForecastController(Serilog.ILogger log, PermissionsService perms, HiveContext ctx)
         {
             this.log = log.ForContext<WeatherForecastController>();
             permissions = perms;

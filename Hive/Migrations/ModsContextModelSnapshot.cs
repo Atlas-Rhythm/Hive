@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Hive.Migrations
 {
-    [DbContext(typeof(ModsContext))]
+    [DbContext(typeof(HiveContext))]
     partial class ModsContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

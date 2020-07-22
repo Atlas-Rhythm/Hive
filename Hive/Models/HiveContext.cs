@@ -6,11 +6,10 @@ using System.Threading.Tasks;
 
 namespace Hive.Models
 {
-    public class ModsContext : DbContext
+    public class HiveContext : DbContext
     {
-        public ModsContext(DbContextOptions<ModsContext> options) : base(options)
+        public HiveContext(DbContextOptions<HiveContext> options) : base(options)
         {
-
         }
 
         public DbSet<Mod> Mods { get; set; } = null!;

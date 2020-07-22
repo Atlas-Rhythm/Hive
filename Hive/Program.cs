@@ -33,7 +33,8 @@ namespace Hive
                 {
                     log.Debug("Configuring database");
 
-                    var context = services.GetRequiredService<ModsContext>();
+                    var context = services.GetRequiredService<HiveContext>();
+
                     context.Database.EnsureCreated();
 
                     log.Debug("Database prepared");
@@ -47,7 +48,7 @@ namespace Hive
                     return;
                 }
             }
-                
+
             host.Run();
         }
 
@@ -72,7 +73,7 @@ namespace Hive
             .Destructure.AsScalar<SemVer.Range>();
 
         [Conditional("DEBUG")]
-        private static void DemoData(Serilog.ILogger log, ModsContext context, IServiceProvider services)
+        private static void DemoData(Serilog.ILogger log, HiveContext context, IServiceProvider services)
         {
             if (context.Mods.Any()) return;
 
