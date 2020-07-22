@@ -144,6 +144,8 @@ paths:
     post:
       summary: ''
       operationId: post-mod-upload-modId
+      security:
+        - vaulthAuth: []
       responses:
         '200':
           description: OK
@@ -151,6 +153,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Mod'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
       description: Posts a mod
       requestBody:
         content:
@@ -251,9 +255,13 @@ paths:
     post:
       summary: ''
       operationId: post-mod-move-channelId
+      security:
+        - vaulthAuth: []
       responses:
         '200':
           description: OK
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
       requestBody:
         content:
           application/json:
@@ -276,6 +284,8 @@ paths:
     get:
       summary: 'Gets all publicly viewable channels, or all channels viewable by the given user'
       tags: []
+      security:
+        - vaulthAuth: []
       responses:
         '200':
           description: OK
@@ -291,11 +301,7 @@ paths:
                 type: object
                 properties: {}
         '401':
-          description: Authentication information is invalid
-          headers:
-            WWW_Authenticate:
-              schema:
-                type: string
+          $ref: '#/components/responses/UnauthorizedError'
       operationId: get-channels
       description: |-
         Gets all channels that are publicly viewable with the given user.
@@ -448,4 +454,14 @@ components:
       required:
         - name
         - versionRange
-  securitySchemes: {}
+  securitySchemes:
+    vaulthAuth: # Authentication through Vaulth
+      type: http
+      scheme: basic
+  responses:
+    UnauthorizedError:
+      description: Authentication information is invalid.
+      headers:
+        WWW_Authenticate:
+          schema:
+            type: string
