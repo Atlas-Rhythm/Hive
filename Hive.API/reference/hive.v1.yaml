@@ -266,6 +266,50 @@ paths:
                   type: string
             examples: {}
       description: Moves a mod to the provided channelId
+  /channels:
+    parameters:
+      - schema:
+          type: string
+        name: userID
+        in: query
+        required: false
+    get:
+      summary: 'Gets all publicly viewable channels, or all channels viewable by the given user'
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Channel'
+                uniqueItems: true
+            application/xml:
+              schema:
+                type: object
+                properties: {}
+      operationId: get-channels
+      description: |-
+        Gets all channels that are publicly viewable with the given user.
+        Query parameters left empty will use defaults.
+  /instance:
+    get:
+      summary: 'Get basic information about this Hive instance.'
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+      operationId: get-instance
+      description: |-
+        Get basic information about this Hive instance.
+        Information can be exposed and hidden on a per-instance basis.
 components:
   schemas:
     Channel:
