@@ -28,7 +28,7 @@ namespace Hive.Models
         public Instant UploadedAt { get; set; }
 
         public Instant? EditedAt { get; set; }
-        
+
         // many to one
         public User Uploader { get; set; } = null!;
 
@@ -39,7 +39,7 @@ namespace Hive.Models
         public IList<User> Contributors { get; set; } = new List<User>();
 
         // many to many (this needs to use a join type, and needs modification to be put into EF)
-        public virtual ICollection<GameVersion> SupportedVersions { get; set; } = new List<GameVersion>();
+        public ICollection<GameVersion> SupportedVersions { get; set; } = new List<GameVersion>();
 
         [Column(TypeName = "jsonb")]
         public IList<ModReference> Dependencies { get; set; } = new List<ModReference>();
@@ -59,10 +59,12 @@ namespace Hive.Models
         public Uri DownloadLink { get; set; } = null!;
 
         #region DB Schema stuff
+
         // this would be the primary key for this row
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Guid { get; set; }
-        #endregion
+
+        #endregion DB Schema stuff
 
         public void AddGameVersion(GameVersion ver)
         {
