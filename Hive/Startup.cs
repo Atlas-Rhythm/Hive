@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Hive.Converters;
 using Hive.Models;
 using Hive.Permissions;
+using Hive.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -15,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Serilog;
 
 namespace Hive
@@ -35,10 +37,11 @@ namespace Hive
                 .AddTransient<IRuleProvider, ConfigRuleProvider>()
                 .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
                 .AddSingleton(sp =>
-                    new PermissionsManager<PermissionContext>(sp.GetService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."));
+                    new PermissionsManager<PermissionContext>(sp.GetService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."))
+                .AddSingleton(sp => new PermissionsService(sp.GetService<PermissionsManager<PermissionContext>>()));
 
             services.AddDbContext<ModsContext>(options =>
-                options.UseNpgsql(Configuration.GetConnectionString("Default"), 
+                options.UseNpgsql(Configuration.GetConnectionString("Default"),
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
 
             services.AddControllers();
@@ -54,7 +57,6 @@ namespace Hive
 
             app.UseSerilogRequestLogging(options =>
             {
-
             });
 
             app.UseHttpsRedirection();
@@ -62,6 +64,9 @@ namespace Hive
             app.UseRouting();
 
             app.UseAuthorization();
+
+            // See: https://developer.okta.com/blog/2019/04/16/graphql-api-with-aspnetcore
+            // For adding GraphQL support in a reasonable way
 
             app.UseEndpoints(endpoints =>
             {

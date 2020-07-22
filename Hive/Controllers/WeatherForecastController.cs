@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Hive.Models;
 using Hive.Permissions;
+using Hive.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,24 +22,22 @@ namespace Hive.Controllers
 
         private readonly ModsContext context;
         private readonly Serilog.ILogger log;
-        private readonly PermissionsManager<PermissionContext> permissions;
+        private readonly PermissionsService permissions;
 
-        public WeatherForecastController(Serilog.ILogger log, PermissionsManager<PermissionContext> perms, ModsContext ctx)
+        public WeatherForecastController(Serilog.ILogger log, PermissionsService perms, ModsContext ctx)
         {
             this.log = log.ForContext<WeatherForecastController>();
             permissions = perms;
             context = ctx;
         }
 
-        private static PermissionActionParseState action;
-
         [HttpGet]
-        public IEnumerable<WeatherForecast> Get()
+        public ActionResult<IEnumerable<WeatherForecast>> Get()
         {
             log.Debug("Hi there!");
 
-            if (!permissions.CanDo("hive.weather.get", new PermissionContext(), ref action))
-                throw new InvalidOperationException();
+            if (!permissions.CanDo("hive.weather.get", new PermissionContext()))
+                return Forbid();
 
             var mod = context.Mods
                 .Include(m => m.Localizations)
