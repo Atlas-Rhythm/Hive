@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Hive.Controllers;
 using Hive.Models;
 using Hive.Permissions;
+using Hive.Plugin;
 using Hive.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -38,7 +40,9 @@ namespace Hive
                 .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
                 .AddSingleton(sp =>
                     new PermissionsManager<PermissionContext>(sp.GetService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."))
-                .AddSingleton(sp => new PermissionsService(sp.GetService<PermissionsManager<PermissionContext>>()));
+                .AddSingleton(sp => new PermissionsService(sp.GetService<PermissionsManager<PermissionContext>>()))
+                .AddSingleton(sp => new ChannelsControllerPlugin())
+                .AddSingleton<IAggregate<ChannelsControllerPlugin>>(sp => new Aggregation<ChannelsControllerPlugin>(sp.GetService<ChannelsControllerPlugin>()));
 
             services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
