@@ -290,10 +290,16 @@ paths:
               schema:
                 type: object
                 properties: {}
+        '401':
+          description: Authentication information is invalid
+          headers:
+            WWW_Authenticate:
+              schema:
+                type: string
       operationId: get-channels
       description: |-
         Gets all channels that are publicly viewable with the given user.
-        Query parameters left empty will use defaults.
+        Query parameters left empty will instead return all publicly visible channels.
   /instance:
     get:
       summary: 'Get basic information about this Hive instance.'
