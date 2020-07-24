@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Linq;
+using Hive.Utilities;
 
 namespace Hive.Versioning
 {
@@ -21,18 +22,53 @@ namespace Hive.Versioning
             if (text.Length < 5)
                 throw new ArgumentException("Input too short to be a SemVer version", nameof(text));
 
-            if (!TryParse(ref text, out major, out minor, out patch, out var preIds, out var buildIds))
+            if (!TryParseInternal(ref text, out major, out minor, out patch, out var preIds, out var buildIds))
                 throw new ArgumentException("Input was not a valid SemVer version", nameof(text));
             if (text.Length > 0)
-                throw new ArgumentException("Input was not a valid SemVer version", nameof(text))
+                throw new ArgumentException("Input was not a valid SemVer version", nameof(text));
 
             prereleaseIds = preIds;
             this.buildIds = buildIds;
         }
 
+        public Version(int major, int minor, int patch, IEnumerable<string> prereleaseIds, IEnumerable<string> buildIds)
+        {
+            this.major = major;
+            this.minor = minor;
+            this.patch = patch;
+            this.prereleaseIds = prereleaseIds.ToArray();
+            this.buildIds = buildIds.ToArray();
+        }
+
+        public int Major => major;
+        public int Minor => minor;
+        public int Patch => patch;
+
+        public IEnumerable<string> PreReleaseIds => prereleaseIds;
+        public IEnumerable<string> BuildIds => buildIds;
+
+
+        public static bool TryParse(string text, [MaybeNullWhen(false)] out Version version)
+            => TryParse((ReadOnlySpan<char>)text, out version);
+        public static bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen(false)] out Version version)
+        {
+            text = text.Trim();
+            return TryParse(ref text, out version) && text.Length == 0;
+        }
+
+        public static bool TryParse(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out Version version)
+        {
+            version = null;
+
+            if (!TryParseInternal(ref text, out var maj, out var min, out var pat, out var pre, out var build))
+                return false;
+
+            version = new Version(maj, min, pat, pre, build);
+            return true;
+        }
 
         #region Parser
-        internal static bool TryParse(
+        private static bool TryParseInternal(
             ref ReadOnlySpan<char> text, 
             out int major,
             out int minor,
@@ -41,7 +77,33 @@ namespace Hive.Versioning
             [MaybeNullWhen(false)] out string[] buildIds
         )
         {
+            prereleaseIds = null;
+            buildIds = null;
 
+            if (!TryParseCore(ref text, out major, out minor, out patch))
+                return false;
+
+            if (TryTake(ref text, '-'))
+            {
+                if (!TryParsePreRelease(ref text, out prereleaseIds))
+                    return false;
+            }
+            else
+            {
+                prereleaseIds = Array.Empty<string>();
+            }
+
+            if (TryTake(ref text, '+'))
+            {
+                if (!TryParseBuild(ref text, out buildIds))
+                    return false;
+            }
+            else
+            {
+                buildIds = Array.Empty<string>();
+            }
+
+            return true;
         }
 
         private static bool TryParseCore(ref ReadOnlySpan<char> text, out int major, out int minor, out int patch)
@@ -83,7 +145,25 @@ namespace Hive.Versioning
         {
             prereleaseIds = null;
 
-            
+            if (TryReadPreReleaseId(ref text, out var id))
+            {
+                var ab = new ArrayBuilder<string>(4);
+                do
+                {
+                    ab.Add(new string(id));
+                    if (!TryTake(ref text, '.'))
+                    { // exit condition
+                        prereleaseIds = ab.ToArray();
+                        return true;
+                    }
+                }
+                while (TryReadPreReleaseId(ref text, out id));
+
+                prereleaseIds = ab.ToArray();
+                return true;
+            }
+
+            return false;
         }
 
         private static bool TryReadPreReleaseId(ref ReadOnlySpan<char> text, out ReadOnlySpan<char> id)
@@ -93,16 +173,57 @@ namespace Hive.Versioning
             return false;
         }
 
-        private static bool TryReadAlphaNumId(ref ReadOnlySpan<char> text, out ReadOnlySpan<char> id)
+        private static bool TryParseBuild(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out string[] buildIds)
+        {
+            buildIds = null;
+
+            if (TryReadBuildId(ref text, out var id))
+            {
+                var ab = new ArrayBuilder<string>(4);
+                do
+                {
+                    ab.Add(new string(id));
+                    if (!TryTake(ref text, '.'))
+                    { // exit condition
+                        buildIds = ab.ToArray();
+                        return true;
+                    }
+                }
+                while (TryReadBuildId(ref text, out id));
+
+                buildIds = ab.ToArray();
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryReadBuildId(ref ReadOnlySpan<char> text, out ReadOnlySpan<char> id)
+            => TryReadAlphaNumId(ref text, out id, true);
+
+        private static bool TryReadAlphaNumId(ref ReadOnlySpan<char> text, out ReadOnlySpan<char> id, bool skipNonDigitCheck = false)
         {
             char c;
             int i = 0;
             do c = text[i++];
-            while ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
+            while ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '-');
 
             int len = i - 1;
 
             id = text.Slice(0, len);
+
+            if (skipNonDigitCheck)
+            {
+                if (len > 0)
+                {
+                    text = text.Slice(len);
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
 
             bool hasNonDigit = false;
             foreach (var chr in id)
