@@ -457,7 +457,8 @@ components:
   securitySchemes:
     vaulthAuth: # Authentication through Vaulth
       type: http
-      scheme: basic
+      scheme: bearer
+      bearerFormat: JWT
   responses:
     UnauthorizedError:
       description: Authentication information is invalid.
