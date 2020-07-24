@@ -7,7 +7,7 @@ namespace Hive.Utilities
 {
     public ref struct ArrayBuilder<T>
     {
-        private ArrayPool<T> pool;
+        private readonly ArrayPool<T> pool;
         private T[] array;
         public int Count { get; private set; }
         private bool rented;

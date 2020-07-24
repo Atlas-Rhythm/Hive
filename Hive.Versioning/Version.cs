@@ -168,8 +168,8 @@ namespace Hive.Versioning
 
         private static bool TryReadPreReleaseId(ref ReadOnlySpan<char> text, out ReadOnlySpan<char> id)
         {
-            if (TryReadNumId(ref text, out id)) return true;
             if (TryReadAlphaNumId(ref text, out id)) return true;
+            if (TryReadNumId(ref text, out id)) return true;
             return false;
         }
 
@@ -203,12 +203,19 @@ namespace Hive.Versioning
 
         private static bool TryReadAlphaNumId(ref ReadOnlySpan<char> text, out ReadOnlySpan<char> id, bool skipNonDigitCheck = false)
         {
+            if (text.Length == 0)
+            {
+                id = default;
+                return false;
+            }
+
             char c;
             int i = 0;
             do c = text[i++];
-            while ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '-');
+            while (((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '-')
+                   && text.Length > i);
 
-            int len = i - 1;
+            int len = text.Length == i ? i : i - 1;
 
             id = text.Slice(0, len);
 
@@ -259,11 +266,17 @@ namespace Hive.Versioning
 
         private static bool TryReadNumId(ref ReadOnlySpan<char> text, out ReadOnlySpan<char> id)
         {
-            //num = 0;
+            var copy = text;
             if (TryTake(ref text, '0')) // we can take a single 0
             {
-                id = text.Slice(0, 1);
+                id = copy.Slice(0, 1);
                 return true;
+            }
+
+            if (text.Length == 0)
+            {
+                id = default;
+                return false;
             }
 
             // or any nonzero character followed by any character
@@ -271,10 +284,13 @@ namespace Hive.Versioning
             if (c > '0' && c <= '9')
             { // we start with a positive number
                 int i = 1;
-                do c = text[i++];
-                while (c >= '0' && c <= '9'); // find as many digits as we can
+                if (text.Length > i)
+                {
+                    do c = text[i++];
+                    while (c >= '0' && c <= '9' && text.Length > i); // find as many digits as we can
+                }
 
-                int len = i - 1;
+                int len = text.Length == i ? i : i - 1;
 
                 id = text.Slice(0, len);
                 text = text.Slice(len);
@@ -288,6 +304,7 @@ namespace Hive.Versioning
 
         private static bool TryTake(ref ReadOnlySpan<char> input, char next)
         {
+            if (input.Length == 0) return false;
             if (input[0] != next) return false;
             input = input.Slice(1);
             return true;
