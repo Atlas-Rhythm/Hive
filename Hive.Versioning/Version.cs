@@ -223,6 +223,7 @@ namespace Hive.Versioning
         {
             prereleaseIds = null;
 
+            var copy = text;
             if (TryReadPreReleaseId(ref text, out var id))
             {
                 var ab = new ArrayBuilder<string>(4);
@@ -237,8 +238,9 @@ namespace Hive.Versioning
                 }
                 while (TryReadPreReleaseId(ref text, out id));
 
-                prereleaseIds = ab.ToArray();
-                return true;
+                _ = ab.ToArray();
+                text = copy;
+                return false;
             }
 
             return false;
@@ -255,6 +257,7 @@ namespace Hive.Versioning
         {
             buildIds = null;
 
+            var copy = text;
             if (TryReadBuildId(ref text, out var id))
             {
                 var ab = new ArrayBuilder<string>(4);
@@ -269,8 +272,9 @@ namespace Hive.Versioning
                 }
                 while (TryReadBuildId(ref text, out id));
 
-                buildIds = ab.ToArray();
-                return true;
+                _ = ab.ToArray();
+                text = copy;
+                return false;
             }
 
             return false;
@@ -287,28 +291,29 @@ namespace Hive.Versioning
                 return false;
             }
 
-            // TODO: this parsing is kinda whack and doesn't quite work correctly
             char c;
             int i = 0;
-            do c = text[i++];
-            while (((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '-')
-                   && text.Length > i);
+            do
+            {
+                if (text.Length <= i)
+                {
+                    i++;
+                    break;
+                }
+                c = text[i++];
+            }
+            while ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '-');
 
-            int len = text.Length == i ? i : i - 1;
+            int len = i - 1;
 
             id = text.Slice(0, len);
 
+            if (len <= 0) return false;
+
             if (skipNonDigitCheck)
             {
-                if (len > 0)
-                {
-                    text = text.Slice(len);
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                text = text.Slice(len);
+                return true;
             }
 
             bool hasNonDigit = false;
@@ -362,7 +367,6 @@ namespace Hive.Versioning
             var c = text[0];
             if (c > '0' && c <= '9')
             { // we start with a positive number
-                // TODO: this parsing is kinda whack
                 int i = 1;
                 if (text.Length > i)
                 {
