@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Linq;
 using Hive.Utilities;
+using System.Diagnostics;
 
 namespace Hive.Versioning
 {
@@ -78,6 +79,26 @@ namespace Hive.Versioning
         /// Gets the sequence of build IDs.
         /// </summary>
         public IEnumerable<string> BuildIds => buildIds;
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append(Major).Append(".")
+              .Append(Minor).Append(".")
+              .Append(Patch);
+            if (prereleaseIds.Length > 0)
+            {
+                sb.Append("-")
+                  .AppendJoin(".", prereleaseIds);
+            }
+            if (buildIds.Length > 0)
+            {
+                sb.Append("+")
+                  .AppendJoin(".", buildIds);
+            }
+            return sb.ToString();
+        }
 
         /// <summary>
         /// Compares two versions for equality.
