@@ -80,6 +80,82 @@ namespace Hive.Versioning
         public IEnumerable<string> BuildIds => buildIds;
 
         /// <summary>
+        /// Compares two versions for equality.
+        /// </summary>
+        /// <param name="a">The first version to compare.</param>
+        /// <param name="b">The second version to compare.</param>
+        /// <returns><see langword="true"/> if they are equal, <see langword="false"/> otherwise.</returns>
+        public static bool operator ==(Version? a, Version? b)
+        {
+            if (a is null && b is null) return true;
+            if (a is null || b is null) return false;
+            return a.Equals(b);
+        }
+        /// <summary>
+        /// Compares two versions for inequality.
+        /// </summary>
+        /// <param name="a">The first version to compare.</param>
+        /// <param name="b">The second version to compare.</param>
+        /// <returns><see langword="true"/> if they are not equal, <see langword="false"/> otherwise.</returns>
+        public static bool operator !=(Version? a, Version? b)
+            => !(a == b);
+
+        /// <summary>
+        /// Checks if <paramref name="a"/> is greater than <paramref name="b"/>.
+        /// </summary>
+        /// <param name="a">The first version to compare.</param>
+        /// <param name="b">The second version to compare.</param>
+        /// <returns><see langword="true"/> if <paramref name="a"/> is greater than <paramref name="b"/>, <see langword="false"/></returns>
+        public static bool operator >(Version a, Version b)
+            => a.CompareTo(b) > 0;
+        /// <summary>
+        /// Checks if <paramref name="a"/> is less than <paramref name="b"/>.
+        /// </summary>
+        /// <param name="a">The first version to compare.</param>
+        /// <param name="b">The second version to compare.</param>
+        /// <returns><see langword="true"/> if <paramref name="a"/> is less than <paramref name="b"/>, <see langword="false"/></returns>
+        public static bool operator <(Version a, Version b)
+            => a.CompareTo(b) < 0;
+        /// <summary>
+        /// Checks if <paramref name="a"/> is greater than or equal to <paramref name="b"/>.
+        /// </summary>
+        /// <param name="a">The first version to compare.</param>
+        /// <param name="b">The second version to compare.</param>
+        /// <returns><see langword="true"/> if <paramref name="a"/> is greater than or equal to <paramref name="b"/>, <see langword="false"/></returns>
+        public static bool operator >=(Version a, Version b)
+            => !(a < b);
+        /// <summary>
+        /// Checks if <paramref name="a"/> is less than or equal to <paramref name="b"/>.
+        /// </summary>
+        /// <param name="a">The first version to compare.</param>
+        /// <param name="b">The second version to compare.</param>
+        /// <returns><see langword="true"/> if <paramref name="a"/> is less than or equal to <paramref name="b"/>, <see langword="false"/></returns>
+        public static bool operator <=(Version a, Version b)
+            => !(a > b);
+
+        /// <summary>
+        /// Compares <see langword="this"/> version to <paramref name="o"/> for equality.
+        /// </summary>
+        /// <param name="o">The object to compare to.</param>
+        /// <returns><see langword="true"/> if they are equal, <see langword="false"/> otherwise.</returns>
+        public override bool Equals(object o) => o is Version v && Equals(v);
+
+        /// <summary>
+        /// Gets the hash code of this <see cref="Version"/>.
+        /// </summary>
+        /// <returns>The hash code for this <see cref="Version"/>.</returns>
+        public override int GetHashCode()
+        {
+            var hash = new HashCode();
+            hash.Add(Major);
+            hash.Add(Minor);
+            hash.Add(Patch);
+            foreach (var item in PreReleaseIds)
+                hash.Add(item, StringComparer.Ordinal);
+            return hash.ToHashCode();
+        }
+
+        /// <summary>
         /// Compares this version to another version according to the SemVer specification.
         /// </summary>
         /// <param name="other">The version to compare to.</param>
