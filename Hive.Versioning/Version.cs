@@ -9,9 +9,9 @@ namespace Hive.Versioning
 {
     public class Version
     {
-        private readonly int major;
-        private readonly int minor;
-        private readonly int patch;
+        private readonly ulong major;
+        private readonly ulong minor;
+        private readonly ulong patch;
         private readonly string[] prereleaseIds;
         private readonly string[] buildIds;
 
@@ -31,7 +31,7 @@ namespace Hive.Versioning
             this.buildIds = buildIds;
         }
 
-        public Version(int major, int minor, int patch, IEnumerable<string> prereleaseIds, IEnumerable<string> buildIds)
+        public Version(ulong major, ulong minor, ulong patch, IEnumerable<string> prereleaseIds, IEnumerable<string> buildIds)
         {
             this.major = major;
             this.minor = minor;
@@ -40,9 +40,9 @@ namespace Hive.Versioning
             this.buildIds = buildIds.ToArray();
         }
 
-        public int Major => major;
-        public int Minor => minor;
-        public int Patch => patch;
+        public ulong Major => major;
+        public ulong Minor => minor;
+        public ulong Patch => patch;
 
         public IEnumerable<string> PreReleaseIds => prereleaseIds;
         public IEnumerable<string> BuildIds => buildIds;
@@ -70,9 +70,9 @@ namespace Hive.Versioning
         #region Parser
         private static bool TryParseInternal(
             ref ReadOnlySpan<char> text, 
-            out int major,
-            out int minor,
-            out int patch,
+            out ulong major,
+            out ulong minor,
+            out ulong patch,
             [MaybeNullWhen(false)] out string[] prereleaseIds,
             [MaybeNullWhen(false)] out string[] buildIds
         )
@@ -106,7 +106,7 @@ namespace Hive.Versioning
             return true;
         }
 
-        private static bool TryParseCore(ref ReadOnlySpan<char> text, out int major, out int minor, out int patch)
+        private static bool TryParseCore(ref ReadOnlySpan<char> text, out ulong major, out ulong minor, out ulong patch)
         {
             minor = 0;
             patch = 0;
@@ -246,12 +246,12 @@ namespace Hive.Versioning
             return hasNonDigit;
         }
 
-        private static bool TryParseNumId(ref ReadOnlySpan<char> text, out int num)
+        private static bool TryParseNumId(ref ReadOnlySpan<char> text, out ulong num)
         {
             var copy = text;
             if (TryReadNumId(ref text, out var id))
             {
-                if (!int.TryParse(id, out num))
+                if (!ulong.TryParse(id, out num))
                 {
                     text = copy;
                     return false;
