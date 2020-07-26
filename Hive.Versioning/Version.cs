@@ -7,6 +7,9 @@ using Hive.Utilities;
 
 namespace Hive.Versioning
 {
+    /// <summary>
+    /// A version that meets the Semantic Versioning specification.
+    /// </summary>
     public class Version
     {
         private readonly ulong major;
@@ -15,6 +18,14 @@ namespace Hive.Versioning
         private readonly string[] prereleaseIds;
         private readonly string[] buildIds;
 
+        /// <summary>
+        /// Parses and creates a version object from a sequence of characters.
+        /// </summary>
+        /// <remarks>
+        /// This is roughly equivalent to <see cref="Parse(ReadOnlySpan{char})"/>.
+        /// </remarks>
+        /// <param name="text">The sequence of characters to parse as a version.</param>
+        /// <exception cref="ArgumentException">Thrown when the input is not a valid SemVer version.</exception>
         public Version(ReadOnlySpan<char> text)
         {
             text = text.Trim();
@@ -29,6 +40,14 @@ namespace Hive.Versioning
             this.buildIds = buildIds;
         }
 
+        /// <summary>
+        /// Creates a version object from the component parts of the version.
+        /// </summary>
+        /// <param name="major">The major version number.</param>
+        /// <param name="minor">The minor version number.</param>
+        /// <param name="patch">The patch number.</param>
+        /// <param name="prereleaseIds">A sequence of IDs specifying the prerelease.</param>
+        /// <param name="buildIds">A sequence of IDs representing the build.</param>
         public Version(ulong major, ulong minor, ulong patch, IEnumerable<string> prereleaseIds, IEnumerable<string> buildIds)
         {
             this.major = major;
@@ -38,19 +57,46 @@ namespace Hive.Versioning
             this.buildIds = buildIds.ToArray();
         }
 
+        /// <summary>
+        /// Gets the major version number.
+        /// </summary>
         public ulong Major => major;
+        /// <summary>
+        /// Gets the minor version number.
+        /// </summary>
         public ulong Minor => minor;
+        /// <summary>
+        /// Gets the patch number.
+        /// </summary>
         public ulong Patch => patch;
 
+        /// <summary>
+        /// Gets the sequence of prerelease IDs.
+        /// </summary>
         public IEnumerable<string> PreReleaseIds => prereleaseIds;
+        /// <summary>
+        /// Gets the sequence of build IDs.
+        /// </summary>
         public IEnumerable<string> BuildIds => buildIds;
 
+        /// <summary>
+        /// Parses a string into a <see cref="Version"/> object.
+        /// </summary>
+        /// <param name="text">The string to parse.</param>
+        /// <returns>The parsed verison object.</returns>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid SemVer version.</exception>
         public static Version Parse(string text)
         {
             if (!TryParse(text, out var ver))
                 throw new ArgumentException("Input not a valid SemVer version", nameof(text));
             return ver;
         }
+        /// <summary>
+        /// Parses a sequence of characters into a <see cref="Version"/> object.
+        /// </summary>
+        /// <param name="text">The sequence of characters to parse.</param>
+        /// <returns>The parsed version object.</returns>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid SemVer version.</exception>
         public static Version Parse(ReadOnlySpan<char> text)
         {
             if (!TryParse(text, out var ver))
@@ -58,14 +104,36 @@ namespace Hive.Versioning
             return ver;
         }
 
+        /// <summary>
+        /// Attempts to parse a string into a version object.
+        /// </summary>
+        /// <param name="text">The string to parse.</param>
+        /// <param name="version">The parsed version, if the input is valid.</param>
+        /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
         public static bool TryParse(string text, [MaybeNullWhen(false)] out Version version)
             => TryParse((ReadOnlySpan<char>)text, out version);
+        /// <summary>
+        /// Attempts to parse a sequence of characters into a version object.
+        /// </summary>
+        /// <param name="text">The sequence of characters to parse.</param>
+        /// <param name="version">The parsed version, if the input is valid.</param>
+        /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
         public static bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen(false)] out Version version)
         {
             text = text.Trim();
             return TryParse(ref text, out version) && text.Length == 0;
         }
 
+        /// <summary>
+        /// Attempts to parse a sequence of characters into a version object, as part of a larger parse.
+        /// </summary>
+        /// <remarks>
+        /// When this method returns, <paramref name="text"/> will begin after the end of the parsed version, if it is present, or
+        /// what it initially contained if no version is present and this returns <see langword="false"/>
+        /// </remarks>
+        /// <param name="text">The sequence of characters to parse.</param>
+        /// <param name="version">The parsed version, if the input is valid.</param>
+        /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
         public static bool TryParse(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out Version version)
         {
             version = null;
