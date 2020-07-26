@@ -22,9 +22,7 @@ namespace Hive.Versioning
             if (text.Length < 5)
                 throw new ArgumentException("Input too short to be a SemVer version", nameof(text));
 
-            if (!TryParseInternal(ref text, out major, out minor, out patch, out var preIds, out var buildIds))
-                throw new ArgumentException("Input was not a valid SemVer version", nameof(text));
-            if (text.Length > 0)
+            if (!TryParseInternal(ref text, out major, out minor, out patch, out var preIds, out var buildIds) || text.Length > 0)
                 throw new ArgumentException("Input was not a valid SemVer version", nameof(text));
 
             prereleaseIds = preIds;
