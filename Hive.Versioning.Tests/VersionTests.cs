@@ -2,13 +2,49 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace Hive.Versioning.Tests
 {
-    public class VersionTests
+    public class VersionTestFixture
     {
+        public Regex SemVerRegex { get; } = new Regex(
+            @"^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:-(?<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+        public void Validate(bool matches, string text, Version? ver)
+        {
+            var match = SemVerRegex.Match(text);
+            Assert.Equal(matches, match.Success);
+
+            if (matches)
+            {
+                Assert.NotNull(ver);
+
+                Assert.Equal(match.Groups["major"].Value, ver!.Major.ToString());
+                Assert.Equal(match.Groups["minor"].Value, ver!.Minor.ToString());
+                Assert.Equal(match.Groups["patch"].Value, ver!.Patch.ToString());
+
+                var pre = match.Groups["prerelease"];
+                Assert.Equal(pre.Success, ver!.PreReleaseIds.Any());
+                if (pre.Success)
+                    Assert.Equal(pre.Value, string.Join(".", ver!.PreReleaseIds));
+
+                var build = match.Groups["buildmetadata"];
+                Assert.Equal(build.Success, ver!.BuildIds.Any());
+                if (build.Success)
+                    Assert.Equal(build.Value, string.Join(".", ver!.BuildIds));
+            }
+        }
+    }
+
+    public class VersionTests : IClassFixture<VersionTestFixture>
+    {
+        VersionTestFixture fixture;
+        public VersionTests(VersionTestFixture fix) => fixture = fix;
+
         [Theory]
         [InlineData("0.0.4")]
         [InlineData("1.2.3")]
@@ -44,6 +80,9 @@ namespace Hive.Versioning.Tests
         {
             Assert.True(Version.TryParse(text, out var ver));
             _ = ver;
+            Assert.Equal(text, ver!.ToString());
+
+            fixture.Validate(true, text, ver);
         }
 
         [Theory]
@@ -90,6 +129,8 @@ namespace Hive.Versioning.Tests
         {
             Assert.False(Version.TryParse(text, out var ver));
             _ = ver;
+
+            fixture.Validate(false, text, ver);
         }
 
         // TODO: Version comparison tests
