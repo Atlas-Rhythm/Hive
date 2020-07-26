@@ -10,7 +10,7 @@ namespace Hive.Versioning
     /// <summary>
     /// A version that meets the Semantic Versioning specification.
     /// </summary>
-    public class Version
+    public class Version : IComparable<Version>, IEquatable<Version>
     {
         private readonly ulong major;
         private readonly ulong minor;
@@ -78,6 +78,73 @@ namespace Hive.Versioning
         /// Gets the sequence of build IDs.
         /// </summary>
         public IEnumerable<string> BuildIds => buildIds;
+
+        /// <summary>
+        /// Compares this version to another version according to the SemVer specification.
+        /// </summary>
+        /// <param name="other">The version to compare to.</param>
+        /// <returns><see langword="true"/> if the versions are equal, <see langword="false"/> otherwise.</returns>
+        public bool Equals(Version other)
+            => Major == other.Major && Minor == other.Minor && Patch == other.Patch
+            && prereleaseIds.Length == other.prereleaseIds.Length
+            && prereleaseIds.Zip(other.prereleaseIds, (a, b) => a == b).All(a => a);
+
+        /// <summary>
+        /// Compares this version to another version according to the SemVer specification.
+        /// </summary>
+        /// <param name="other">The version to compare to.</param>
+        /// <returns>Less than zero if <see langword="this"/> is less than <paramref name="other"/>, zero if they are equal, and 
+        /// more than zero if <see langword="this"/> is greater than <paramref name="other"/></returns>
+        public int CompareTo(Version other)
+        {
+            var val = Major.CompareTo(other.Major);
+            if (val != 0) return val;
+            val = Minor.CompareTo(other.Minor);
+            if (val != 0) return val;
+            val = Patch.CompareTo(other.Patch);
+            if (val != 0) return val;
+
+            if (prereleaseIds.Length != 0 && other.prereleaseIds.Length == 0)
+                return -1;
+            if (prereleaseIds.Length == 0 && other.prereleaseIds.Length != 0)
+                return 1;
+
+            var len = Math.Min(prereleaseIds.Length, other.prereleaseIds.Length);
+            for (int i = 0; i < len; i++)
+            {
+                var a = prereleaseIds[i];
+                ulong? anum = null;
+                var b = other.prereleaseIds[i];
+                ulong? bnum = null;
+
+                if (ulong.TryParse(a, out var an))
+                    anum = an;
+                if (ulong.TryParse(b, out var bn))
+                    bnum = bn;
+
+                if (anum != null && bnum == null)
+                    return -1;
+                if (anum == null && bnum != null)
+                    return 1;
+
+                if (anum != null && bnum != null)
+                { // compare by numbers
+                    val = anum.Value.CompareTo(bnum.Value);
+                    if (val != 0) return val;
+                }
+                else
+                { // compare by strings
+                    val = string.CompareOrdinal(a, b);
+                    if (val != 0) return val;
+                }
+            }
+
+            if (prereleaseIds.Length > other.prereleaseIds.Length)
+                return 1;
+            if (prereleaseIds.Length < other.prereleaseIds.Length)
+                return -1;
+            return 0;
+        }
 
         /// <summary>
         /// Parses a string into a <see cref="Version"/> object.
