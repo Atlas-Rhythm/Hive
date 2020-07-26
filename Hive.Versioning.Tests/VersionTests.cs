@@ -42,7 +42,7 @@ namespace Hive.Versioning.Tests
 
     public class VersionTests : IClassFixture<VersionTestFixture>
     {
-        VersionTestFixture fixture;
+        private readonly VersionTestFixture fixture;
         public VersionTests(VersionTestFixture fix) => fixture = fix;
 
         [Theory]
