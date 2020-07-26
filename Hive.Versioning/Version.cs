@@ -45,6 +45,18 @@ namespace Hive.Versioning
         public IEnumerable<string> PreReleaseIds => prereleaseIds;
         public IEnumerable<string> BuildIds => buildIds;
 
+        public static Version Parse(string text)
+        {
+            if (!TryParse(text, out var ver))
+                throw new ArgumentException("Input not a valid SemVer version", nameof(text));
+            return ver;
+        }
+        public static Version Parse(ReadOnlySpan<char> text)
+        {
+            if (!TryParse(text, out var ver))
+                throw new ArgumentException("Input not a valid SemVer version", nameof(text));
+            return ver;
+        }
 
         public static bool TryParse(string text, [MaybeNullWhen(false)] out Version version)
             => TryParse((ReadOnlySpan<char>)text, out version);
