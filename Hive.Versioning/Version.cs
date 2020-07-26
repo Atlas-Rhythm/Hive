@@ -209,6 +209,7 @@ namespace Hive.Versioning
                 return false;
             }
 
+            // TODO: this parsing is kinda whack and doesn't quite work correctly
             char c;
             int i = 0;
             do c = text[i++];
@@ -283,6 +284,7 @@ namespace Hive.Versioning
             var c = text[0];
             if (c > '0' && c <= '9')
             { // we start with a positive number
+                // TODO: this parsing is kinda whack
                 int i = 1;
                 if (text.Length > i)
                 {
