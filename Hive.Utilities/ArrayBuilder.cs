@@ -5,14 +5,31 @@ using System.Text;
 
 namespace Hive.Utilities
 {
+    /// <summary>
+    /// A type that can be used to (fairly) efficitently create arrays with minimal allocation.
+    /// </summary>
+    /// <typeparam name="T">The type of the array elements.</typeparam>
     public ref struct ArrayBuilder<T>
     {
-        private readonly ArrayPool<T> pool;
+        private ArrayPool<T> pool;
         private T[] array;
+        /// <summary>
+        /// The number of items currently in the <see cref="ArrayBuilder{T}"/>.
+        /// </summary>
         public int Count { get; private set; }
         private bool rented;
 
+        /// <summary>
+        /// Constructs a new <see cref="ArrayBuilder{T}"/> with the specified minimum capacity.
+        /// </summary>
+        /// <param name="capacity">The minimum capacity to initialize with.</param>
         public ArrayBuilder(int capacity = 4) : this(ArrayPool<T>.Shared, capacity) { }
+        /// <summary>
+        /// Constructs a new <see cref="ArrayBuilder{T}"/> with the specified <see cref="ArrayPool{T}"/>
+        /// and minimumm capcacity.
+        /// </summary>
+        /// <param name="pool">The <see cref="ArrayPool{T}"/> to use to allocate new arrays.</param>
+        /// <param name="capacity">The minimum capacity to start with.</param>
         public ArrayBuilder(ArrayPool<T> pool, int capacity = 4)
         {
             this.pool = pool;
@@ -21,25 +38,42 @@ namespace Hive.Utilities
             rented = true;
         }
 
+        /// <summary>
+        /// Ensures the specified amount in the internal array.
+        /// </summary>
+        /// <param name="amount">The amount to reserve.</param>
         public void Reserve(int amount)
         {
-            if (amount < array.Length) return;
+            if (array != null && amount < array.Length) return;
+            if (pool == null) pool = ArrayPool<T>.Shared;
 
             var newArr = pool.Rent(amount); // perhaps this should ask for a bigger scale?
-            Array.Copy(array, newArr, Count);
-            if (rented) pool.Return(array, true);
+            if (array != null)
+            {
+                Array.Copy(array, newArr, Count);
+                if (rented) pool.Return(array, true);
+            }
             array = newArr;
             rented = true;
         }
 
+        /// <summary>
+        /// Adds an item to the internal array.
+        /// </summary>
+        /// <param name="item">The item to add.</param>
         public void Add(T item)
         {
             Reserve(Count + 1);
             array[Count++] = item;
         }
 
+        /// <summary>
+        /// Gets this builder as an array.
+        /// </summary>
+        /// <returns>The array that represents this builder.</returns>
         public T[] ToArray()
         {
+            if (array == null) return Array.Empty<T>();
             if (rented || array.Length != Count)
             {
                 var newArr = new T[Count];
