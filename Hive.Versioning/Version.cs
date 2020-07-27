@@ -5,6 +5,7 @@ using System.Text;
 using System.Linq;
 using Hive.Utilities;
 using System.Diagnostics;
+using static Hive.Versioning.ParseHelpers;
 
 namespace Hive.Versioning
 {
@@ -153,6 +154,23 @@ namespace Hive.Versioning
         /// <returns><see langword="true"/> if <paramref name="a"/> is less than or equal to <paramref name="b"/>, <see langword="false"/></returns>
         public static bool operator <=(Version a, Version b)
             => !(a > b);
+
+        /// <summary>
+        /// Determines the maximum of two versions.
+        /// </summary>
+        /// <param name="a">The first version.</param>
+        /// <param name="b">The second version.</param>
+        /// <returns>The maximum of <paramref name="a"/> and <paramref name="b"/></returns>
+        public static Version Max(Version a, Version b)
+            => a > b ? a : b;
+        /// <summary>
+        /// Determines the minimum of two versions.
+        /// </summary>
+        /// <param name="a">The first version.</param>
+        /// <param name="b">The second version.</param>
+        /// <returns>The minimum of <paramref name="a"/> and <paramref name="b"/></returns>
+        public static Version Min(Version a, Version b)
+            => a < b ? a : b;
 
         /// <summary>
         /// Compares <see langword="this"/> version to <paramref name="o"/> for equality.
@@ -553,14 +571,6 @@ namespace Hive.Versioning
             // or this isn't a numeric id
             id = default;
             return false;
-        }
-
-        private static bool TryTake(ref ReadOnlySpan<char> input, char next)
-        {
-            if (input.Length == 0) return false;
-            if (input[0] != next) return false;
-            input = input.Slice(1);
-            return true;
         }
         #endregion
     }
