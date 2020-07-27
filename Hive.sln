@@ -11,6 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Permissions.Tests", "H
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{359F68C9-18C8-435C-9573-A5C7CBD0ADE0}"
 	ProjectSection(SolutionItems) = preProject
+		Directory.Build.targets = Directory.Build.targets
 		Hive.props = Hive.props
 		nuget.config = nuget.config
 	EndProjectSection
@@ -27,7 +28,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Versioning", "Hive.Ver
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Versioning.Tests", "Hive.Versioning.Tests\Hive.Versioning.Tests.csproj", "{E07BC8F2-00B7-4E6E-BC44-3007421A9831}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Versioning.Fuzz", "Hive.Versioning.Fuzz\Hive.Versioning.Fuzz.csproj", "{6AADF57E-7EBA-4A89-81C5-3C8AF3A58605}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Versioning.Fuzz", "Hive.Versioning.Fuzz\Hive.Versioning.Fuzz.csproj", "{6AADF57E-7EBA-4A89-81C5-3C8AF3A58605}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
