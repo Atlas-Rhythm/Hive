@@ -11,7 +11,7 @@ namespace Hive.Versioning
 
 
         [Flags]
-        private enum ComparisonType
+        internal enum ComparisonType
         {
             None = 0,
             ExactEqual = 1,
@@ -21,13 +21,14 @@ namespace Hive.Versioning
             LessEqual = Less | ExactEqual,
         }
 
-        private enum ComparerCombineResult
+        internal enum ComparerCombineResult
         {
             SingleComparer,
-            Subrange
+            Subrange,
+            Invalid
         }
 
-        private partial struct VersionComparer
+        internal partial struct VersionComparer
         {
             public readonly Version CompareTo;
             public readonly ComparisonType Type;
@@ -51,6 +52,10 @@ namespace Hive.Versioning
                     _ => throw new InvalidOperationException(),
                 };
 
+            public bool Matches(in VersionComparer other)
+                => Matches(other.CompareTo)
+                || (Type == other.Type && CompareTo == other.CompareTo);
+
             public ComparerCombineResult Invert(out VersionComparer comparer, out Subrange range)
             {
                 switch (Type)
@@ -73,15 +78,76 @@ namespace Hive.Versioning
                         return ComparerCombineResult.SingleComparer;
                 }
             }
+
+            public ComparerCombineResult CombineWith(in VersionComparer other, out VersionComparer comparer, out Subrange range)
+            {
+                comparer = default;
+                range = default;
+
+                if (((Type & ComparisonType.Greater) != ComparisonType.None && (other.Type & ComparisonType.Greater) != ComparisonType.None)
+                 || ((Type & ComparisonType.Less) != ComparisonType.None && (other.Type & ComparisonType.Less) != ComparisonType.None))
+                { // both face in the same direction
+                    // so we want to pick the one that encapsulates the other completely
+                    comparer = Matches(other) ? this : other;
+                    return ComparerCombineResult.SingleComparer;
+                }
+
+                if (Type == ComparisonType.ExactEqual && other.Type == ComparisonType.ExactEqual)
+                {
+                    if (CompareTo == other.CompareTo)
+                    {
+                        comparer = this;
+                        return ComparerCombineResult.SingleComparer;
+                    }
+                    else
+                    {
+                        // there is no way to create a Subrange or VersionComparer that has only the specified members
+                        return ComparerCombineResult.Invalid;
+                    }
+                }
+
+                // if one is exact equal and the other matches it, then return the one that matches it
+                if (Type == ComparisonType.ExactEqual)
+                { 
+                    if (other.Matches(this))
+                    {
+                        comparer = other;
+                        return ComparerCombineResult.SingleComparer;
+                    }
+                    else
+                    {
+                        // if we *don't* match, then this is similar to when they are both equal and not the same
+                        return ComparerCombineResult.Invalid;
+                    }
+                }
+                if (other.Type == ComparisonType.ExactEqual)
+                {
+                    if (Matches(other))
+                    {
+                        comparer = this;
+                        return ComparerCombineResult.SingleComparer;
+                    }
+                    else
+                    {
+                        // if we *don't* match, then this is similar to when they are both equal and not the same
+                        return ComparerCombineResult.Invalid;
+                    }
+                }
+
+                // at this point, we know that the versions form a range, be it inward or outward
+                var thisIsMin = CompareTo < other.CompareTo;
+                range = thisIsMin ? new Subrange(this, other) : new Subrange(other, this);
+                return ComparerCombineResult.Subrange;
+            }
         }
 
-        private partial struct Subrange
+        internal partial struct Subrange
         {
             public readonly VersionComparer LowerBound;
             public readonly VersionComparer UpperBound;
             public readonly bool IsInward;
 
-            public Subrange(VersionComparer lower, VersionComparer upper)
+            public Subrange(in VersionComparer lower, in VersionComparer upper)
             {
                 if (lower.Type == ComparisonType.ExactEqual || upper.Type == ComparisonType.ExactEqual)
                     throw new ArgumentException("Subrange cannot take ExactEqual as one of its bounds");
@@ -89,10 +155,21 @@ namespace Hive.Versioning
                 LowerBound = lower;
                 UpperBound = upper;
 
-                IsInward = lower.Matches(upper.CompareTo) && upper.Matches(lower.CompareTo);
+                IsInward = lower.Matches(upper) && upper.Matches(lower);
             }
 
             public bool Matches(Version ver)
+            {
+                if (IsInward)
+                { // this means they "face" each other, and so both must match
+                    return LowerBound.Matches(ver) && UpperBound.Matches(ver);
+                }
+                else
+                { // they "face" away from each other, and so either matches
+                    return LowerBound.Matches(ver) || UpperBound.Matches(ver);
+                }
+            }
+            public bool Matches(in VersionComparer ver)
             {
                 if (IsInward)
                 { // this means they "face" each other, and so both must match
@@ -117,17 +194,35 @@ namespace Hive.Versioning
             {
                 if (IsInward && other.IsInward)
                 { // we're combining inward ranges, so our job is fairly simple
-                    if (Matches(other.LowerBound.CompareTo) && LowerBound.CompareTo < other.UpperBound.CompareTo)
-                    { // other's lower bound is within our range, and its upper is above
+                    if (Matches(other.LowerBound) || other.Matches(LowerBound))
+                    { // there is overlap
+                        var lowResult = LowerBound.CombineWith(other.LowerBound, out var lower, out _);
+                        var highResult = UpperBound.CombineWith(other.UpperBound, out var upper, out _);
+                        if (lowResult != ComparerCombineResult.SingleComparer || highResult != ComparerCombineResult.SingleComparer)
+                            throw new InvalidOperationException("I'm pretty sure this case is literally impossible");
 
+                        result = new Subrange(lower, upper);
+                        return true;
                     }
+                    else
+                    { // there is no overlap, so they cannot be combined
+                        result = default;
+                        return false;
+                    }
+                }
+
+                throw new NotImplementedException();
+
+                if (IsInward && !other.IsInward)
+                {
+
                 }
             }
         }
 
 
         #region Parser
-        private partial struct VersionComparer 
+        internal partial struct VersionComparer 
         {
             public static bool TryParse(ref ReadOnlySpan<char> text, out VersionComparer comparer)
             {
@@ -171,7 +266,7 @@ namespace Hive.Versioning
                 return true;
             }
         }
-        private partial struct Subrange
+        internal partial struct Subrange
         {
             public static bool TryParse(ref ReadOnlySpan<char> text, out Subrange subrange)
             {
