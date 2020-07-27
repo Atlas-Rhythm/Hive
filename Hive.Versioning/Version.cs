@@ -532,13 +532,18 @@ namespace Hive.Versioning
             if (c > '0' && c <= '9')
             { // we start with a positive number
                 int i = 1;
-                if (text.Length > i)
+                do
                 {
-                    do c = text[i++];
-                    while (c >= '0' && c <= '9' && text.Length > i); // find as many digits as we can
+                    if (text.Length <= i)
+                    {
+                        i++;
+                        break;
+                    }
+                    c = text[i++];
                 }
+                while (c >= '0' && c <= '9'); // find as many digits as we can
 
-                int len = text.Length == i ? i : i - 1;
+                int len = i - 1;
 
                 id = text.Slice(0, len);
                 text = text.Slice(len);
