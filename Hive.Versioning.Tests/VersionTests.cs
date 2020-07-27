@@ -76,6 +76,7 @@ namespace Hive.Versioning.Tests
         [InlineData("1.0.0+0.build.1-rc.10000aaa-kk-0.1")]
         //[InlineData("99999999999999999999999.999999999999999999.99999999999999999")]
         [InlineData("1.0.0-0A.is.legal")]
+        [InlineData("10.110.11111111111111111111111")]
         public void SemverValid(string text)
         {
             Assert.True(Version.TryParse(text, out var ver));
@@ -125,6 +126,15 @@ namespace Hive.Versioning.Tests
         [InlineData("9.8.7+meta+meta")]
         [InlineData("9.8.7-whatever+meta+meta")]
         [InlineData("99999999999999999999999.999999999999999999.99999999999999999----RC-SNAPSHOT.12.09.1--------------------------------..12")]
+        [InlineData("10.2.3\0")]
+        [InlineData("1.2.3\0")]
+        [InlineData("0.0.0-a.3\x8c")]
+        [InlineData("1.0.0-amethinglongCbuild.1-aef.1-.1-aef.1\x1a")]
+        [InlineData("1.0.0-66\x8e")]
+        [InlineData("0.0.3111111111111111111111111\x0a\x0a")] // what afl found was actually rather longer, but this hits the issue i think
+        [InlineData("1.0.0-ala.3=")]
+        [InlineData("10.11111111111111111111111112.3\x0a")]
+        [InlineData("22222222222222222222210.2.3\x0a")]
         public void SemverInvalid(string text)
         {
             Assert.False(Version.TryParse(text, out var ver));

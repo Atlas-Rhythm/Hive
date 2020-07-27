@@ -11,6 +11,7 @@ namespace Hive.Versioning.Fuzz
             var fix = new VersionTestFixture();
             Fuzzer.Run(vertext =>
             {
+                vertext = vertext.Trim();
                 var success = Version.TryParse(vertext, out var ver);
                 fix.Validate(success, vertext, ver);
             });
