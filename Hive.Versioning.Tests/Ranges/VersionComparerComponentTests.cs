@@ -100,5 +100,33 @@ namespace Hive.Versioning.Tests.Ranges
             Assert.Equal(expect.CompareTo, newComparer.CompareTo);
         }
 
+        [Theory]
+        [InlineData(">1.0.0", true, "1.0.0", nameof(ComparisonType.Greater))]
+        [InlineData(">=1.0.0", true, "1.0.0", nameof(ComparisonType.GreaterEqual))]
+        [InlineData("<1.0.0", true, "1.0.0", nameof(ComparisonType.Less))]
+        [InlineData("<=1.0.0", true, "1.0.0", nameof(ComparisonType.LessEqual))]
+        [InlineData("=1.0.0", true, "1.0.0", nameof(ComparisonType.ExactEqual))]
+        [InlineData("==1.0.0", false, "", "")]
+        [InlineData("1.0.0", false, "", "")]
+        [InlineData("<<1.0.0", false, "", "")]
+        [InlineData(">>1.0.0", false, "", "")]
+        [InlineData("<<=1.0.0", false, "", "")]
+        [InlineData(">>=1.0.0", false, "", "")]
+        [InlineData("<>1.0.0", false, "", "")]
+        [InlineData("><1.0.0", false, "", "")]
+        [InlineData("<>=1.0.0", false, "", "")]
+        [InlineData("><=1.0.0", false, "", "")]
+        public void TestComparerParse(string input, bool valid, string verS, string typeS)
+        {
+            var expect = valid ? CreateComparer(verS, typeS) : default;
+
+            var text = (ReadOnlySpan<char>)input;
+            Assert.Equal(valid, VersionComparer.TryParse(ref text, out var comparer));
+            if (valid)
+            {
+                Assert.Equal(expect.Type, comparer.Type);
+                Assert.Equal(expect.CompareTo, comparer.CompareTo);
+            }
+        }
     }
 }
