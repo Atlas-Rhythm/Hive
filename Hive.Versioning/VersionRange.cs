@@ -84,8 +84,7 @@ namespace Hive.Versioning
                 comparer = default;
                 range = default;
 
-                if (((Type & ComparisonType.Greater) != ComparisonType.None && (other.Type & ComparisonType.Greater) != ComparisonType.None)
-                 || ((Type & ComparisonType.Less) != ComparisonType.None && (other.Type & ComparisonType.Less) != ComparisonType.None))
+                if ((Type & other.Type & ~ComparisonType.ExactEqual) != ComparisonType.None) // they're pointing the same direction
                 { // both face in the same direction
                     // so we want to pick the one that encapsulates the other completely
                     comparer = Matches(other) ? this : other;
@@ -151,6 +150,8 @@ namespace Hive.Versioning
             {
                 if (lower.Type == ComparisonType.ExactEqual || upper.Type == ComparisonType.ExactEqual)
                     throw new ArgumentException("Subrange cannot take ExactEqual as one of its bounds");
+                if (lower.CompareTo > upper.CompareTo)
+                    throw new ArgumentException("Lower bound must be below upper bound");
 
                 LowerBound = lower;
                 UpperBound = upper;
@@ -193,9 +194,11 @@ namespace Hive.Versioning
             public bool TryCombineWith(in Subrange other, out Subrange result)
             {
                 if (IsInward && other.IsInward)
-                { // we're combining inward ranges, so our job is fairly simple
+                { 
+                    // we're combining inward ranges, so our job is fairly simple
+                    // either, there is overlap
                     if (Matches(other.LowerBound) || other.Matches(LowerBound))
-                    { // there is overlap
+                    {
                         var lowResult = LowerBound.CombineWith(other.LowerBound, out var lower, out _);
                         var highResult = UpperBound.CombineWith(other.UpperBound, out var upper, out _);
                         if (lowResult != ComparerCombineResult.SingleComparer || highResult != ComparerCombineResult.SingleComparer)
@@ -204,11 +207,29 @@ namespace Hive.Versioning
                         result = new Subrange(lower, upper);
                         return true;
                     }
-                    else
-                    { // there is no overlap, so they cannot be combined
-                        result = default;
-                        return false;
+                    // or the edges meet and leave no gap
+                    if (UpperBound.CompareTo == other.LowerBound.CompareTo)
+                    {
+                        if (((UpperBound.Type & other.LowerBound.Type) & ~ComparisonType.ExactEqual) == ComparisonType.None  // they have opposite directions
+                         && ((UpperBound.Type ^ other.LowerBound.Type) &  ComparisonType.ExactEqual) != ComparisonType.None) // there is exactly one equal between them
+                        {
+                            result = new Subrange(LowerBound, other.UpperBound);
+                            return true;
+                        }
                     }
+                    if (other.UpperBound.CompareTo == LowerBound.CompareTo)
+                    {
+                        if (((other.UpperBound.Type & LowerBound.Type) & ~ComparisonType.ExactEqual) == ComparisonType.None  // they have opposite directions
+                         && ((other.UpperBound.Type ^ LowerBound.Type) &  ComparisonType.ExactEqual) != ComparisonType.None) // there is exactly one equal between them
+                        {
+                            result = new Subrange(other.LowerBound, UpperBound);
+                            return true;
+                        }
+                    }
+
+                    // otherwise, we can't combine them
+                    result = default;
+                    return false;
                 }
 
                 throw new NotImplementedException();
