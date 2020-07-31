@@ -17,8 +17,35 @@ namespace Hive.Versioning.Tests.Ranges
             return comparer;
         }
 
+        private static Subrange ParseSubrange(string input, bool valid = true)
+        {
+            ReadOnlySpan<char> text = input;
+            Assert.Equal(valid, Subrange.TryParse(ref text, out var range));
+            return range;
+        }
+
         private static Subrange CreateSubrange(string lower, string upper)
             => new Subrange(ParseComparer(lower), ParseComparer(upper));
+
+        [Theory]
+        [InlineData(">1.0.0 <2.0.0", true, ">1.0.0", "<2.0.0")]
+        [InlineData(">=1.0.0 <2.0.0", true, ">=1.0.0", "<2.0.0")]
+        [InlineData("^1.0.0", true, ">=1.0.0", "<2.0.0")]
+        [InlineData("^1.0.1", true, ">=1.0.1", "<2.0.0")]
+        [InlineData("^1.1.0", true, ">=1.1.0", "<2.0.0")]
+        [InlineData("^0.1.0", true, ">=0.1.0", "<0.2.0")]
+        [InlineData("^0.0.1", true, ">=0.0.1", "<0.0.2")]
+        [InlineData("<2.0.0 >1.0.0", false, ">1.0.0", "<2.0.0")]
+        [InlineData("<2.0.0 >=1.0.0", false, ">=1.0.0", "<2.0.0")]
+        public void TestParse(string text, bool valid, string lowerS, string upperS)
+        {
+            var actual = ParseSubrange(text, valid);
+            if (valid)
+            {
+                var expect = CreateSubrange(lowerS, upperS);
+                CheckEqual(expect, actual);
+            }
+        }
 
         [Theory]
         [InlineData(">=1.0.0", "<2.0.0", true)]
@@ -98,12 +125,17 @@ namespace Hive.Versioning.Tests.Ranges
             if (succeeds)
             {
                 var expect = CreateSubrange(lowerR, upperR);
-                Assert.Equal(expect.IsInward, result.IsInward);
-                Assert.Equal(expect.LowerBound.Type, result.LowerBound.Type);
-                Assert.Equal(expect.LowerBound.CompareTo, result.LowerBound.CompareTo);
-                Assert.Equal(expect.UpperBound.Type, result.UpperBound.Type);
-                Assert.Equal(expect.UpperBound.CompareTo, result.UpperBound.CompareTo);
+                CheckEqual(expect, result);
             }
+        }
+
+        private static void CheckEqual(in Subrange expect, in Subrange result)
+        {
+            Assert.Equal(expect.IsInward, result.IsInward);
+            Assert.Equal(expect.LowerBound.Type, result.LowerBound.Type);
+            Assert.Equal(expect.LowerBound.CompareTo, result.LowerBound.CompareTo);
+            Assert.Equal(expect.UpperBound.Type, result.UpperBound.Type);
+            Assert.Equal(expect.UpperBound.CompareTo, result.UpperBound.CompareTo);
         }
     }
 }
