@@ -23,7 +23,7 @@ namespace Hive.Versioning
         /// <summary>
         /// Gets the zero version (0.0.0).
         /// </summary>
-        public static Version Zero { get; } = new Version(0, 0, 0, Enumerable.Empty<string>(), Enumerable.Empty<string>());
+        public static Version Zero { get; } = new Version(0, 0, 0);
 
         /// <summary>
         /// Parses and creates a version object from a sequence of characters.
@@ -63,6 +63,15 @@ namespace Hive.Versioning
             this.prereleaseIds = prereleaseIds.ToArray();
             this.buildIds = buildIds.ToArray();
         }
+
+        /// <summary>
+        /// Creates a version object from the component parts of the version.
+        /// </summary>
+        /// <param name="major">The major version number.</param>
+        /// <param name="minor">The minor version number.</param>
+        /// <param name="patch">The patch number.</param>
+        public Version(ulong major, ulong minor, ulong patch) : this(major, minor, patch, Enumerable.Empty<string>(), Enumerable.Empty<string>())
+        { }
 
         /// <summary>
         /// Gets the major version number.

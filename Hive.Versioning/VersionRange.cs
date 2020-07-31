@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using static Hive.Versioning.ParseHelpers;
 
@@ -402,8 +403,57 @@ namespace Hive.Versioning
         {
             public static bool TryParse(ref ReadOnlySpan<char> text, out Subrange subrange)
             {
-                // TODO:
-                throw new NotImplementedException();
+                var copy = text;
+
+                // first we check for a ^ range
+                if (TryReadCaretRange(ref text, out subrange)) return true;
+
+                // otherwise we just try read two VersionComparers in a row
+                if (!VersionComparer.TryParse(ref text, out var lower))
+                {
+                    text = copy;
+                    subrange = default;
+                    return false;
+                }
+                text = text.TrimStart();
+                if (!VersionComparer.TryParse(ref text, out var upper))
+                {
+                    text = copy;
+                    subrange = default;
+                    return false;
+                }
+
+                subrange = new Subrange(lower, upper);
+                return true;
+            }
+
+            private static bool TryReadCaretRange(ref ReadOnlySpan<char> text, out Subrange range)
+            {
+                var copy = text;
+                if (!TryTake(ref text, '^'))
+                {
+                    range = default;
+                    return false;
+                }
+
+                text = text.TrimStart();
+                if (!Version.TryParse(ref text, out var lower))
+                {
+                    text = copy;
+                    range = default;
+                    return false;
+                }
+
+                Version upper;
+                if (lower.Major != 0)
+                    upper = new Version(lower.Major + 1, 0, 0);
+                else if (lower.Minor != 0)
+                    upper = new Version(0, lower.Minor + 1, 0);
+                else
+                    upper = new Version(0, 0, lower.Patch + 1);
+
+                range = new Subrange(new VersionComparer(lower, ComparisonType.GreaterEqual), new VersionComparer(upper, ComparisonType.Less));
+                return true;
             }
 
             public override string ToString()
