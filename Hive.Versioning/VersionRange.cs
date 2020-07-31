@@ -19,6 +19,8 @@ namespace Hive.Versioning
             GreaterEqual = Greater | ExactEqual,
             Less = 4,
             LessEqual = Less | ExactEqual,
+
+            _All = ExactEqual | Greater | Less,
         }
 
         internal enum ComparerCombineResult
@@ -324,14 +326,12 @@ namespace Hive.Versioning
         internal partial struct Subrange
         {
             public static readonly Subrange Everything;
-            public static readonly Subrange Nothing;
 
             static Subrange()
             {
                 Everything = new Subrange(
                     new VersionComparer(Version.Zero, ComparisonType.LessEqual), 
                     new VersionComparer(Version.Zero, ComparisonType.Greater));
-                Nothing = Everything.Invert();
             }
         }
 
@@ -380,6 +380,23 @@ namespace Hive.Versioning
 
                 return true;
             }
+
+            public override string ToString()
+            {
+                if (Type == ComparisonType.None) return "default";
+
+                var sb = new StringBuilder();
+                if ((Type & ComparisonType.Greater) != ComparisonType.None)
+                    sb.Append(">");
+                if ((Type & ComparisonType.Less) != ComparisonType.None)
+                    sb.Append("<");
+                if ((Type & ComparisonType.ExactEqual) != ComparisonType.None)
+                    sb.Append("=");
+                if ((Type & ~ComparisonType._All) != ComparisonType.None)
+                    sb.Append("!Invalid!");
+
+                return sb.Append(CompareTo.ToString()).ToString();
+            }
         }
         internal partial struct Subrange
         {
@@ -388,6 +405,9 @@ namespace Hive.Versioning
                 // TODO:
                 throw new NotImplementedException();
             }
+
+            public override string ToString()
+                => LowerBound.ToString() + " " + UpperBound.ToString();
         }
         #endregion
     }
