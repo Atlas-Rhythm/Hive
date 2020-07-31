@@ -124,7 +124,7 @@ namespace Hive.Versioning
                 {
                     if (b.Matches(a))
                     {
-                        comp = a;
+                        comp = b;
                         res = ComparerCombineResult.SingleComparer;
                         return true;
                     }
@@ -417,6 +417,13 @@ namespace Hive.Versioning
                 }
                 text = text.TrimStart();
                 if (!VersionComparer.TryParse(ref text, out var upper))
+                {
+                    text = copy;
+                    subrange = default;
+                    return false;
+                }
+
+                if (lower.CompareTo > upper.CompareTo)
                 {
                     text = copy;
                     subrange = default;
