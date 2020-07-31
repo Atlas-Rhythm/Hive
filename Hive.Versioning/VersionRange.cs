@@ -105,38 +105,38 @@ namespace Hive.Versioning
                     }
                 }
 
-                // if one is exact equal and the other matches it, then return the one that matches it
-                if (Type == ComparisonType.ExactEqual)
-                { 
-                    if (other.Matches(this))
-                    {
-                        comparer = other;
-                        return ComparerCombineResult.SingleComparer;
-                    }
-                    else
-                    {
-                        // if we *don't* match, then this is similar to when they are both equal and not the same
-                        return ComparerCombineResult.Invalid;
-                    }
-                }
-                if (other.Type == ComparisonType.ExactEqual)
-                {
-                    if (Matches(other))
-                    {
-                        comparer = this;
-                        return ComparerCombineResult.SingleComparer;
-                    }
-                    else
-                    {
-                        // if we *don't* match, then this is similar to when they are both equal and not the same
-                        return ComparerCombineResult.Invalid;
-                    }
-                }
+                if (CombineWithEqualPart(this, other, out comparer, out var res)) return res;
+                if (CombineWithEqualPart(other, this, out comparer, out res)) return res;
 
                 // at this point, we know that the versions form a range, be it inward or outward
                 var thisIsMin = CompareTo < other.CompareTo;
                 range = thisIsMin ? new Subrange(this, other) : new Subrange(other, this);
                 return ComparerCombineResult.Subrange;
+            }
+
+            private static bool CombineWithEqualPart(in VersionComparer a, in VersionComparer b, out VersionComparer comp, out ComparerCombineResult res)
+            {
+                // if one is exact equal and the other matches it, then return the one that matches it
+                if (a.Type == ComparisonType.ExactEqual)
+                {
+                    if (b.Matches(a))
+                    {
+                        comp = a;
+                        res = ComparerCombineResult.SingleComparer;
+                        return true;
+                    }
+                    else
+                    {
+                        // if we *don't* match, then this is similar to when they are both equal and not the same
+                        comp = default;
+                        res = ComparerCombineResult.Invalid;
+                        return true;
+                    }
+                }
+
+                comp = default;
+                res = default;
+                return false;
             }
         }
 
@@ -208,23 +208,15 @@ namespace Hive.Versioning
                         return true;
                     }
                     // or the edges meet and leave no gap
-                    if (UpperBound.CompareTo == other.LowerBound.CompareTo)
+                    if (TestExactMeeting(UpperBound, other.LowerBound))
                     {
-                        if (((UpperBound.Type & other.LowerBound.Type) & ~ComparisonType.ExactEqual) == ComparisonType.None  // they have opposite directions
-                         && ((UpperBound.Type ^ other.LowerBound.Type) &  ComparisonType.ExactEqual) != ComparisonType.None) // there is exactly one equal between them
-                        {
-                            result = new Subrange(LowerBound, other.UpperBound);
-                            return true;
-                        }
+                        result = new Subrange(LowerBound, other.UpperBound);
+                        return true;
                     }
-                    if (other.UpperBound.CompareTo == LowerBound.CompareTo)
+                    if (TestExactMeeting(other.UpperBound, LowerBound))
                     {
-                        if (((other.UpperBound.Type & LowerBound.Type) & ~ComparisonType.ExactEqual) == ComparisonType.None  // they have opposite directions
-                         && ((other.UpperBound.Type ^ LowerBound.Type) &  ComparisonType.ExactEqual) != ComparisonType.None) // there is exactly one equal between them
-                        {
-                            result = new Subrange(other.LowerBound, UpperBound);
-                            return true;
-                        }
+                        result = new Subrange(other.LowerBound, UpperBound);
+                        return true;
                     }
 
                     // otherwise, we can't combine them
@@ -232,12 +224,114 @@ namespace Hive.Versioning
                     return false;
                 }
 
-                throw new NotImplementedException();
+                // handle the case where there is exactly one inward range
+                if (TryCombineWithOneInPart(this, other, out result, out var res)) return res;
+                if (TryCombineWithOneInPart(other, this, out result, out res)) return res;
 
-                if (IsInward && !other.IsInward)
                 {
+                    // here, they are both outward ranges
+                    // this case is *really* simple
+                    // just combine the bounds, and if they are in the wrong order, return everything
+                    var lowResult = LowerBound.CombineWith(other.LowerBound, out var lower, out _);
+                    var highResult = UpperBound.CombineWith(other.UpperBound, out var upper, out _);
+                    if (lowResult != ComparerCombineResult.SingleComparer || highResult != ComparerCombineResult.SingleComparer)
+                        throw new InvalidOperationException("The lower and upper bounds were somehow in the wrong order");
 
+                    if (lower.Matches(upper) || upper.Matches(lower))
+                        result = Everything;
+                    else
+                        result = new Subrange(lower, upper);
+                    return true;
                 }
+            }
+
+            private static bool TestExactMeeting(in VersionComparer a, in VersionComparer b)
+                => a.CompareTo == b.CompareTo
+                && ((a.Type & b.Type) & ~ComparisonType.ExactEqual) == ComparisonType.None  // they have opposite directions
+                && ((a.Type ^ b.Type) &  ComparisonType.ExactEqual) != ComparisonType.None; // there is exactly one equal between them
+
+            private static bool TryCombineWithOneInPart(in Subrange a, in Subrange b, out Subrange result, out bool retVal)
+            {
+                if (a.IsInward && !b.IsInward)
+                {
+                    // this is completely contained by b
+                    if ((b.LowerBound.Matches(a.LowerBound) && b.LowerBound.Matches(a.UpperBound))
+                     || (b.UpperBound.Matches(a.LowerBound) && b.UpperBound.Matches(a.UpperBound)))
+                    {
+                        result = b;
+                        retVal = true;
+                        return true;
+                    }
+
+                    var meetLower = TestExactMeeting(b.LowerBound, a.LowerBound);
+                    var meetUpper = TestExactMeeting(b.UpperBound, a.UpperBound);
+                    // if we meet at both the upper and lower bounds, then our result is everything
+                    if (meetLower && meetUpper)
+                    {
+                        result = Everything;
+                        retVal = true;
+                        return true;
+                    }
+                    // our lower bound exactly meets its lower bound
+                    if (meetLower)
+                    {
+                        result = new Subrange(a.UpperBound, b.UpperBound);
+                        retVal = true;
+                        return true;
+                    }
+                    // out upper bound exactly meets its upper bound
+                    if (meetUpper)
+                    {
+                        result = new Subrange(a.LowerBound, b.LowerBound);
+                        retVal = true;
+                        return true;
+                    }
+                    // lower bound is within the lower segment, upper is not
+                    if (b.LowerBound.Matches(a.LowerBound) && !b.UpperBound.Matches(a.UpperBound))
+                    {
+                        var lowResult = b.LowerBound.CombineWith(a.UpperBound, out var lower, out _);
+                        if (lowResult != ComparerCombineResult.SingleComparer)
+                            throw new InvalidOperationException();
+
+                        result = new Subrange(lower, b.UpperBound);
+                        retVal = true;
+                        return true;
+                    }
+                    // upper bound is within the upper segment, lower is not
+                    if (b.UpperBound.Matches(a.UpperBound) && !b.LowerBound.Matches(a.LowerBound))
+                    {
+                        var highResult = b.UpperBound.CombineWith(a.LowerBound, out var upper, out _);
+                        if (highResult != ComparerCombineResult.SingleComparer)
+                            throw new InvalidOperationException();
+
+                        result = new Subrange(b.LowerBound, upper);
+                        retVal = true;
+                        return true;
+                    }
+
+                    // otherwise we can't combine them
+                    result = default;
+                    retVal = false;
+                    return true;
+                }
+
+                result = default;
+                retVal = default;
+                return false;
+            }
+        }
+
+        internal partial struct Subrange
+        {
+            public static readonly Subrange Everything;
+            public static readonly Subrange Nothing;
+
+            static Subrange()
+            {
+                Everything = new Subrange(
+                    new VersionComparer(Version.Zero, ComparisonType.LessEqual), 
+                    new VersionComparer(Version.Zero, ComparisonType.Greater));
+                Nothing = Everything.Invert();
             }
         }
 

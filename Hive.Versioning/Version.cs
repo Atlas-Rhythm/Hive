@@ -21,6 +21,11 @@ namespace Hive.Versioning
         private readonly string[] buildIds;
 
         /// <summary>
+        /// Gets the zero version (0.0.0).
+        /// </summary>
+        public static Version Zero { get; } = new Version(0, 0, 0, Enumerable.Empty<string>(), Enumerable.Empty<string>());
+
+        /// <summary>
         /// Parses and creates a version object from a sequence of characters.
         /// </summary>
         /// <remarks>
