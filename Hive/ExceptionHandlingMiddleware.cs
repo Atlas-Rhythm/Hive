@@ -31,7 +31,7 @@ namespace Hive
         public ExceptionHandlingMiddleware(RequestDelegate next, Serilog.ILogger log)
         {
             _next = next;
-            logger = (log ?? throw new ArgumentException(Resource.ArgumentNullException_ExceptionHandlingMiddleware, nameof(log))).ForContext<ExceptionHandlingMiddleware>();
+            logger = (log ?? throw new ArgumentException(Resource.ArgumentNullException_logger, nameof(log))).ForContext<ExceptionHandlingMiddleware>();
         }
 
         public async Task Invoke(HttpContext httpContext)
@@ -58,7 +58,7 @@ namespace Hive
             {
                 httpContext.Response.ContentType = "application/json";
                 var json = JsonSerializer.Serialize(new JsonApiException { StatusCode = httpContext.Response.StatusCode, Message = message }, serializerOptions);
-                await httpContext.Response.WriteAsync(json);
+                await httpContext.Response.WriteAsync(json).ConfigureAwait(false);
             }
         }
     }

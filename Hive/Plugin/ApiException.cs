@@ -20,23 +20,14 @@ namespace Hive.Plugin
 
         private static string? StatusCodeDefaultMessage(HttpStatusCode code)
         {
-            switch (code)
+            return code switch
             {
-                case HttpStatusCode.NotFound:
-                    return "Not found";
-
-                case HttpStatusCode.BadRequest:
-                    return "Bad request";
-
-                case HttpStatusCode.Forbidden:
-                    return "Forbidden";
-
-                case HttpStatusCode.InternalServerError:
-                    return "Internal server error";
-
-                default:
-                    return null;
-            }
+                HttpStatusCode.NotFound => "Not found",
+                HttpStatusCode.BadRequest => "Bad request",
+                HttpStatusCode.Forbidden => "Forbidden",
+                HttpStatusCode.InternalServerError => "Internal server error",
+                _ => null,
+            };
         }
     }
 }

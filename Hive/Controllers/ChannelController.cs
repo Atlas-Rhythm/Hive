@@ -17,13 +17,14 @@ namespace Hive.Controllers
     public class ChannelsControllerPlugin : IPlugin
     {
         /// <summary>
-        /// Throws an <see cref="ApiException"/> or does nothing. Useful for plugins which wish to exit early.
-        /// <para>Hive default is to do nothing.</para>
+        /// Returns true if the specified user still has access to the channel in question. False otherwise.
+        /// A false return will cause the endpoint in question to return a Forbid before executing the rest of the endpoint.
+        /// <para>Hive default is to return true.</para>
         /// </summary>
-        /// <exception cref="ApiException">Throw this (with a custom response code and message) when you wish to cause a failure</exception>
         /// <param name="user">User in context</param>
-        public void GetChannelsAdditionalChecks(User? user)
+        public bool GetChannelsAdditionalChecks(User? user)
         {
+            return true;
         }
 
         /// <summary>
@@ -36,17 +37,6 @@ namespace Hive.Controllers
         {
             return channels;
         }
-
-        /// <summary>
-        /// Returns a selection function for selecting channels to return.
-        /// objects will be serialized to JSON.
-        /// <para>Hive default is to return a function that is only channel names.</para>
-        /// </summary>
-        /// <returns>Selection function</returns>
-        public Func<Channel, object> GetChannelsSelect()
-        {
-            return c => new { c.Name };
-        }
     }
 
     [Route("api/channels")]
@@ -57,23 +47,28 @@ namespace Hive.Controllers
         private readonly Serilog.ILogger log;
         private readonly HiveContext context;
         private readonly IAggregate<ChannelsControllerPlugin> plugin;
+        private readonly IProxyAuthenticationService authService;
 
-        public ChannelsController(Serilog.ILogger log, PermissionsService perms, HiveContext ctx, IAggregate<ChannelsControllerPlugin> plugin)
+        public ChannelsController(Serilog.ILogger logger, PermissionsService perms, HiveContext ctx, IAggregate<ChannelsControllerPlugin> plugin, IProxyAuthenticationService authService)
         {
-            this.log = log.ForContext<WeatherForecastController>();
+            log = logger.ForContext<ChannelsController>();
             permissions = perms;
             context = ctx;
             this.plugin = plugin;
+            this.authService = authService;
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<object>> GetChannels()
+        // TODO: Perhaps return a subset of Channel, instead only containing information desired as opposed to the whole model?
+        // This is probably applicable via a GraphQL endpoint, however.
+        public async Task<ActionResult<IEnumerable<Channel>>> GetChannels()
         {
             log.Debug("Getting channels...");
             // The existence of this method is determined through a configuration file, which is handled in Startup.cs
             // This method simply needs to exist.
             // TODO: Get user
-            User? user = null;
+            User? user = await authService.GetUser(Request);
+            // If user is null, we can simply forward it anyways
             // TODO: Wrap with user != null, either anonymize "hive.channel" or remove entirely.
             if (!permissions.CanDo("hive.channel", new Permissions.PermissionContext { User = user }))
                 return Forbid();
@@ -81,18 +76,18 @@ namespace Hive.Controllers
             log.Debug("Combining plugins...");
             var combined = plugin.Combine();
             log.Debug("Performing additional checks for GetChannels...");
-            // May throw an ApiException, which should be handled by our MiddleWare
-            combined.GetChannelsAdditionalChecks(user);
+            // May return false, which causes a Forbid.
+            // If it throws an exception, it will be handled by our MiddleWare
+            if (!combined.GetChannelsAdditionalChecks(user))
+                return Forbid();
             // Filter channels based off of user-level permission
-            // Permission for a given channel is entirely plugin-based, channels in Hive are defaulty entirely public.
+            // Permission for a given channel is entirely plugin-based, channels in Hive are defaultly entirely public.
             // For a mix of private/public channels, a plugin that maintains a user-level list of read/write channels is probably ideal.
             var channels = context.Channels.ToList();
             log.Debug("Filtering channels from {0} channels...", channels.Count);
             var filteredChannels = combined.GetChannelsFilter(channels);
             log.Debug("Remaining channels: {0}", filteredChannels.Count());
-            var selection = filteredChannels.Select(combined.GetChannelsSelect());
-            log.Debug("Selected channels: {0}", selection.Count());
-            return selection.ToList();
+            return filteredChannels.ToList();
         }
     }
 }

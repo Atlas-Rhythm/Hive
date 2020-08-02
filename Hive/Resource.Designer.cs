@@ -61,11 +61,11 @@ namespace Hive {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Must provide a non-null log!.
+        ///   Looks up a localized string similar to Must provide a non-null logger!.
         /// </summary>
-        internal static string ArgumentNullException_ExceptionHandlingMiddleware {
+        internal static string ArgumentNullException_logger {
             get {
-                return ResourceManager.GetString("ArgumentNullException_ExceptionHandlingMiddleware", resourceCulture);
+                return ResourceManager.GetString("ArgumentNullException_logger", resourceCulture);
             }
         }
     }

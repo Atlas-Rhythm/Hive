@@ -42,7 +42,8 @@ namespace Hive
                     new PermissionsManager<PermissionContext>(sp.GetService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."))
                 .AddSingleton(sp => new PermissionsService(sp.GetService<PermissionsManager<PermissionContext>>()))
                 .AddSingleton(sp => new ChannelsControllerPlugin())
-                .AddSingleton<IAggregate<ChannelsControllerPlugin>>(sp => new Aggregation<ChannelsControllerPlugin>(sp.GetService<ChannelsControllerPlugin>()));
+                .AddSingleton<IAggregate<ChannelsControllerPlugin>>(sp => new Aggregation<ChannelsControllerPlugin>(sp.GetService<ChannelsControllerPlugin>()))
+                .AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
 
             services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
