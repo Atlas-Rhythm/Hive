@@ -275,12 +275,6 @@ paths:
             examples: {}
       description: Moves a mod to the provided channelId
   /channels:
-    parameters:
-      - schema:
-          type: string
-        name: userID
-        in: query
-        required: false
     get:
       summary: 'Gets all publicly viewable channels, or all channels viewable by the given user'
       tags: []
@@ -304,8 +298,8 @@ paths:
           $ref: '#/components/responses/UnauthorizedError'
       operationId: get-channels
       description: |-
-        Gets all channels that are publicly viewable with the given user.
-        Query parameters left empty will instead return all publicly visible channels.
+        Gets all channels that are publicly viewable.
+        When passed with an auth header, then it will return all channels viewable to the authorized user.
   /instance:
     get:
       summary: 'Get basic information about this Hive instance.'
