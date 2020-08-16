@@ -37,16 +37,16 @@ namespace Hive.Services
         {
             if (context is null)
                 return;
-            await context.Response.WriteAsync("challenge");
             context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+            await context.Response.WriteAsync("challenge");
         }
 
         public async Task ForbidAsync(AuthenticationProperties properties)
         {
             if (context is null)
                 return;
-            await context.Response.WriteAsync("forbidden");
             context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+            await context.Response.WriteAsync("forbidden");
         }
 
         public Task InitializeAsync(AuthenticationScheme scheme, HttpContext context)
