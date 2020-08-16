@@ -35,6 +35,27 @@ namespace Hive.Versioning
 
 
 
+        public StringBuilder ToString(StringBuilder sb)
+        {
+            for (int i = 0; i < subranges.Length; i++)
+            {
+                subranges[i].ToString(sb);
+                if (i != subranges.Length - 1)
+                    sb.Append(" || ");
+            }
+
+            if (additionalComparer != null)
+            {
+                if (subranges.Length > 0)
+                    sb.Append(" || ");
+                additionalComparer.Value.ToString(sb);
+            }
+
+            return sb;
+        }
+
+        public override string ToString()
+            => ToString(new StringBuilder()).ToString();
 
         public static bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen(false)] out VersionRange range)
         {

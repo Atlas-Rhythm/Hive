@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using static Hive.Versioning.ParseHelpers;
 
@@ -386,11 +387,10 @@ namespace Hive.Versioning
                 return true;
             }
 
-            public override string ToString()
+            public StringBuilder ToString(StringBuilder sb)
             {
-                if (Type == ComparisonType.None) return "default";
+                if (Type == ComparisonType.None) return sb.Append("default");
 
-                var sb = new StringBuilder();
                 if ((Type & ComparisonType.Greater) != ComparisonType.None)
                     sb.Append(">");
                 if ((Type & ComparisonType.Less) != ComparisonType.None)
@@ -400,8 +400,11 @@ namespace Hive.Versioning
                 if ((Type & ~ComparisonType._All) != ComparisonType.None)
                     sb.Append("!Invalid!");
 
-                return sb.Append(CompareTo.ToString()).ToString();
+                return CompareTo.ToString(sb);
             }
+
+            public override string ToString()
+                => ToString(new StringBuilder()).ToString();
         }
         internal partial struct Subrange
         {
@@ -467,8 +470,10 @@ namespace Hive.Versioning
                 return true;
             }
 
+            public StringBuilder ToString(StringBuilder sb)
+                => UpperBound.ToString(LowerBound.ToString(sb).Append(" "));
             public override string ToString()
-                => LowerBound.ToString() + " " + UpperBound.ToString();
+                => ToString(new StringBuilder()).ToString();
         }
         #endregion
     }

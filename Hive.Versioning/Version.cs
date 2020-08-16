@@ -95,10 +95,8 @@ namespace Hive.Versioning
         /// </summary>
         public IEnumerable<string> BuildIds => buildIds;
 
-        /// <inheritdoc/>
-        public override string ToString()
+        public StringBuilder ToString(StringBuilder sb)
         {
-            var sb = new StringBuilder();
             sb.Append(Major).Append(".")
               .Append(Minor).Append(".")
               .Append(Patch);
@@ -112,8 +110,12 @@ namespace Hive.Versioning
                 sb.Append("+")
                   .AppendJoin(".", buildIds);
             }
-            return sb.ToString();
+            return sb;
         }
+
+        /// <inheritdoc/>
+        public override string ToString()
+            => ToString(new StringBuilder()).ToString();
 
         /// <summary>
         /// Compares two versions for equality.

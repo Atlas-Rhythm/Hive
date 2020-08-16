@@ -23,5 +23,23 @@ namespace Hive.Versioning.Tests.Ranges
         {
             Assert.Equal(valid, VersionRange.TryParse(text, out _));
         }
+
+        [Theory]
+        [InlineData(">=1.0.0")]
+        [InlineData(">1.0.0")]
+        [InlineData("<2.0.0")]
+        [InlineData("<=2.0.0")]
+        [InlineData(">=1.0.0 <2.0.0")]
+        [InlineData(">1.0.0 <=2.0.0")]
+        [InlineData(">=1.0.0 || <2.0.0")]
+        [InlineData(">1.0.0  || <=2.0.0")]
+        public void TestStringificationRoundTrip(string startText)
+        {
+            Assert.True(VersionRange.TryParse(startText, out var range));
+            var startString = range!.ToString();
+            Assert.True(VersionRange.TryParse(startString, out var range2));
+            var endString = range2!.ToString();
+            Assert.Equal(startString, endString);
+        }
     }
 }
