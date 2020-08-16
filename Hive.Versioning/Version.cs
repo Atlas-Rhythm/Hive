@@ -301,14 +301,6 @@ namespace Hive.Versioning
         }
 
         /// <summary>
-        /// Attempts to parse a string into a version object.
-        /// </summary>
-        /// <param name="text">The string to parse.</param>
-        /// <param name="version">The parsed version, if the input is valid.</param>
-        /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
-        public static bool TryParse(string text, [MaybeNullWhen(false)] out Version version)
-            => TryParse((ReadOnlySpan<char>)text, out version);
-        /// <summary>
         /// Attempts to parse a sequence of characters into a version object.
         /// </summary>
         /// <param name="text">The sequence of characters to parse.</param>

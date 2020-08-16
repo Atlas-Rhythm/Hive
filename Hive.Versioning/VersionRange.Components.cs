@@ -57,6 +57,13 @@ namespace Hive.Versioning
                 => Matches(other.CompareTo)
                 || (Type == other.Type && CompareTo == other.CompareTo);
 
+            public Subrange ToExactEqualSubrange()
+            {
+                if (Type != ComparisonType.ExactEqual)
+                    throw new InvalidOperationException();
+                return new Subrange(new VersionComparer(CompareTo, ComparisonType.GreaterEqual), new VersionComparer(CompareTo, ComparisonType.LessEqual));
+            }
+
             public ComparerCombineResult Invert(out VersionComparer comparer, out Subrange range)
             {
                 switch (Type)
