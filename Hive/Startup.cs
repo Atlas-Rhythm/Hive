@@ -43,13 +43,19 @@ namespace Hive
                 .AddSingleton(sp => new PermissionsService(sp.GetService<PermissionsManager<PermissionContext>>()))
                 .AddSingleton(sp => new ChannelsControllerPlugin())
                 .AddSingleton<IAggregate<ChannelsControllerPlugin>>(sp => new Aggregation<ChannelsControllerPlugin>(sp.GetService<ChannelsControllerPlugin>()))
-                .AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
+                //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
+                .AddSingleton<IProxyAuthenticationService>(Span => new MockAuthenticationService());
 
             services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
 
             services.AddControllers();
+            services.AddAuthentication(a =>
+            {
+                a.AddScheme<MockAuthenticationHandler>("Bearer", "MockAuth");
+                a.DefaultScheme = "Bearer";
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

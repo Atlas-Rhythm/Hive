@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Hive.Models;
 using Hive.Plugin;
 using Hive.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,7 +25,8 @@ namespace Hive.Controllers
         /// <param name="user">User in context</param>
         public bool GetChannelsAdditionalChecks(User? user)
         {
-            return true;
+            // Test for now, ensures denial of channel access
+            return user is null;
         }
 
         /// <summary>

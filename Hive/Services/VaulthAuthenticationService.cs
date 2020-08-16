@@ -41,6 +41,7 @@ namespace Hive.Services
             // Check the header of the request for a token
             // If the token exists, verify it with a check
             // If the token matches, we should be good to say that the token is valid and that the user is logged in
+            // TODO: Implement
             return false;
         }
 
