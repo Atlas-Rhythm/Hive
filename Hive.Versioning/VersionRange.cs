@@ -111,6 +111,7 @@ namespace Hive.Versioning
                     sranges = ab.ToArray();
                     return true;
                 }
+                text = text.TrimStart();
             }
             while (TryReadComponent(ref text, out range, out compare));
 
