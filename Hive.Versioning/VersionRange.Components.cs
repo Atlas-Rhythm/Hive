@@ -63,16 +63,37 @@ namespace Hive.Versioning
                     _ => throw new InvalidOperationException(),
                 };
 
+            /// <remarks>
+            /// A <see cref="VersionComparer"/> is considered matching if it is exactly equivalent to this one, in addition to if its comparison
+            /// value matches.
+            /// </remarks>
             public bool Matches(in VersionComparer other)
                 => Matches(other.CompareTo)
                 || (Type == other.Type && CompareTo == other.CompareTo);
 
+            /// <summary>
+            /// Converts this <see cref="ComparisonType.ExactEqual"/> <see cref="VersionComparer"/> to an equivalent <see cref="Subrange"/>.
+            /// </summary>
+            /// <remarks>
+            /// The returned <see cref="Subrange"/> always takes the form <c>&gt;=Version &lt;=Version</c>.
+            /// </remarks>
+            /// <returns>The <see cref="Subrange"/> that is equivalent to this <see cref="VersionComparer"/></returns>
             public Subrange ToExactEqualSubrange()
             {
                 Assert(Type == ComparisonType.ExactEqual);
                 return new Subrange(new VersionComparer(CompareTo, ComparisonType.GreaterEqual), new VersionComparer(CompareTo, ComparisonType.LessEqual));
             }
 
+            /// <summary>
+            /// Inverts this <see cref="VersionComparer"/> into either another <see cref="VersionComparer"/> or a <see cref="Subrange"/>.
+            /// </summary>
+            /// <remarks>
+            /// The only time this produces a <see cref="Subrange"/> is when <see cref="Type"/> is <see cref="ComparisonType.ExactEqual"/>.
+            /// </remarks>
+            /// <param name="comparer">The inverted <see cref="VersionComparer"/>, if any.</param>
+            /// <param name="range">The <see cref="Subrange"/> representing this <see cref="VersionComparer"/> inverted, if any.</param>
+            /// <returns><see cref="CombineResult.OneSubrange"/> if this produces a <see cref="Subrange"/>, or <see cref="CombineResult.OneComparer"/>
+            /// if it produces a <see cref="VersionComparer"/>.</returns>
             public CombineResult Invert(out VersionComparer comparer, out Subrange range)
             {
                 switch (Type)
@@ -96,6 +117,30 @@ namespace Hive.Versioning
                 }
             }
 
+            /// <summary>
+            /// Tries to perform a logical conjunction (and) with <paramref name="other"/>.
+            /// </summary>
+            /// <remarks>
+            /// This method will only return one of the following values:
+            /// <list type="table">
+            ///     <item>
+            ///         <term><see cref="CombineResult.OneComparer"/></term>
+            ///         <description>A single <see cref="VersionComparer"/> was produced, and <paramref name="comparer"/> was set.</description>
+            ///     </item>
+            ///     <item>
+            ///         <term><see cref="CombineResult.OneSubrange"/></term>
+            ///         <description>A single <see cref="Subrange"/> was produced, and <paramref name="range"/> was set.</description>
+            ///     </item>
+            ///     <item>
+            ///         <term><see cref="CombineResult.Nothing"/></term>
+            ///         <description>The conjunction result matches no possible values.</description>
+            ///     </item>
+            /// </list>
+            /// </remarks>
+            /// <param name="other">The other <see cref="VersionComparer"/> to try to perform conjunction with.</param>
+            /// <param name="comparer">The single <see cref="VersionComparer"/> the operation produced, if any.</param>
+            /// <param name="range">The single <see cref="Subrange"/> the operation produced, if any.</param>
+            /// <returns>A <see cref="CombineResult"/> indicating which of the outputs were set, if any.</returns>
             public CombineResult TryConjunction(in VersionComparer other, out VersionComparer comparer, out Subrange range)
             {
                 comparer = default;
@@ -135,6 +180,10 @@ namespace Hive.Versioning
                     return CombineResult.Nothing;
             }
 
+            /// <summary>
+            /// A part of the implementation of <see cref="TryConjunction(in VersionComparer, out VersionComparer, out Subrange)"/> that handles
+            /// the cases where exactly one of the inputs are an <see cref="ComparisonType.ExactEqual"/> comparer.
+            /// </summary>
             private static bool TryConjunctionEqualPart(in VersionComparer a, in VersionComparer b, out VersionComparer comp, out CombineResult res)
             {
                 // if one is exact equal and the other matches it, then return the one that is an equal
@@ -160,6 +209,36 @@ namespace Hive.Versioning
                 return false;
             }
 
+            /// <summary>
+            /// Tries to perform a logical disjunction (or) with <paramref name="other"/>.
+            /// </summary>
+            /// <remarks>
+            /// This method will only return one of the following values:
+            /// <list type="table">
+            ///     <item>
+            ///         <term><see cref="CombineResult.OneComparer"/></term>
+            ///         <description>A single <see cref="VersionComparer"/> was produced, and <paramref name="comparer"/> was set.</description>
+            ///     </item>
+            ///     <item>
+            ///         <term><see cref="CombineResult.OneSubrange"/></term>
+            ///         <description>A single <see cref="Subrange"/> was produced, and <paramref name="range"/> was set.</description>
+            ///     </item>
+            ///     <item>
+            ///         <term><see cref="CombineResult.Everything"/></term>
+            ///         <description>The disjunction result matches every valid value. For convenience, 
+            ///             <paramref name="range"/> is set to <see cref="Subrange.Everything"/>.</description>
+            ///     </item>
+            ///     <item>
+            ///         <term><see cref="CombineResult.Unrepresentable"/></term>
+            ///         <description>The disjunction result is not representable with only a <see cref="VersionComparer"/> and a <see cref="Subrange"/>.
+            ///             For example, if the inputs are non-equal <see cref="ComparisonType.ExactEqual"/> comparers, this will be returned.</description>
+            ///     </item>
+            /// </list>
+            /// </remarks>
+            /// <param name="other">The other <see cref="VersionComparer"/> to try to perform disjunction with.</param>
+            /// <param name="comparer">The single <see cref="VersionComparer"/> the operation produced, if any.</param>
+            /// <param name="range">The single <see cref="Subrange"/> the operation produced, if any.</param>
+            /// <returns>A <see cref="CombineResult"/> indicating which of the outputs were set, if any.</returns>
             public CombineResult TryDisjunction(in VersionComparer other, out VersionComparer comparer, out Subrange range)
             {
                 comparer = default;
@@ -202,6 +281,10 @@ namespace Hive.Versioning
                     return CombineResult.OneSubrange;
             }
 
+            /// <summary>
+            /// A part of the implementation of <see cref="TryDisjunction(in VersionComparer, out VersionComparer, out Subrange)"/> that handles
+            /// the cases where exactly one of the inputs are an <see cref="ComparisonType.ExactEqual"/> comparer.
+            /// </summary>
             private static bool TryDisjunctionEqualPart(in VersionComparer a, in VersionComparer b, out VersionComparer comp, out CombineResult res)
             {
                 // if one is exact equal and the other matches it, then return the one that matches it
@@ -266,6 +349,11 @@ namespace Hive.Versioning
                     return LowerBound.Matches(ver) || UpperBound.Matches(ver);
                 }
             }
+
+            /// <remarks>
+            /// This is identical to <see cref="Matches(Version)"/> except that it uses <see cref="VersionComparer.Matches(in VersionComparer)"/>
+            /// instead of <see cref="VersionComparer.Matches(Version)"/>.
+            /// </remarks>
             public bool Matches(in VersionComparer ver)
             {
                 if (IsInward)
@@ -285,6 +373,30 @@ namespace Hive.Versioning
                 return new Subrange(lower, upper);
             }
 
+            /// <summary>
+            /// Tries to perform a logical conjunction (and) with <paramref name="other"/>.
+            /// </summary>
+            /// <remarks>
+            /// This method will only return one of the following values:
+            /// <list type="table">
+            ///     <item>
+            ///         <term><see cref="CombineResult.OneSubrange"/></term>
+            ///         <description>A single <see cref="Subrange"/> was produced, and <paramref name="result"/> was set.</description>
+            ///     </item>
+            ///     <item>
+            ///         <term><see cref="CombineResult.TwoSubranges"/></term>
+            ///         <description>Two <see cref="Subrange"/>s were produced, and both <paramref name="result"/> and <paramref name="result2"/> were set.</description>
+            ///     </item>
+            ///     <item>
+            ///         <term><see cref="CombineResult.Nothing"/></term>
+            ///         <description>The conjunction result matches no valid values.</description>
+            ///     </item>
+            /// </list>
+            /// </remarks>
+            /// <param name="other">The other <see cref="Subrange"/> to try to perform conjunction with.</param>
+            /// <param name="result">The single (or first) <see cref="Subrange"/> the operation produced, if any.</param>
+            /// <param name="result2">The second <see cref="Subrange"/> the operation produced, if any.</param>
+            /// <returns>A <see cref="CombineResult"/> indicating which of the outputs were set, if any.</returns>
             public CombineResult TryConjunction(in Subrange other, out Subrange result, out Subrange result2)
             {
                 result2 = default;
@@ -330,6 +442,10 @@ namespace Hive.Versioning
                 }
             }
 
+            /// <remarks>
+            /// A part of the implementation of <see cref="TryConjunction(in Subrange, out Subrange, out Subrange)"/>, handling the cases where exactly one
+            /// input is an inward-facing <see cref="Subrange"/>.
+            /// </remarks>
             private static bool TryConjunctionOneInwardPart(in Subrange a, in Subrange b, out Subrange result, out Subrange result2, out CombineResult retVal)
             {
                 result2 = default;
@@ -379,7 +495,31 @@ namespace Hive.Versioning
                 return false;
             }
 
-
+            /// <summary>
+            /// Tries to perform a logical disjunction (or) with <paramref name="other"/>.
+            /// </summary>
+            /// <remarks>
+            /// This method will only return one of the following values:
+            /// <list type="table">
+            ///     <item>
+            ///         <term><see cref="CombineResult.OneSubrange"/></term>
+            ///         <description>A single <see cref="Subrange"/> was produced, and <paramref name="result"/> was set.</description>
+            ///     </item>
+            ///     <item>
+            ///         <term><see cref="CombineResult.TwoSubranges"/></term>
+            ///         <description>Two <see cref="Subrange"/>s were produced, and both <paramref name="result"/> and <paramref name="result2"/> were set.</description>
+            ///     </item>
+            ///     <item>
+            ///         <term><see cref="CombineResult.Everything"/></term>
+            ///         <description>The disjunction result matches every valid value. For convenience, 
+            ///             <paramref name="result"/> is set to <see cref="Everything"/>.</description>
+            ///     </item>
+            /// </list>
+            /// </remarks>
+            /// <param name="other">The other <see cref="Subrange"/> to try to perform disjunction with.</param>
+            /// <param name="result">The single (or first) <see cref="Subrange"/> the operation produced, if any.</param>
+            /// <param name="result2">The second <see cref="Subrange"/> the operation produced, if any.</param>
+            /// <returns>A <see cref="CombineResult"/> indicating which of the outputs were set, if any.</returns>
             public CombineResult TryDisjunction(in Subrange other, out Subrange result, out Subrange result2)
             {
                 result2 = default;
@@ -438,6 +578,10 @@ namespace Hive.Versioning
                 }
             }
 
+            /// <remarks>
+            /// A part of the implementation of <see cref="TryDisjunction(in Subrange, out Subrange, out Subrange)"/>, handling the cases where exactly one
+            /// input is an inward-facing <see cref="Subrange"/>.
+            /// </remarks>
             private static bool TryDisjunctionOneInwardPart(in Subrange a, in Subrange b, out Subrange result, out Subrange result2, out CombineResult retVal)
             {
                 result2 = default;
@@ -514,6 +658,9 @@ namespace Hive.Versioning
                 return false;
             }
 
+            /// <summary>
+            /// Checks if two <see cref="VersionComparer"/>s are mutually exclusive, but meet exactly leaving no versions that neither matches.
+            /// </summary>
             private static bool TestExactMeeting(in VersionComparer a, in VersionComparer b)
                 => a.CompareTo == b.CompareTo
                 && ((a.Type & b.Type) & ~ComparisonType.ExactEqual) == ComparisonType.None  // they have opposite directions
