@@ -75,6 +75,32 @@ namespace Hive.Versioning.Tests.Ranges
         };
 
         [Theory]
+        [InlineData("1.0.0", nameof(ComparisonType.Greater), "1.0.1", nameof(ComparisonType.GreaterEqual), "1.0.1", nameof(ComparisonType.GreaterEqual))]
+        [InlineData("1.0.1", nameof(ComparisonType.Greater), "1.0.0", nameof(ComparisonType.GreaterEqual), "1.0.1", nameof(ComparisonType.Greater))]
+        [InlineData("1.0.0", nameof(ComparisonType.GreaterEqual), "1.0.1", nameof(ComparisonType.Greater), "1.0.1", nameof(ComparisonType.Greater))]
+        [InlineData("1.0.1", nameof(ComparisonType.GreaterEqual), "1.0.0", nameof(ComparisonType.Greater), "1.0.1", nameof(ComparisonType.GreaterEqual))]
+        [InlineData("1.0.0", nameof(ComparisonType.Less), "1.0.1", nameof(ComparisonType.LessEqual), "1.0.0", nameof(ComparisonType.Less))]
+        [InlineData("1.0.1", nameof(ComparisonType.Less), "1.0.0", nameof(ComparisonType.LessEqual), "1.0.0", nameof(ComparisonType.LessEqual))]
+        [InlineData("1.0.0", nameof(ComparisonType.LessEqual), "1.0.1", nameof(ComparisonType.Less), "1.0.0", nameof(ComparisonType.LessEqual))]
+        [InlineData("1.0.1", nameof(ComparisonType.LessEqual), "1.0.0", nameof(ComparisonType.Less), "1.0.0", nameof(ComparisonType.Less))]
+        [InlineData("1.0.0", nameof(ComparisonType.Greater), "1.0.1", nameof(ComparisonType.ExactEqual), "1.0.1", nameof(ComparisonType.ExactEqual))]
+        [InlineData("1.0.0", nameof(ComparisonType.Less), "0.1.1", nameof(ComparisonType.ExactEqual), "0.1.1", nameof(ComparisonType.ExactEqual))]
+        [InlineData("1.0.1", nameof(ComparisonType.ExactEqual), "1.0.1", nameof(ComparisonType.ExactEqual), "1.0.1", nameof(ComparisonType.ExactEqual))]
+        public void TextComparerConjunctionComparer(string verAs, string typeAs, string verBs, string typeBs, string verRs, string typeRs)
+        {
+            var a = CreateComparer(verAs, typeAs);
+            var b = CreateComparer(verBs, typeBs);
+
+            var expect = CreateComparer(verRs, typeRs);
+
+            var result = a.TryConjunction(b, out var newComparer, out _);
+
+            Assert.Equal(CombineResult.OneComparer, result);
+            Assert.Equal(expect.Type, newComparer.Type);
+            Assert.Equal(expect.CompareTo, newComparer.CompareTo);
+        }
+
+        [Theory]
         [InlineData("1.0.0", nameof(ComparisonType.Greater), "1.0.1", nameof(ComparisonType.GreaterEqual), "1.0.0", nameof(ComparisonType.Greater))]
         [InlineData("1.0.1", nameof(ComparisonType.Greater), "1.0.0", nameof(ComparisonType.GreaterEqual), "1.0.0", nameof(ComparisonType.GreaterEqual))]
         [InlineData("1.0.0", nameof(ComparisonType.GreaterEqual), "1.0.1", nameof(ComparisonType.Greater), "1.0.0", nameof(ComparisonType.GreaterEqual))]
@@ -86,14 +112,14 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData("1.0.0", nameof(ComparisonType.Greater), "1.0.1", nameof(ComparisonType.ExactEqual), "1.0.0", nameof(ComparisonType.Greater))]
         [InlineData("1.0.0", nameof(ComparisonType.Less), "0.1.1", nameof(ComparisonType.ExactEqual), "1.0.0", nameof(ComparisonType.Less))]
         [InlineData("1.0.1", nameof(ComparisonType.ExactEqual), "1.0.1", nameof(ComparisonType.ExactEqual), "1.0.1", nameof(ComparisonType.ExactEqual))]
-        public void TextComparerCombineToComparer(string verAs, string typeAs, string verBs, string typeBs, string verRs, string typeRs)
+        public void TextComparerDisjunctionComparer(string verAs, string typeAs, string verBs, string typeBs, string verRs, string typeRs)
         {
             var a = CreateComparer(verAs, typeAs);
             var b = CreateComparer(verBs, typeBs);
 
             var expect = CreateComparer(verRs, typeRs);
 
-            var result = a.TryConjunction(b, out var newComparer, out _);
+            var result = a.TryDisjunction(b, out var newComparer, out _);
 
             Assert.Equal(CombineResult.OneComparer, result);
             Assert.Equal(expect.Type, newComparer.Type);
