@@ -34,9 +34,59 @@ namespace Hive.Versioning
             additionalComparer = comparer;
         }
 
+        public VersionRange Disjunction(VersionRange other)
+        {
+            VersionComparer? comparer = null;
+            Subrange? subrange = null;
+            if (additionalComparer != null && other.additionalComparer != null)
+            {
+                var result = additionalComparer.Value.TryDisjunction(other.additionalComparer.Value, out var resComp, out var resSub);
+                switch (result)
+                {
+                    case CombineResult.OneComparer:
+                        comparer = resComp;
+                        break;
+                    case CombineResult.OneSubrange:
+                        subrange = resSub;
+                        break;
+                    case CombineResult.Everything:
+                        return Everything;
+                    case CombineResult.Unrepresentable:
+                        if (additionalComparer.Value.Type == ComparisonType.ExactEqual)
+                        {
+                            subrange = additionalComparer.Value.ToExactEqualSubrange();
+                            comparer = other.additionalComparer;
+                        }
+                        else
+                        {
+                            subrange = other.additionalComparer.Value.ToExactEqualSubrange();
+                            comparer = additionalComparer;
+                        }
+                        break;
+                    default: throw new InvalidOperationException();
+                }
+            }
+            else if (additionalComparer != null)
+                comparer = additionalComparer;
+            else
+                comparer = other.additionalComparer;
+
+            var allSubranges = new Subrange[subranges.Length + other.subranges.Length + (subrange != null ? 1 : 0)];
+            Array.Copy(subranges, allSubranges, subranges.Length);
+            Array.Copy(other.subranges, 0, allSubranges, subranges.Length, other.subranges.Length);
+            if (subrange != null)
+                allSubranges[^1] = subrange.Value;
+
+            return new VersionRange(allSubranges, comparer);
+        }
+
+        public static VersionRange operator |(VersionRange a, VersionRange b) => a.Disjunction(b);
 
 
         private static readonly Subrange[] EverythingSubranges = new[] { Subrange.Everything };
+
+        public static VersionRange Everything { get; } = new VersionRange(EverythingSubranges, null);
+        public static VersionRange Nothing { get; } = new VersionRange(Array.Empty<Subrange>(), null);
 
         private static (Subrange[] Ranges, VersionComparer? Comparer) FixupRangeList(Subrange[] ranges, VersionComparer? comparer)
         {
