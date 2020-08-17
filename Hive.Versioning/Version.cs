@@ -95,6 +95,11 @@ namespace Hive.Versioning
         /// </summary>
         public IEnumerable<string> BuildIds => buildIds;
 
+        /// <summary>
+        /// Appends this <see cref="Version"/> to the provided <see cref="StringBuilder"/>.
+        /// </summary>
+        /// <param name="sb">The <see cref="StringBuilder"/> to append to.</param>
+        /// <returns>The provided <see cref="StringBuilder"/></returns>
         public StringBuilder ToString(StringBuilder sb)
         {
             sb.Append(Major).Append(".")
