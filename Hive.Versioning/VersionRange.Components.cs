@@ -241,10 +241,18 @@ namespace Hive.Versioning
                 if (lower.CompareTo > upper.CompareTo)
                     throw new ArgumentException("Lower bound must be below upper bound");
 
-                LowerBound = lower;
-                UpperBound = upper;
-
-                IsInward = lower.Matches(upper) && upper.Matches(lower);
+                if (lower.CompareTo == upper.CompareTo && (lower.Type & upper.Type & ComparisonType.ExactEqual) != 0)
+                { // this is only the case if this is an ExactEqual subrange, so we can set it more consistently
+                    LowerBound = new VersionComparer(lower.CompareTo, ComparisonType.GreaterEqual);
+                    UpperBound = new VersionComparer(upper.CompareTo, ComparisonType.LessEqual);
+                    IsInward = true; // ExactEqual subranges are always considered inward
+                }
+                else
+                {
+                    LowerBound = lower;
+                    UpperBound = upper;
+                    IsInward = lower.Matches(upper) && upper.Matches(lower);
+                }
             }
 
             public bool Matches(Version ver)

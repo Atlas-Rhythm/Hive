@@ -103,7 +103,7 @@ namespace Hive.Versioning.Tests.Ranges
             new object[] { "<1.0.0", ">=2.0.0", "2.0.0", true },
         };
 
-        [Theory]
+        /*[Theory]
         [InlineData(">=1.0.0", "<2.0.0", ">=1.0.1", "<2.0.0-pre.1", true, ">=1.0.0", "<2.0.0")]
         [InlineData(">=1.0.0", "<2.0.0", ">=1.0.1", "<2.0.0", true, ">=1.0.0", "<2.0.0")]
         [InlineData(">=1.0.0", "<2.0.0", ">=1.0.0", "<2.0.0-pre.1", true, ">=1.0.0", "<2.0.0")]
@@ -118,6 +118,7 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData(">=1.0.0", "<2.0.0", ">2.0.0", "<3.0.0", false, "", "")]
         public void TestTryConjunction(string lowerA, string upperA, string lowerB, string upperB, bool succeeds, string lowerR, string upperR)
         {
+            // TODO: this test needs to be completely redone, as the underlying impl has been
             var ra = CreateSubrange(lowerA, upperA);
             var rb = CreateSubrange(lowerB, upperB);
 
@@ -127,6 +128,37 @@ namespace Hive.Versioning.Tests.Ranges
                 var expect = CreateSubrange(lowerR, upperR);
                 CheckEqual(expect, result);
             }
+        }*/
+
+        [Theory]
+        [InlineData(">=1.0.0 <2.0.0", ">=1.0.1 <2.0.0-pre.1", nameof(CombineResult.OneSubrange), ">=1.0.1 <2.0.0-pre.1", null)]
+        [InlineData(">=1.0.0 <2.0.0", ">=1.0.1 <2.0.0", nameof(CombineResult.OneSubrange), ">=1.0.1 <2.0.0", null)]
+        [InlineData(">=1.0.0 <2.0.0", ">=1.0.0 <2.0.0", nameof(CombineResult.OneSubrange), ">=1.0.0 <2.0.0", null)]
+        [InlineData(">=1.0.0 <2.0.0", ">1.0.0 <2.0.0", nameof(CombineResult.OneSubrange), ">1.0.0 <2.0.0", null)]
+        [InlineData("<1.0.0 >=2.0.0", ">=1.0.0 <=2.0.0", nameof(CombineResult.OneSubrange), ">=2.0.0 <=2.0.0", null)]
+        [InlineData("<1.0.0 >2.0.0", ">1.0.0 <2.0.0", nameof(CombineResult.Nothing), null, null)]
+        [InlineData("<1.0.0 >2.0.0", ">0.1.0 <2.0.0", nameof(CombineResult.OneSubrange), ">0.1.0 <1.0.0", null)]
+        [InlineData("<1.0.0 >2.0.0", ">1.0.0 <3.0.0", nameof(CombineResult.OneSubrange), ">2.0.0 <3.0.0", null)]
+        [InlineData("<1.0.0 >2.0.0", ">0.1.0 <3.0.0", nameof(CombineResult.TwoSubranges), ">0.1.0 <1.0.0", ">2.0.0 <3.0.0")]
+        [InlineData("<1.0.0 >2.0.0", "<1.0.0 >2.0.0", nameof(CombineResult.OneSubrange), "<1.0.0 >2.0.0", null)]
+        [InlineData("<1.0.0 >2.0.0", "<1.1.0 >2.1.0", nameof(CombineResult.OneSubrange), "<1.0.0 >2.1.0", null)]
+        [InlineData("<1.1.0 >2.1.0", "<1.0.0 >2.0.0", nameof(CombineResult.OneSubrange), "<1.0.0 >2.1.0", null)]
+        [InlineData("<1.0.0 >2.0.0", "<3.0.0 >4.0.0", nameof(CombineResult.TwoSubranges), "<1.0.0 >4.0.0", ">2.0.0 <3.0.0")]
+        public void TestTryConjunction(string Sa, string Sb, string SresultType, string? Sresult1, string? Sresult2)
+        {
+            var a = ParseSubrange(Sa);
+            var b = ParseSubrange(Sb);
+            var expectResult = Enum.Parse<CombineResult>(SresultType);
+            var expect1 = Sresult1 == null ? null : new Subrange?(ParseSubrange(Sresult1));
+            var expect2 = Sresult2 == null ? null : new Subrange?(ParseSubrange(Sresult2));
+
+            var result = a.TryConjunction(b, out var result1, out var result2);
+            Assert.Equal(expectResult, result);
+            if (expect1 != null)
+                CheckEqual(expect1.Value, result1);
+            if (expect2 != null)
+                CheckEqual(expect2.Value, result2);
+
         }
 
         private static void CheckEqual(in Subrange expect, in Subrange result)
