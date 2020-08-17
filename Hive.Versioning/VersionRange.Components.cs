@@ -39,7 +39,7 @@ namespace Hive.Versioning
             Everything
         }
 
-        internal partial struct VersionComparer
+        internal partial struct VersionComparer : IEquatable<VersionComparer>
         {
             public readonly Version CompareTo;
             public readonly ComparisonType Type;
@@ -309,9 +309,12 @@ namespace Hive.Versioning
                 res = default;
                 return false;
             }
+
+            public bool Equals(VersionComparer other)
+                => Type == other.Type && CompareTo == other.CompareTo;
         }
 
-        internal partial struct Subrange
+        internal partial struct Subrange : IEquatable<Subrange>
         {
             public readonly VersionComparer LowerBound;
             public readonly VersionComparer UpperBound;
@@ -334,7 +337,14 @@ namespace Hive.Versioning
                 {
                     LowerBound = lower;
                     UpperBound = upper;
-                    IsInward = lower.Matches(upper) && upper.Matches(lower);
+
+                    if (Everything.LowerBound.CompareTo != null && TestExactMeeting(lower, upper))
+                    {
+                        LowerBound = Everything.LowerBound;
+                        UpperBound = Everything.UpperBound;
+                    }
+
+                    IsInward = LowerBound.Matches(UpperBound) && UpperBound.Matches(LowerBound);
                 }
             }
 
@@ -665,6 +675,9 @@ namespace Hive.Versioning
                 => a.CompareTo == b.CompareTo
                 && ((a.Type & b.Type) & ~ComparisonType.ExactEqual) == ComparisonType.None  // they have opposite directions
                 && ((a.Type ^ b.Type) & ComparisonType.ExactEqual) != ComparisonType.None; // there is exactly one equal between them
+
+            public bool Equals(Subrange other)
+                => LowerBound.Equals(other.LowerBound) && UpperBound.Equals(other.UpperBound);
         }
 
         internal partial struct Subrange

@@ -3,13 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using static Hive.Versioning.ParseHelpers;
 
 namespace Hive.Versioning
 {
-    public partial class VersionRange
+    public partial class VersionRange : IEquatable<VersionRange>
     {
         private readonly Subrange[] subranges;
         private readonly VersionComparer? additionalComparer;
@@ -90,6 +91,9 @@ namespace Hive.Versioning
 
         private static (Subrange[] Ranges, VersionComparer? Comparer) FixupRangeList(Subrange[] ranges, VersionComparer? comparer)
         {
+            if (ranges.Length == 0 && comparer == null)
+                return (ranges, comparer);
+
             Array.Sort(ranges, (a, b) => a.LowerBound.CompareTo.CompareTo(b.LowerBound.CompareTo));
 
             var ab = new ArrayBuilder<Subrange>(ranges.Length);
@@ -97,12 +101,6 @@ namespace Hive.Versioning
             Subrange nextToInsert = default;
             for (int i = 0; i < ranges.Length; i++)
             {
-                if (i == 0)
-                {
-                    nextToInsert = ranges[i];
-                    continue;
-                }
-
                 var current = ranges[i];
 
                 if (comparer != null)
@@ -187,6 +185,12 @@ namespace Hive.Versioning
                     }
                 }
 
+                if (i == 0)
+                {
+                    nextToInsert = current;
+                    continue;
+                }
+
                 var result = nextToInsert.TryDisjunction(current, out var result1, out var result2);
                 switch (result)
                 {
@@ -240,6 +244,38 @@ namespace Hive.Versioning
 
         public override string ToString()
             => ToString(new StringBuilder()).ToString();
+
+        public override bool Equals(object obj)
+            => obj is VersionRange range && Equals(range);
+
+        public bool Equals(VersionRange other)
+        {
+            if (ReferenceEquals(this, other)) return true;
+            if (additionalComparer == null ^ other.additionalComparer == null)
+                return false;
+            if (subranges.Length != other.subranges.Length)
+                return false;
+            if (additionalComparer != null && other.additionalComparer != null
+             && !additionalComparer.Value.Equals(other.additionalComparer.Value))
+                return false;
+
+            for (var i = 0; i < subranges.Length; i++)
+            {
+                if (!subranges[i].Equals(other.subranges[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        public static bool operator ==(VersionRange? a, VersionRange? b)
+        {
+            if (a is null && b is null) return true;
+            if (a is null || b is null) return false;
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(VersionRange? a, VersionRange? b) => !(a == b);
 
         public static bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen(false)] out VersionRange range)
         {
