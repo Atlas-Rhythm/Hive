@@ -8,6 +8,10 @@ namespace Hive.Utilities
     /// <summary>
     /// A type that can be used to (fairly) efficitently create arrays with minimal allocation.
     /// </summary>
+    /// <remarks>
+    /// Before going out of scope, each instance <b>must</b> have either <see cref="ToArray"/> or <see cref="Clear"/> called
+    /// to ensure that the underlying array is returned to the <see cref="ArrayPool{T}"/> it was rented from.
+    /// </remarks>
     /// <typeparam name="T">The type of the array elements.</typeparam>
     public ref struct ArrayBuilder<T>
     {
@@ -55,6 +59,17 @@ namespace Hive.Utilities
             }
             array = newArr;
             rented = true;
+        }
+
+        /// <summary>
+        /// Clears the underlying array and frees it.
+        /// </summary>
+        public void Clear()
+        {
+            Count = 0;
+            if (rented) pool.Return(array, true);
+            array = Array.Empty<T>();
+            rented = false;
         }
 
         /// <summary>

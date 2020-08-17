@@ -428,7 +428,7 @@ namespace Hive.Versioning
                 }
                 while (TryReadPreReleaseId(ref text, out id));
 
-                _ = ab.ToArray();
+                ab.Clear();
                 text = copy;
                 return false;
             }
@@ -462,7 +462,7 @@ namespace Hive.Versioning
                 }
                 while (TryReadBuildId(ref text, out id));
 
-                _ = ab.ToArray();
+                ab.Clear();
                 text = copy;
                 return false;
             }
