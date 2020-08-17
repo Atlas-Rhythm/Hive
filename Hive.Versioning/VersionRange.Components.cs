@@ -488,15 +488,17 @@ namespace Hive.Versioning
                     // lower bound is within the lower segment, upper is not
                     if (b.LowerBound.Matches(a.LowerBound) && !b.UpperBound.Matches(a.UpperBound))
                     {
-                        retVal = b.LowerBound.TryDisjunction(a.UpperBound, out _, out result);
-                        Assert(retVal == CombineResult.OneSubrange);
+                        Assert(b.LowerBound.TryDisjunction(a.UpperBound, out var compare, out _) == CombineResult.OneComparer);
+                        result = new Subrange(compare, b.UpperBound);
+                        retVal = CombineResult.OneSubrange;
                         return true;
                     }
                     // upper bound is within the upper segment, lower is not
                     if (b.UpperBound.Matches(a.UpperBound) && !b.LowerBound.Matches(a.LowerBound))
                     {
-                        retVal = b.UpperBound.TryDisjunction(a.LowerBound, out _, out result);
-                        Assert(retVal == CombineResult.OneSubrange);
+                        Assert(b.UpperBound.TryDisjunction(a.LowerBound, out var compare, out _) == CombineResult.OneComparer);
+                        result = new Subrange(b.LowerBound, compare);
+                        retVal = CombineResult.OneSubrange;
                         return true;
                     }
 
