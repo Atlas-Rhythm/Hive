@@ -28,6 +28,8 @@ namespace Hive.Versioning
 
         private VersionRange(Subrange[] srs, VersionComparer? comparer)
         {
+            // TODO: during construction, this should sort and reduce the input subranges
+
             subranges = srs;
             additionalComparer = comparer;
         }
@@ -97,12 +99,13 @@ namespace Hive.Versioning
                 {
                     if (comparer != null)
                     {
-                        var res = comparer.Value.TryConjunction(compare.Value, out var newComparer, out var sr);
+                        var res = comparer.Value.TryDisjunction(compare.Value, out var newComparer, out var sr);
                         switch (res)
                         {
                             case CombineResult.OneComparer:
                                 comparer = newComparer;
                                 break;
+                            case CombineResult.Everything:
                             case CombineResult.OneSubrange:
                                 ab.Add(sr);
                                 comparer = null;
