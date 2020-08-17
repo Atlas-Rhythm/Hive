@@ -97,16 +97,17 @@ namespace Hive.Versioning
                 {
                     if (comparer != null)
                     {
-                        var res = comparer.Value.CombineWith(compare.Value, out var newComparer, out var sr);
+                        var res = comparer.Value.TryConjunction(compare.Value, out var newComparer, out var sr);
                         switch (res)
                         {
-                            case ComparerCombineResult.SingleComparer:
+                            case CombineResult.OneComparer:
                                 comparer = newComparer;
                                 break;
-                            case ComparerCombineResult.Subrange:
+                            case CombineResult.OneSubrange:
                                 ab.Add(sr);
+                                comparer = null;
                                 break;
-                            case ComparerCombineResult.Invalid:
+                            case CombineResult.Unrepresentable:
                                 // one of them is an ExactEqual comparer
                                 if (comparer.Value.Type == ComparisonType.ExactEqual)
                                 {

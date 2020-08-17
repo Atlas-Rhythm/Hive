@@ -116,12 +116,12 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData(">=1.0.0", "<2.0.0", ">=2.0.0", "<3.0.0", true, ">=1.0.0", "<3.0.0")]
         [InlineData(">=2.0.0", "<3.0.0", ">=1.0.0", "<2.0.0", true, ">=1.0.0", "<3.0.0")]
         [InlineData(">=1.0.0", "<2.0.0", ">2.0.0", "<3.0.0", false, "", "")]
-        public void TestTryCombineWith(string lowerA, string upperA, string lowerB, string upperB, bool succeeds, string lowerR, string upperR)
+        public void TestTryConjunction(string lowerA, string upperA, string lowerB, string upperB, bool succeeds, string lowerR, string upperR)
         {
             var ra = CreateSubrange(lowerA, upperA);
             var rb = CreateSubrange(lowerB, upperB);
 
-            Assert.Equal(succeeds, ra.TryCombineWith(rb, out var result));
+            Assert.Equal(succeeds, ra.TryConjunction(rb, out var result, out var result2) != CombineResult.Unrepresentable);
             if (succeeds)
             {
                 var expect = CreateSubrange(lowerR, upperR);

@@ -38,13 +38,13 @@ namespace Hive.Versioning.Tests.Ranges
 
             var inversionResult = comparer.Invert(out var newComparer, out var newRange);
 
-            Assert.NotEqual(ComparerCombineResult.Invalid, inversionResult);
+            Assert.NotEqual(CombineResult.Unrepresentable, inversionResult);
             Assert.Equal(comparer.Type == ComparisonType.ExactEqual
-                ? ComparerCombineResult.Subrange
-                : ComparerCombineResult.SingleComparer,
+                ? CombineResult.OneSubrange
+                : CombineResult.OneComparer,
                 inversionResult);
 
-            if (inversionResult == VersionRange.ComparerCombineResult.SingleComparer)
+            if (inversionResult == VersionRange.CombineResult.OneComparer)
                 Assert.Equal(!matches, newComparer.Matches(compareTo));
             else
                 Assert.Equal(!matches, newRange.Matches(compareTo));
@@ -93,9 +93,9 @@ namespace Hive.Versioning.Tests.Ranges
 
             var expect = CreateComparer(verRs, typeRs);
 
-            var result = a.CombineWith(b, out var newComparer, out _);
+            var result = a.TryConjunction(b, out var newComparer, out _);
 
-            Assert.Equal(ComparerCombineResult.SingleComparer, result);
+            Assert.Equal(CombineResult.OneComparer, result);
             Assert.Equal(expect.Type, newComparer.Type);
             Assert.Equal(expect.CompareTo, newComparer.CompareTo);
         }

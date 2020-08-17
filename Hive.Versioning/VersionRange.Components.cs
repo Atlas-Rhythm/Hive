@@ -10,6 +10,12 @@ namespace Hive.Versioning
     // For everything else, see VersionRange.cs
     public partial class VersionRange
     {
+        private static void Assert(bool value)
+        {
+            if (!value)
+                throw new InvalidOperationException("Assertion failed");
+        }
+
         [Flags]
         internal enum ComparisonType
         {
@@ -23,11 +29,14 @@ namespace Hive.Versioning
             _All = ExactEqual | Greater | Less,
         }
 
-        internal enum ComparerCombineResult
+        internal enum CombineResult
         {
-            SingleComparer,
-            Subrange,
-            Invalid
+            OneComparer,
+            OneSubrange,
+            TwoSubranges,
+            Unrepresentable,
+            Nothing,
+            Everything
         }
 
         internal partial struct VersionComparer
@@ -60,19 +69,18 @@ namespace Hive.Versioning
 
             public Subrange ToExactEqualSubrange()
             {
-                if (Type != ComparisonType.ExactEqual)
-                    throw new InvalidOperationException();
+                Assert(Type == ComparisonType.ExactEqual);
                 return new Subrange(new VersionComparer(CompareTo, ComparisonType.GreaterEqual), new VersionComparer(CompareTo, ComparisonType.LessEqual));
             }
 
-            public ComparerCombineResult Invert(out VersionComparer comparer, out Subrange range)
+            public CombineResult Invert(out VersionComparer comparer, out Subrange range)
             {
                 switch (Type)
                 {
                     case ComparisonType.ExactEqual:
                         comparer = default;
                         range = new Subrange(new VersionComparer(CompareTo, ComparisonType.Less), new VersionComparer(CompareTo, ComparisonType.Greater));
-                        return ComparerCombineResult.Subrange;
+                        return CombineResult.OneSubrange;
                     default:
                         range = default;
                         comparer = new VersionComparer(CompareTo,
@@ -84,20 +92,20 @@ namespace Hive.Versioning
                                 ComparisonType.LessEqual => ComparisonType.Greater,
                                 _ => throw new InvalidOperationException()
                             });
-                        return ComparerCombineResult.SingleComparer;
+                        return CombineResult.OneComparer;
                 }
             }
 
-            public ComparerCombineResult CombineWith(in VersionComparer other, out VersionComparer comparer, out Subrange range)
+            public CombineResult TryConjunction(in VersionComparer other, out VersionComparer comparer, out Subrange range)
             {
                 comparer = default;
                 range = default;
 
                 if ((Type & other.Type & ~ComparisonType.ExactEqual) != ComparisonType.None) // they're pointing the same direction
-                { // both face in the same direction
-                    // so we want to pick the one that encapsulates the other completely
-                    comparer = Matches(other) ? this : other;
-                    return ComparerCombineResult.SingleComparer;
+                { 
+                    // so we want to pick the one that is encapsulated completely (the conjunction)
+                    comparer = Matches(other) ? other : this;
+                    return CombineResult.OneComparer;
                 }
 
                 if (Type == ComparisonType.ExactEqual && other.Type == ComparisonType.ExactEqual)
@@ -105,25 +113,96 @@ namespace Hive.Versioning
                     if (CompareTo == other.CompareTo)
                     {
                         comparer = this;
-                        return ComparerCombineResult.SingleComparer;
+                        return CombineResult.OneComparer;
                     }
                     else
                     {
-                        // there is no way to create a Subrange or VersionComparer that has only the specified members
-                        return ComparerCombineResult.Invalid;
+                        // a conjunction of 2 different exact values is nothing
+                        return CombineResult.Nothing;
                     }
                 }
 
-                if (CombineWithEqualPart(this, other, out comparer, out var res)) return res;
-                if (CombineWithEqualPart(other, this, out comparer, out res)) return res;
+                if (TryConjunctionEqualPart(this, other, out comparer, out var res)) return res;
+                if (TryConjunctionEqualPart(other, this, out comparer, out res)) return res;
 
                 // at this point, we know that the versions form a range, be it inward or outward
+                // but because this is a conjunction, the range *must* be inward, otherwise we return Nothing
                 var thisIsMin = CompareTo < other.CompareTo;
                 range = thisIsMin ? new Subrange(this, other) : new Subrange(other, this);
-                return ComparerCombineResult.Subrange;
+                if (range.IsInward)
+                    return CombineResult.OneSubrange;
+                else
+                    return CombineResult.Nothing;
             }
 
-            private static bool CombineWithEqualPart(in VersionComparer a, in VersionComparer b, out VersionComparer comp, out ComparerCombineResult res)
+            private static bool TryConjunctionEqualPart(in VersionComparer a, in VersionComparer b, out VersionComparer comp, out CombineResult res)
+            {
+                // if one is exact equal and the other matches it, then return the one that is an equal
+                if (a.Type == ComparisonType.ExactEqual)
+                {
+                    if (b.Matches(a))
+                    {
+                        comp = a;
+                        res = CombineResult.OneComparer;
+                        return true;
+                    }
+                    else
+                    {
+                        // if we *don't* match, then this is similar to when they are both equal and not the same
+                        comp = default;
+                        res = CombineResult.Nothing;
+                        return true;
+                    }
+                }
+
+                comp = default;
+                res = default;
+                return false;
+            }
+
+            public CombineResult TryDisjunction(in VersionComparer other, out VersionComparer comparer, out Subrange range)
+            {
+                comparer = default;
+                range = default;
+
+                if ((Type & other.Type & ~ComparisonType.ExactEqual) != ComparisonType.None) // they're pointing the same direction
+                {
+                    // so we want to pick the one that is completely encapsulates the other
+                    comparer = Matches(other) ? this : other;
+                    return CombineResult.OneComparer;
+                }
+
+                if (Type == ComparisonType.ExactEqual && other.Type == ComparisonType.ExactEqual)
+                {
+                    if (CompareTo == other.CompareTo)
+                    {
+                        comparer = this;
+                        return CombineResult.OneComparer;
+                    }
+                    else
+                    {
+                        // a disjunction of 2 different exact equal values cannot be represented by our outputs
+                        return CombineResult.Unrepresentable;
+                    }
+                }
+
+                if (TryDisjunctionEqualPart(this, other, out comparer, out var res)) return res;
+                if (TryDisjunctionEqualPart(other, this, out comparer, out res)) return res;
+
+                // at this point, we know that the versions form a range, be it inward or outward
+                // but because this is a disjunction, the range *must* be outward, otherwise we return Everything
+                var thisIsMin = CompareTo < other.CompareTo;
+                range = thisIsMin ? new Subrange(this, other) : new Subrange(other, this);
+                if (range.IsInward)
+                {
+                    range = Subrange.Everything;
+                    return CombineResult.Everything;
+                }
+                else
+                    return CombineResult.OneSubrange;
+            }
+
+            private static bool TryDisjunctionEqualPart(in VersionComparer a, in VersionComparer b, out VersionComparer comp, out CombineResult res)
             {
                 // if one is exact equal and the other matches it, then return the one that matches it
                 if (a.Type == ComparisonType.ExactEqual)
@@ -131,14 +210,14 @@ namespace Hive.Versioning
                     if (b.Matches(a))
                     {
                         comp = b;
-                        res = ComparerCombineResult.SingleComparer;
+                        res = CombineResult.OneComparer;
                         return true;
                     }
                     else
                     {
                         // if we *don't* match, then this is similar to when they are both equal and not the same
                         comp = default;
-                        res = ComparerCombineResult.Invalid;
+                        res = CombineResult.Unrepresentable;
                         return true;
                     }
                 }
@@ -193,64 +272,68 @@ namespace Hive.Versioning
 
             public Subrange Invert()
             {
-                var lowResult = LowerBound.Invert(out var lower, out _);
-                var highResult = UpperBound.Invert(out var upper, out _);
-                if (lowResult != ComparerCombineResult.SingleComparer || highResult != ComparerCombineResult.SingleComparer)
-                    throw new InvalidOperationException("Subrange somehow managed to have one of its bounds be an equality comparison");
+                Assert(LowerBound.Invert(out var lower, out _) == CombineResult.OneComparer);
+                Assert(UpperBound.Invert(out var upper, out _) == CombineResult.OneComparer);
                 return new Subrange(lower, upper);
             }
 
-            public bool TryCombineWith(in Subrange other, out Subrange result)
+            public CombineResult TryConjunction(in Subrange other, out Subrange result, out Subrange result2)
             {
+                result2 = default;
+
                 if (IsInward && other.IsInward)
                 {
                     // we're combining inward ranges, so our job is fairly simple
                     // either, there is overlap
                     if (Matches(other.LowerBound) || other.Matches(LowerBound))
                     {
-                        var lowResult = LowerBound.CombineWith(other.LowerBound, out var lower, out _);
-                        var highResult = UpperBound.CombineWith(other.UpperBound, out var upper, out _);
-                        if (lowResult != ComparerCombineResult.SingleComparer || highResult != ComparerCombineResult.SingleComparer)
-                            throw new InvalidOperationException("I'm pretty sure this case is literally impossible");
-
+                        Assert(LowerBound.TryConjunction(other.LowerBound, out var lower, out _) == CombineResult.OneComparer);
+                        Assert(UpperBound.TryConjunction(other.UpperBound, out var upper, out _) == CombineResult.OneComparer);
                         result = new Subrange(lower, upper);
-                        return true;
+                        return CombineResult.OneSubrange;
                     }
-                    // or the edges meet and leave no gap
+
+                    // this is conjunction, so there *must* be overlap
+                    /*// or the edges meet and leave no gap
                     if (TestExactMeeting(UpperBound, other.LowerBound))
                     {
-                        result = new Subrange(LowerBound, other.UpperBound);
-                        return true;
+                        //result = new Subrange(LowerBound, other.UpperBound);
+                        result = default;
+                        return CombineResult.Nothing;
                     }
                     if (TestExactMeeting(other.UpperBound, LowerBound))
                     {
-                        result = new Subrange(other.LowerBound, UpperBound);
-                        return true;
-                    }
+                        //result = new Subrange(other.LowerBound, UpperBound);
+                        result = default;
+                        return CombineResult.Nothing;
+                    }*/
 
                     // otherwise, we can't combine them
                     result = default;
-                    return false;
+                    return CombineResult.Nothing;
                 }
 
                 // handle the case where there is exactly one inward range
-                if (TryCombineWithOneInPart(this, other, out result, out var res)) return res;
-                if (TryCombineWithOneInPart(other, this, out result, out res)) return res;
+                if (TryConjunctionOneInwardPart(this, other, out result, out result2, out var res)) return res;
+                if (TryConjunctionOneInwardPart(other, this, out result, out result2, out res)) return res;
 
+                // now we know that both are outward ranges
                 {
-                    // here, they are both outward ranges
-                    // this case is *really* simple
-                    // just combine the bounds, and if they are in the wrong order, return everything
-                    var lowResult = LowerBound.CombineWith(other.LowerBound, out var lower, out _);
-                    var highResult = UpperBound.CombineWith(other.UpperBound, out var upper, out _);
-                    if (lowResult != ComparerCombineResult.SingleComparer || highResult != ComparerCombineResult.SingleComparer)
-                        throw new InvalidOperationException("The lower and upper bounds were somehow in the wrong order");
+                    var thisIsLower = LowerBound.CompareTo < other.LowerBound.CompareTo;
+                    var lowerRange = thisIsLower ? this : other;
+                    var upperRange = thisIsLower ? other : this;
 
-                    if (lower.Matches(upper) || upper.Matches(lower))
-                        result = Everything;
-                    else
-                        result = new Subrange(lower, upper);
-                    return true;
+                    var lowResult = lowerRange.LowerBound.TryConjunction(upperRange.LowerBound, out var lowCompare, out _);
+                    var midResult = lowerRange.UpperBound.TryConjunction(upperRange.LowerBound, out _, out var midRange);
+                    var highResult = lowerRange.UpperBound.TryConjunction(upperRange.UpperBound, out var highCompare, out _);
+
+                    Assert(lowResult == CombineResult.OneComparer);
+                    Assert(midResult == CombineResult.Nothing || midResult == CombineResult.OneSubrange);
+                    Assert(highResult == CombineResult.OneComparer);
+
+                    result = new Subrange(lowCompare, highCompare);
+                    result2 = midRange;
+                    return midResult == CombineResult.Nothing ? CombineResult.OneSubrange : CombineResult.TwoSubranges;
                 }
             }
 
@@ -259,19 +342,22 @@ namespace Hive.Versioning
                 && ((a.Type & b.Type) & ~ComparisonType.ExactEqual) == ComparisonType.None  // they have opposite directions
                 && ((a.Type ^ b.Type) & ComparisonType.ExactEqual) != ComparisonType.None; // there is exactly one equal between them
 
-            private static bool TryCombineWithOneInPart(in Subrange a, in Subrange b, out Subrange result, out bool retVal)
+            private static bool TryConjunctionOneInwardPart(in Subrange a, in Subrange b, out Subrange result, out Subrange result2, out CombineResult retVal)
             {
+                result2 = default;
                 if (a.IsInward && !b.IsInward)
                 {
-                    // this is completely contained by b
+                    // a is completely contained by b
                     if ((b.LowerBound.Matches(a.LowerBound) && b.LowerBound.Matches(a.UpperBound))
                      || (b.UpperBound.Matches(a.LowerBound) && b.UpperBound.Matches(a.UpperBound)))
                     {
-                        result = b;
-                        retVal = true;
+                        result = a;
+                        retVal = CombineResult.OneSubrange;
                         return true;
                     }
 
+                    // this is a conjunction, so there *must* be overlap
+                    /*
                     var meetLower = TestExactMeeting(b.LowerBound, a.LowerBound);
                     var meetUpper = TestExactMeeting(b.UpperBound, a.UpperBound);
                     // if we meet at both the upper and lower bounds, then our result is everything
@@ -295,32 +381,34 @@ namespace Hive.Versioning
                         retVal = true;
                         return true;
                     }
+                    */
                     // lower bound is within the lower segment, upper is not
                     if (b.LowerBound.Matches(a.LowerBound) && !b.UpperBound.Matches(a.UpperBound))
                     {
-                        var lowResult = b.LowerBound.CombineWith(a.UpperBound, out var lower, out _);
-                        if (lowResult != ComparerCombineResult.SingleComparer)
-                            throw new InvalidOperationException();
-
-                        result = new Subrange(lower, b.UpperBound);
-                        retVal = true;
+                        retVal = b.LowerBound.TryConjunction(a.LowerBound, out _, out result);
+                        Assert(retVal == CombineResult.OneSubrange);
                         return true;
                     }
                     // upper bound is within the upper segment, lower is not
                     if (b.UpperBound.Matches(a.UpperBound) && !b.LowerBound.Matches(a.LowerBound))
                     {
-                        var highResult = b.UpperBound.CombineWith(a.LowerBound, out var upper, out _);
-                        if (highResult != ComparerCombineResult.SingleComparer)
-                            throw new InvalidOperationException();
+                        retVal = b.UpperBound.TryConjunction(a.UpperBound, out _, out result);
+                        Assert(retVal == CombineResult.OneSubrange);
+                        return true;
+                    }
 
-                        result = new Subrange(b.LowerBound, upper);
-                        retVal = true;
+                    // the edges of A are in each side of B, so unrepresentable with only one Subrange, but representable with 2
+                    if (b.LowerBound.Matches(a.LowerBound) && b.UpperBound.Matches(a.UpperBound))
+                    {
+                        Assert(b.LowerBound.TryConjunction(a.LowerBound, out _, out result) == CombineResult.OneSubrange);
+                        Assert(b.UpperBound.TryConjunction(a.UpperBound, out _, out result2) == CombineResult.OneSubrange);
+                        retVal = CombineResult.TwoSubranges;
                         return true;
                     }
 
                     // otherwise we can't combine them
                     result = default;
-                    retVal = false;
+                    retVal = CombineResult.Nothing;
                     return true;
                 }
 
