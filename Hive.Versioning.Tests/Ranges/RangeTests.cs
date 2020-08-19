@@ -23,6 +23,32 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData("=1.0.0 <=2.0.0", false)]
         [InlineData("=1.0.0 || <=2.0.0", true)]
         [InlineData("=1.0.0 || >=2.0.0", true)]
+        [InlineData(">1.0.0 =2.0.0\n", false)]
+        [InlineData("=1.0.0 <=2.0.0�", false)]
+        [InlineData(">1.0.0-5=2.0.0\n", false)]
+        [InlineData("=2.0.0<2.0.0�", false)]
+        [InlineData("=2.0.0<2.8.0�", false)]
+        [InlineData("=2.0.0 <=2.0.8\n", false)]
+        [InlineData(">1.0.0  ||  <=2.0.0-0.0<=2.0.0  || <=2.0.0-9.0", false)]
+        [InlineData(">1.0.0  || <=2.0.0  || <=2.0.0-0.0 <=2.0.0  || <=2..0-0.0", false)]
+        [InlineData(">1.0.0 >1.0.0   || ^1.0.0  ||.0.", false)]
+        [InlineData("=2.3.0-0>2.3.0-0.C i", false)]
+        [InlineData(">2.3.0-0=2.3.0-c.C i", false)]
+        [InlineData(">1.0.0= 52.0.0", false)]
+        [InlineData("=2.3.0-0>2.3.0-8.C i", false)]
+        [InlineData("=2.3.0-0.C >2.3.0-0.C ii", false)]
+        [InlineData(">1.0.0  || <=6.0.0>9.0.0  || <=6.0.0  || <=2.  |", false)]
+        [InlineData(">9.0.0  || >=6.0.0>9.0.0  || <=6.0.0  || <=2.  |", false)]
+        [InlineData(">9.0.0  || <=6.0.0<9.0.0  || <=6.0.0  || <=2.  |", false)]
+        [InlineData(">6.0.0  || <=6.0.0>9.0.0  || <=6.0.0  || <=2.  |", false)]
+        [InlineData("=2.3.0-0.A >2.3.0-0.C ii", false)]
+        [InlineData(">9.0.0  || =6.1.0  || <=2.0.0 =6.1.0  || <=2.0.0 ", false)]
+        [InlineData("<1.0.0 <1.8.0   || ^1.0.0  ||.0.", false)]
+        [InlineData("=2.3.0-0.A >2.3.0--0.A >", false)]
+        [InlineData(">9.0.0  || =29.0.0  || =2.0.0 =29.0.0  || =2.0.0  || =2.0.0-0.0.0  || =2.0.0-0.0?", false)]
+        [InlineData("<1.8.0 <1.8.0   || ^1.0.0  ||.0.", false)]
+        [InlineData(">1.4.0 >1.8.0   || ^1.0.0  ||.0.", false)]
+        // CONTINUE READING FROM FIRST FUZZER RUN AT ID:26
         public void TestParserValidation(string text, bool valid)
         {
             Assert.Equal(valid, VersionRange.TryParse(text, out _));
