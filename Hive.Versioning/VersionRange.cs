@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
 using static Hive.Versioning.ParseHelpers;
 
 namespace Hive.Versioning
@@ -98,115 +100,54 @@ namespace Hive.Versioning
 
             var ab = new ArrayBuilder<Subrange>(ranges.Length);
 
-            Subrange nextToInsert = default;
+            Subrange? nextToInsert = null;
             for (int i = 0; i < ranges.Length; i++)
             {
                 var current = ranges[i];
 
-                if (comparer != null)
+                var combineWithComparerResult = CheckCombineWithComparer(ref current, ref comparer, out var returnResult);
+                switch (combineWithComparerResult)
                 {
-                    if (current.IsInward)
-                    {
-                        if (current.Matches(comparer.Value))
-                        {
-                            if ((comparer.Value.Type & ComparisonType.Greater) != 0)
-                            {
-                                comparer = current.LowerBound;
-                                continue;
-                            }
-                            if ((comparer.Value.Type & ComparisonType.Less) != 0)
-                            {
-                                comparer = current.UpperBound;
-                                continue;
-                            }
-                            // if we reach here, then comparer is an ExactEqual, so we can just kill it
-                            comparer = null;
-                        }
-                        else
-                        {
-                            if ((comparer.Value.Type & ComparisonType.Greater) != 0)
-                            {
-                                if (comparer.Value.Matches(current.LowerBound))
-                                    continue; // we want to skip this current, because it already matches our comparer
-                            }
-                            if ((comparer.Value.Type & ComparisonType.Less) != 0)
-                            {
-                                if (comparer.Value.Matches(current.UpperBound))
-                                    continue; // we want to skip this current, because it already matches our comparer
-                            }
-                            // if its an exact equal and isn't matched, do nothing
-                        }
-                    }
-                    else
-                    {
-                        // current is an outward subrange
-                        if ((comparer.Value.Type & ComparisonType.Greater) != 0)
-                        {
-                            if (comparer.Value.Matches(current.LowerBound))
-                            { // if we match the lower bound, then these two match everything
-                                ab.Clear();
-                                return (EverythingSubranges, null);
-                            }
-                            else if (comparer.Value.Matches(current.UpperBound))
-                            { // if we match the upper bound, then adjust current to include comparer
-                                current = new Subrange(current.LowerBound, comparer.Value);
-                                comparer = null;
-                            }
-                            else
-                            {
-                                // comparer is completely included in current
-                                comparer = null;
-                            }
-                        }
-                        else if ((comparer.Value.Type & ComparisonType.Less) != 0)
-                        {
-                            if (comparer.Value.Matches(current.UpperBound))
-                            { // if we match the upper bound, then these two match everything
-                                ab.Clear();
-                                return (EverythingSubranges, null);
-                            }
-                            else if (comparer.Value.Matches(current.LowerBound))
-                            { // if we match the lower bound, then adjust current to include comparer
-                                current = new Subrange(comparer.Value, current.UpperBound);
-                                comparer = null;
-                            }
-                            else
-                            {
-                                // comparer is completely included in current
-                                comparer = null;
-                            }
-                        }
-                        else
-                        {
-                            // its an exact equal
-                            if (current.Matches(comparer.Value))
-                                comparer = null; // so if it matches, null comparer, otherwise do nothing
-                        }
-                    }
+                    case CombineWithComparerResult.NextIteration:
+                        continue;
+                    case CombineWithComparerResult.ReturnEarly:
+                        ab.Clear();
+                        return returnResult;
+                    case CombineWithComparerResult.DoNothing: break;
+                    default: throw new InvalidOperationException();
                 }
 
-                if (i == 0)
+                if (nextToInsert == null)
                 {
                     nextToInsert = current;
                     continue;
                 }
 
-                var result = nextToInsert.TryDisjunction(current, out var result1, out var result2);
+                var result = nextToInsert.Value.TryDisjunction(current, out var result1, out var result2);
                 switch (result)
                 {
                     case CombineResult.OneSubrange:
                         nextToInsert = result1;
                         break;
                     case CombineResult.TwoSubranges:
-                        if (result1.LowerBound.CompareTo < result2.LowerBound.CompareTo)
                         {
-                            ab.Add(result1);
-                            nextToInsert = result2;
-                        }
-                        else
-                        {
-                            ab.Add(result2);
-                            nextToInsert = result1;
+                            var aLowerB = result1.LowerBound.CompareTo < result2.LowerBound.CompareTo;
+                            var addFirst = aLowerB ? result1 : result2;
+                            nextToInsert = aLowerB ? result2 : result1;
+
+                            combineWithComparerResult = CheckCombineWithComparer(ref addFirst, ref comparer, out returnResult);
+                            switch (combineWithComparerResult)
+                            {
+                                case CombineWithComparerResult.NextIteration:
+                                    continue;
+                                case CombineWithComparerResult.ReturnEarly:
+                                    ab.Clear();
+                                    return returnResult;
+                                case CombineWithComparerResult.DoNothing: break;
+                                default: throw new InvalidOperationException();
+                            }
+
+                            ab.Add(addFirst);
                         }
                         break;
                     case CombineResult.Everything:
@@ -217,10 +158,105 @@ namespace Hive.Versioning
                 }
             }
 
-            if (ranges.Length > 0)
-                ab.Add(nextToInsert);
+            if (nextToInsert != null)
+                ab.Add(nextToInsert.Value);
 
             return (ab.ToArray(), comparer);
+        }
+
+        private enum CombineWithComparerResult
+        {
+            DoNothing, NextIteration, ReturnEarly
+        }
+
+        private static CombineWithComparerResult CheckCombineWithComparer(ref Subrange current, ref VersionComparer? comparer, out (Subrange[], VersionComparer?) returnResult)
+        {
+            returnResult = default;
+
+            if (comparer != null)
+            {
+                if (current.IsInward)
+                {
+                    if (current.Matches(comparer.Value))
+                    {
+                        if ((comparer.Value.Type & ComparisonType.Greater) != 0)
+                        {
+                            comparer = current.LowerBound;
+                            return CombineWithComparerResult.NextIteration;
+                        }
+                        if ((comparer.Value.Type & ComparisonType.Less) != 0)
+                        {
+                            comparer = current.UpperBound;
+                            return CombineWithComparerResult.NextIteration;
+                        }
+                        // if we reach here, then comparer is an ExactEqual, so we can just kill it
+                        comparer = null;
+                    }
+                    else
+                    {
+                        if ((comparer.Value.Type & ComparisonType.Greater) != 0)
+                        {
+                            if (comparer.Value.Matches(current.LowerBound))
+                                return CombineWithComparerResult.NextIteration; // we want to skip this current, because it already matches our comparer
+                        }
+                        if ((comparer.Value.Type & ComparisonType.Less) != 0)
+                        {
+                            if (comparer.Value.Matches(current.UpperBound))
+                                return CombineWithComparerResult.NextIteration; // we want to skip this current, because it already matches our comparer
+                        }
+                        // if its an exact equal and isn't matched, do nothing
+                    }
+                }
+                else
+                {
+                    // current is an outward subrange
+                    if ((comparer.Value.Type & ComparisonType.Greater) != 0)
+                    {
+                        if (comparer.Value.Matches(current.LowerBound))
+                        { // if we match the lower bound, then these two match everything
+                            //ab.Clear();
+                            returnResult = (EverythingSubranges, null);
+                            return CombineWithComparerResult.ReturnEarly;
+                        }
+                        else if (comparer.Value.Matches(current.UpperBound))
+                        { // if we match the upper bound, then adjust current to include comparer
+                            current = new Subrange(current.LowerBound, comparer.Value);
+                            comparer = null;
+                        }
+                        else
+                        {
+                            // comparer is completely included in current
+                            comparer = null;
+                        }
+                    }
+                    else if ((comparer.Value.Type & ComparisonType.Less) != 0)
+                    {
+                        if (comparer.Value.Matches(current.UpperBound))
+                        { // if we match the upper bound, then these two match everything
+                            returnResult = (EverythingSubranges, null);
+                            return CombineWithComparerResult.ReturnEarly;
+                        }
+                        else if (comparer.Value.Matches(current.LowerBound))
+                        { // if we match the lower bound, then adjust current to include comparer
+                            current = new Subrange(comparer.Value, current.UpperBound);
+                            comparer = null;
+                        }
+                        else
+                        {
+                            // comparer is completely included in current
+                            comparer = null;
+                        }
+                    }
+                    else
+                    {
+                        // its an exact equal
+                        if (current.Matches(comparer.Value))
+                            comparer = null; // so if it matches, null comparer, otherwise do nothing
+                    }
+                }
+            }
+
+            return CombineWithComparerResult.DoNothing;
         }
 
         public StringBuilder ToString(StringBuilder sb)

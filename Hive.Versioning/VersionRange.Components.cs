@@ -601,7 +601,7 @@ namespace Hive.Versioning
                     if ((b.LowerBound.Matches(a.LowerBound) && b.LowerBound.Matches(a.UpperBound))
                      || (b.UpperBound.Matches(a.LowerBound) && b.UpperBound.Matches(a.UpperBound)))
                     {
-                        result = a;
+                        result = b;
                         retVal = CombineResult.OneSubrange;
                         return true;
                     }

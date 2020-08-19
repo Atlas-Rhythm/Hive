@@ -19,6 +19,7 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData(">1.0.0 <=2.0.0", true)]
         [InlineData(">=1.0.0 || <2.0.0", true)]
         [InlineData(">1.0.0  || <=2.0.0", true)]
+        [InlineData("^0.1.5", true)]
         public void TestParserValidation(string text, bool valid)
         {
             Assert.Equal(valid, VersionRange.TryParse(text, out _));
@@ -33,6 +34,7 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData(">1.0.0 <=2.0.0")]
         [InlineData(">=1.0.0 || <2.0.0")]
         [InlineData(">1.0.0  || <=2.0.0")]
+        [InlineData("^0.1.5")]
         public void TestStringificationRoundTrip(string startText)
         {
             Assert.True(VersionRange.TryParse(startText, out var range));
@@ -55,6 +57,21 @@ namespace Hive.Versioning.Tests.Ranges
             Assert.True(VersionRange.TryParse(Sb, out var b));
             Assert.Equal(equal, a!.Equals(b!));
             Assert.Equal(equal, b!.Equals(a!));
+        }
+
+        [Theory]
+        [InlineData("^1.0.0", "^0.1.5", "^0.1.5 || ^1.0.0")]
+        [InlineData("^1.0.0 || >=3.0.0", "^0.1.5 || <2.1.5", "^0.1.5 || ^1.0.0 || <2.1.5 >=3.0.0")]
+        public void TestDisjunction(string Sa, string Sb, string Sexpect)
+        {
+            Assert.True(VersionRange.TryParse(Sa, out var a));
+            Assert.True(VersionRange.TryParse(Sb, out var b));
+            Assert.True(VersionRange.TryParse(Sexpect, out var expect));
+
+            var explDisjunct = a!.Disjunction(b!);
+            var implDisjunct = a! | b!;
+            Assert.Equal(expect, explDisjunct);
+            Assert.Equal(expect, implDisjunct);
         }
     }
 }
