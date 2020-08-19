@@ -758,7 +758,7 @@ namespace Hive.Versioning
         }
         internal partial struct Subrange
         {
-            public static bool TryParse(ref ReadOnlySpan<char> text, out Subrange subrange)
+            public static bool TryParse(ref ReadOnlySpan<char> text, bool allowOutward, out Subrange subrange)
             {
                 var copy = text;
 
@@ -795,6 +795,14 @@ namespace Hive.Versioning
                 }
 
                 subrange = new Subrange(lower, upper);
+
+                if (!allowOutward && !subrange.IsInward)
+                { // reject inward-facing subranges for consistency on the outside
+                    text = copy;
+                    subrange = default;
+                    return false;
+                }
+
                 return true;
             }
 
@@ -842,7 +850,7 @@ namespace Hive.Versioning
                     }
                 }
 
-                LowerBound.ToString(sb).Append(" ");
+                LowerBound.ToString(sb).Append(IsInward ? " " : " || ");
                 UpperBound.ToString(sb);
                 return sb;
             }

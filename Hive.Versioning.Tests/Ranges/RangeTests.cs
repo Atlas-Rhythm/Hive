@@ -21,6 +21,8 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData(">1.0.0  || <=2.0.0", true)]
         [InlineData("^0.1.5", true)]
         [InlineData("=1.0.0 <=2.0.0", false)]
+        [InlineData("=1.0.0 || <=2.0.0", true)]
+        [InlineData("=1.0.0 || >=2.0.0", true)]
         public void TestParserValidation(string text, bool valid)
         {
             Assert.Equal(valid, VersionRange.TryParse(text, out _));
@@ -51,8 +53,8 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData("^1.0.0", ">=1.0.0 <2.0.0", true)]
         [InlineData("^1.0.0 || ^2.0.0", ">=1.0.0 <3.0.0", true)]
         [InlineData("^1.0.0 || ^2.0.0 || >4.0.0", ">4.0.0 || >=1.0.0 <3.0.0", true)]
-        [InlineData(">4.0.0 || <5.0.0", "<1.0.0 >=1.0.0", true)]
-        [InlineData("<1.0.0 || ^2.0.0 || >4.0.0", "^2.0.0 || <1.0.0 >4.0.0", true)]
+        [InlineData(">4.0.0 || <5.0.0", "<1.0.0 || >=1.0.0", true)]
+        [InlineData("<1.0.0 || ^2.0.0 || >4.0.0", "^2.0.0 || <1.0.0 || >4.0.0", true)]
         public void TestEquality(string Sa, string Sb, bool equal)
         {
             Assert.True(VersionRange.TryParse(Sa, out var a));
@@ -63,8 +65,8 @@ namespace Hive.Versioning.Tests.Ranges
 
         [Theory]
         [InlineData("^1.0.0", "^0.1.5", "^0.1.5 || ^1.0.0")]
-        [InlineData("^1.0.0 || >=3.0.0", "^0.1.5 || <2.1.5", "^0.1.5 || ^1.0.0 || <2.1.5 >=3.0.0")]
-        [InlineData("^1.0.0 || >=3.0.0", "^0.1.5 || <0.1.0", "^0.1.5 || ^1.0.0 || <0.1.0 >=3.0.0")]
+        [InlineData("^1.0.0 || >=3.0.0", "^0.1.5 || <2.1.5", "^0.1.5 || ^1.0.0 || <2.1.5 || >=3.0.0")]
+        [InlineData("^1.0.0 || >=3.0.0", "^0.1.5 || <0.1.0", "^0.1.5 || ^1.0.0 || <0.1.0 || >=3.0.0")]
         public void TestDisjunction(string Sa, string Sb, string Sexpect)
         {
             Assert.True(VersionRange.TryParse(Sa, out var a));

@@ -378,9 +378,9 @@ namespace Hive.Versioning
                                     ab.Add(comparer.Value.ToExactEqualSubrange());
                                     comparer = compare;
                                 }
-                                if (compare.Value.Type == ComparisonType.ExactEqual)
+                                else if (compare.Value.Type == ComparisonType.ExactEqual)
                                     ab.Add(compare.Value.ToExactEqualSubrange());
-                                if (comparer.Value.Type == compare.Value.Type)
+                                else if (comparer.Value.Type == compare.Value.Type)
                                     comparer = null;
                                 break;
                             default: throw new InvalidOperationException();
@@ -408,7 +408,7 @@ namespace Hive.Versioning
 
         private static bool TryReadComponent(ref ReadOnlySpan<char> text, out Subrange? range, out VersionComparer? compare)
         {
-            if (Subrange.TryParse(ref text, out var sr))
+            if (Subrange.TryParse(ref text, false, out var sr))
             {
                 range = sr;
                 compare = null;

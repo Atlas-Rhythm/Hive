@@ -20,7 +20,7 @@ namespace Hive.Versioning.Tests.Ranges
         private static Subrange ParseSubrange(string input, bool valid = true)
         {
             ReadOnlySpan<char> text = input;
-            Assert.Equal(valid, Subrange.TryParse(ref text, out var range));
+            Assert.Equal(valid, Subrange.TryParse(ref text, true, out var range));
             return range;
         }
 
