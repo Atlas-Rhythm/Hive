@@ -316,7 +316,7 @@ namespace Hive.Versioning
         public static bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen(false)] out Version version)
         {
             text = text.Trim();
-            return TryParse(ref text, out version) && text.Length == 0;
+            return TryParse(ref text, true, out version) && text.Length == 0;
         }
 
         /// <summary>
@@ -330,10 +330,15 @@ namespace Hive.Versioning
         /// <param name="version">The parsed version, if the input is valid.</param>
         /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
         public static bool TryParse(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out Version version)
+            => TryParse(ref text, false, out version);
+
+        private static bool TryParse(ref ReadOnlySpan<char> text, bool checkLength, [MaybeNullWhen(false)] out Version version)
         {
             version = null;
 
             if (!TryParseInternal(ref text, out var maj, out var min, out var pat, out var pre, out var build))
+                return false;
+            if (checkLength && text.Length > 0)
                 return false;
 
             version = new Version(maj, min, pat, pre, build);

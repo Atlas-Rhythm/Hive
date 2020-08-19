@@ -323,12 +323,20 @@ namespace Hive.Versioning
         public static bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen(false)] out VersionRange range)
         {
             text = text.Trim();
-            return TryParse(ref text, out range) && text.Length == 0;
+            return TryParse(ref text, true, out range) && text.Length == 0;
         }
 
         public static bool TryParse(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out VersionRange range)
+            => TryParse(ref text, false, out range);
+
+        private static bool TryParse(ref ReadOnlySpan<char> text, bool checkLength, [MaybeNullWhen(false)] out VersionRange range)
         {
             if (!TryParse(ref text, out var srs, out var compare))
+            {
+                range = null;
+                return false;
+            }
+            if (checkLength && text.Length > 0)
             {
                 range = null;
                 return false;
