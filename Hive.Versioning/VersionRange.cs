@@ -91,12 +91,19 @@ namespace Hive.Versioning
         public static VersionRange Everything { get; } = new VersionRange(EverythingSubranges, null);
         public static VersionRange Nothing { get; } = new VersionRange(Array.Empty<Subrange>(), null);
 
+        private static int CompareSubranges(Subrange a, Subrange b)
+        {
+            if (!a.IsInward && b.IsInward) return -1;
+            if (a.IsInward && !b.IsInward) return 1;
+            return a.LowerBound.CompareTo.CompareTo(b.LowerBound.CompareTo);
+        }
+
         private static (Subrange[] Ranges, VersionComparer? Comparer) FixupRangeList(Subrange[] ranges, VersionComparer? comparer)
         {
             if (ranges.Length == 0 && comparer == null)
                 return (ranges, comparer);
 
-            Array.Sort(ranges, (a, b) => a.LowerBound.CompareTo.CompareTo(b.LowerBound.CompareTo));
+            Array.Sort(ranges, CompareSubranges);
 
             var ab = new ArrayBuilder<Subrange>(ranges.Length);
 
