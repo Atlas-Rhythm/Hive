@@ -798,8 +798,9 @@ namespace Hive.Versioning
                     return false;
                 }
 
-                if (lower.Type == ComparisonType.ExactEqual || upper.Type == ComparisonType.ExactEqual)
-                {
+                if (lower.Type == ComparisonType.ExactEqual || upper.Type == ComparisonType.ExactEqual
+                 || (lower.Type & ~ComparisonType.ExactEqual) == (upper.Type & ~ComparisonType.ExactEqual))
+                { // if the bounds point the same direction, the subrange is invalid
                     text = copy;
                     subrange = default;
                     return false;
