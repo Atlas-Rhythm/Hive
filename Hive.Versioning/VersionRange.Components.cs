@@ -821,7 +821,24 @@ namespace Hive.Versioning
             }
 
             public StringBuilder ToString(StringBuilder sb)
-                => UpperBound.ToString(LowerBound.ToString(sb).Append(" "));
+            {
+                if (LowerBound.Type == ComparisonType.GreaterEqual && UpperBound.Type == ComparisonType.Less)
+                {
+                    var lower = LowerBound.CompareTo;
+                    var upper = UpperBound.CompareTo;
+
+                    if (!upper.PreReleaseIds.Any()) {
+                        if ((lower.Major != 0 && lower.Major + 1 == upper.Major && upper.Minor == 0 && upper.Patch == 0)
+                         || (lower.Minor != 0 && lower.Minor + 1 == upper.Minor && upper.Major == 0 && upper.Patch == 0)
+                         || (lower.Patch != 0 && lower.Patch + 1 == upper.Patch && upper.Major == 0 && upper.Minor == 0))
+                            return lower.ToString(sb.Append("^"));
+                    }
+                }
+
+                LowerBound.ToString(sb).Append(" ");
+                UpperBound.ToString(sb);
+                return sb;
+            }
             public override string ToString()
                 => ToString(new StringBuilder()).ToString();
         }
