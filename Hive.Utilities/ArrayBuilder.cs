@@ -91,7 +91,7 @@ namespace Hive.Utilities
             if (array == null) return Array.Empty<T>();
             if (rented || array.Length != Count)
             {
-                var newArr = new T[Count];
+                var newArr = Count == 0 ? Array.Empty<T>() : new T[Count];
                 Array.Copy(array, newArr, Count);
                 if (rented) pool.Return(array, true);
                 array = newArr;
