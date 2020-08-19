@@ -787,6 +787,13 @@ namespace Hive.Versioning
                     return false;
                 }
 
+                if (lower.Type == ComparisonType.ExactEqual || upper.Type == ComparisonType.ExactEqual)
+                {
+                    text = copy;
+                    subrange = default;
+                    return false;
+                }
+
                 subrange = new Subrange(lower, upper);
                 return true;
             }

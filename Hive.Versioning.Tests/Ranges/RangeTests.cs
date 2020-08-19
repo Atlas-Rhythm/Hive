@@ -20,6 +20,7 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData(">=1.0.0 || <2.0.0", true)]
         [InlineData(">1.0.0  || <=2.0.0", true)]
         [InlineData("^0.1.5", true)]
+        [InlineData("=1.0.0 <=2.0.0", false)]
         public void TestParserValidation(string text, bool valid)
         {
             Assert.Equal(valid, VersionRange.TryParse(text, out _));
