@@ -585,7 +585,9 @@ namespace Hive.Versioning
                     Assert(LowerBound.TryDisjunction(other.LowerBound, out var lowCompare, out _) == CombineResult.OneComparer);
                     Assert(UpperBound.TryDisjunction(other.UpperBound, out var highCompare, out _) == CombineResult.OneComparer);
 
-                    result = new Subrange(lowCompare, highCompare);
+                    result = lowCompare.CompareTo < highCompare.CompareTo 
+                        ? new Subrange(lowCompare, highCompare)
+                        : new Subrange(highCompare, lowCompare);
                     result2 = default;
                     if (result.IsInward)
                     {
