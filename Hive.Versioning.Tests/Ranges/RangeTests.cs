@@ -38,6 +38,8 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData(">=1.0.0 || <2.0.0")]
         [InlineData(">1.0.0  || <=2.0.0")]
         [InlineData("^0.1.5")]
+        [InlineData("=1.0.0 || <=2.0.0")]
+        [InlineData("=1.0.0 || >=2.0.0")]
         public void TestStringificationRoundTrip(string startText)
         {
             Assert.True(VersionRange.TryParse(startText, out var range));

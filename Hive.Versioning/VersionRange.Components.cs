@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using static Hive.Versioning.ParseHelpers;
 
@@ -10,6 +11,7 @@ namespace Hive.Versioning
     // For everything else, see VersionRange.cs
     public partial class VersionRange
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void Assert(bool value)
         {
             if (!value)
@@ -319,6 +321,7 @@ namespace Hive.Versioning
             public readonly VersionComparer LowerBound;
             public readonly VersionComparer UpperBound;
             public readonly bool IsInward;
+            public readonly bool IsExactEqual;
 
             public Subrange(in VersionComparer lower, in VersionComparer upper)
             {
@@ -332,11 +335,13 @@ namespace Hive.Versioning
                     LowerBound = new VersionComparer(lower.CompareTo, ComparisonType.GreaterEqual);
                     UpperBound = new VersionComparer(upper.CompareTo, ComparisonType.LessEqual);
                     IsInward = true; // ExactEqual subranges are always considered inward
+                    IsExactEqual = true;
                 }
                 else
                 {
                     LowerBound = lower;
                     UpperBound = upper;
+                    IsExactEqual = false;
 
                     if (Everything.LowerBound.CompareTo != null && TestExactMeeting(lower, upper))
                     {
@@ -374,6 +379,12 @@ namespace Hive.Versioning
                 { // they "face" away from each other, and so either matches
                     return LowerBound.Matches(ver) || UpperBound.Matches(ver);
                 }
+            }
+
+            public VersionComparer ToExactEqualComparer()
+            {
+                Assert(IsExactEqual);
+                return new VersionComparer(LowerBound.CompareTo, ComparisonType.ExactEqual);
             }
 
             public Subrange Invert()
@@ -849,6 +860,9 @@ namespace Hive.Versioning
                             return lower.ToString(sb.Append("^"));
                     }
                 }
+
+                if (IsExactEqual)
+                    return ToExactEqualComparer().ToString(sb);
 
                 LowerBound.ToString(sb).Append(IsInward ? " " : " || ");
                 UpperBound.ToString(sb);
