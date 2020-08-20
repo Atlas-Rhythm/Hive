@@ -350,6 +350,21 @@ namespace Hive.Versioning
                     }
 
                     IsInward = LowerBound.Matches(UpperBound) && UpperBound.Matches(LowerBound);
+
+                    if (IsInward)
+                    {
+                        if ((LowerBound.Type & ComparisonType.Less) != 0 || (UpperBound.Type & ComparisonType.Greater) != 0)
+                        {
+                            (LowerBound, UpperBound) = (UpperBound, LowerBound);
+                        }
+                    }
+                    else
+                    {
+                        if ((LowerBound.Type & ComparisonType.Greater) != 0 || (UpperBound.Type & ComparisonType.Less) != 0)
+                        {
+                            (LowerBound, UpperBound) = (UpperBound, LowerBound);
+                        }
+                    }
                 }
             }
 

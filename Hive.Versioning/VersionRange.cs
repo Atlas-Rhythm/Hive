@@ -26,6 +26,7 @@ namespace Hive.Versioning
             if (!TryParse(ref text, out var ranges, out additionalComparer) || text.Length > 0)
                 throw new ArgumentException("Input is an invalid range", nameof(text));
 
+            (ranges, additionalComparer) = FixupRangeList(ranges, additionalComparer);
             subranges = ranges;
         }
 
