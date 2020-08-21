@@ -310,6 +310,22 @@ namespace Hive.Versioning.Tests.Ranges
         }
 
         [Theory]
+        [InlineData(">= 1.0.0 <4.0.0", "^1.0.0", "^1.0.0")]
+        [InlineData(">= 1.0.1 <4.0.0", "^1.0.0", "^1.0.1")]
+        public void TestConjunction(string Sa, string Sb, string Sexpect)
+        {
+            Assert.True(VersionRange.TryParse(Sa, out var a));
+            Assert.True(VersionRange.TryParse(Sb, out var b));
+            Assert.True(VersionRange.TryParse(Sexpect, out var expect));
+
+            var explConj = a!.Conjunction(b!);
+            var implConj = a! & b!;
+            Assert.Equal(expect, explConj);
+            Assert.Equal(expect, implConj);
+            Assert.Equal(~expect!, ~a! | ~b!);
+        }
+
+        [Theory]
         [InlineData(">1.0.0", "<=1.0.0")]
         [InlineData("^1.0.0", "<1.0.0 || >=2.0.0")]
         [InlineData("^1.0.0 || >5.0.0", "<1.0.0 || >=2.0.0 <=5.0.0")]
