@@ -142,15 +142,13 @@ namespace Hive.Versioning
                                 {
                                     case CombineResult.OneComparer:
                                     case CombineResult.Nothing: break;
-                                        /*lowerBound = comp;
-                                        break;*/
                                     case CombineResult.OneSubrange:
                                         ab.Add(resRange);
                                         lowerBound = null;
+                                        invComparer = null;
                                         break;
                                     default: throw new InvalidOperationException();
                                 }
-                                invComparer = null;
                             }
                         }
 
@@ -164,8 +162,6 @@ namespace Hive.Versioning
                         {
                             case CombineResult.OneComparer:
                             case CombineResult.Nothing: break;
-                                /*upperBound = comp;
-                                break;*/
                             case CombineResult.OneSubrange:
                                 ab.Add(resRange);
                                 upperBound = null;
@@ -192,6 +188,8 @@ namespace Hive.Versioning
 
             return _inverse;
         }
+
+        public static VersionRange operator !(VersionRange r) => r.Invert();
 
 
         private static readonly Subrange[] EverythingSubranges = new[] { Subrange.Everything };
