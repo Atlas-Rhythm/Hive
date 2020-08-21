@@ -86,6 +86,13 @@ namespace Hive.Versioning
 
         public static VersionRange operator |(VersionRange a, VersionRange b) => a.Disjunction(b);
 
+        public VersionRange Conjunction(VersionRange other)
+        {
+            // TODO: replace this implementation with one that doesn't allocate a load of ranges
+            return ~(~this | ~other);
+        }
+
+        public static VersionRange operator &(VersionRange a, VersionRange b) => a.Conjunction(b);
 
         private VersionRange? _inverse;
 
