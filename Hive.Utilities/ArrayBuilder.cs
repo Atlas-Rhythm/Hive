@@ -48,7 +48,7 @@ namespace Hive.Utilities
         /// <param name="amount">The amount to reserve.</param>
         public void Reserve(int amount)
         {
-            if (array != null && amount < array.Length) return;
+            if (array != null && amount <= array.Length) return;
             if (pool == null) pool = ArrayPool<T>.Shared;
 
             var newArr = pool.Rent(amount); // perhaps this should ask for a bigger scale?
