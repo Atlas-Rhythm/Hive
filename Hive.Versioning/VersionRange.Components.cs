@@ -314,6 +314,9 @@ namespace Hive.Versioning
 
             public bool Equals(VersionComparer other)
                 => Type == other.Type && CompareTo == other.CompareTo;
+
+            public override int GetHashCode()
+                => HashCode.Combine(Type, CompareTo);
         }
 
         internal partial struct Subrange : IEquatable<Subrange>
@@ -706,6 +709,9 @@ namespace Hive.Versioning
 
             public bool Equals(Subrange other)
                 => LowerBound.Equals(other.LowerBound) && UpperBound.Equals(other.UpperBound);
+
+            public override int GetHashCode()
+                => HashCode.Combine(LowerBound, UpperBound);
         }
 
         internal partial struct Subrange
