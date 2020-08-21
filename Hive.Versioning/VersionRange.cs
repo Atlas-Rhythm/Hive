@@ -87,6 +87,113 @@ namespace Hive.Versioning
         public static VersionRange operator |(VersionRange a, VersionRange b) => a.Disjunction(b);
 
 
+        private VersionRange? _inverse;
+
+        public VersionRange Invert()
+        {
+            if (_inverse is null)
+            {
+                if (this == Everything)
+                    _inverse = Nothing;
+                else if (this == Nothing)
+                    _inverse = Everything;
+                else
+                {
+                    VersionComparer? invComparer = null;
+                    if (additionalComparer != null)
+                    {
+                        var comparerResult = additionalComparer.Value.Invert(out var inverseComparer, out var inverseCompRange);
+                        switch (comparerResult)
+                        {
+                            case CombineResult.OneComparer:
+                                invComparer = inverseComparer;
+                                break;
+                            default: throw new InvalidOperationException();
+                        }
+                    }
+
+                    var invertedRanges = subranges.Select(r => r.Invert());
+                    using var ab = new ArrayBuilder<Subrange>(subranges.Length + 2);
+
+                    VersionComparer? lowerBound = null;
+                    VersionComparer? upperBound = null;
+                    foreach (var range in invertedRanges)
+                    {
+                        if (upperBound != null)
+                        {
+                            var conjResult = upperBound.Value.TryConjunction(range.LowerBound, out var comp, out var resRange);
+                            switch (conjResult)
+                            {
+                                case CombineResult.Nothing: break;
+                                case CombineResult.OneSubrange:
+                                    ab.Add(resRange);
+                                    break;
+                                case CombineResult.OneComparer:
+                                default: throw new InvalidOperationException();
+                            }
+                        }
+                        else
+                        {
+                            lowerBound = range.IsInward ? range.UpperBound : range.LowerBound;
+                            if (invComparer != null)
+                            {
+                                var conjResult = lowerBound.Value.TryConjunction(invComparer.Value, out var comp, out var resRange);
+                                switch (conjResult)
+                                {
+                                    case CombineResult.OneComparer:
+                                    case CombineResult.Nothing: break;
+                                        /*lowerBound = comp;
+                                        break;*/
+                                    case CombineResult.OneSubrange:
+                                        ab.Add(resRange);
+                                        lowerBound = null;
+                                        break;
+                                    default: throw new InvalidOperationException();
+                                }
+                                invComparer = null;
+                            }
+                        }
+
+                        upperBound = range.IsInward ? range.LowerBound : range.UpperBound;
+                    }
+
+                    if (invComparer != null && upperBound != null)
+                    {
+                        var conjResult = upperBound.Value.TryConjunction(invComparer.Value, out var comp, out var resRange);
+                        switch (conjResult)
+                        {
+                            case CombineResult.OneComparer:
+                            case CombineResult.Nothing: break;
+                                /*upperBound = comp;
+                                break;*/
+                            case CombineResult.OneSubrange:
+                                ab.Add(resRange);
+                                upperBound = null;
+                                break;
+                            default: throw new InvalidOperationException();
+                        }
+                        invComparer = null;
+                    }
+
+                    if (lowerBound != null && upperBound != null)
+                    {
+                        ab.Add(lowerBound.Value.CompareTo < upperBound.Value.CompareTo
+                            ? new Subrange(lowerBound.Value, upperBound.Value)
+                            : new Subrange(upperBound.Value, lowerBound.Value));
+                    }
+                    else if (lowerBound != null)
+                        invComparer = lowerBound;
+                    else if (upperBound != null)
+                        invComparer = upperBound;
+
+                    _inverse = new VersionRange(ab.ToArray(), invComparer) { _inverse = this };
+                }
+            }
+
+            return _inverse;
+        }
+
+
         private static readonly Subrange[] EverythingSubranges = new[] { Subrange.Everything };
 
         public static VersionRange Everything { get; } = new VersionRange(EverythingSubranges, null);
@@ -106,7 +213,7 @@ namespace Hive.Versioning
 
             Array.Sort(ranges, CompareSubranges);
 
-            var ab = new ArrayBuilder<Subrange>(ranges.Length);
+            using var ab = new ArrayBuilder<Subrange>(ranges.Length);
 
             Subrange? nextToInsert = null;
             for (int i = 0; i < ranges.Length; i++)
@@ -312,6 +419,15 @@ namespace Hive.Versioning
             return true;
         }
 
+        public override int GetHashCode()
+        {
+            var hc = new HashCode();
+            hc.Add(additionalComparer);
+            foreach (var sr in subranges)
+                hc.Add(sr);
+            return hc.ToHashCode();
+        }
+
         public static bool operator ==(VersionRange? a, VersionRange? b)
         {
             if (a is null && b is null) return true;
@@ -356,7 +472,7 @@ namespace Hive.Versioning
             if (!TryReadComponent(ref text, out var range, out var compare))
                 return false;
 
-            var ab = new ArrayBuilder<Subrange>();
+            using var ab = new ArrayBuilder<Subrange>();
 
             ReadOnlySpan<char> restoreTo;
             do
@@ -394,6 +510,10 @@ namespace Hive.Versioning
                                 break;
                             default: throw new InvalidOperationException();
                         }
+                    }
+                    else if (compare.Value.Type == ComparisonType.ExactEqual)
+                    {
+                        ab.Add(compare.Value.ToExactEqualSubrange());
                     }
                     else
                         comparer = compare;

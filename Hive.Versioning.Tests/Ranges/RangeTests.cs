@@ -308,5 +308,19 @@ namespace Hive.Versioning.Tests.Ranges
             Assert.Equal(expect, explDisjunct);
             Assert.Equal(expect, implDisjunct);
         }
+
+        [Theory]
+        [InlineData(">1.0.0", "<=1.0.0")]
+        [InlineData("^1.0.0", "<1.0.0 || >=2.0.0")]
+        [InlineData("^1.0.0 || >5.0.0", "<1.0.0 || >=2.0.0 <5.0.0")]
+        [InlineData("^1.0.0 || <0.1.0", ">=0.1.0 <1.0.0 || >=2.0.0")]
+        [InlineData("^1.0.0 || ^3.0.0", "<1.0.0 || >=2.0.0 <3.0.0 || >=4.0.0")]
+        public void TestInverse(string Sinr, string Sexpect)
+        {
+            Assert.True(VersionRange.TryParse(Sinr, out var inr));
+            Assert.True(VersionRange.TryParse(Sexpect, out var expect));
+            Assert.Equal(expect!, inr!.Invert());
+            Assert.Equal(inr!, expect!.Invert());
+        }
     }
 }
