@@ -189,7 +189,7 @@ namespace Hive.Versioning
             return _inverse;
         }
 
-        public static VersionRange operator !(VersionRange r) => r.Invert();
+        public static VersionRange operator ~(VersionRange r) => r.Invert();
 
 
         private static readonly Subrange[] EverythingSubranges = new[] { Subrange.Everything };

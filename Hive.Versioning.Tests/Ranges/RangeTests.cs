@@ -320,9 +320,9 @@ namespace Hive.Versioning.Tests.Ranges
         {
             Assert.True(VersionRange.TryParse(Sinr, out var inr));
             Assert.True(VersionRange.TryParse(Sexpect, out var expect));
-            Assert.Equal(!inr!, inr!.Invert());
+            Assert.Equal(~inr!, inr!.Invert());
             Assert.Equal(expect!, inr!.Invert());
-            Assert.Equal(!expect!, expect!.Invert());
+            Assert.Equal(~expect!, expect!.Invert());
             Assert.Equal(inr!, expect!.Invert());
         }
     }
