@@ -426,7 +426,7 @@ namespace Hive.Versioning
             var copy = text;
             if (TryReadPreReleaseId(ref text, out var id))
             {
-                var ab = new ArrayBuilder<string>(4);
+                using var ab = new ArrayBuilder<string>(4);
                 do
                 {
                     ab.Add(new string(id));
@@ -460,7 +460,7 @@ namespace Hive.Versioning
             var copy = text;
             if (TryReadBuildId(ref text, out var id))
             {
-                var ab = new ArrayBuilder<string>(4);
+                using var ab = new ArrayBuilder<string>(4);
                 do
                 {
                     ab.Add(new string(id));

@@ -73,6 +73,11 @@ namespace Hive.Utilities
         }
 
         /// <summary>
+        /// Disposes of this <see cref="ArrayBuilder{T}"/>, releasing the underlying array if possible.
+        /// </summary>
+        public void Dispose() => Clear();
+
+        /// <summary>
         /// Adds an item to the internal array.
         /// </summary>
         /// <param name="item">The item to add.</param>
