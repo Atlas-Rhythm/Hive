@@ -9,7 +9,7 @@ namespace Hive.Versioning.Fuzz
     {
         static int Main(string[] args)
         {
-            var type = args.Length > 0 ? args[0] : "range";
+            var type = args.Length > 0 ? args[0] : "binops";
 
             if (type == "version")
             {
@@ -28,14 +28,39 @@ namespace Hive.Versioning.Fuzz
                     rangetext = rangetext.Trim();
                     if (VersionRange.TryParse(rangetext, out var range))
                     {
-                        if (args.Contains("disj"))
-                        {
-                            range |= range;
-                            range |= range;
-                            range |= range;
-                            range |= range;
-                        }
                         _ = range.ToString();
+                    }
+                });
+            }
+            else if (type == "binops")
+            {
+                Fuzzer.Run(rangetext =>
+                {
+                    rangetext = rangetext.Trim();
+                    var parts = rangetext.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    if (parts.Length != 2) return;
+                    var a = parts[0];
+                    var b = parts[1];
+
+                    var asucc = VersionRange.TryParse(a, out var ar);
+                    var bsucc = VersionRange.TryParse(b, out var br);
+
+                    if (asucc && bsucc)
+                    {
+                        var c = ar! & br!;
+                        var d = ar! | br!;
+                        _ = c.ToString();
+                        _ = d.ToString();
+                    }
+                    if (asucc)
+                    {
+                        var e = ~ar!;
+                        _ = e.ToString();
+                    }
+                    if (bsucc)
+                    {
+                        var f = ~br!;
+                        _ = f.ToString();
                     }
                 });
             }
