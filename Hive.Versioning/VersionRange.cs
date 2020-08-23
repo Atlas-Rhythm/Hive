@@ -25,6 +25,7 @@ namespace Hive.Versioning
         /// </summary>
         /// <param name="text">The textual represenation of the <see cref="VersionRange"/> to create.</param>
         /// <seealso cref="TryParse(ref ReadOnlySpan{char}, out VersionRange)"/>
+        /// <exception cref="ArgumentException">Thrown when<paramref name="text"/> is not a valid <see cref="VersionRange"/>.</exception>
         public VersionRange(ReadOnlySpan<char> text)
         {
             text = text.Trim();
@@ -543,6 +544,7 @@ namespace Hive.Versioning
         /// <param name="text">The stirng to parse.</param>
         /// <returns>The parsed <see cref="VersionRange"/>.</returns>
         /// <seealso cref="TryParse(ReadOnlySpan{char}, out VersionRange)"/>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid <see cref="VersionRange"/>.</exception>
         public static VersionRange Parse(ReadOnlySpan<char> text)
         {
             if (!TryParse(text, out var range))
