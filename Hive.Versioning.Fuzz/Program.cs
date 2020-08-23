@@ -42,6 +42,7 @@ namespace Hive.Versioning.Fuzz
                     var a = parts[0];
                     var b = parts[1];
 
+                    var ver = new Version("1.0.0");
                     var asucc = VersionRange.TryParse(a, out var ar);
                     var bsucc = VersionRange.TryParse(b, out var br);
 
@@ -56,11 +57,13 @@ namespace Hive.Versioning.Fuzz
                     {
                         var e = ~ar!;
                         _ = e.ToString();
+                        _ = ar!.Matches(ver);
                     }
                     if (bsucc)
                     {
                         var f = ~br!;
                         _ = f.ToString();
+                        _ = br!.Matches(ver);
                     }
                 });
             }
