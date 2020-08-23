@@ -12,13 +12,19 @@ using static Hive.Versioning.ParseHelpers;
 
 namespace Hive.Versioning
 {
+    /// <summary>
+    /// An arbitrary range of <see cref="Version"/>s, capable of matching any possible set of <see cref="Version"/>s.
+    /// </summary>
     public partial class VersionRange : IEquatable<VersionRange>
     {
         private readonly Subrange[] subranges;
         private readonly VersionComparer? additionalComparer;
 
-        // TODO: finish this
-
+        /// <summary>
+        /// Constructs a new <see cref="VersionRange"/> that corresponds to the text provided in <paramref name="text"/>. 
+        /// </summary>
+        /// <param name="text">The textual represenation of the <see cref="VersionRange"/> to create.</param>
+        /// <seealso cref="TryParse(ref ReadOnlySpan{char}, out VersionRange)"/>
         public VersionRange(ReadOnlySpan<char> text)
         {
             text = text.Trim();
@@ -38,6 +44,12 @@ namespace Hive.Versioning
             additionalComparer = comparer;
         }
 
+        /// <summary>
+        /// Computes the logical disjunction (or) of this <see cref="VersionRange"/> and <paramref name="other"/>.
+        /// </summary>
+        /// <param name="other">The other <see cref="VersionRange"/> to compute the disjunction of.</param>
+        /// <returns>The logical disjunction of <see langword="this"/> and <paramref name="other"/>.</returns>
+        /// <seealso cref="operator |(VersionRange, VersionRange)"/>
         public VersionRange Disjunction(VersionRange other)
         {
             VersionComparer? comparer = null;
@@ -84,18 +96,42 @@ namespace Hive.Versioning
             return new VersionRange(allSubranges, comparer);
         }
 
+        /// <summary>
+        /// Computes the logical disjunction (or) of the two arguments.
+        /// </summary>
+        /// <param name="a">The first argument.</param>
+        /// <param name="b">The second argument.</param>
+        /// <returns>The logical disjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
+        /// <seealso cref="Disjunction(VersionRange)"/>
         public static VersionRange operator |(VersionRange a, VersionRange b) => a.Disjunction(b);
 
+        /// <summary>
+        /// Computes the logical conjunction (and) of this <see cref="VersionRange"/> and <paramref name="other"/>.
+        /// </summary>
+        /// <param name="other">The other <see cref="VersionRange"/> to compute the conjunction of.</param>
+        /// <returns>The logical conjunction of <see langword="this"/> and <paramref name="other"/>.</returns>
+        /// <seealso cref="operator &amp;(VersionRange, VersionRange)"/>
         public VersionRange Conjunction(VersionRange other)
         {
             // TODO: replace this implementation with one that doesn't allocate a load of ranges
             return ~(~this | ~other);
         }
 
+        /// <summary>
+        /// Computes the logical conjunction (and) of the two arguments.
+        /// </summary>
+        /// <param name="a">The first argument.</param>
+        /// <param name="b">The second argument.</param>
+        /// <returns>The logical disjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
+        /// <seealso cref="Conjunction(VersionRange)"/>
         public static VersionRange operator &(VersionRange a, VersionRange b) => a.Conjunction(b);
 
         private VersionRange? _inverse;
-
+        /// <summary>
+        /// Gets the compliement of this <see cref="VersionRange"/>.
+        /// </summary>
+        /// <returns>The compliement of this <see cref="VersionRange"/>.</returns>
+        /// <seealso cref="operator ~(VersionRange)"/>
         public VersionRange Invert()
         {
             if (_inverse is null)
@@ -196,12 +232,24 @@ namespace Hive.Versioning
             return _inverse;
         }
 
+        /// <summary>
+        /// Computes the compliment of the argument.
+        /// </summary>
+        /// <param name="r">The <see cref="VersionRange"/> to compute the compliment of.</param>
+        /// <returns>The compliment of <paramref name="r"/>.</returns>
+        /// <seealso cref="Invert()"/>
         public static VersionRange operator ~(VersionRange r) => r.Invert();
 
 
         private static readonly Subrange[] EverythingSubranges = new[] { Subrange.Everything };
 
+        /// <summary>
+        /// The <see cref="VersionRange"/> that matches all <see cref="Version"/>s.
+        /// </summary>
         public static VersionRange Everything { get; } = new VersionRange(EverythingSubranges, null);
+        /// <summary>
+        /// The <see cref="VersionRange"/> that matches no <see cref="Version"/>s.
+        /// </summary>
         public static VersionRange Nothing { get; } = new VersionRange(Array.Empty<Subrange>(), null);
 
         private static int CompareSubranges(Subrange a, Subrange b)
@@ -379,6 +427,11 @@ namespace Hive.Versioning
             return CombineWithComparerResult.DoNothing;
         }
 
+        /// <summary>
+        /// Appends the string representation of this <see cref="VersionRange"/> to the provided <see cref="StringBuilder"/>.
+        /// </summary>
+        /// <param name="sb">The <see cref="StringBuilder"/> to append to.</param>
+        /// <returns>The <see cref="StringBuilder"/> that was appended to.</returns>
         public StringBuilder ToString(StringBuilder sb)
         {
             for (int i = 0; i < subranges.Length; i++)
@@ -398,12 +451,22 @@ namespace Hive.Versioning
             return sb;
         }
 
+        /// <summary>
+        /// Gets the string representation of this <see cref="VersionRange"/>.
+        /// </summary>
+        /// <returns>The string representation of this <see cref="VersionRange"/>.</returns>
         public override string ToString()
             => ToString(new StringBuilder()).ToString();
 
+        /// <inheritdoc/>
         public override bool Equals(object obj)
             => obj is VersionRange range && Equals(range);
 
+        /// <summary>
+        /// Determines whether this <see cref="VersionRange"/> is equivalent to another range.
+        /// </summary>
+        /// <param name="other">The <see cref="VersionRange"/> to compare to.</param>
+        /// <returns><see langword="true"/> if they are equivalent, <see langword="false"/> otherwise.</returns>
         public bool Equals(VersionRange other)
         {
             if (ReferenceEquals(this, other)) return true;
@@ -424,6 +487,7 @@ namespace Hive.Versioning
             return true;
         }
 
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             var hc = new HashCode();
@@ -433,6 +497,12 @@ namespace Hive.Versioning
             return hc.ToHashCode();
         }
 
+        /// <summary>
+        /// Compares two <see cref="VersionRange"/>s for equality.
+        /// </summary>
+        /// <param name="a">The first argument.</param>
+        /// <param name="b">The second argument.</param>
+        /// <returns><see langword="true"/> if <paramref name="b"/> and <paramref name="b"/> are equivalent, <see langword="false"/> otherwise.</returns>
         public static bool operator ==(VersionRange? a, VersionRange? b)
         {
             if (a is null && b is null) return true;
@@ -440,14 +510,36 @@ namespace Hive.Versioning
             return a.Equals(b);
         }
 
+        /// <summary>
+        /// Determines if two <see cref="VersionRange"/>s are not equivalent.
+        /// </summary>
+        /// <param name="a">The first argument.</param>
+        /// <param name="b">The second argument.</param>
+        /// <returns><see langword="true"/> if <paramref name="b"/> and <paramref name="b"/> are not equivalent, <see langword="false"/> otherwise.</returns>
         public static bool operator !=(VersionRange? a, VersionRange? b) => !(a == b);
 
+        /// <summary>
+        /// Attempts to parse a whole string as a <see cref="VersionRange"/>.
+        /// </summary>
+        /// <param name="text">The string to try to parse.</param>
+        /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
         public static bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen(false)] out VersionRange range)
         {
             text = text.Trim();
             return TryParse(ref text, true, out range) && text.Length == 0;
         }
 
+        /// <summary>
+        /// Attempts to parse a <see cref="VersionRange"/> from the start of the string.
+        /// </summary>
+        /// <remarks>
+        /// When this returns <see langword="true"/>, <paramref name="text"/> will begin immediately after the parsed <see cref="VersionRange"/>.
+        /// When this returns <see langword="false"/>, <paramref name="text"/> will remain unchanged.
+        /// </remarks>
+        /// <param name="text">The string to try to parse.</param>
+        /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
         public static bool TryParse(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out VersionRange range)
             => TryParse(ref text, false, out range);
 
