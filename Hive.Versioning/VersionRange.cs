@@ -535,6 +535,22 @@ namespace Hive.Versioning
         public static bool operator !=(VersionRange? a, VersionRange? b) => !(a == b);
 
         /// <summary>
+        /// Parses a string as a <see cref="VersionRange"/>.
+        /// </summary>
+        /// <remarks>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
+        /// </remarks>
+        /// <param name="text">The stirng to parse.</param>
+        /// <returns>The parsed <see cref="VersionRange"/>.</returns>
+        /// <seealso cref="TryParse(ReadOnlySpan{char}, out VersionRange)"/>
+        public static VersionRange Parse(ReadOnlySpan<char> text)
+        {
+            if (!TryParse(text, out var range))
+                throw new ArgumentException("The argument is not a valid VersionRange", nameof(text));
+            return range;
+        }
+
+        /// <summary>
         /// Attempts to parse a whole string as a <see cref="VersionRange"/>.
         /// </summary>
         /// <param name="text">The string to try to parse.</param>
