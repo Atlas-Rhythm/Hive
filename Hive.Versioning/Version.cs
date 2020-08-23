@@ -283,18 +283,6 @@ namespace Hive.Versioning
         }
 
         /// <summary>
-        /// Parses a string into a <see cref="Version"/> object.
-        /// </summary>
-        /// <param name="text">The string to parse.</param>
-        /// <returns>The parsed verison object.</returns>
-        /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid SemVer version.</exception>
-        public static Version Parse(string text)
-        {
-            if (!TryParse(text, out var ver))
-                throw new ArgumentException("Input not a valid SemVer version", nameof(text));
-            return ver;
-        }
-        /// <summary>
         /// Parses a sequence of characters into a <see cref="Version"/> object.
         /// </summary>
         /// <param name="text">The sequence of characters to parse.</param>
