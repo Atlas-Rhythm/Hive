@@ -341,5 +341,37 @@ namespace Hive.Versioning.Tests.Ranges
             Assert.Equal(~expect!, expect!.Invert());
             Assert.Equal(inr!, expect!.Invert());
         }
+        
+        [Theory]
+        [InlineData("^1.0.0", "1.0.0-pre.1", false)]
+        [InlineData("^1.0.0", "1.0.0", true)]
+        [InlineData("^1.0.0", "1.4.0", true)]
+        [InlineData("^1.0.0", "1.8.0", true)]
+        [InlineData("^1.0.0", "2.0.0", false)]
+        [InlineData("^1.0.0 || ^2.0.0", "1.0.0-pre.1", false)]
+        [InlineData("^1.0.0 || ^2.0.0", "1.0.0", true)]
+        [InlineData("^1.0.0 || ^2.0.0", "1.4.0", true)]
+        [InlineData("^1.0.0 || ^2.0.0", "1.8.0", true)]
+        [InlineData("^1.0.0 || ^2.0.0", "2.0.0", true)]
+        [InlineData("^1.0.0 || ^2.0.0", "3.0.0", false)]
+        [InlineData("^1.0.0 || ^3.0.0", "1.0.0-pre.1", false)]
+        [InlineData("^1.0.0 || ^3.0.0", "1.0.0", true)]
+        [InlineData("^1.0.0 || ^3.0.0", "1.4.0", true)]
+        [InlineData("^1.0.0 || ^3.0.0", "1.8.0", true)]
+        [InlineData("^1.0.0 || ^3.0.0", "2.0.0", false)]
+        [InlineData("^1.0.0 || ^3.0.0", "3.0.0", true)]
+        [InlineData("^1.0.0 || ^3.0.0", "4.0.0", false)]
+        [InlineData(">1.0.0", "1.0.0", false)]
+        [InlineData(">1.0.0", "2.0.0", true)]
+        [InlineData(">1.0.0", "3.0.0", true)]
+        [InlineData(">1.0.0", "4.0.0", true)]
+        [InlineData(">1.0.0", "5.0.0", true)]
+        public void TestMatches(string Srange, string Sversion, bool expect)
+        {
+            var range = VersionRange.Parse(Srange);
+            var version = Version.Parse(Sversion);
+
+            Assert.Equal(expect, range.Matches(version));
+        }
     }
 }
