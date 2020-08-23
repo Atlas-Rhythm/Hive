@@ -240,6 +240,22 @@ namespace Hive.Versioning
         /// <seealso cref="Invert()"/>
         public static VersionRange operator ~(VersionRange r) => r.Invert();
 
+        /// <summary>
+        /// Determines whether or not a given <see cref="Version"/> matches this <see cref="VersionRange"/>.
+        /// </summary>
+        /// <param name="version">The <see cref="Version"/> to check.</param>
+        /// <returns><see langword="true"/> if <paramref name="version"/> matches, <see langword="false"/> otherwise.</returns>
+        public bool Matches(Version version)
+        {
+            if (additionalComparer?.Matches(version) ?? false)
+                return true;
+            foreach (var range in subranges)
+            {
+                if (range.Matches(version))
+                    return true;
+            }
+            return false;
+        }
 
         private static readonly Subrange[] EverythingSubranges = new[] { Subrange.Everything };
 
@@ -524,6 +540,7 @@ namespace Hive.Versioning
         /// <param name="text">The string to try to parse.</param>
         /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
         /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
+        /// <seealso cref="TryParse(ref ReadOnlySpan{char}, out VersionRange)"/>
         public static bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen(false)] out VersionRange range)
         {
             text = text.Trim();
@@ -534,8 +551,9 @@ namespace Hive.Versioning
         /// Attempts to parse a <see cref="VersionRange"/> from the start of the string.
         /// </summary>
         /// <remarks>
-        /// When this returns <see langword="true"/>, <paramref name="text"/> will begin immediately after the parsed <see cref="VersionRange"/>.
-        /// When this returns <see langword="false"/>, <paramref name="text"/> will remain unchanged.
+        /// <para>When this returns <see langword="true"/>, <paramref name="text"/> will begin immediately after the parsed <see cref="VersionRange"/>.
+        /// When this returns <see langword="false"/>, <paramref name="text"/> will remain unchanged.</para>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
         /// </remarks>
         /// <param name="text">The string to try to parse.</param>
         /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
