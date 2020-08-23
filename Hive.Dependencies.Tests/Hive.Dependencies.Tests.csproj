@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Hive.Dependencies\Hive.Dependencies.fsproj" />
+    <ProjectReference Include="..\Hive.Versioning\Hive.Versioning.csproj" />
   </ItemGroup>
 
 </Project>
