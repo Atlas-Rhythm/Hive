@@ -34,7 +34,7 @@ namespace Hive.Versioning.Fuzz
             }
             else if (type == "binops")
             {
-                Fuzzer.OutOfProcess.Run(rangetext =>
+                Fuzzer./*OutOfProcess.*/Run(rangetext =>
                 {
                     rangetext = rangetext.Trim();
                     var parts = rangetext.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
