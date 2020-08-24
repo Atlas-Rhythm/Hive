@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -12,7 +13,7 @@ namespace Hive.Versioning
     public partial class VersionRange
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Assert(bool value)
+        private static void Assert([DoesNotReturnIf(false)] bool value)
         {
             if (!value)
                 throw new InvalidOperationException("Assertion failed");
