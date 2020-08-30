@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Exceptions.fs" />
+    <Compile Include="IValueAccessor.fs" />
+    <Compile Include="Resolver.fsi" />
+    <Compile Include="Helpers.fs" />
+    <Compile Include="Resolver.fs" />
+  </ItemGroup>
+
+</Project>
