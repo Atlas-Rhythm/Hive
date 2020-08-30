@@ -83,14 +83,14 @@ namespace Hive.Permissions.Tests
 
             var permManager = new PermissionsManager<Context>(mock.Object, logger, ".");
 
-            PermissionActionParseState hiveModUploadParseState;
+            PermissionActionParseState hiveModUploadParseState = default;
             Assert.False(permManager.CanDo("hive.mod.upload", new Context(), ref hiveModUploadParseState));
             Assert.True(permManager.CanDo("hive.mod.upload", new Context { Hive = true }, ref hiveModUploadParseState));
             Assert.True(permManager.CanDo("hive.mod.upload", new Context { HiveMod = true }, ref hiveModUploadParseState));
             Assert.True(permManager.CanDo("hive.mod.upload", new Context { HiveModUpload = true }, ref hiveModUploadParseState));
             Assert.False(permManager.CanDo("hive.mod.upload", new Context { HiveModDelete = true }, ref hiveModUploadParseState));
 
-            PermissionActionParseState hiveModDeleteParseState;
+            PermissionActionParseState hiveModDeleteParseState = default;
             Assert.False(permManager.CanDo("hive.mod.delete", new Context(), ref hiveModDeleteParseState));
             Assert.True(permManager.CanDo("hive.mod.delete", new Context { Hive = true }, ref hiveModDeleteParseState));
             Assert.True(permManager.CanDo("hive.mod.delete", new Context { HiveMod = true }, ref hiveModDeleteParseState));
@@ -111,8 +111,8 @@ namespace Hive.Permissions.Tests
 
             var manager = new PermissionsManager<Context>(mock.Object, mockLogger.Object, ".");
 
-            PermissionActionParseState state;
-            PermissionActionParseState modState;
+            PermissionActionParseState state = default;
+            PermissionActionParseState modState = default;
             // We should be able to successfully compile this to a true
             Assert.True(manager.CanDo("hive", new Context { Hive = true }, ref state));
             // We should not be able to successfully compile this at all, so it should default to return false
@@ -134,8 +134,8 @@ namespace Hive.Permissions.Tests
 
             var manager = new PermissionsManager<Context>(mock.Object, mockLogger.Object, ".");
 
-            PermissionActionParseState state;
-            PermissionActionParseState modState;
+            PermissionActionParseState state = default;
+            PermissionActionParseState modState = default;
             // We should be able to successfully compile this to a true
             Assert.True(manager.CanDo("hive", new Context { Hive = true }, ref state));
             // We should not be able to successfully compile this at all, so it should default to return false
@@ -158,7 +158,7 @@ namespace Hive.Permissions.Tests
 
             var permManager = new PermissionsManager<Context>(mock.Object, logger, "/");
 
-            PermissionActionParseState state;
+            PermissionActionParseState state = default;
             Assert.False(permManager.CanDo("hive/mod/upload", new Context(), ref state));
             Assert.True(permManager.CanDo("hive/mod/upload", new Context { Hive = true }, ref state));
             Assert.True(permManager.CanDo("hive/mod/upload", new Context { HiveMod = true }, ref state));
@@ -179,7 +179,7 @@ namespace Hive.Permissions.Tests
 
             var permManager = new PermissionsManager<Context>(mock.Object, logger, "akljsdfgvhbakjfgh");
 
-            PermissionActionParseState state;
+            PermissionActionParseState state = default;
             Assert.False(permManager.CanDo("hiveakljsdfgvhbakjfghmodakljsdfgvhbakjfghupload", new Context(), ref state));
             Assert.True(permManager.CanDo("hiveakljsdfgvhbakjfghmodakljsdfgvhbakjfghupload", new Context { Hive = true }, ref state));
             Assert.True(permManager.CanDo("hiveakljsdfgvhbakjfghmodakljsdfgvhbakjfghupload", new Context { HiveMod = true }, ref state));
@@ -198,7 +198,7 @@ namespace Hive.Permissions.Tests
 
             var permManager = new PermissionsManager<Context>(mock.Object, logger, ".");
 
-            PermissionActionParseState state;
+            PermissionActionParseState state = default;
             Assert.False(permManager.CanDo("hive.mod", new Context(), ref state));
             Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true }, ref state));
             Assert.True(permManager.CanDo("hive.mod", new Context { HiveMod = true }, ref state));
@@ -232,7 +232,7 @@ namespace Hive.Permissions.Tests
 
             // Should not allow for permission injection
 
-            PermissionActionParseState state;
+            PermissionActionParseState state = default;
             Assert.False(permManager.CanDo("hive.mod", new Context { ArbitraryString = "ctx.Hive" }, ref state));
             mockLogger.Verify(l => l.Warn(It.IsAny<string>(), It.Is<object[]>(arr => arr.Length == 1 && arr[0] is CompilationException), "CanDo", hiveModRule.Name, hiveModRule, permManager), Times.Once);
             Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true, ArbitraryString = "ctx.Hive" }, ref state));
@@ -252,7 +252,7 @@ namespace Hive.Permissions.Tests
 
             var permManager = new PermissionsManager<Context>(mock.Object, logger, ".");
 
-            PermissionActionParseState state;
+            PermissionActionParseState state = default;
             // This will throw a PermissionException containing an NRE, because Context.NonTrivialObject is null
             Assert.Throws<PermissionException>(() => permManager.CanDo("hive.mod", new Context(), ref state));
             Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true }, ref state));
