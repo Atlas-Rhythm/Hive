@@ -35,7 +35,7 @@ namespace Hive
                 .AddTransient<IRuleProvider, ConfigRuleProvider>()
                 .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
                 .AddSingleton(sp =>
-                    new PermissionsManager<PermissionContext>(sp.GetService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."));
+                    new PermissionsManager<PermissionContext>(sp.GetRequiredService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."));
 
             services.AddDbContext<ModsContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"), 

@@ -1,4 +1,5 @@
 ﻿using Hive.Utilities;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -13,12 +14,12 @@ namespace Hive.Permissions
 
         public ConfigRuleProvider() { }
 
-        public bool HasRuleChangedSince(StringView name, DateTime time)
+        public bool HasRuleChangedSince(StringView name, Instant time)
         {
             return false;
         }
 
-        public bool HasRuleChangedSince(Rule rule, DateTime time)
+        public bool HasRuleChangedSince(Rule rule, Instant time)
         {
             return false;
         }
