@@ -1,10 +1,7 @@
-﻿using SemVer;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Version = SemVer.Version;
-using VerRange = SemVer.Range;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +9,8 @@ using System.Text.Json;
 using NodaTime;
 using Hive.Converters;
 using System.Text.Json.Serialization;
+using Hive.Versioning;
+using Version = Hive.Versioning.Version;
 
 namespace Hive.Models
 {
@@ -97,7 +96,7 @@ namespace Hive.Models
                 .Property(m => m.Version)
                 .HasConversion( // TODO: maybe encode this differently (say in a json structure?)
                     v => v.ToString(),
-                    s => new Version(s, false)
+                    s => new Version(s)
                 );
             b.Entity<Mod>()
                 .HasIndex(m => new { m.ID, m.Version })
@@ -119,10 +118,10 @@ namespace Hive.Models
         public string ModID { get; }
 
         [JsonConverter(typeof(VersionRangeJsonConverter))]
-        public VerRange Versions { get; }
+        public VersionRange Versions { get; }
 
         [JsonConstructor]
-        public ModReference(string modID, VerRange versions)
+        public ModReference(string modID, VersionRange versions)
         {
             ModID = modID;
             Versions = versions;
