@@ -11,13 +11,24 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Permissions.Tests", "H
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{359F68C9-18C8-435C-9573-A5C7CBD0ADE0}"
 	ProjectSection(SolutionItems) = preProject
+		Directory.Build.targets = Directory.Build.targets
 		Hive.props = Hive.props
 		nuget.config = nuget.config
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Utilities", "Hive.Utilities\Hive.Utilities.csproj", "{3C265E15-AFDF-47B1-9893-7957F9A43818}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities", "Hive.Utilities\Hive.Utilities.csproj", "{3C265E15-AFDF-47B1-9893-7957F9A43818}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Utilities.Tests", "Hive.Utilities.Tests\Hive.Utilities.Tests.csproj", "{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities.Tests", "Hive.Utilities.Tests\Hive.Utilities.Tests.csproj", "{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Hive.Dependencies", "Hive.Dependencies\Hive.Dependencies.fsproj", "{14DA7AF2-7B06-4E06-864E-0284269D9655}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Dependencies.Tests", "Hive.Dependencies.Tests\Hive.Dependencies.Tests.csproj", "{9086B6A4-8162-4CEC-B05A-D3222542EC4A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Versioning", "Hive.Versioning\Hive.Versioning.csproj", "{67415FB4-6200-4DEA-BEC1-10D7C3B1399D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Versioning.Tests", "Hive.Versioning.Tests\Hive.Versioning.Tests.csproj", "{E07BC8F2-00B7-4E6E-BC44-3007421A9831}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Versioning.Fuzz", "Hive.Versioning.Fuzz\Hive.Versioning.Fuzz.csproj", "{6AADF57E-7EBA-4A89-81C5-3C8AF3A58605}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +56,26 @@ Global
 		{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14DA7AF2-7B06-4E06-864E-0284269D9655}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14DA7AF2-7B06-4E06-864E-0284269D9655}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14DA7AF2-7B06-4E06-864E-0284269D9655}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14DA7AF2-7B06-4E06-864E-0284269D9655}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9086B6A4-8162-4CEC-B05A-D3222542EC4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9086B6A4-8162-4CEC-B05A-D3222542EC4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9086B6A4-8162-4CEC-B05A-D3222542EC4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9086B6A4-8162-4CEC-B05A-D3222542EC4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67415FB4-6200-4DEA-BEC1-10D7C3B1399D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67415FB4-6200-4DEA-BEC1-10D7C3B1399D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67415FB4-6200-4DEA-BEC1-10D7C3B1399D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67415FB4-6200-4DEA-BEC1-10D7C3B1399D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E07BC8F2-00B7-4E6E-BC44-3007421A9831}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E07BC8F2-00B7-4E6E-BC44-3007421A9831}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E07BC8F2-00B7-4E6E-BC44-3007421A9831}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E07BC8F2-00B7-4E6E-BC44-3007421A9831}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6AADF57E-7EBA-4A89-81C5-3C8AF3A58605}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AADF57E-7EBA-4A89-81C5-3C8AF3A58605}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AADF57E-7EBA-4A89-81C5-3C8AF3A58605}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AADF57E-7EBA-4A89-81C5-3C8AF3A58605}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

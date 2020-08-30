@@ -11,6 +11,8 @@ namespace Hive.Permissions.Logging
         private readonly object manager;
 
         [ThreadStatic]
+        private static string PublicApi = "";
+        [ThreadStatic]
         private static StringView CurrentAction = "";
         [ThreadStatic]
         private static Rule? CurrentRule = null;
@@ -21,11 +23,61 @@ namespace Hive.Permissions.Logging
             this.manager = manager;
         }
 
-        public void Info(string message, params object[] info) => logger?.Info(message, info, CurrentAction, CurrentRule, manager);
-        public void Warn(string message, params object[] info) => logger?.Warn(message, info, CurrentAction, CurrentRule, manager);
+        public void Wrap(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (PermissionException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw Exception(e);
+            }
+        }
 
+        public T Wrap<T>(Func<T> action)
+        {
+            try
+            {
+                return action();
+            }
+            catch (PermissionException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw Exception(e);
+            }
+        }
+
+        public PermissionException Exception(Exception e) 
+            => e is PermissionException pe ? pe : new PermissionException($"Error in {PublicApi}", e, CurrentAction, CurrentRule);
+        public void Info(string message, params object[] info) => logger?.Info(message, info, PublicApi, CurrentAction, CurrentRule, manager);
+        public void Warn(string message, params object[] info) => logger?.Warn(message, info, PublicApi, CurrentAction, CurrentRule, manager);
+
+        public ApiScope InApi(string api) => new ApiScope(api);
         public ActionScope WithAction(StringView action) => new ActionScope(action);
         public RuleScope WithRule(Rule? rule) => new RuleScope(rule);
+        public void ReplaceRule(Rule? rule) => CurrentRule = rule;
+
+        public struct ApiScope : IDisposable
+        {
+            private readonly string prevApi;
+            public ApiScope(string api)
+            {
+                prevApi = PublicApi;
+                PublicApi = api;
+            }
+            public void Dispose()
+            {
+                PublicApi = prevApi;
+            }
+        }
 
         public struct ActionScope : IDisposable
         {
@@ -44,14 +96,19 @@ namespace Hive.Permissions.Logging
         public struct RuleScope : IDisposable
         {
             private readonly Rule? prevRule;
+            private readonly bool revert;
+
             public RuleScope(Rule? rule)
             {
+                revert = CurrentRule != rule;
                 prevRule = CurrentRule;
-                CurrentRule = rule;
+                if (revert)
+                    CurrentRule = rule;
             }
             public void Dispose()
             {
-                CurrentRule = prevRule;
+                if (revert)
+                    CurrentRule = prevRule;
             }
         }
     }
