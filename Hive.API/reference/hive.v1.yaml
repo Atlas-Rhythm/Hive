@@ -152,7 +152,7 @@ paths:
           required: true
   /game/versions:
     get:
-      summary: Your GET endpoint
+      summary: Returns all game versions.
       tags: []
       responses:
         '200':
