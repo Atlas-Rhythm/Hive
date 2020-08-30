@@ -6,7 +6,7 @@ using System.Text;
 namespace Hive.Utilities
 {
     /// <summary>
-    /// A type that can be used to (fairly) efficitently create arrays with minimal allocation.
+    /// A type that can be used to (fairly) efficiently create arrays with minimal allocation.
     /// </summary>
     /// <remarks>
     /// Before going out of scope, each instance <b>must</b> have either <see cref="ToArray"/> or <see cref="Clear"/> called
