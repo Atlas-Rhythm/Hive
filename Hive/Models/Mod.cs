@@ -87,11 +87,7 @@ namespace Hive.Models
             b.Entity<Mod>()
                 .HasMany(m => m.SupportedVersions)
                 .WithMany(v => v.SupportedMods)
-                .UsingEntity<GameVersion_Mod_Joiner>(
-                    rb => rb.HasOne(j => j.Version).WithMany().OnDelete(DeleteBehavior.Cascade),
-                    lb => lb.HasOne(j => j.Mod).WithMany().OnDelete(DeleteBehavior.Cascade)
-                )
-                .HasNoKey();
+                .UsingEntity(m => m.HasNoKey());
             b.Entity<Mod>()
                 .Property(m => m.Version)
                 .HasConversion( // TODO: maybe encode this differently (say in a json structure?)
