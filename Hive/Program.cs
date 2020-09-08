@@ -16,6 +16,8 @@ using Serilog.Configuration;
 using Serilog.Exceptions;
 using Serilog.Exceptions.Core;
 using Serilog.Exceptions.EntityFrameworkCore.Destructurers;
+using Hive.Versioning;
+using Version = Hive.Versioning.Version;
 
 namespace Hive
 {
@@ -69,8 +71,8 @@ namespace Hive
                 });
 
         private static LoggerConfiguration LibraryTypes(this LoggerDestructuringConfiguration conf)
-            => conf.AsScalar<SemVer.Version>()
-            .Destructure.AsScalar<SemVer.Range>();
+            => conf.AsScalar<Version>()
+            .Destructure.AsScalar<VersionRange>();
 
         [Conditional("DEBUG")]
         private static void DemoData(Serilog.ILogger log, HiveContext context, IServiceProvider services)
@@ -92,7 +94,7 @@ namespace Hive
                 var mod = new Mod
                 {
                     ID = "test-mod",
-                    Version = new SemVer.Version("0.1.0"),
+                    Version = new Version("0.1.0"),
                     UploadedAt = SystemClock.Instance.GetCurrentInstant(),
                     Uploader = new User { DumbId = "me" },
                     Channel = channel,
@@ -107,7 +109,7 @@ namespace Hive
                     OwningMod = mod
                 };
 
-                var mr = new ModReference("dep-id", new SemVer.Range("^1.0.0"));
+                var mr = new ModReference("dep-id", new VersionRange("^1.0.0"));
 
                 mod.Dependencies.Add(mr);
                 mod.AddGameVersion(gameVersion);

@@ -18,13 +18,14 @@ namespace Hive.Logging
         {
             logger
                 .ForContext("Manager", manager)
+                .ForContext("Api", api)
                 .ForContext("MoreInfo", messageInfo)
                 .Information("{Api}: While processing {Rule} for {Action}: {Message}", api, currentRule, action, message);
         }
 
         public void Warn(string message, object[] messageInfo, string api, StringView action, Rule? currentRule, object manager)
         {
-            var log = logger.ForContext("Manager", manager);
+            var log = logger.ForContext("Manager", manager).ForContext("Api", api);
 
             if (messageInfo.Length > 0 && messageInfo[0] is Exception e)
             {
