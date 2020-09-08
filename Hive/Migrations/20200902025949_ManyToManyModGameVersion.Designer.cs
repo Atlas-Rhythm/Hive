@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Hive.Migrations
 {
-    [DbContext(typeof(ModsContext))]
+    [DbContext(typeof(HiveContext))]
     [Migration("20200902025949_ManyToManyModGameVersion")]
     partial class ManyToManyModGameVersion
     {

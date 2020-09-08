@@ -87,9 +87,9 @@ namespace Hive.Models
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
             b.Entity<Mod>()
+                .HasNoKey()
                 .HasMany(m => m.SupportedVersions)
-                .WithMany(v => v.SupportedMods)
-                .UsingEntity(m => m.HasNoKey());
+                .WithMany(v => v.SupportedMods);
             b.Entity<Mod>()
                 .Property(m => m.Version)
                 .HasConversion( // TODO: maybe encode this differently (say in a json structure?)

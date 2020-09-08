@@ -12,7 +12,7 @@ namespace Hive.Services
     public class MockAuthenticationHandler : IAuthenticationHandler
     {
         private HttpContext? context;
-        private string? authType;
+        private static string authType = "Bearer";
         private readonly IProxyAuthenticationService proxyAuth;
 
         public MockAuthenticationHandler(IProxyAuthenticationService proxyAuth)

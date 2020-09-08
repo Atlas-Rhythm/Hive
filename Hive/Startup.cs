@@ -40,9 +40,9 @@ namespace Hive
                 .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
                 .AddSingleton(sp =>
                     new PermissionsManager<PermissionContext>(sp.GetRequiredService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."))
-                .AddSingleton(sp => new PermissionsService(sp.GetService<PermissionsManager<PermissionContext>>()))
+                .AddSingleton(sp => new PermissionsService(sp.GetRequiredService<PermissionsManager<PermissionContext>>()))
                 .AddSingleton(sp => new ChannelsControllerPlugin())
-                .AddSingleton<IAggregate<ChannelsControllerPlugin>>(sp => new Aggregation<ChannelsControllerPlugin>(sp.GetService<ChannelsControllerPlugin>()))
+                .AddSingleton<IAggregate<ChannelsControllerPlugin>>(sp => new Aggregation<ChannelsControllerPlugin>(sp.GetRequiredService<ChannelsControllerPlugin>()))
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
                 .AddSingleton<IProxyAuthenticationService>(Span => new MockAuthenticationService());
 
