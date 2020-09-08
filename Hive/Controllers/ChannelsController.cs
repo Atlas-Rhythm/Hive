@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -9,6 +9,7 @@ using Hive.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hive.Controllers
 {
@@ -63,7 +64,7 @@ namespace Hive.Controllers
         [HttpGet]
         // TODO: Perhaps return a subset of Channel, instead only containing information desired as opposed to the whole model?
         // This is probably applicable via a GraphQL endpoint, however.
-        public async Task<ActionResult<IEnumerable<Channel>>> GetChannels()
+        public async Task<IActionResult> GetChannels()
         {
             log.Debug("Getting channels...");
             // The existence of this method is determined through a configuration file, which is handled in Startup.cs
@@ -85,11 +86,11 @@ namespace Hive.Controllers
             // Filter channels based off of user-level permission
             // Permission for a given channel is entirely plugin-based, channels in Hive are defaultly entirely public.
             // For a mix of private/public channels, a plugin that maintains a user-level list of read/write channels is probably ideal.
-            var channels = context.Channels.ToList();
+            var channels = await context.Channels.ToListAsync();
             log.Debug("Filtering channels from {0} channels...", channels.Count);
             var filteredChannels = combined.GetChannelsFilter(channels);
             log.Debug("Remaining channels: {0}", filteredChannels.Count());
-            return filteredChannels.ToList();
+            return Ok(filteredChannels.ToList());
         }
     }
 }
