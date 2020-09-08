@@ -7,7 +7,7 @@ using NodaTime;
 
 namespace Hive.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class CleanReset : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -16,8 +16,7 @@ namespace Hive.Migrations
                 columns: table => new
                 {
                     Name = table.Column<string>(type: "text", nullable: false),
-                    AdditionalData = table.Column<JsonElement>(type: "jsonb", nullable: false),
-                    IsPublic = table.Column<bool>(type: "boolean", nullable: false)
+                    AdditionalData = table.Column<JsonElement>(type: "jsonb", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -30,7 +29,8 @@ namespace Hive.Migrations
                 {
                     Guid = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    AdditionalData = table.Column<JsonElement>(type: "jsonb", nullable: false)
+                    AdditionalData = table.Column<JsonElement>(type: "jsonb", nullable: false),
+                    CreationTime = table.Column<Instant>(type: "timestamp", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -49,16 +49,17 @@ namespace Hive.Migrations
                     Uploader = table.Column<string>(type: "text", nullable: false),
                     Authors = table.Column<string[]>(type: "text[]", nullable: false),
                     Contributors = table.Column<string[]>(type: "text[]", nullable: false),
-                    Dependencies = table.Column<List<ModReference>>(type: "jsonb", nullable: false),
-                    Conflicts = table.Column<List<ModReference>>(type: "jsonb", nullable: false),
+                    Dependencies = table.Column<IList<ModReference>>(type: "jsonb", nullable: false),
+                    Conflicts = table.Column<IList<ModReference>>(type: "jsonb", nullable: false),
                     ChannelName = table.Column<string>(type: "text", nullable: false),
                     AdditionalData = table.Column<JsonElement>(type: "jsonb", nullable: false),
-                    Links = table.Column<List<ValueTuple<string, Uri>>>(type: "jsonb", nullable: false),
+                    Links = table.Column<IList<ValueTuple<string, Uri>>>(type: "jsonb", nullable: false),
                     DownloadLink = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Mods", x => x.Guid);
+                    table.UniqueConstraint("AK_Mods_ID", x => x.ID);
                     table.ForeignKey(
                         name: "FK_Mods_Channels_ChannelName",
                         column: x => x.ChannelName,
@@ -68,25 +69,26 @@ namespace Hive.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "GameVersion_Mod_Joiner",
+                name: "GameVersionMod",
                 columns: table => new
                 {
-                    ModGuid = table.Column<Guid>(type: "uuid", nullable: false),
-                    VersionGuid = table.Column<Guid>(type: "uuid", nullable: false)
+                    GameVersion_Guid = table.Column<Guid>(type: "uuid", nullable: false),
+                    Mod_ID = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
+                    table.PrimaryKey("PK_GameVersionMod", x => new { x.GameVersion_Guid, x.Mod_ID });
                     table.ForeignKey(
-                        name: "FK_GameVersion_Mod_Joiner_GameVersions_VersionGuid",
-                        column: x => x.VersionGuid,
+                        name: "FK_GameVersionMod_GameVersions_GameVersion_Guid",
+                        column: x => x.GameVersion_Guid,
                         principalTable: "GameVersions",
                         principalColumn: "Guid",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_GameVersion_Mod_Joiner_Mods_ModGuid",
-                        column: x => x.ModGuid,
+                        name: "FK_GameVersionMod_Mods_Mod_ID",
+                        column: x => x.Mod_ID,
                         principalTable: "Mods",
-                        principalColumn: "Guid",
+                        principalColumn: "ID",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -114,14 +116,9 @@ namespace Hive.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_GameVersion_Mod_Joiner_ModGuid",
-                table: "GameVersion_Mod_Joiner",
-                column: "ModGuid");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_GameVersion_Mod_Joiner_VersionGuid",
-                table: "GameVersion_Mod_Joiner",
-                column: "VersionGuid");
+                name: "IX_GameVersionMod_Mod_ID",
+                table: "GameVersionMod",
+                column: "Mod_ID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_GameVersions_Name",
@@ -149,7 +146,7 @@ namespace Hive.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "GameVersion_Mod_Joiner");
+                name: "GameVersionMod");
 
             migrationBuilder.DropTable(
                 name: "ModLocalizations");

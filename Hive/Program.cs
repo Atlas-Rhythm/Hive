@@ -92,7 +92,7 @@ namespace Hive
 
                 var mod = new Mod
                 {
-                    ID = "test-mod",
+                    ReadableID = "test-mod",
                     Version = new Version("0.1.0"),
                     UploadedAt = SystemClock.Instance.GetCurrentInstant(),
                     Uploader = new User { DumbId = "me" },

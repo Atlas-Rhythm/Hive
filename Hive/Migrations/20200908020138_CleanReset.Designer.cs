@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hive.Migrations
 {
     [DbContext(typeof(ModsContext))]
-    [Migration("20200902025949_ManyToManyModGameVersion")]
-    partial class ManyToManyModGameVersion
+    [Migration("20200908020138_CleanReset")]
+    partial class CleanReset
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -27,14 +27,12 @@ namespace Hive.Migrations
             modelBuilder.Entity("GameVersionMod", b =>
                 {
                     b.Property<Guid?>("GameVersion_Guid")
-                        .IsRequired()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Mod_ID")
-                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasIndex("GameVersion_Guid");
+                    b.HasKey("GameVersion_Guid", "Mod_ID");
 
                     b.HasIndex("Mod_ID");
 

@@ -16,7 +16,11 @@ namespace Hive.Models
 {
     public class Mod
     {
-        public string ID { get; set; } = null!;
+        // this would be the primary key for this row
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public Guid Guid { get; set; }
+
+        public string ReadableID { get; set; } = null!;
 
         // one to many
         public IList<LocalizedModInfo> Localizations { get; set; } = new List<LocalizedModInfo>();
@@ -57,12 +61,6 @@ namespace Hive.Models
 
         public Uri DownloadLink { get; set; } = null!;
 
-        #region DB Schema stuff
-        // this would be the primary key for this row
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid Guid { get; set; }
-        #endregion
-
         public void AddGameVersion(GameVersion ver)
         {
             if (!SupportedVersions.Contains(ver))
@@ -79,15 +77,15 @@ namespace Hive.Models
 
         public static void Configure(ModelBuilder b)
         {
+            /*b.Entity<Mod>()
+                .HasKey(m => m.Guid);*/
             b.Entity<Mod>()
                 .HasMany(m => m.Localizations)
                 .WithOne(l => l.OwningMod)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
-            b.Entity<Mod>()
-                .HasMany(m => m.SupportedVersions)
-                .WithMany(v => v.SupportedMods)
-                .UsingEntity(m => m.HasNoKey());
+
+            // SupportedMods is set up by GameVersion
             b.Entity<Mod>()
                 .Property(m => m.Version)
                 .HasConversion( // TODO: maybe encode this differently (say in a json structure?)
@@ -95,7 +93,7 @@ namespace Hive.Models
                     s => new Version(s)
                 );
             b.Entity<Mod>()
-                .HasIndex(m => new { m.ID, m.Version })
+                .HasIndex(m => new { m.ReadableID, m.Version })
                 .IsUnique();
             b.Entity<Mod>()
                 .Property(m => m.Uploader)

@@ -25,14 +25,12 @@ namespace Hive.Migrations
             modelBuilder.Entity("GameVersionMod", b =>
                 {
                     b.Property<Guid?>("GameVersion_Guid")
-                        .IsRequired()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Mod_ID")
-                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasIndex("GameVersion_Guid");
+                    b.HasKey("GameVersion_Guid", "Mod_ID");
 
                     b.HasIndex("Mod_ID");
 
