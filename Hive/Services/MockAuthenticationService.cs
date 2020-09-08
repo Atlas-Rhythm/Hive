@@ -24,6 +24,11 @@ namespace Hive.Services
 
         public async Task<User?> GetUser(HttpRequest request, bool throwOnError = false)
         {
+            if (request is null)
+                if (throwOnError)
+                    throw new ArgumentNullException(nameof(request));
+                else
+                    return null;
             if (request.Headers.TryGetValue(HeaderNames.Authorization, out var authHeader))
             {
                 if (Users.TryGetValue(authHeader, out User? outp))

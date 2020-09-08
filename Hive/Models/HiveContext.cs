@@ -12,13 +12,14 @@ namespace Hive.Models
         {
         }
 
-        public DbSet<Mod> Mods { get; set; } = null!;
+        public HiveContext() : base()
+        {
+        }
 
-        public DbSet<LocalizedModInfo> ModLocalizations { get; set; } = null!;
-
-        public DbSet<Channel> Channels { get; set; } = null!;
-
-        public DbSet<GameVersion> GameVersions { get; set; } = null!;
+        public virtual DbSet<Mod> Mods { get; set; } = null!;
+        public virtual DbSet<LocalizedModInfo> ModLocalizations { get; set; } = null!;
+        public virtual DbSet<Channel> Channels { get; set; } = null!;
+        public virtual DbSet<GameVersion> GameVersions { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
