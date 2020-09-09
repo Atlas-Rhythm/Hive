@@ -35,7 +35,7 @@ namespace Hive.Converters
             b.Metadata.SetValueComparer(new ValueComparer<IList<User>>(
                     (a, b) => a.SequenceEqual(b, UserComparer.Instance),
                     l => l.Aggregate(0, (a, v) => HashCode.Combine(a, v.DumbId.GetHashCode())),
-                    l => l.ToList() as IList<User> // DO NOT REMOVE THIS CAST! IT IS REQUIRES FOR THIS TO WORK.
+                    l => l.ToList() as IList<User> // DO NOT REMOVE THIS CAST! IT IS REQUIRED FOR THIS TO WORK.
                 ));
 
             return b;
@@ -44,8 +44,10 @@ namespace Hive.Converters
         private sealed class UserComparer : IEqualityComparer<User>
         {
             public static readonly UserComparer Instance = new UserComparer();
+
             public bool Equals([AllowNull] User x, [AllowNull] User y)
                 => x?.DumbId == y?.DumbId;
+
             public int GetHashCode([DisallowNull] User obj)
                 => obj.DumbId.GetHashCode();
         }
