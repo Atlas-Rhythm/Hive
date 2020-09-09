@@ -24,10 +24,9 @@ namespace Hive.Controllers
         /// <para>Hive default is to return true.</para>
         /// </summary>
         /// <param name="user">User in context</param>
-        public bool GetChannelsAdditionalChecks(User? user)
+        public virtual bool GetChannelsAdditionalChecks(User? user)
         {
-            // Test for now, ensures denial of channel access
-            return user is null;
+            return true;
         }
 
         /// <summary>
@@ -36,7 +35,7 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="channels">Input channels to filter</param>
         /// <returns>Filtered channels</returns>
-        public IEnumerable<Channel> GetChannelsFilter(IEnumerable<Channel> channels)
+        public virtual IEnumerable<Channel> GetChannelsFilter(IEnumerable<Channel> channels)
         {
             return channels;
         }
@@ -62,9 +61,11 @@ namespace Hive.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         // TODO: Perhaps return a subset of Channel, instead only containing information desired as opposed to the whole model?
         // This is probably applicable via a GraphQL endpoint, however.
-        public async Task<IActionResult> GetChannels()
+        public async Task<ActionResult<IEnumerable<Channel>>> GetChannels()
         {
             log.Debug("Getting channels...");
             // The existence of this method is determined through a configuration file, which is handled in Startup.cs
@@ -86,7 +87,7 @@ namespace Hive.Controllers
             // Filter channels based off of user-level permission
             // Permission for a given channel is entirely plugin-based, channels in Hive are defaultly entirely public.
             // For a mix of private/public channels, a plugin that maintains a user-level list of read/write channels is probably ideal.
-            var channels = await context.Channels.ToListAsync();
+            var channels = context.Channels.ToList();
             log.Debug("Filtering channels from {0} channels...", channels.Count);
             var filteredChannels = combined.GetChannelsFilter(channels);
             log.Debug("Remaining channels: {0}", filteredChannels.Count());
