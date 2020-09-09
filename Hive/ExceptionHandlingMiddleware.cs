@@ -31,7 +31,7 @@ namespace Hive
         public ExceptionHandlingMiddleware(RequestDelegate next, Serilog.ILogger log)
         {
             _next = next;
-            logger = (log ?? throw new ArgumentException(Resource.ArgumentNullException_logger, nameof(log))).ForContext<ExceptionHandlingMiddleware>();
+            logger = (log ?? throw new ArgumentNullException(nameof(log), Resource.ArgumentNullException_logger)).ForContext<ExceptionHandlingMiddleware>();
         }
 
         public async Task Invoke(HttpContext httpContext)
