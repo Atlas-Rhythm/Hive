@@ -30,17 +30,14 @@ namespace Hive.Models
             b.Entity<GameVersion>()
                 .HasIndex(v => new { v.Name })
                 .IsUnique();
-            // SupportedMods is set up by Mod
+
+            b.Entity<GameVersion>()
+                .HasMany(m => m.SupportedMods)
+                .WithMany(v => v.SupportedVersions)
+                .UsingEntity(b =>
+                {
+
+                });
         }
-    }
-
-    // FIXME: waiting on EF Core 5 preview 7 for full many-to-many support
-    internal class GameVersion_Mod_Joiner
-    {
-        [Key]
-        public Mod Mod { get; set; } = null!;
-
-        [Key]
-        public GameVersion Version { get; set; } = null!;
     }
 }
