@@ -43,7 +43,8 @@ namespace Hive.Tests.Endpoints
         {
             var plugin = new Mock<ChannelsControllerPlugin>();
             plugin.Setup(m => m.GetChannelsAdditionalChecks(It.IsAny<User>())).Returns(false);
-            plugin.Setup(m => m.GetChannelsFilter(It.IsAny<IEnumerable<Channel>>())).Returns((IEnumerable<Channel> c) => c);
+            plugin.Setup(m => m.GetChannelsFilter(It.IsAny<User>(), It.IsAny<IEnumerable<Channel>>()))
+                .Returns((IEnumerable<Channel> c) => c);
             var channelData = new List<Channel>
             {
                 new Channel { Name = "Public" },
@@ -86,7 +87,7 @@ namespace Hive.Tests.Endpoints
         {
             var plugin = new Mock<ChannelsControllerPlugin>();
             plugin.Setup(m => m.GetChannelsAdditionalChecks(It.IsAny<User>())).Returns(true);
-            plugin.Setup(m => m.GetChannelsFilter(It.IsAny<IEnumerable<Channel>>()))
+            plugin.Setup(m => m.GetChannelsFilter(It.IsAny<User>(), It.IsAny<IEnumerable<Channel>>()))
                 .Returns((IEnumerable<Channel> c) => c.Where(channel => channel.Name != "Beta"));
             var channelData = new List<Channel>
             {
