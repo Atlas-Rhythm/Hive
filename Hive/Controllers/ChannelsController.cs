@@ -19,8 +19,9 @@ namespace Hive.Controllers
     public class ChannelsControllerPlugin : IPlugin
     {
         /// <summary>
-        /// Returns true if the specified user still has access to the channel in question. False otherwise.
+        /// Returns true if the specified user has access to ANY of the channels. False otherwise.
         /// A false return will cause the endpoint in question to return a Forbid before executing the rest of the endpoint.
+        /// <para>It is recommended to use <see cref="GetChannelsFilter(IEnumerable{Channel})"/> for filtering user specific channels.</para>
         /// <para>Hive default is to return true.</para>
         /// </summary>
         /// <param name="user">User in context</param>
@@ -33,9 +34,10 @@ namespace Hive.Controllers
         /// Returns a filtered enumerable of <see cref="Channel"/>
         /// <para>Hive default is to return input channels.</para>
         /// </summary>
+        /// <param name="user">User to filter on</param>
         /// <param name="channels">Input channels to filter</param>
         /// <returns>Filtered channels</returns>
-        public virtual IEnumerable<Channel> GetChannelsFilter(IEnumerable<Channel> channels)
+        public virtual IEnumerable<Channel> GetChannelsFilter(User? user, IEnumerable<Channel> channels)
         {
             return channels;
         }
@@ -89,7 +91,7 @@ namespace Hive.Controllers
             // For a mix of private/public channels, a plugin that maintains a user-level list of read/write channels is probably ideal.
             var channels = context.Channels.ToList();
             log.Debug("Filtering channels from {0} channels...", channels.Count);
-            var filteredChannels = combined.GetChannelsFilter(channels);
+            var filteredChannels = combined.GetChannelsFilter(user, channels);
             log.Debug("Remaining channels: {0}", filteredChannels.Count());
             return Ok(filteredChannels.ToList());
         }
