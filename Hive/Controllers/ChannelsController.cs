@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Hive.Models;
+using Hive.Permissions;
 using Hive.Plugin;
 using Hive.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -16,7 +17,7 @@ namespace Hive.Controllers
     /// <summary>
     /// A class for plugins that allow modifications of <see cref="ChannelsController"/>
     /// </summary>
-    public class ChannelsControllerPlugin : IPlugin
+    public interface IChannelsControllerPlugin : IPlugin
     {
         /// <summary>
         /// Returns true if the specified user has access to ANY of the channels. False otherwise.
@@ -25,10 +26,7 @@ namespace Hive.Controllers
         /// <para>Hive default is to return true.</para>
         /// </summary>
         /// <param name="user">User in context</param>
-        public virtual bool GetChannelsAdditionalChecks(User? user)
-        {
-            return true;
-        }
+        public bool GetChannelsAdditionalChecks(User? user);
 
         /// <summary>
         /// Returns a filtered enumerable of <see cref="Channel"/>
@@ -37,23 +35,31 @@ namespace Hive.Controllers
         /// <param name="user">User to filter on</param>
         /// <param name="channels">Input channels to filter</param>
         /// <returns>Filtered channels</returns>
-        public virtual IEnumerable<Channel> GetChannelsFilter(User? user, IEnumerable<Channel> channels)
-        {
-            return channels;
-        }
+        public IEnumerable<Channel> GetChannelsFilter(User? user, IEnumerable<Channel> channels);
+    }
+
+    /// <summary>
+    /// Default Hive implementation of the <see cref="IChannelsControllerPlugin"/>
+    /// </summary>
+    internal class HiveChannelsControllerPlugin : IChannelsControllerPlugin
+    {
+        public bool GetChannelsAdditionalChecks(User? user) => true;
+
+        public IEnumerable<Channel> GetChannelsFilter(User? user, IEnumerable<Channel> channels) => channels;
     }
 
     [Route("api/channels")]
     [ApiController]
     public class ChannelsController : ControllerBase
     {
-        private readonly PermissionsService permissions;
+        private readonly PermissionsManager<PermissionContext> permissions;
         private readonly Serilog.ILogger log;
         private readonly HiveContext context;
-        private readonly IAggregate<ChannelsControllerPlugin> plugin;
+        private readonly IAggregate<IChannelsControllerPlugin> plugin;
         private readonly IProxyAuthenticationService authService;
+        private PermissionActionParseState channelsParseState;
 
-        public ChannelsController(Serilog.ILogger logger, PermissionsService perms, HiveContext ctx, IAggregate<ChannelsControllerPlugin> plugin, IProxyAuthenticationService authService)
+        public ChannelsController(Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IChannelsControllerPlugin> plugin, IProxyAuthenticationService authService)
         {
             log = logger.ForContext<ChannelsController>();
             permissions = perms;
@@ -61,6 +67,8 @@ namespace Hive.Controllers
             this.plugin = plugin;
             this.authService = authService;
         }
+
+        private const string ActionName = "hive.channel";
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -76,7 +84,9 @@ namespace Hive.Controllers
             User? user = await authService.GetUser(Request);
             // If user is null, we can simply forward it anyways
             // TODO: Wrap with user != null, either anonymize "hive.channel" or remove entirely.
-            if (!permissions.CanDo("hive.channel", new Permissions.PermissionContext { User = user }))
+            // hive.channel with a null channel in the context should be permissible
+            // iff a given user (or none) is allowed to view any channels. Thus, this should almost always be true
+            if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref channelsParseState))
                 return Forbid();
             // Combine plugins
             log.Debug("Combining plugins...");
@@ -91,7 +101,11 @@ namespace Hive.Controllers
             // For a mix of private/public channels, a plugin that maintains a user-level list of read/write channels is probably ideal.
             var channels = context.Channels.ToList();
             log.Debug("Filtering channels from {0} channels...", channels.Count);
-            var filteredChannels = combined.GetChannelsFilter(user, channels);
+            // First, we filter over if the given channel is accessible to the given user.
+            // This allows for much more specific permissions, although chances are that roles will be used (and thus a plugin) instead.
+            var filteredChannels = channels.Where(c => permissions.CanDo(ActionName, new PermissionContext { Channel = c, User = user }, ref channelsParseState));
+            log.Debug("Remaining channels before plugin: {0}", filteredChannels.Count());
+            filteredChannels = combined.GetChannelsFilter(user, filteredChannels);
             log.Debug("Remaining channels: {0}", filteredChannels.Count());
             return Ok(filteredChannels.ToList());
         }

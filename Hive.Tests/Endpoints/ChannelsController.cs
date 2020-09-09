@@ -8,9 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using NodaTime;
+using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,7 +23,7 @@ namespace Hive.Tests.Endpoints
         [Fact]
         public async Task PermissionForbid()
         {
-            var plugin = new ChannelsControllerPlugin();
+            var plugin = CreateDefaultPlugin();
             var channelData = new List<Channel>
             {
                 new Channel { Name = "Public" },
@@ -41,7 +41,7 @@ namespace Hive.Tests.Endpoints
         [Fact]
         public async Task PluginDeny()
         {
-            var plugin = new Mock<ChannelsControllerPlugin>();
+            var plugin = CreatePlugin();
             plugin.Setup(m => m.GetChannelsAdditionalChecks(It.IsAny<User>())).Returns(false);
             plugin.Setup(m => m.GetChannelsFilter(It.IsAny<User>(), It.IsAny<IEnumerable<Channel>>()))
                 .Returns((User user, IEnumerable<Channel> c) => c);
@@ -62,7 +62,7 @@ namespace Hive.Tests.Endpoints
         [Fact]
         public async Task Standard()
         {
-            var plugin = new ChannelsControllerPlugin();
+            var plugin = CreateDefaultPlugin();
             var channelData = new List<Channel>
             {
                 new Channel { Name = "Public" },
@@ -74,8 +74,9 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(res);
             // Should succeed, return the correct channels.
             Assert.IsType<OkObjectResult>(res.Result);
-            Assert.NotNull(res.Result);
-            var value = (res.Result as OkObjectResult).Value as IEnumerable<Channel>;
+            var result = res.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var value = result!.Value as IEnumerable<Channel>;
             Assert.NotNull(value);
             // Order of the channels isn't explicitly tested, just that the result contains the channels.
             foreach (var item in channelData)
@@ -83,9 +84,33 @@ namespace Hive.Tests.Endpoints
         }
 
         [Fact]
-        public async Task FilterPublic()
+        public async Task StandardFilter()
         {
-            var plugin = new Mock<ChannelsControllerPlugin>();
+            var plugin = CreateDefaultPlugin();
+            var channelData = new List<Channel>
+            {
+                new Channel { Name = "Public" },
+                new Channel { Name = "Beta" }
+            }.AsQueryable();
+
+            var controller = CreateController("ctx.Channel == null | ctx.Channel.Name != \"Beta\" | next(true)", plugin, channelData);
+            var res = await controller.GetChannels();
+            Assert.NotNull(res);
+            // Should succeed, with only Public listed.
+            Assert.IsType<OkObjectResult>(res.Result);
+            var result = res.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var value = result!.Value as IEnumerable<Channel>;
+            Assert.NotNull(value);
+            // Should only contain the first channel
+            Assert.Contains(channelData.ElementAt(0), value);
+            Assert.DoesNotContain(channelData.ElementAt(1), value);
+        }
+
+        [Fact]
+        public async Task PluginFilter()
+        {
+            var plugin = CreatePlugin();
             plugin.Setup(m => m.GetChannelsAdditionalChecks(It.IsAny<User>())).Returns(true);
             plugin.Setup(m => m.GetChannelsFilter(It.IsAny<User>(), It.IsAny<IEnumerable<Channel>>()))
                 .Returns((User user, IEnumerable<Channel> c) => c.Where(channel => channel.Name != "Beta"));
@@ -100,8 +125,9 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(res);
             // Should succeed, with only Public listed.
             Assert.IsType<OkObjectResult>(res.Result);
-            Assert.NotNull(res.Result);
-            var value = (res.Result as OkObjectResult).Value as IEnumerable<Channel>;
+            var result = res.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var value = result!.Value as IEnumerable<Channel>;
             Assert.NotNull(value);
             // Should only contain the first channel
             Assert.Contains(channelData.ElementAt(0), value);
@@ -111,12 +137,12 @@ namespace Hive.Tests.Endpoints
         public Mock<DbSet<Channel>> GetChannels(IQueryable<Channel> channels)
         {
             var channelSet = new Mock<DbSet<Channel>>();
-            channelSet.As<IDbAsyncEnumerable<Channel>>()
-                .Setup(m => m.GetAsyncEnumerator())
-                .Returns(new TestDbAsyncEnumerator<Channel>(channels.GetEnumerator()));
+            channelSet.As<IEnumerable<Channel>>()
+                .Setup(m => m.GetEnumerator())
+                .Returns(channels.GetEnumerator());
             channelSet.As<IQueryable<Channel>>()
                 .Setup(m => m.Provider)
-                .Returns(new TestDbAsyncQueryProvider<Channel>(channels.Provider));
+                .Returns(channels.Provider);
             channelSet.As<IQueryable<Channel>>().Setup(m => m.Expression).Returns(channels.Expression);
             channelSet.As<IQueryable<Channel>>().Setup(m => m.ElementType).Returns(channels.ElementType);
             channelSet.As<IQueryable<Channel>>().Setup(m => m.GetEnumerator()).Returns(channels.GetEnumerator());
@@ -137,24 +163,27 @@ namespace Hive.Tests.Endpoints
             return mock;
         }
 
-        private Controllers.ChannelsController CreateController(string permissionRule, ChannelsControllerPlugin plugin, IQueryable<Channel> channelData)
+        private Mock<IChannelsControllerPlugin> CreatePlugin() => new Mock<IChannelsControllerPlugin>();
+
+        private IChannelsControllerPlugin CreateDefaultPlugin() => new HiveChannelsControllerPlugin();
+
+        private Controllers.ChannelsController CreateController(string permissionRule, IChannelsControllerPlugin plugin, IQueryable<Channel> channelData)
         {
-            var logger = Serilog.Log.ForContext<ChannelsController>();
+            var logger = new LoggerConfiguration().WriteTo.Debug().CreateLogger();
             var ruleProvider = MockRuleProvider();
-            var hiveRule = new Rule("hive", "ctx.Hive | next(false)");
+            var hiveRule = new Rule("hive", "next(false)");
             var r = new Rule("hive.channel", permissionRule);
             ruleProvider.Setup(m => m.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
             ruleProvider.Setup(m => m.TryGetRule(r.Name, out r)).Returns(true);
             var manager = new PermissionsManager<PermissionContext>(ruleProvider.Object);
-            var perms = new PermissionsService(manager);
 
             var mockChannels = GetChannels(channelData);
             var mockContext = new Mock<HiveContext>();
             mockContext.Setup(m => m.Channels).Returns(mockChannels.Object);
-            var channelsControllerPlugin = new Aggregation<ChannelsControllerPlugin>(plugin);
+            var channelsControllerPlugin = new Aggregation<IChannelsControllerPlugin>(plugin);
             var authService = new MockAuthenticationService();
 
-            return new Controllers.ChannelsController(logger, perms, mockContext.Object, channelsControllerPlugin, authService);
+            return new Controllers.ChannelsController(logger, manager, mockContext.Object, channelsControllerPlugin, authService);
         }
     }
 }

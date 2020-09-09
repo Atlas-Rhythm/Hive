@@ -21,7 +21,6 @@ namespace Hive.Models
 
         public string? Credits { get; set; }
 
-
         private Mod? owningMod = null;
 
         [BackingField(nameof(owningMod))]
@@ -37,17 +36,13 @@ namespace Hive.Models
             }
         }
 
-#if false
         #region DB Schema stuff
-        // this would be a foreign key back to the Mod object this is associated with
-        public Guid ModVersionGuid { get; }
-        #endregion
-#endif
-        #region DB Schema stuff
+
         // this would be the primary key for this row
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Guid { get; set; }
-        #endregion
+
+        #endregion DB Schema stuff
 
         public static void Configure(ModelBuilder b)
         {

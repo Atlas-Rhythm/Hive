@@ -33,7 +33,7 @@ namespace Hive.Services
             return AuthenticateResult.Success(new AuthenticationTicket(p, authType));
         }
 
-        public async Task ChallengeAsync(AuthenticationProperties properties)
+        public async Task ChallengeAsync(AuthenticationProperties? properties)
         {
             if (context is null)
                 return;
@@ -41,7 +41,7 @@ namespace Hive.Services
             await context.Response.WriteAsync("challenge");
         }
 
-        public async Task ForbidAsync(AuthenticationProperties properties)
+        public async Task ForbidAsync(AuthenticationProperties? properties)
         {
             if (context is null)
                 return;

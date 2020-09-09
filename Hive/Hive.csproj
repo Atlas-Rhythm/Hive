@@ -5,15 +5,10 @@
     <UserSecretsId>a7289d55-bdb8-47a6-8078-9d0de29ea78c</UserSecretsId>
     
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG</DefineConstants>
-  </PropertyGroup>
   
   <Import Project="..\Hive.props" />
   
   <ItemGroup>
-    <PackageReference Include="EntityFramework" Version="6.4.4" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.6">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -20,9 +20,9 @@ namespace Hive.Controllers
 
         private readonly HiveContext context;
         private readonly Serilog.ILogger log;
-        private readonly PermissionsService permissions;
+        private readonly PermissionsManager<PermissionContext> permissions;
 
-        public WeatherForecastController(Serilog.ILogger log, PermissionsService perms, HiveContext ctx)
+        public WeatherForecastController(Serilog.ILogger log, PermissionsManager<PermissionContext> perms, HiveContext ctx)
         {
             this.log = log.ForContext<WeatherForecastController>();
             permissions = perms;

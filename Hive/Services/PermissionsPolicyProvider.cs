@@ -15,12 +15,12 @@ namespace Hive.Services
             return Task.FromResult(policy.Build());
         }
 
-        public Task<AuthorizationPolicy> GetFallbackPolicyAsync()
+        public Task<AuthorizationPolicy?> GetFallbackPolicyAsync()
         {
             return GetDefaultPolicyAsync();
         }
 
-        public Task<AuthorizationPolicy> GetPolicyAsync(string policyName)
+        public Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
         {
             var policy = new AuthorizationPolicyBuilder(CookieAuthenticationDefaults.AuthenticationScheme);
             if (policyName.StartsWith(RequirePermissionAttribute.PolicyPrefix, StringComparison.OrdinalIgnoreCase))

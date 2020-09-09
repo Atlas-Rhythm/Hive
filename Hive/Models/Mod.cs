@@ -38,7 +38,7 @@ namespace Hive.Models
         public IList<User> Contributors { get; set; } = new List<User>();
 
         // many to many (this needs to use a join type, and needs modification to be put into EF)
-        public ICollection<GameVersion> SupportedVersions { get; set; } = new List<GameVersion>();
+        public virtual ICollection<GameVersion> SupportedVersions { get; set; } = new List<GameVersion>();
 
         [Column(TypeName = "jsonb")]
         public IList<ModReference> Dependencies { get; set; } = new List<ModReference>();
@@ -87,7 +87,6 @@ namespace Hive.Models
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
             b.Entity<Mod>()
-                .HasNoKey()
                 .HasMany(m => m.SupportedVersions)
                 .WithMany(v => v.SupportedMods);
             b.Entity<Mod>()
