@@ -12,6 +12,9 @@ namespace Hive
 
         public RequirePermissionAttribute(string action) => Action = action;
 
+        /// <summary>
+        /// Gets or sets the action string used for this attribute
+        /// </summary>
         public string? Action
         {
             get => Policy?.Substring(PolicyPrefix.Length);

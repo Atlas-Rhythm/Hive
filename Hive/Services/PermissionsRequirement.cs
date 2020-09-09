@@ -12,7 +12,11 @@ namespace Hive.Services
     /// </summary>
     public class PermissionsRequirement : IAuthorizationRequirement
     {
-        internal string Action { get; }
+        /// <summary>
+        /// Gets the action string associated with this permissions requirement
+        /// </summary>
+        public string Action { get; }
+
         internal PermissionActionParseState actionParseState;
 
         public PermissionsRequirement(string action)

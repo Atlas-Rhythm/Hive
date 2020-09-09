@@ -26,7 +26,7 @@ namespace Hive.Controllers
         /// <para>Hive default is to return true.</para>
         /// </summary>
         /// <param name="user">User in context</param>
-        public bool GetChannelsAdditionalChecks(User? user);
+        public bool GetChannelsAdditionalChecks(User? user) => true;
 
         /// <summary>
         /// Returns a filtered enumerable of <see cref="Channel"/>
@@ -35,18 +35,10 @@ namespace Hive.Controllers
         /// <param name="user">User to filter on</param>
         /// <param name="channels">Input channels to filter</param>
         /// <returns>Filtered channels</returns>
-        public IEnumerable<Channel> GetChannelsFilter(User? user, IEnumerable<Channel> channels);
-    }
-
-    /// <summary>
-    /// Default Hive implementation of the <see cref="IChannelsControllerPlugin"/>
-    /// </summary>
-    internal class HiveChannelsControllerPlugin : IChannelsControllerPlugin
-    {
-        public bool GetChannelsAdditionalChecks(User? user) => true;
-
         public IEnumerable<Channel> GetChannelsFilter(User? user, IEnumerable<Channel> channels) => channels;
     }
+
+    internal class HiveChannelsControllerPlugin : IChannelsControllerPlugin { }
 
     [Route("api/channels")]
     [ApiController]
