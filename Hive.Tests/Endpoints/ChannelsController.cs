@@ -93,7 +93,7 @@ namespace Hive.Tests.Endpoints
                 new Channel { Name = "Beta" }
             }.AsQueryable();
 
-            var controller = CreateController("ctx.Channel == null | ctx.Channel.Name != \"Beta\" | next(true)", plugin, channelData);
+            var controller = CreateController("ctx.Channel = null | ctx.Channel.Name ~= \"Beta\" | next(true)", plugin, channelData);
             var res = await controller.GetChannels();
             Assert.NotNull(res);
             // Should succeed, with only Public listed.
