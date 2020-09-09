@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hive.Migrations
 {
     [DbContext(typeof(ModsContext))]
-    [Migration("20200908020138_CleanReset")]
+    [Migration("20200909022204_CleanReset")]
     partial class CleanReset
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -29,12 +29,12 @@ namespace Hive.Migrations
                     b.Property<Guid?>("GameVersion_Guid")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Mod_ID")
-                        .HasColumnType("text");
+                    b.Property<Guid?>("Mod_Id")
+                        .HasColumnType("uuid");
 
-                    b.HasKey("GameVersion_Guid", "Mod_ID");
+                    b.HasKey("GameVersion_Guid", "Mod_Id");
 
-                    b.HasIndex("Mod_ID");
+                    b.HasIndex("Mod_Id");
 
                     b.ToTable("GameVersionMod");
                 });
@@ -100,19 +100,19 @@ namespace Hive.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("OwningModGuid")
+                    b.Property<Guid>("OwningModId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Guid");
 
-                    b.HasIndex("OwningModGuid");
+                    b.HasIndex("OwningModId");
 
                     b.ToTable("ModLocalizations");
                 });
 
             modelBuilder.Entity("Hive.Models.Mod", b =>
                 {
-                    b.Property<Guid>("Guid")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
@@ -146,13 +146,13 @@ namespace Hive.Migrations
                     b.Property<Instant?>("EditedAt")
                         .HasColumnType("timestamp");
 
-                    b.Property<string>("ID")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<IList<ValueTuple<string, Uri>>>("Links")
                         .IsRequired()
                         .HasColumnType("jsonb");
+
+                    b.Property<string>("ReadableID")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Instant>("UploadedAt")
                         .HasColumnType("timestamp");
@@ -165,11 +165,11 @@ namespace Hive.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("Guid");
+                    b.HasKey("Id");
 
                     b.HasIndex("ChannelName");
 
-                    b.HasIndex("ID", "Version")
+                    b.HasIndex("ReadableID", "Version")
                         .IsUnique();
 
                     b.ToTable("Mods");
@@ -185,8 +185,7 @@ namespace Hive.Migrations
 
                     b.HasOne("Hive.Models.Mod", null)
                         .WithMany()
-                        .HasForeignKey("Mod_ID")
-                        .HasPrincipalKey("ID")
+                        .HasForeignKey("Mod_Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -195,7 +194,7 @@ namespace Hive.Migrations
                 {
                     b.HasOne("Hive.Models.Mod", "OwningMod")
                         .WithMany("Localizations")
-                        .HasForeignKey("OwningModGuid")
+                        .HasForeignKey("OwningModId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

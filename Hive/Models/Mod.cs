@@ -18,7 +18,7 @@ namespace Hive.Models
     {
         // this would be the primary key for this row
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid Guid { get; set; }
+        public Guid Id { get; set; } // the reason for this wierdness is that M2M, at the moment, fails if it can't find the PKey by convention
 
         public string ReadableID { get; set; } = null!;
 
@@ -77,8 +77,6 @@ namespace Hive.Models
 
         public static void Configure(ModelBuilder b)
         {
-            /*b.Entity<Mod>()
-                .HasKey(m => m.Guid);*/
             b.Entity<Mod>()
                 .HasMany(m => m.Localizations)
                 .WithOne(l => l.OwningMod)

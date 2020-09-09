@@ -20,7 +20,8 @@ namespace Hive.Converters
                 s => new User { DumbId = s }, null));
             b.Metadata.SetValueComparer(new ValueComparer<User>(
                     (a, b) => a.DumbId == b.DumbId,
-                    u => u.DumbId.GetHashCode()
+                    u => u.DumbId.GetHashCode(),
+                    u => new User { DumbId = u.DumbId }
                 ));
 
             return b;
@@ -34,7 +35,7 @@ namespace Hive.Converters
             b.Metadata.SetValueComparer(new ValueComparer<IList<User>>(
                     (a, b) => a.SequenceEqual(b, UserComparer.Instance),
                     l => l.Aggregate(0, (a, v) => HashCode.Combine(a, v.DumbId.GetHashCode())),
-                    l => l.ToList()
+                    l => l.ToList() as IList<User> // DO NOT REMOVE THIS CAST! IT IS REQUIRES FOR THIS TO WORK.
                 ));
 
             return b;

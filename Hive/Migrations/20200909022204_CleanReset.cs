@@ -41,8 +41,8 @@ namespace Hive.Migrations
                 name: "Mods",
                 columns: table => new
                 {
-                    Guid = table.Column<Guid>(type: "uuid", nullable: false),
-                    ID = table.Column<string>(type: "text", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ReadableID = table.Column<string>(type: "text", nullable: false),
                     Version = table.Column<string>(type: "text", nullable: false),
                     UploadedAt = table.Column<Instant>(type: "timestamp", nullable: false),
                     EditedAt = table.Column<Instant>(type: "timestamp", nullable: true),
@@ -58,8 +58,7 @@ namespace Hive.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Mods", x => x.Guid);
-                    table.UniqueConstraint("AK_Mods_ID", x => x.ID);
+                    table.PrimaryKey("PK_Mods", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Mods_Channels_ChannelName",
                         column: x => x.ChannelName,
@@ -73,11 +72,11 @@ namespace Hive.Migrations
                 columns: table => new
                 {
                     GameVersion_Guid = table.Column<Guid>(type: "uuid", nullable: false),
-                    Mod_ID = table.Column<string>(type: "text", nullable: false)
+                    Mod_Id = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_GameVersionMod", x => new { x.GameVersion_Guid, x.Mod_ID });
+                    table.PrimaryKey("PK_GameVersionMod", x => new { x.GameVersion_Guid, x.Mod_Id });
                     table.ForeignKey(
                         name: "FK_GameVersionMod_GameVersions_GameVersion_Guid",
                         column: x => x.GameVersion_Guid,
@@ -85,10 +84,10 @@ namespace Hive.Migrations
                         principalColumn: "Guid",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_GameVersionMod_Mods_Mod_ID",
-                        column: x => x.Mod_ID,
+                        name: "FK_GameVersionMod_Mods_Mod_Id",
+                        column: x => x.Mod_Id,
                         principalTable: "Mods",
-                        principalColumn: "ID",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -102,23 +101,23 @@ namespace Hive.Migrations
                     Description = table.Column<string>(type: "text", nullable: false),
                     Changelog = table.Column<string>(type: "text", nullable: true),
                     Credits = table.Column<string>(type: "text", nullable: true),
-                    OwningModGuid = table.Column<Guid>(type: "uuid", nullable: false)
+                    OwningModId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ModLocalizations", x => x.Guid);
                     table.ForeignKey(
-                        name: "FK_ModLocalizations_Mods_OwningModGuid",
-                        column: x => x.OwningModGuid,
+                        name: "FK_ModLocalizations_Mods_OwningModId",
+                        column: x => x.OwningModId,
                         principalTable: "Mods",
-                        principalColumn: "Guid",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_GameVersionMod_Mod_ID",
+                name: "IX_GameVersionMod_Mod_Id",
                 table: "GameVersionMod",
-                column: "Mod_ID");
+                column: "Mod_Id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_GameVersions_Name",
@@ -127,9 +126,9 @@ namespace Hive.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ModLocalizations_OwningModGuid",
+                name: "IX_ModLocalizations_OwningModId",
                 table: "ModLocalizations",
-                column: "OwningModGuid");
+                column: "OwningModId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Mods_ChannelName",
@@ -137,9 +136,9 @@ namespace Hive.Migrations
                 column: "ChannelName");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Mods_ID_Version",
+                name: "IX_Mods_ReadableID_Version",
                 table: "Mods",
-                columns: new[] { "ID", "Version" },
+                columns: new[] { "ReadableID", "Version" },
                 unique: true);
         }
 
