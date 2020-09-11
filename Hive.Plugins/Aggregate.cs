@@ -1,16 +1,22 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Hive.Plugins
 {
     internal class Aggregate<T> : IAggregate<T>
+        where T : class
     {
-        public Aggregate(IEnumerable<T> aggregate)
+        private Aggregate(IEnumerable<T> aggregate)
         {
-
+            Instance = AggregatedInstanceGenerator<T>.Create(Array.Empty<Delegate>(), aggregate);
         }
 
-        public T Instance => throw new NotImplementedException();
+        public Aggregate(IServiceProvider services) : this(services.GetServices<T>())
+        {
+        }
+
+        public T Instance { get; }
     }
 }

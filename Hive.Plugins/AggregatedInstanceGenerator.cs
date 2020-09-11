@@ -105,7 +105,7 @@ namespace Hive.Plugins
                 var (delType, hasResult) = GetGenericDelegateType(args, ret);
 
                 var typeArgs = args.Select(p => p.ParameterType).Prepend(ifaceType);
-                if (hasResult) typeArgs.Append(ret.ParameterType);
+                if (hasResult) typeArgs = typeArgs.Append(ret.ParameterType);
                 delType = delType.MakeGenericType(typeArgs.ToArray());
 
                 var genField = gen.DefineField($"impl__{method.Name}", delType, FieldAttributes.Private | FieldAttributes.InitOnly);
@@ -223,10 +223,15 @@ namespace Hive.Plugins
                 if (param.ParameterType.IsByRef)
                     gtype = gtype.MakeByRefType();
                 coreArgTypes[i + 1] = gtype;
+
             }
 
+            var retType = hasResult ? genericParams[^1] : typeof(void);
+            if (hasResult && ret.ParameterType.IsByRef)
+                retType = retType.MakeByRefType();
+
             var invoke = newDelType.DefineMethod("Invoke", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual,
-                ret.ParameterType, coreArgTypes);
+                retType, coreArgTypes);
             invoke.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
             invoke.DefineParameter(0, GetAttrsFor(ret), "return");
             invoke.DefineParameter(1, ParameterAttributes.None, "inst");
@@ -245,7 +250,7 @@ namespace Hive.Plugins
             }
 
             var endInvoke = newDelType.DefineMethod("EndInvoke", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual,
-                ret.ParameterType, new[] { typeof(IAsyncResult) });
+                retType, new[] { typeof(IAsyncResult) });
             endInvoke.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
             endInvoke.DefineParameter(0, GetAttrsFor(ret), "return");
             endInvoke.DefineParameter(1, ParameterAttributes.None, "result");
