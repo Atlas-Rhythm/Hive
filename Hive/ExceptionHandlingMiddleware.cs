@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
@@ -28,10 +29,14 @@ namespace Hive
         private readonly RequestDelegate _next;
         private readonly Serilog.ILogger logger;
 
-        public ExceptionHandlingMiddleware(RequestDelegate next, Serilog.ILogger log)
+        public ExceptionHandlingMiddleware([DisallowNull] RequestDelegate next, [DisallowNull] Serilog.ILogger log)
         {
+            if (next is null)
+                throw new ArgumentNullException(nameof(next));
+            if (log is null)
+                throw new ArgumentNullException(nameof(log));
             _next = next;
-            logger = (log ?? throw new ArgumentNullException(nameof(log), Resource.ArgumentNullException_logger)).ForContext<ExceptionHandlingMiddleware>();
+            logger = log.ForContext<ExceptionHandlingMiddleware>();
         }
 
         public async Task Invoke(HttpContext httpContext)
@@ -39,7 +44,7 @@ namespace Hive
             string? message = null;
             try
             {
-                await _next.Invoke(httpContext);
+                await _next.Invoke(httpContext).ConfigureAwait(false);
             }
             catch (ApiException ex)
             {
@@ -66,9 +71,6 @@ namespace Hive
     // Extension method used to add the middleware to the HTTP request pipeline.
     public static class ExceptionHandlingMiddlewareExtensions
     {
-        public static IApplicationBuilder UseExceptionHandlingMiddleware(this IApplicationBuilder builder)
-        {
-            return builder.UseMiddleware<ExceptionHandlingMiddleware>();
-        }
+        public static IApplicationBuilder UseExceptionHandlingMiddleware(this IApplicationBuilder builder) => builder.UseMiddleware<ExceptionHandlingMiddleware>();
     }
 }

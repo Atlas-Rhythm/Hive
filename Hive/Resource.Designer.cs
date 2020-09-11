@@ -61,11 +61,20 @@ namespace Hive {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Must provide a non-null logger!.
+        ///   Looks up a localized string similar to challenge.
         /// </summary>
-        internal static string ArgumentNullException_logger {
+        internal static string challenge_respose {
             get {
-                return ResourceManager.GetString("ArgumentNullException_logger", resourceCulture);
+                return ResourceManager.GetString("challenge_respose", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to forbidden.
+        /// </summary>
+        internal static string forbidden_respose {
+            get {
+                return ResourceManager.GetString("forbidden_respose", resourceCulture);
             }
         }
     }

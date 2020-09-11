@@ -5,6 +5,7 @@ using Serilog;
 using Serilog.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -15,16 +16,18 @@ using System.Threading.Tasks;
 
 namespace Hive.Services
 {
-    public class VaulthAuthenticationService : IProxyAuthenticationService
+    public sealed class VaulthAuthenticationService : IProxyAuthenticationService, IDisposable
     {
         private const string vaulthGetUserApi = "user";
         private readonly Uri vaulthUri;
         private readonly HttpClient client;
         private readonly ILogger logger;
 
-        public VaulthAuthenticationService(ILogger log, IConfiguration configuration)
+        public VaulthAuthenticationService([DisallowNull] ILogger log, IConfiguration configuration)
         {
-            logger = (log ?? throw new ArgumentException(Resource.ArgumentNullException_logger, nameof(log))).ForContext<VaulthAuthenticationService>();
+            if (log is null)
+                throw new ArgumentNullException(nameof(log));
+            logger = log.ForContext<VaulthAuthenticationService>();
             vaulthUri = configuration.GetValue<Uri>("vaulthBaseUri");
             var timeout = new TimeSpan(0, 0, 0, 0, configuration.GetValue<int>("vaulthTimeoutMs"));
             client = new HttpClient
@@ -47,6 +50,8 @@ namespace Hive.Services
 
         public async Task<User?> GetUser(HttpRequest request, bool throwOnError = false)
         {
+            if (request is null)
+                throw new ArgumentNullException(nameof(request));
             // After we are certain we have a valid token in our request header, we can get the user using it
             // If the response we get is valid, we are happy to continue, otherwise, we have a failure and return null/task failure
             // Invoke user/get with the current request to get info about the user (the entire structure)
@@ -56,7 +61,7 @@ namespace Hive.Services
                 message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", auth);
             try
             {
-                var resp = await client.SendAsync(message);
+                var resp = await client.SendAsync(message).ConfigureAwait(false);
                 return await resp.Content.ReadFromJsonAsync<User?>(new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true,
@@ -84,5 +89,7 @@ namespace Hive.Services
                 return null;
             }
         }
+
+        public void Dispose() => client.Dispose();
     }
 }

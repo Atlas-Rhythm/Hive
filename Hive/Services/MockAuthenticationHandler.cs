@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
@@ -24,7 +25,7 @@ namespace Hive.Services
         {
             if (context is null)
                 return AuthenticateResult.NoResult();
-            var user = await proxyAuth.GetUser(context.Request);
+            var user = await proxyAuth.GetUser(context.Request).ConfigureAwait(false);
             if (user is null)
                 return AuthenticateResult.Fail("Could not find user");
             user.AuthenticationType = authType;
@@ -38,7 +39,7 @@ namespace Hive.Services
             if (context is null)
                 return;
             context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-            await context.Response.WriteAsync("challenge");
+            await context.Response.WriteAsync(Resource.challenge_respose).ConfigureAwait(false);
         }
 
         public async Task ForbidAsync(AuthenticationProperties? properties)
@@ -46,11 +47,13 @@ namespace Hive.Services
             if (context is null)
                 return;
             context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-            await context.Response.WriteAsync("forbidden");
+            await context.Response.WriteAsync(Resource.forbidden_respose).ConfigureAwait(false);
         }
 
-        public Task InitializeAsync(AuthenticationScheme scheme, HttpContext context)
+        public Task InitializeAsync([DisallowNull] AuthenticationScheme scheme, HttpContext context)
         {
+            if (scheme is null)
+                throw new ArgumentNullException(nameof(scheme));
             authType = scheme.Name;
             this.context = context;
             return Task.CompletedTask;

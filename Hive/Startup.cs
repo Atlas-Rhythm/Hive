@@ -58,6 +58,7 @@ namespace Hive
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Configure is required for Startup.")]
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())

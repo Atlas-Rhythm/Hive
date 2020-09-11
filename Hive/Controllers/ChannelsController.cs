@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -51,8 +52,10 @@ namespace Hive.Controllers
         private readonly IProxyAuthenticationService authService;
         private PermissionActionParseState channelsParseState;
 
-        public ChannelsController(Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IChannelsControllerPlugin> plugin, IProxyAuthenticationService authService)
+        public ChannelsController([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IChannelsControllerPlugin> plugin, IProxyAuthenticationService authService)
         {
+            if (logger is null)
+                throw new ArgumentNullException(nameof(logger));
             log = logger.ForContext<ChannelsController>();
             permissions = perms;
             context = ctx;
@@ -70,10 +73,8 @@ namespace Hive.Controllers
         public async Task<ActionResult<IEnumerable<Channel>>> GetChannels()
         {
             log.Debug("Getting channels...");
-            // The existence of this method is determined through a configuration file, which is handled in Startup.cs
-            // This method simply needs to exist.
-            // TODO: Get user
-            User? user = await authService.GetUser(Request);
+            // Get the user, do not need to capture context.
+            User? user = await authService.GetUser(Request).ConfigureAwait(false);
             // If user is null, we can simply forward it anyways
             // TODO: Wrap with user != null, either anonymize "hive.channel" or remove entirely.
             // hive.channel with a null channel in the context should be permissible
