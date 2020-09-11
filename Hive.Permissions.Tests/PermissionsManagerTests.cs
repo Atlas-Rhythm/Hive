@@ -191,7 +191,7 @@ namespace Hive.Permissions.Tests
         {
             var mock = MockRuleProvider();
 
-            var hiveRule = new Rule("hive", "ctx.ArbitraryString = \"test\" | next(false)");
+            var hiveRule = new Rule("hive", "ctx.Hive | ctx.ArbitraryString = \"test\" | next(false)");
             mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
 
             var permManager = new PermissionsManager<Context>(mock.Object, logger, ".");

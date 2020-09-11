@@ -93,7 +93,7 @@ namespace Hive.Tests.Endpoints
                 new Channel { Name = "Beta" }
             }.AsQueryable();
 
-            var controller = CreateController("ctx.Channel = null | ctx.Channel.Name ~= \"Beta\" | next(true)", plugin, channelData);
+            var controller = CreateController("isNull(ctx.Channel) | ctx.Channel.Name = \"Public\" | next(false)", plugin, channelData);
             var res = await controller.GetChannels();
             Assert.NotNull(res);
             // Should succeed, with only Public listed.
@@ -175,7 +175,10 @@ namespace Hive.Tests.Endpoints
             var r = new Rule("hive.channel", permissionRule);
             ruleProvider.Setup(m => m.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
             ruleProvider.Setup(m => m.TryGetRule(r.Name, out r)).Returns(true);
-            var manager = new PermissionsManager<PermissionContext>(ruleProvider.Object);
+            var manager = new PermissionsManager<PermissionContext>(ruleProvider.Object, new List<(string, Delegate)>
+            {
+                ("isNull", new Func<object?, bool>(o => o is null))
+            });
 
             var mockChannels = GetChannels(channelData);
             var mockContext = new Mock<HiveContext>();
