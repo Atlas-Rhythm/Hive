@@ -44,8 +44,12 @@ namespace Hive
 
                     DemoData(log, context, services);
 
-                    var agg = services.GetService<IAggregate<IWeatherExtensions>>();
+                    var agg = services.GetRequiredService<IAggregate<IWeatherExtensions>>();
 
+                    var aggInst = agg.Instance;
+                    aggInst.DoThing();
+                    aggInst.GetThing1(0);
+                    aggInst.GetThing4(1, out var b);
                 }
                 catch (Exception e)
                 {
