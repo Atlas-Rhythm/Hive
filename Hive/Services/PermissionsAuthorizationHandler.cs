@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -18,8 +19,12 @@ namespace Hive.Services
             permissions = perms;
         }
 
-        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionsRequirement requirement, PermissionContext contextObj)
+        protected override Task HandleRequirementAsync([DisallowNull] AuthorizationHandlerContext context, [DisallowNull] PermissionsRequirement requirement, PermissionContext contextObj)
         {
+            if (context is null)
+                throw new ArgumentNullException(nameof(context));
+            if (requirement is null)
+                throw new ArgumentNullException(nameof(requirement));
             // TODO: Create our contextObj from the requirement. If we need to fetch mods, we grab them
             // This should be used in our permissions manager, when we check permissions.
             // actionParseState exists for each unique attribute, that is, for each unique requirement.Action.

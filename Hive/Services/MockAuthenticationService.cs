@@ -22,19 +22,19 @@ namespace Hive.Services
             Users.Add("Bearer: asdf", user2);
         }
 
-        public async Task<User?> GetUser(HttpRequest request, bool throwOnError = false)
+        public Task<User?> GetUser(HttpRequest request, bool throwOnError = false)
         {
             if (request is null)
                 if (throwOnError)
                     throw new ArgumentNullException(nameof(request));
                 else
-                    return null;
+                    return Task.FromResult<User?>(null);
             if (request.Headers.TryGetValue(HeaderNames.Authorization, out var authHeader))
             {
                 if (Users.TryGetValue(authHeader, out User? outp))
-                    return outp;
+                    return Task.FromResult(outp);
             }
-            return null;
+            return Task.FromResult<User?>(null);
         }
 
         public Task<bool> IsValid(HttpRequest request) => throw new NotImplementedException();

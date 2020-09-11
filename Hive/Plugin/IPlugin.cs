@@ -10,6 +10,7 @@ namespace Hive.Plugin
         T Combine();
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1040:Avoid empty interfaces", Justification = "We use IPlugin as an ensurance for IAggreagator.")]
     public interface IPlugin
     {
     }

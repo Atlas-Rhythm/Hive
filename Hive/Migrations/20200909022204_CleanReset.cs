@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Hive.Models;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -9,8 +10,10 @@ namespace Hive.Migrations
 {
     public partial class CleanReset : Migration
     {
-        protected override void Up(MigrationBuilder migrationBuilder)
+        protected override void Up([DisallowNull] MigrationBuilder migrationBuilder)
         {
+            if (migrationBuilder is null)
+                throw new ArgumentNullException(nameof(migrationBuilder));
             migrationBuilder.CreateTable(
                 name: "Channels",
                 columns: table => new
@@ -142,8 +145,10 @@ namespace Hive.Migrations
                 unique: true);
         }
 
-        protected override void Down(MigrationBuilder migrationBuilder)
+        protected override void Down([DisallowNull] MigrationBuilder migrationBuilder)
         {
+            if (migrationBuilder is null)
+                throw new ArgumentNullException(nameof(migrationBuilder));
             migrationBuilder.DropTable(
                 name: "GameVersionMod");
 

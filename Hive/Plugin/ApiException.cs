@@ -29,5 +29,17 @@ namespace Hive.Plugin
                 _ => null,
             };
         }
+
+        public ApiException()
+        {
+        }
+
+        public ApiException(string message) : base(message)
+        {
+        }
+
+        public ApiException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
     }
 }

@@ -15,21 +15,21 @@ namespace Hive.Services
             return Task.FromResult(policy.Build());
         }
 
-        public Task<AuthorizationPolicy?> GetFallbackPolicyAsync()
+        public async Task<AuthorizationPolicy?> GetFallbackPolicyAsync()
         {
-            return GetDefaultPolicyAsync();
+            return await GetDefaultPolicyAsync().ConfigureAwait(false);
         }
 
-        public Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
+        public async Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
         {
             var policy = new AuthorizationPolicyBuilder(CookieAuthenticationDefaults.AuthenticationScheme);
             if (policyName.StartsWith(RequirePermissionAttribute.PolicyPrefix, StringComparison.OrdinalIgnoreCase))
             {
                 var action = policyName.Substring(RequirePermissionAttribute.PolicyPrefix.Length);
                 policy.AddRequirements(new PermissionsRequirement(action));
-                return Task.FromResult(policy.Build());
+                return policy.Build();
             }
-            return GetDefaultPolicyAsync();
+            return await GetDefaultPolicyAsync().ConfigureAwait(false);
         }
     }
 }
