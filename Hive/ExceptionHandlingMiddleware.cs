@@ -39,6 +39,7 @@ namespace Hive
             logger = log.ForContext<ExceptionHandlingMiddleware>();
         }
 
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We want to catch all exceptions and handle them as internal server errors.")]
         public async Task Invoke(HttpContext httpContext)
         {
             string? message = null;

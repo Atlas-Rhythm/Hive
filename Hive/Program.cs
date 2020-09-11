@@ -46,8 +46,7 @@ namespace Hive
                 catch (Exception e)
                 {
                     log.Fatal(e, "An error ocurred while setting up the database");
-                    Environment.Exit(1);
-                    return;
+                    throw;
                 }
             }
 
