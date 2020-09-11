@@ -5,8 +5,13 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using Hive.Plugins;
+
+[assembly: InternalsVisibleTo(AggregatedInstanceGenerator.AssemblyName)]
 
 namespace Hive.Plugins
 {
@@ -38,17 +43,13 @@ namespace Hive.Plugins
 
     internal static class AggregatedInstanceGenerator
     {
-        private static readonly AssemblyBuilder Assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("Hive.Plugins.Aggregates"), AssemblyBuilderAccess.RunAndCollect);
-        private static readonly ModuleBuilder Module = Assembly.DefineDynamicModule(Assembly.GetName().Name);
+        public const string AssemblyName = "Hive.Plugins.Aggregates";
+
+        private static readonly AssemblyBuilder Assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(AssemblyName), AssemblyBuilderAccess.RunAndCollect);
+        private static readonly ModuleBuilder Module = Assembly.DefineDynamicModule(AssemblyName);
 
         private static ParameterAttributes GetAttrsFor(ParameterInfo param)
-        {
-            var attrs = ParameterAttributes.None;
-            if (param.IsIn) attrs |= ParameterAttributes.In;
-            if (param.IsOut) attrs |= ParameterAttributes.Out;
-            if (param.IsLcid) attrs |= ParameterAttributes.Lcid;
-            return attrs;
-        }
+            => param.Attributes;
 
         private static Type AsNonByRef(Type type)
             => type.IsByRef ? type.GetElementType() : type;
@@ -60,11 +61,13 @@ namespace Hive.Plugins
             if (ifaceType.GetCustomAttribute<AggregableAttribute>() == null)
                 throw new ArgumentException("Aggregated interfaces must be marked [Aggregable]!", nameof(ifaceType));
 
-            var gen = Module.DefineType($"{ifaceType.Namespace}.Aggregate{ifaceType.Name}", TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed);
+            var gen = Module.DefineType($"{ifaceType.Namespace}.Aggregate{ifaceType.Name}", TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.AnsiClass);
             gen.AddInterfaceImplementation(ifaceType);
 
             var enumerableType = typeof(IEnumerable<>).MakeGenericType(ifaceType);
             var aggregateListField = gen.DefineField("_aggregatedImpls", enumerableType, FieldAttributes.Private | FieldAttributes.InitOnly);
+
+            const MethodAttributes MethodAttrs = MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Final;
 
             #region IAggregateList
             {
@@ -74,7 +77,7 @@ namespace Hive.Plugins
                 var listProp = aggList.GetProperty(nameof(IAggregateList<object>.List)) ?? throw new InvalidOperationException();
                 var listGet = listProp.GetGetMethod();
 
-                var listImpl = gen.DefineMethod("get_List", MethodAttributes.Public, enumerableType, Array.Empty<Type>());
+                var listImpl = gen.DefineMethod("get_List", MethodAttrs, enumerableType, Array.Empty<Type>());
                 gen.DefineMethodOverride(listImpl, listGet);
 
                 {
@@ -129,10 +132,21 @@ namespace Hive.Plugins
                 var genField = gen.DefineField($"impl__{method.Name}", delType, FieldAttributes.Private | FieldAttributes.InitOnly);
                 fields.Add(genField);
 
-                var genMethod = gen.DefineMethod($"<{method.Name}>", MethodAttributes.Public, ret.ParameterType, args.Select(p => p.ParameterType).ToArray());
+                var genMethod = gen.DefineMethod(
+                    $"<{method.Name}>", 
+                    MethodAttrs, 
+                    CallingConventions.Standard,
+                    ret.ParameterType,
+                    ret.GetRequiredCustomModifiers(),
+                    ret.GetOptionalCustomModifiers(),
+                    args.Select(p => p.ParameterType).ToArray(),
+                    args.Select(p => p.GetRequiredCustomModifiers()).ToArray(),
+                    args.Select(p => p.GetOptionalCustomModifiers()).ToArray()
+                );
                 gen.DefineMethodOverride(genMethod, method);
 
                 genMethod.DefineParameter(0, GetAttrsFor(ret), ret.Name);
+
                 for (int i = 0; i < args.Length; i++)
                 {
                     var param = args[i];
@@ -157,6 +171,9 @@ namespace Hive.Plugins
                     il.Emit(OpCodes.Callvirt, target);
                     il.Emit(OpCodes.Ret);
                 }
+
+                Console.WriteLine($"{method}");
+                Console.WriteLine($"{genMethod}");
             }
             #endregion
 
@@ -185,11 +202,11 @@ namespace Hive.Plugins
             var delParams = Expression.Parameter(typeof(Delegate[]), "delegates");
             var enumParams = Expression.Parameter(typeof(IEnumerable<object>), "impls");
             var creator = Expression.Lambda<Func<Delegate[], IEnumerable<object>, object>>(
-                Expression.New(ctor, delParams, Expression.Convert(enumParams, enumerableType)),
+                Expression.New(genType.GetConstructor(new[] { typeof(Delegate[]), enumerableType }), delParams, Expression.Convert(enumParams, enumerableType)),
                 delParams, enumParams
             ).Compile();
 
-            return (methods.Zip(fields, (m, f) => (m, f.FieldType)), creator);
+            return (methods.Zip(fields, (m, f) => (m, f.FieldType)).ToArray(), creator);
         }
 
         private static (Type delType, bool hasResult) GetGenericDelegateType(ParameterInfo[] args, ParameterInfo ret)
@@ -288,15 +305,15 @@ namespace Hive.Plugins
 
             static void AppendParam(StringBuilder sb, ParameterInfo p)
             {
-                if (p.IsIn)
-                    sb.Append("i");
-                if (p.IsOut)
-                    sb.Append("o");
-
                 if (p.ParameterType.IsByRef)
                     sb.Append("R");
                 else
                     sb.Append("N");
+
+                if (p.IsIn)
+                    sb.Append("i");
+                if (p.IsOut)
+                    sb.Append("o");
             }
 
             foreach (var p in args) AppendParam(sb, p);
