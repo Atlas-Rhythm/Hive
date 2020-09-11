@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Hive.Models;
 using Hive.Permissions;
+using Hive.Plugins;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -56,5 +57,16 @@ namespace Hive.Controllers
             })
             .ToArray();
         }
+    }
+
+    [Aggregable]
+    public interface IWeatherExtensions
+    {
+        void DoThing();
+        int GetThing1(int a);
+        int GetThing2(int a, in int b);
+        int GetThing3(int a, out int b);
+        ref int GetThing4(int a, out int b);
+        int GetThing5(int a);
     }
 }

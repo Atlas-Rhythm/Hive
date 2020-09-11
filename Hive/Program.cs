@@ -18,6 +18,8 @@ using Serilog.Exceptions.Core;
 using Serilog.Exceptions.EntityFrameworkCore.Destructurers;
 using Hive.Versioning;
 using Version = Hive.Versioning.Version;
+using Hive.Plugins;
+using Hive.Controllers;
 
 namespace Hive
 {
@@ -41,6 +43,9 @@ namespace Hive
                     log.Debug("Database prepared");
 
                     DemoData(log, context, services);
+
+                    var agg = services.GetService<IAggregate<IWeatherExtensions>>();
+
                 }
                 catch (Exception e)
                 {

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Hive.Converters;
 using Hive.Models;
 using Hive.Permissions;
+using Hive.Plugins;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -40,6 +41,8 @@ namespace Hive
             services.AddDbContext<ModsContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"), 
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
+
+            services.AddAggregates();
 
             services.AddControllers();
         }
