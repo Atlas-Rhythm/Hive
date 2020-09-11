@@ -10,7 +10,7 @@ namespace Hive.Plugins
     {
         private Aggregate(IEnumerable<T> aggregate)
         {
-            Instance = AggregatedInstanceGenerator<T>.Create(Array.Empty<Delegate>(), aggregate);
+            Instance = AggregatedInstanceGenerator<T>.Create(aggregate);
         }
 
         public Aggregate(IServiceProvider services) : this(services.GetServices<T>())

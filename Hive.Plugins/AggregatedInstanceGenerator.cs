@@ -19,30 +19,32 @@ namespace Hive.Plugins
     {
         private static IEnumerable<(MethodInfo Method, Type DelegateType)>? implOrder;
         private static Func<Delegate[], IEnumerable<object>, object>? creator;
+        private static Delegate[]? methodImpls;
 
         private static void LazySetup()
         {
-            (implOrder, creator) = AggregatedInstanceGenerator.CreateAggregatedInstance(typeof(T));
-        }
-
-        public static IEnumerable<(MethodInfo Method, Type DelegateType)> ImplOrder
-        {
-            get
+            lock (AggregatedInstanceGenerator.Lock)
             {
-                if (implOrder == null) LazySetup();
-                return implOrder!;
+                if (implOrder != null) return;
+                (implOrder, creator) = AggregatedInstanceGenerator.CreateAggregatedInstance(typeof(T));
             }
+
+            methodImpls = implOrder
+                .Select(t => AggregatedMethodGenerator.Generate(typeof(T), t.Method, t.DelegateType))
+                .ToArray();
         }
 
-        internal static T Create(Delegate[] delegates, IEnumerable<T> impls)
+        internal static T Create(IEnumerable<T> impls)
         {
             if (creator == null) LazySetup();
-            return (T)creator!(delegates, impls);
+            return (T)creator!(methodImpls!, impls);
         }
     }
 
     internal static class AggregatedInstanceGenerator
     {
+        internal static readonly object Lock = new object();
+
         public const string AssemblyName = "Hive.Plugins.Aggregates";
 
         private static readonly AssemblyBuilder Assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(AssemblyName), AssemblyBuilderAccess.RunAndCollect);
@@ -171,9 +173,6 @@ namespace Hive.Plugins
                     il.Emit(OpCodes.Callvirt, target);
                     il.Emit(OpCodes.Ret);
                 }
-
-                Console.WriteLine($"{method}");
-                Console.WriteLine($"{genMethod}");
             }
             #endregion
 
