@@ -12,16 +12,28 @@ namespace Hive.Plugins
 {
     internal static class AggregatedInstanceGenerator<T> where T : class
     {
-        public  static readonly IEnumerable<(MethodInfo Method, Type DelegateType)> ImplOrder;
-        private static readonly Func<Delegate[], IEnumerable<object>, object> Creator;
+        private static IEnumerable<(MethodInfo Method, Type DelegateType)>? implOrder;
+        private static Func<Delegate[], IEnumerable<object>, object>? creator;
 
-        static AggregatedInstanceGenerator()
+        private static void LazySetup()
         {
-            (ImplOrder, Creator) = AggregatedInstanceGenerator.CreateAggregatedInstance(typeof(T));
+            (implOrder, creator) = AggregatedInstanceGenerator.CreateAggregatedInstance(typeof(T));
+        }
+
+        public static IEnumerable<(MethodInfo Method, Type DelegateType)> ImplOrder
+        {
+            get
+            {
+                if (implOrder == null) LazySetup();
+                return implOrder!;
+            }
         }
 
         internal static T Create(Delegate[] delegates, IEnumerable<T> impls)
-            => (T)Creator(delegates, impls);
+        {
+            if (creator == null) LazySetup();
+            return (T)creator!(delegates, impls);
+        }
     }
 
     internal static class AggregatedInstanceGenerator
@@ -37,6 +49,9 @@ namespace Hive.Plugins
             if (param.IsLcid) attrs |= ParameterAttributes.Lcid;
             return attrs;
         }
+
+        private static Type AsNonByRef(Type type)
+            => type.IsByRef ? type.GetElementType() : type;
 
         public static (IEnumerable<(MethodInfo Method, Type DelegateType)> ImplOrder, Func<Delegate[], IEnumerable<object>, object> Creator) CreateAggregatedInstance(Type ifaceType)
         {
@@ -78,6 +93,9 @@ namespace Hive.Plugins
             {
                 switch (i)
                 {
+                    case 0:
+                        il.Emit(OpCodes.Ldarg_0);
+                        break;
                     case 1:
                         il.Emit(OpCodes.Ldarg_1);
                         break;
@@ -106,7 +124,7 @@ namespace Hive.Plugins
 
                 var typeArgs = args.Select(p => p.ParameterType).Prepend(ifaceType);
                 if (hasResult) typeArgs = typeArgs.Append(ret.ParameterType);
-                delType = delType.MakeGenericType(typeArgs.ToArray());
+                delType = delType.MakeGenericType(typeArgs.Select(AsNonByRef).ToArray());
 
                 var genField = gen.DefineField($"impl__{method.Name}", delType, FieldAttributes.Private | FieldAttributes.InitOnly);
                 fields.Add(genField);
@@ -197,8 +215,9 @@ namespace Hive.Plugins
             var argParams = new GenericTypeParameterBuilder[args.Length];
             for (int i = 1; i <= args.Length; i++)
             {
-                // all the argument types should be contravariant
-                genericParams[i].SetGenericParameterAttributes(GenericParameterAttributes.Contravariant);
+                // all the argument types should be contravariant (if possible
+                if (!args[i - 1].ParameterType.IsByRef)
+                    genericParams[i].SetGenericParameterAttributes(GenericParameterAttributes.Contravariant);
                 argParams[i - 1] = genericParams[i];
             }
 
@@ -207,7 +226,8 @@ namespace Hive.Plugins
             if (hasResult)
             {
                 resultParam = genericParams[^1];
-                resultParam.SetGenericParameterAttributes(GenericParameterAttributes.Covariant);
+                if (!ret.ParameterType.IsByRef)
+                    resultParam.SetGenericParameterAttributes(GenericParameterAttributes.Covariant);
             }
 
             // emit ctor
@@ -223,7 +243,6 @@ namespace Hive.Plugins
                 if (param.ParameterType.IsByRef)
                     gtype = gtype.MakeByRefType();
                 coreArgTypes[i + 1] = gtype;
-
             }
 
             var retType = hasResult ? genericParams[^1] : typeof(void);
