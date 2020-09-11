@@ -91,7 +91,7 @@ namespace Hive.Utilities.Tests
 
         [Theory]
         [MemberData(nameof(SubstringLenCases), DisableDiscoveryEnumeration = false)]
-        public void Indexer(string source, int start, int len, string _)
+        public void Indexer(string source, int start, int len, string actual)
         {
             StringView sv = new StringView(source, start, len);
             for (int i = start - 2; i <= start + len; i++)
@@ -101,6 +101,7 @@ namespace Hive.Utilities.Tests
                 else
                     Assert.Equal(source[i], sv[i - start]);
             }
+            Assert.Equal(sv.ToString(), actual);
         }
 
         [Theory]
