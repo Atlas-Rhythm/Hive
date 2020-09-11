@@ -29,6 +29,15 @@ namespace Hive.Plugins
         private static readonly AssemblyBuilder Assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("Hive.Plugins.Aggregates"), AssemblyBuilderAccess.RunAndCollect);
         private static readonly ModuleBuilder Module = Assembly.DefineDynamicModule(Assembly.GetName().Name);
 
+        private static ParameterAttributes GetAttrsFor(ParameterInfo param)
+        {
+            var attrs = ParameterAttributes.None;
+            if (param.IsIn) attrs |= ParameterAttributes.In;
+            if (param.IsOut) attrs |= ParameterAttributes.Out;
+            if (param.IsLcid) attrs |= ParameterAttributes.Lcid;
+            return attrs;
+        }
+
         public static (IEnumerable<(MethodInfo Method, Type DelegateType)> ImplOrder, Func<Delegate[], IEnumerable<object>, object> Creator) CreateAggregatedInstance(Type ifaceType)
         {
             if (!ifaceType.IsInterface)
@@ -93,7 +102,7 @@ namespace Hive.Plugins
                 var args = method.GetParameters();
                 var ret = method.ReturnParameter;
 
-                var (delType, hasResult) = GetGenericDelegateType(ifaceType, args, ret);
+                var (delType, hasResult) = GetGenericDelegateType(args, ret);
 
                 var typeArgs = args.Select(p => p.ParameterType).Prepend(ifaceType);
                 if (hasResult) typeArgs.Append(ret.ParameterType);
@@ -104,15 +113,6 @@ namespace Hive.Plugins
 
                 var genMethod = gen.DefineMethod($"<{method.Name}>", MethodAttributes.Public, ret.ParameterType, args.Select(p => p.ParameterType).ToArray());
                 gen.DefineMethodOverride(genMethod, method);
-
-                static ParameterAttributes GetAttrsFor(ParameterInfo param)
-                {
-                    var attrs = ParameterAttributes.None;
-                    if (param.IsIn) attrs |= ParameterAttributes.In;
-                    if (param.IsOut) attrs |= ParameterAttributes.Out;
-                    if (param.IsLcid) attrs |= ParameterAttributes.Lcid;
-                    return attrs;
-                }
 
                 genMethod.DefineParameter(0, GetAttrsFor(ret), ret.Name);
                 for (int i = 0; i < args.Length; i++)
@@ -174,9 +174,11 @@ namespace Hive.Plugins
             return (methods.Zip(fields, (m, f) => (m, f.FieldType)), creator);
         }
 
-        private static (Type delType, bool hasResult) GetGenericDelegateType(Type iface, ParameterInfo[] args, ParameterInfo ret)
+        private static (Type delType, bool hasResult) GetGenericDelegateType(ParameterInfo[] args, ParameterInfo ret)
         {
             // the first argument will always be an IAggregateList<T0>
+
+            bool hasResult = ret.ParameterType != typeof(void);
 
             var name = BuildName(args, ret);
 
@@ -184,17 +186,73 @@ namespace Hive.Plugins
 
             if (type != null)
             {
-                return (type, ret.ParameterType != typeof(void));
+                return (type, hasResult);
             }
 
             var newDelType = Module.DefineType(name, TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.AnsiClass | TypeAttributes.Sealed, typeof(MulticastDelegate));
-            var genericParams = newDelType.DefineGenericParameters(Enumerable.Range(0, 1 + args.Length).Select(i => $"T{i}").ToArray());
+            var genericParams = newDelType.DefineGenericParameters(Enumerable.Range(0, 1 + args.Length + (hasResult ? 1 : 0)).Select(i => $"T{i}").ToArray());
+            // genericParams[0] is the argument to IAggregateList, and is invariant
+            var iface = genericParams[0];
+
+            var argParams = new GenericTypeParameterBuilder[args.Length];
+            for (int i = 1; i <= args.Length; i++)
+            {
+                // all the argument types should be contravariant
+                genericParams[i].SetGenericParameterAttributes(GenericParameterAttributes.Contravariant);
+                argParams[i - 1] = genericParams[i];
+            }
+
+            // return type (if present) should be covariant
+            GenericTypeParameterBuilder? resultParam = null;
+            if (hasResult)
+            {
+                resultParam = genericParams[^1];
+                resultParam.SetGenericParameterAttributes(GenericParameterAttributes.Covariant);
+            }
 
             // emit ctor
             var ctor = newDelType.DefineConstructor(MethodAttributes.Public | MethodAttributes.HideBySig, CallingConventions.Standard, new[] { typeof(object), typeof(IntPtr) });
             ctor.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
 
-            throw new NotImplementedException();
+            var coreArgTypes = new Type[args.Length + 1];
+            coreArgTypes[0] = typeof(IAggregateList<>).MakeGenericType(iface);
+            for (int i = 0; i < args.Length; i++)
+            {
+                var param = args[i];
+                Type gtype = argParams[i];
+                if (param.ParameterType.IsByRef)
+                    gtype = gtype.MakeByRefType();
+                coreArgTypes[i + 1] = gtype;
+            }
+
+            var invoke = newDelType.DefineMethod("Invoke", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual,
+                ret.ParameterType, coreArgTypes);
+            invoke.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
+            invoke.DefineParameter(0, GetAttrsFor(ret), "return");
+            invoke.DefineParameter(1, ParameterAttributes.None, "inst");
+            for (int i = 0; i < args.Length; i++)
+            {
+                invoke.DefineParameter(i + 2, GetAttrsFor(args[i]), $"arg{i}");
+            }
+
+            var beginInvoke = newDelType.DefineMethod("BeginInvoke", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual,
+                typeof(IAsyncResult), coreArgTypes.Append(typeof(AsyncCallback)).Append(typeof(object)).ToArray());
+            beginInvoke.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
+            beginInvoke.DefineParameter(1, ParameterAttributes.None, "inst");
+            for (int i = 0; i < args.Length; i++)
+            {
+                beginInvoke.DefineParameter(i + 2, GetAttrsFor(args[i]), $"arg{i}");
+            }
+
+            var endInvoke = newDelType.DefineMethod("EndInvoke", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual,
+                ret.ParameterType, new[] { typeof(IAsyncResult) });
+            endInvoke.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
+            endInvoke.DefineParameter(0, GetAttrsFor(ret), "return");
+            endInvoke.DefineParameter(1, ParameterAttributes.None, "result");
+
+            type = newDelType.CreateType();
+
+            return (type, hasResult);
         }
 
         private static string BuildName(ParameterInfo[] args, ParameterInfo ret)
