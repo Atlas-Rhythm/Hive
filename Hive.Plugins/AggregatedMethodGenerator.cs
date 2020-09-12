@@ -77,6 +77,8 @@ namespace Hive.Plugins
                     .Append(Expression.Assign(returnStorageSet!, Expression.Constant(false)));
             }
 
+            var loopBreak = Expression.Label("break");
+
             var loopBody = new List<Expression>();
             var loopBodyEnd = new List<Expression>();
             if (returnStorage != null)
@@ -93,9 +95,16 @@ namespace Hive.Plugins
                             returnStorageSet,
                             Expression.Constant(true)
                         ));
-            }
 
-            var loopBreak = Expression.Label("break");
+                var stopIfRet = returnOutInfo.StopIfReturns;
+                if (stopIfRet != null)
+                {
+                    loopBodyEnd.Add(Expression.IfThen(
+                                stopIfRet.Test(returnStorage),
+                                Expression.Break(loopBreak)
+                            ));
+                }
+            }
 
             var callArguments = new List<Expression>();
             for (int i = 0; i < paramInfo.Length; i++)
