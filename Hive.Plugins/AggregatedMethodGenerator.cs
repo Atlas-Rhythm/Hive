@@ -27,10 +27,19 @@ namespace Hive.Plugins
                 throw new InvalidOperationException($"Method {toAggregate} must return a nullable type to use {nameof(StopIfReturnsNullAttribute)}");
 
             var targetParameters = toAggregate.GetParameters();
+            var parameterAttributes = targetParameters.Select(p => p.GetCustomAttributes()).ToArray();
+            var returnAttributes = toAggregate.ReturnParameter.GetCustomAttributes();
+
+            ValidateParam(toAggregate.ReturnParameter, returnAttributes, isRetval: true);
+            foreach (var (attrs, param) in parameterAttributes.Zip(targetParameters, (attrs, param) => (attrs, param)))
+                ValidateParam(param, attrs);
 
             var listParam = Expression.Parameter(typeof(IAggregateList<>).MakeGenericType(iface), "list");
             var lambdaParams = targetParameters.Select(p => Expression.Parameter(p.ParameterType, p.Name)).ToArray();
 
+
+
+            var loopVar = Expression.Variable(iface, "impl");
             var expr = Expression.Lambda(
                 delegateType,
                 Expression.Block(
@@ -40,6 +49,11 @@ namespace Hive.Plugins
                             .MakeGenericMethod(iface),
                         listParam
                     ),
+                    new ForeachExpression(
+                        Expression.Property(listParam, nameof(IAggregateList<int>.List)),
+                        loopVar,
+                        Expression.Call(typeof(Console), nameof(Console.WriteLine), null, loopVar)
+                    ),
                     DefaultForType(toAggregate.ReturnType)
                 ),
                 lambdaParams.Prepend(listParam)
@@ -47,6 +61,8 @@ namespace Hive.Plugins
 
             return expr.Compile();
         }
+
+        private class ReducingVisitor : ExpressionVisitor { }
 
         // Note: The below method and type exist because expression trees *cannot* take a ref of a variable, but they *can* pass around references
         //       So, I have a small type and wrapper function to do it for me.
@@ -66,16 +82,26 @@ namespace Hive.Plugins
 
         }
 
-        private static bool CheckAttribute(ParameterInfo param, Attribute attr)
+        private static void ValidateParam(ParameterInfo param, IEnumerable<Attribute> attrs, bool isRetval = false)
         {
-            if (!CheckAttributeTarget(param, attr)) return false;
+            foreach (var attr in attrs)
+            {
+                if (!CheckAttribute(param, attr, isRetval))
+                    throw new InvalidOperationException($"Attribute {attr} invalid on parameter {param}");
+            }
+        }
+
+        private static bool CheckAttribute(ParameterInfo param, Attribute attr, bool isRetval = false)
+        {
+            if (!(attr is IAggregatorAttribute)) return true;
+            if (!CheckAttributeTarget(param, attr, isRetval)) return false;
             if (attr is IRequiresType reqTy) return reqTy.CheckType(param.ParameterType);
             return true;
         }
 
-        private static bool CheckAttributeTarget(ParameterInfo param, Attribute attr)
+        private static bool CheckAttributeTarget(ParameterInfo param, Attribute attr, bool isRetval = false)
         {
-            if (param.IsRetval) return attr is ITargetsReturn;
+            if (param.IsRetval || isRetval) return attr is ITargetsReturn;
             if (param.IsOut) return attr is ITargetsOutParam;
             return attr is ITargetsInParam;
         }

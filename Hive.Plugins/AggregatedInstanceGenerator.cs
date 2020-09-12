@@ -299,7 +299,7 @@ namespace Hive.Plugins
         {
             var sb = new StringBuilder();
 
-            sb.Append("Hive.Plugins.Aggregates.D")
+            sb.Append($"{AssemblyName}.D")
               .Append(args.Length);
 
             static void AppendParam(StringBuilder sb, ParameterInfo p)

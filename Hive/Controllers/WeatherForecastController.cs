@@ -57,16 +57,28 @@ namespace Hive.Controllers
             })
             .ToArray();
         }
+
+        public static int AggregateGetThing3(int a, int b)
+            => a + b;
     }
 
     [Aggregable]
     public interface IWeatherExtensions
     {
         void DoThing();
-        int GetThing1(int a);
-        int GetThing2(int a, in int b);
-        int GetThing3(int a, out int b);
+
+        [ReturnLast]
+        int GetThing1([TakesReturnValue] int a);
+
+        [ReturnLast]
+        int GetThing2([TakesReturnValue] int a, in int b);
+
+        [return: AggregateWith(typeof(WeatherForecastController), nameof(WeatherForecastController.AggregateGetThing3))]
+        int GetThing3(int a, [ReturnLast] out int b);
+
         ref int GetThing4(int a, out int b);
+
+        [return: AggregateWith(typeof(WeatherForecastController), nameof(WeatherForecastController.AggregateGetThing3))]
         int GetThing5(int a);
     }
 }

@@ -4,11 +4,12 @@ using System.Text;
 
 namespace Hive.Plugins
 {
-    internal interface ITargetsInParam { }
-    internal interface ITargetsOutParam { }
-    internal interface ITargetsReturn { }
+    internal interface IAggregatorAttribute { }
+    internal interface ITargetsInParam : IAggregatorAttribute { }
+    internal interface ITargetsOutParam : IAggregatorAttribute { }
+    internal interface ITargetsReturn : IAggregatorAttribute { }
 
-    internal interface IRequiresType
+    internal interface IRequiresType : IAggregatorAttribute
     {
         bool CheckType(Type type);
     }
