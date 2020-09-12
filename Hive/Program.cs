@@ -48,8 +48,9 @@ namespace Hive
 
                     var aggInst = agg.Instance;
                     aggInst.DoThing();
-                    aggInst.GetThing1(0);
-                    aggInst.GetThing4(1, out var b);
+                    var r1 = aggInst.GetThing1(0);
+                    var r3 = aggInst.GetThing3(1, out var b);
+                    var r5 = aggInst.GetThing5(2);
                 }
                 catch (Exception e)
                 {

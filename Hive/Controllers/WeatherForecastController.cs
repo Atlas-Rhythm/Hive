@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Hive.Models;
 using Hive.Permissions;
@@ -76,9 +77,10 @@ namespace Hive.Controllers
         [return: AggregateWith(typeof(WeatherForecastController), nameof(WeatherForecastController.AggregateGetThing3))]
         int GetThing3(int a, [ReturnLast] out int b);
 
-        ref int GetThing4(int a, out int b);
+        // ByRef returns are really wierd, and frankly, I don't think there is ever a good way to aggregate them. Not supported.
+        //ref int GetThing4(int a, out int b);
 
-        [return: AggregateWith(typeof(WeatherForecastController), nameof(WeatherForecastController.AggregateGetThing3))]
+        [return: AggregateWith(typeof(Expression), nameof(Expression.Add))]
         int GetThing5(int a);
     }
 }

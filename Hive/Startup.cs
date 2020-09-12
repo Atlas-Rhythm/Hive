@@ -56,32 +56,26 @@ namespace Hive
         {
             public void DoThing()
             {
-                throw new NotImplementedException();
             }
 
             public int GetThing1([TakesReturnValue] int a)
             {
-                throw new NotImplementedException();
+                return a + 1;
             }
 
             public int GetThing2([TakesReturnValue] int a, in int b)
             {
-                throw new NotImplementedException();
+                return a + b;
             }
 
             public int GetThing3(int a, [ReturnLast] out int b)
             {
-                throw new NotImplementedException();
-            }
-
-            public ref int GetThing4(int a, out int b)
-            {
-                throw new NotImplementedException();
+                return b = a;
             }
 
             public int GetThing5(int a)
             {
-                throw new NotImplementedException();
+                return a + 1;
             }
         }
 
@@ -89,32 +83,26 @@ namespace Hive
         {
             public void DoThing()
             {
-                throw new NotImplementedException();
             }
 
             public int GetThing1([TakesReturnValue] int a)
             {
-                throw new NotImplementedException();
+                return a + 2;
             }
 
             public int GetThing2([TakesReturnValue] int a, in int b)
             {
-                throw new NotImplementedException();
+                return a + b;
             }
 
             public int GetThing3(int a, [ReturnLast] out int b)
             {
-                throw new NotImplementedException();
-            }
-
-            public ref int GetThing4(int a, out int b)
-            {
-                throw new NotImplementedException();
+                return b = a + 2;
             }
 
             public int GetThing5(int a)
             {
-                throw new NotImplementedException();
+                return a + 2;
             }
         }
 

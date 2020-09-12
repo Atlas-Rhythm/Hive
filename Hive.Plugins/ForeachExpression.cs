@@ -21,12 +21,20 @@ namespace Hive.Plugins
         public Expression Enumerable { get; }
         public ParameterExpression LoopVariable { get; }
         public Expression Body { get; }
+        public LabelTarget BreakLabel { get; }
+
 
         public ForeachExpression(Expression enumerable, ParameterExpression loopVariable, Expression body)
+            : this(enumerable, loopVariable, Label(), body)
+        {
+        }
+
+        public ForeachExpression(Expression enumerable, ParameterExpression loopVariable, LabelTarget @break, Expression body)
         {
             Enumerable = enumerable;
             LoopVariable = loopVariable;
             Body = body;
+            BreakLabel = @break;
 
             if (!typeof(IEnumerable).IsAssignableFrom(enumerable.Type))
                 throw new ArgumentException("A foreach loop can only take IEnumerable and IEnumerable<T>", nameof(enumerable));
@@ -65,7 +73,6 @@ namespace Hive.Plugins
         public override Expression Reduce()
         {
             var enumerator = Variable(EnumeratorType);
-            var exitLabel = Label();
 
             return Block(
                 new[] { enumerator },
@@ -79,9 +86,9 @@ namespace Hive.Plugins
                                 Assign(LoopVariable, Property(enumerator, Current)),
                                 Body
                             ),
-                            Break(exitLabel)
+                            Break(BreakLabel)
                         ),
-                        exitLabel
+                        BreakLabel
                     ),
                     Call(Convert(enumerator, typeof(IDisposable)), DisposableDispose)
                 )
