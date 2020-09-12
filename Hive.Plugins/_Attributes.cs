@@ -14,7 +14,7 @@ namespace Hive.Plugins
         bool CheckType(Type type);
     }
 
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class StopIfReturnsAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType
     {
         public bool ReturnValue { get; }
@@ -25,19 +25,19 @@ namespace Hive.Plugins
             => type == typeof(bool);
     }
 
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class StopIfReturnsNullAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType
     {
         bool IRequiresType.CheckType(Type type)
             => !type.IsValueType || (type.IsConstructedGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>));
     }
 
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class ReturnLastAttribute : Attribute, ITargetsOutParam, ITargetsReturn
     {
     }
 
-    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue, AllowMultiple = false, Inherited = false)]
     public sealed class AggregateWithAttribute : Attribute, ITargetsOutParam, ITargetsReturn
     {
         public Type TypeWithAggregator { get; }
@@ -46,12 +46,12 @@ namespace Hive.Plugins
             => (TypeWithAggregator, AggregatorName) = (targetType, targetName);
     }
 
-    [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class TakesReturnValueAttribute : Attribute, ITargetsInParam
     {
     }
 
-    [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class TakesOutParamValueAttribute : Attribute, ITargetsOutParam
     {
         public int ParameterIndex { get; }

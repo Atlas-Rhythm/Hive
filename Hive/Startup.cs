@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Hive.Controllers;
 using Hive.Converters;
 using Hive.Models;
 using Hive.Permissions;
@@ -14,6 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -44,7 +46,76 @@ namespace Hive
 
             services.AddAggregates();
 
+            services.AddSingleton<IWeatherExtensions, WeatherThingImpl1>();
+            services.AddSingleton<IWeatherExtensions, WeatherThingImpl2>();
+
             services.AddControllers();
+        }
+
+        private class WeatherThingImpl1 : IWeatherExtensions
+        {
+            public void DoThing()
+            {
+                throw new NotImplementedException();
+            }
+
+            public int GetThing1([TakesReturnValue] int a)
+            {
+                throw new NotImplementedException();
+            }
+
+            public int GetThing2([TakesReturnValue] int a, in int b)
+            {
+                throw new NotImplementedException();
+            }
+
+            public int GetThing3(int a, [ReturnLast] out int b)
+            {
+                throw new NotImplementedException();
+            }
+
+            public ref int GetThing4(int a, out int b)
+            {
+                throw new NotImplementedException();
+            }
+
+            public int GetThing5(int a)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        private class WeatherThingImpl2 : IWeatherExtensions
+        {
+            public void DoThing()
+            {
+                throw new NotImplementedException();
+            }
+
+            public int GetThing1([TakesReturnValue] int a)
+            {
+                throw new NotImplementedException();
+            }
+
+            public int GetThing2([TakesReturnValue] int a, in int b)
+            {
+                throw new NotImplementedException();
+            }
+
+            public int GetThing3(int a, [ReturnLast] out int b)
+            {
+                throw new NotImplementedException();
+            }
+
+            public ref int GetThing4(int a, out int b)
+            {
+                throw new NotImplementedException();
+            }
+
+            public int GetThing5(int a)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
