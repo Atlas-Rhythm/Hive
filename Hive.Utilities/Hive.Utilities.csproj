@@ -5,6 +5,6 @@
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
-  <Import Project="..\Hive.props"/>
+  <Import Project="..\Hive.props" />
 
 </Project>

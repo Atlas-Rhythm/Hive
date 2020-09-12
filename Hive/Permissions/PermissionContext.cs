@@ -8,9 +8,9 @@ namespace Hive.Permissions
 {
     public class PermissionContext
     {
-        public User? User { get; }
-        public Mod? Mod { get; }
-        public Channel? Channel { get; }
-        public GameVersion? GameVersion { get; }
+        public User? User { get; set; }
+        public Mod? Mod { get; set; }
+        public Channel? Channel { get; set; }
+        public GameVersion? GameVersion { get; set; }
     }
 }

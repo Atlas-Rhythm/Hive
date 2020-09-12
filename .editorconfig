@@ -1,0 +1,7 @@
+﻿[*.cs]
+
+# IDE0022: Use expression body for methods
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+
+# IDE0053: Use expression body for lambda expressions
+csharp_style_expression_bodied_lambdas = true:suggestion

@@ -12,7 +12,9 @@ namespace Hive.Permissions
     {
         // TODO: implement
 
-        public ConfigRuleProvider() { }
+        public ConfigRuleProvider()
+        {
+        }
 
         public bool HasRuleChangedSince(StringView name, Instant time)
         {

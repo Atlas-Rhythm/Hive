@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Hive.Models
@@ -16,8 +17,10 @@ namespace Hive.Models
 
         // TODO: is there anything else that needs to be on any particular channel object?
 
-        public static void Configure(ModelBuilder b)
+        public static void Configure([DisallowNull] ModelBuilder b)
         {
+            if (b is null)
+                throw new ArgumentNullException(nameof(b));
             b.Entity<Channel>();
         }
     }

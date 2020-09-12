@@ -23,8 +23,12 @@ namespace Hive.Converters
             return new VersionRange(reader.GetString()!);
         }
 
-        public override void Write(Utf8JsonWriter writer, VersionRange value, JsonSerializerOptions options)
+        public override void Write([DisallowNull] Utf8JsonWriter writer, [DisallowNull] VersionRange value, JsonSerializerOptions options)
         {
+            if (writer is null)
+                throw new ArgumentNullException(nameof(writer));
+            if (value is null)
+                throw new ArgumentNullException(nameof(value));
             writer.WriteStringValue(value.ToString());
         }
     }

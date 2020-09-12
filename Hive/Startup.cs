@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Hive.Converters;
+using Hive.Controllers;
 using Hive.Models;
 using Hive.Permissions;
+using Hive.Plugin;
+using Hive.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -15,6 +18,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Serilog;
 
 namespace Hive
@@ -35,16 +39,26 @@ namespace Hive
                 .AddTransient<IRuleProvider, ConfigRuleProvider>()
                 .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
                 .AddSingleton(sp =>
-                    new PermissionsManager<PermissionContext>(sp.GetRequiredService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."));
+                    new PermissionsManager<PermissionContext>(sp.GetRequiredService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."))
+                .AddSingleton<IChannelsControllerPlugin>(sp => new HiveChannelsControllerPlugin())
+                .AddSingleton<IAggregate<IChannelsControllerPlugin>>(sp => new Aggregation<IChannelsControllerPlugin>(sp.GetRequiredService<IChannelsControllerPlugin>()))
+                //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
+                .AddSingleton<IProxyAuthenticationService>(Span => new MockAuthenticationService());
 
-            services.AddDbContext<ModsContext>(options =>
-                options.UseNpgsql(Configuration.GetConnectionString("Default"), 
+            services.AddDbContext<HiveContext>(options =>
+                options.UseNpgsql(Configuration.GetConnectionString("Default"),
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
 
             services.AddControllers();
+            services.AddAuthentication(a =>
+            {
+                a.AddScheme<MockAuthenticationHandler>("Bearer", "MockAuth");
+                a.DefaultScheme = "Bearer";
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Configure is required for Startup.")]
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -52,9 +66,10 @@ namespace Hive
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseExceptionHandlingMiddleware();
+
             app.UseSerilogRequestLogging(options =>
             {
-
             });
 
             app.UseHttpsRedirection();
@@ -62,6 +77,9 @@ namespace Hive
             app.UseRouting();
 
             app.UseAuthorization();
+
+            // See: https://developer.okta.com/blog/2019/04/16/graphql-api-with-aspnetcore
+            // For adding GraphQL support in a reasonable way
 
             app.UseEndpoints(endpoints =>
             {

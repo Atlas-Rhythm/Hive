@@ -187,6 +187,23 @@ namespace Hive.Permissions.Tests
         }
 
         [Fact]
+        public void TestString()
+        {
+            var mock = MockRuleProvider();
+
+            var hiveRule = new Rule("hive", "ctx.Hive | ctx.ArbitraryString = \"test\" | next(false)");
+            mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
+
+            var permManager = new PermissionsManager<Context>(mock.Object, logger, ".");
+
+            PermissionActionParseState state = default;
+            Assert.False(permManager.CanDo("hive", new Context(), ref state));
+            Assert.True(permManager.CanDo("hive", new Context { Hive = true }, ref state));
+            Assert.True(permManager.CanDo("hive", new Context { ArbitraryString = "test" }, ref state));
+            Assert.False(permManager.CanDo("hive", new Context { ArbitraryString = "asdf" }, ref state));
+        }
+
+        [Fact]
         public void TestChangeRule()
         {
             var mock = MockRuleProvider();

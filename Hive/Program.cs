@@ -35,7 +35,8 @@ namespace Hive
                 {
                     log.Debug("Configuring database");
 
-                    var context = services.GetRequiredService<ModsContext>();
+                    var context = services.GetRequiredService<HiveContext>();
+
                     context.Database.EnsureCreated();
 
                     log.Debug("Database prepared");
@@ -45,11 +46,10 @@ namespace Hive
                 catch (Exception e)
                 {
                     log.Fatal(e, "An error ocurred while setting up the database");
-                    Environment.Exit(1);
-                    return;
+                    throw;
                 }
             }
-                
+
             host.Run();
         }
 
@@ -74,7 +74,7 @@ namespace Hive
             .Destructure.AsScalar<VersionRange>();
 
         [Conditional("DEBUG")]
-        private static void DemoData(Serilog.ILogger log, ModsContext context, IServiceProvider services)
+        private static void DemoData(Serilog.ILogger log, HiveContext context, IServiceProvider services)
         {
             if (context.Mods.Any()) return;
 
