@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace Hive.Plugin
+namespace Hive
 {
     public class ApiException : Exception
     {

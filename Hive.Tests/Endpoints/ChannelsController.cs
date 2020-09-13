@@ -1,7 +1,6 @@
 ﻿using Hive.Controllers;
 using Hive.Models;
 using Hive.Permissions;
-using Hive.Plugin;
 using Hive.Services;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Mvc;
@@ -183,7 +182,7 @@ namespace Hive.Tests.Endpoints
             var mockChannels = GetChannels(channelData);
             var mockContext = new Mock<HiveContext>();
             mockContext.Setup(m => m.Channels).Returns(mockChannels.Object);
-            var channelsControllerPlugin = new Aggregation<IChannelsControllerPlugin>(plugin);
+            var channelsControllerPlugin = new SingleAggregate<IChannelsControllerPlugin>(plugin);
             var authService = new MockAuthenticationService();
 
             return new Controllers.ChannelsController(logger, manager, mockContext.Object, channelsControllerPlugin, authService);

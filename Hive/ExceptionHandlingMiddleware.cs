@@ -6,7 +6,6 @@ using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Hive.Plugin;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 

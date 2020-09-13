@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Hive.Controllers;
+using Hive.Converters;
 using Hive.Models;
 using Hive.Permissions;
-using Hive.Plugin;
+using Hive.Plugins;
 using Hive.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -16,6 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -41,13 +43,14 @@ namespace Hive
                 .AddSingleton(sp =>
                     new PermissionsManager<PermissionContext>(sp.GetRequiredService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."))
                 .AddSingleton<IChannelsControllerPlugin>(sp => new HiveChannelsControllerPlugin())
-                .AddSingleton<IAggregate<IChannelsControllerPlugin>>(sp => new Aggregation<IChannelsControllerPlugin>(sp.GetRequiredService<IChannelsControllerPlugin>()))
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
                 .AddSingleton<IProxyAuthenticationService>(Span => new MockAuthenticationService());
 
             services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
+
+            services.AddAggregates();
 
             services.AddControllers();
             services.AddAuthentication(a =>

@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Hive.Models;
 using Hive.Permissions;
-using Hive.Plugin;
+using Hive.Plugins;
 using Hive.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -18,7 +18,8 @@ namespace Hive.Controllers
     /// <summary>
     /// A class for plugins that allow modifications of <see cref="ChannelsController"/>
     /// </summary>
-    public interface IChannelsControllerPlugin : IPlugin
+    [Aggregable]
+    public interface IChannelsControllerPlugin
     {
         /// <summary>
         /// Returns true if the specified user has access to ANY of the channels. False otherwise.
@@ -36,7 +37,7 @@ namespace Hive.Controllers
         /// <param name="user">User to filter on</param>
         /// <param name="channels">Input channels to filter</param>
         /// <returns>Filtered channels</returns>
-        public IEnumerable<Channel> GetChannelsFilter(User? user, IEnumerable<Channel> channels) => channels;
+        public IEnumerable<Channel> GetChannelsFilter(User? user, [TakesReturnValue] IEnumerable<Channel> channels) => channels;
     }
 
     internal class HiveChannelsControllerPlugin : IChannelsControllerPlugin { }
@@ -83,7 +84,7 @@ namespace Hive.Controllers
                 return Forbid();
             // Combine plugins
             log.Debug("Combining plugins...");
-            var combined = plugin.Combine();
+            var combined = plugin.Instance;
             log.Debug("Performing additional checks for GetChannels...");
             // May return false, which causes a Forbid.
             // If it throws an exception, it will be handled by our MiddleWare
