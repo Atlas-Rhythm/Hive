@@ -28,10 +28,21 @@ namespace Hive.Plugins
         Expression Test(Expression value);
     }
 
+    /// <summary>
+    /// Indicates that an aggregated method should stop executing implementations if it returns the provided 
+    /// <see cref="bool"/> value, either with a normal return or out parameter, depending on where this attribute is placed.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class StopIfReturnsAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
     {
+        /// <summary>
+        /// Gets the return value that signals the aggregator to exit.
+        /// </summary>
         public bool ReturnValue { get; }
+        /// <summary>
+        /// Constructs a <see cref="StopIfReturnsAttribute"/> with the specified return value.
+        /// </summary>
+        /// <param name="returnValue">The return value that will signal the aggregator to exit.</param>
         public StopIfReturnsAttribute(bool returnValue)
             => ReturnValue = returnValue;
 
@@ -44,6 +55,10 @@ namespace Hive.Plugins
                 : Expression.IsFalse(value);
     }
 
+    /// <summary>
+    /// Indicates that an aggregated method should stop executing implementations if it returns <see langword="null"/>,
+    /// either with a normal return or out parameter, depending on where this attribute is placed.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class StopIfReturnsNullAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
     {
@@ -64,6 +79,10 @@ namespace Hive.Plugins
         }
     }
 
+    /// <summary>
+    /// Indicates that the result value for this attribute's target should be the value that the last executed implementation
+    /// returned.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class ReturnLastAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IExpressionAggregator
     {
@@ -71,12 +90,35 @@ namespace Hive.Plugins
             => next;
     }
 
+    /// <summary>
+    /// Indicates that the result value for this attribute's target should be aggregated using the specified method.
+    /// </summary>
+    /// <remarks>
+    /// <para>It first looks for a static method that takes two <see cref="Expression"/>s and returns an <see cref="Expression"/>. If it
+    /// finds it, then it uses that to generate an expression tree during aggregate method generation to aggregate the values.</para>
+    /// <para>Otherwise, it looks for a static method that takes two parameters that are assignable from the value type and returns a value
+    /// that is assignable to the value type. It then calls that method at runtime to aggregate the values.</para>
+    /// </remarks>
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue, AllowMultiple = false, Inherited = false)]
     public sealed class AggregateWithAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IExpressionAggregator
     {
+        /// <summary>
+        /// Gets the type that has the aggregator method to use.
+        /// </summary>
         public Type TypeWithAggregator { get; }
+        /// <summary>
+        /// Gets the name of the aggregator method.
+        /// </summary>
         public string AggregatorName { get; }
+        /// <summary>
+        /// Gets the <see cref="Expression"/>-based aggregator method, if it is what is targeted.
+        /// </summary>
         public MethodInfo? ExpressionAggregator { get; }
+        /// <summary>
+        /// Constructs an <see cref="AggregateWithAttribute"/> with the specified target type and method name.
+        /// </summary>
+        /// <param name="targetType">The type that contains the method to use to aggregate the values.</param>
+        /// <param name="targetName">The name of the method to use to aggregate the values.</param>
         public AggregateWithAttribute(Type targetType, string targetName)
         {
             TypeWithAggregator = targetType;
@@ -115,15 +157,32 @@ namespace Hive.Plugins
         }
     }
 
+    /// <summary>
+    /// Indicates that a particular parameter will take the return value of the previous invocation.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class TakesReturnValueAttribute : Attribute, ITargetsInParam, ISpecifiesInput
     {
     }
 
+    /// <summary>
+    /// Indicates that a parameter will take the value of the specified <see langword="out"/> parameter
+    /// of the previous invocation.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class TakesOutValueAttribute : Attribute, ITargetsInParam, ISpecifiesInput
     {
+        /// <summary>
+        /// Gets the index of the <see langword="out"/> parameter referenced.
+        /// </summary>
         public int ParameterIndex { get; }
+        /// <summary>
+        /// Constructs a <see cref="TakesOutValueAttribute"/> with the index of the <see langword="out"/>  parameter to reference.
+        /// </summary>
+        /// <remarks>
+        /// <paramref name="index"/> <b>must</b> be a 0-indexed reference to an <see langword="out"/> parameter.
+        /// </remarks>
+        /// <param name="index">The index of the <see langword="out"/> parameter to take the value of.</param>
         public TakesOutValueAttribute(int index)
             => ParameterIndex = index;
     }

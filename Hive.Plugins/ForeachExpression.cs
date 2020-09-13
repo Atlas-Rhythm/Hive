@@ -8,27 +8,69 @@ using System.Text;
 
 namespace Hive.Plugins
 {
+    /// <summary>
+    /// An <see cref="Expression"/> representing a <see langword="foreach" /> loop, iterating over some enumerable type.
+    /// </summary>
     public class ForeachExpression : Expression
     {
+        /// <inheritdoc/>
         public override bool CanReduce => true;
+        /// <inheritdoc/>
         public override ExpressionType NodeType => (ExpressionType)1000;
+        /// <inheritdoc/>
         public override Type Type => typeof(void);
 
+        /// <summary>
+        /// Gets the type of the elements of the enumeration.
+        /// </summary>
         public Type EnumerationType { get; }
+        /// <summary>
+        /// Gets the type of the <see cref="IEnumerator"/> being used for iteration.
+        /// </summary>
         public Type EnumeratorType { get; }
+        /// <summary>
+        /// Gets the method on the enumerable that gets its enumerator.
+        /// </summary>
         public MethodInfo GetEnumerator { get; }
+        /// <summary>
+        /// Gets the property on <see cref="EnumeratorType"/> that gets is current value.
+        /// </summary>
         public PropertyInfo Current { get; }
+        /// <summary>
+        /// Gets the expression representing the value to enumerate.
+        /// </summary>
         public Expression Enumerable { get; }
+        /// <summary>
+        /// Gets the variable that is populated with the value during each iteration.
+        /// </summary>
         public ParameterExpression LoopVariable { get; }
+        /// <summary>
+        /// Gets the expression to be evaluated as the body of the loop.
+        /// </summary>
         public Expression Body { get; }
+        /// <summary>
+        /// Gets the <see cref="LabelTarget"/> that can be used with <see cref="Expression.Break(LabelTarget)"/> to break out of the loop early.
+        /// </summary>
         public LabelTarget BreakLabel { get; }
 
-
+        /// <summary>
+        /// Constructs a new <see cref="ForeachExpression"/> without specifying a break label.
+        /// </summary>
+        /// <param name="enumerable">An expression representing the value to enumerate.</param>
+        /// <param name="loopVariable">The variable to populate with the current value in each iteration.</param>
+        /// <param name="body">The body of the loop.</param>
         public ForeachExpression(Expression enumerable, ParameterExpression loopVariable, Expression body)
             : this(enumerable, loopVariable, Label(), body)
         {
         }
 
+        /// <summary>
+        /// Constructs a new <see cref="ForeachExpression"/> specifying a break label.
+        /// </summary>
+        /// <param name="enumerable">An expression representing the value to enumerate.</param>
+        /// <param name="loopVariable">The variable to populate with the current value in each iteration.</param>
+        /// <param name="break">The <see cref="LabelTarget"/> to use to break out of the loop.</param>
+        /// <param name="body">The body of the loop.</param>
         public ForeachExpression(Expression enumerable, ParameterExpression loopVariable, LabelTarget @break, Expression body)
         {
             Enumerable = enumerable;
@@ -70,6 +112,7 @@ namespace Hive.Plugins
         private static readonly MethodInfo EnumeratorMoveNext = typeof(IEnumerator).GetMethod(nameof(IEnumerator.MoveNext), BindingFlags.Public | BindingFlags.Instance);
         private static readonly MethodInfo DisposableDispose = typeof(IDisposable).GetMethod(nameof(IDisposable.Dispose), BindingFlags.Public | BindingFlags.Instance);
 
+        /// <inheritdoc/>
         public override Expression Reduce()
         {
             var enumerator = Variable(EnumeratorType);
@@ -95,6 +138,7 @@ namespace Hive.Plugins
             );
         }
 
+        /// <inheritdoc/>
         public override string ToString()
             => $"Foreach({LoopVariable} in {Enumerable}, {Body})";
     }
