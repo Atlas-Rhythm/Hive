@@ -89,10 +89,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Mod'
               examples: {}
-            application/xml:
-              schema:
-                type: object
-                properties: {}
       operationId: get-mod-modId
     patch:
       summary: Updates a mod with the specified ID
@@ -266,10 +262,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/Channel'
                 uniqueItems: true
-            application/xml:
-              schema:
-                type: object
-                properties: {}
         '401':
           $ref: '#/components/responses/UnauthorizedError'
       operationId: get-channels

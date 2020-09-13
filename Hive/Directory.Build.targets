@@ -20,8 +20,8 @@
       <_NSwagArguments Include="/GenerateNullableReferenceTypes:true" />
       <_NSwagArguments Include="/GenerateModelValidationAttributes:true" />
       <_NSwagArguments Include="/GenerateOptionalParameters:true" />
-      <_NSwagArguments Include="/GenerateDtoTypes:false" />
-      <_NSwagArguments Include="/AdditionalNamespaceUsages:Hive.Models" />
+      <_NSwagArguments Include="/GenerateDtoTypes:false" Condition="$(NSwagGenerateDtoTypes) != 'true'" />
+      <!--<_NSwagArguments Include="/AdditionalNamespaceUsages:Hive.Models" />-->
       <_NSwagArguments Include="/ResponseArrayType:System.Collections.Generic.IEnumerable" />
       <_NSwagArguments Include="/ControllerBaseClass:Microsoft.AspNetCore.Mvc.ControllerBase" />
     </ItemGroup>
