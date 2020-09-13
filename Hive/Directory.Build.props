@@ -1,0 +1,18 @@
+﻿<Project>
+
+  <ItemDefinitionGroup>
+    <OpenApi>
+      <Link></Link>
+      <Generator>MSBuild:GenerateNSwag</Generator>
+      <Visible>true</Visible>
+    </OpenApi>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)OpenApi.xml" />
+    <AvailableItemName Include="OpenApi">
+      <Targets>GenerateNSwag</Targets>
+    </AvailableItemName>
+  </ItemGroup>
+  
+</Project>

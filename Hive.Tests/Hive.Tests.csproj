@@ -6,6 +6,7 @@
     <Tests>true</Tests>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+  
   <Import Project="..\Hive.props" />
 
   <ItemGroup>

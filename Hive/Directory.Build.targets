@@ -1,0 +1,32 @@
+﻿<Project>
+  
+  <PropertyGroup>
+    <CoreCompileDependsOn>GenerateNSwag;$(CoreCompileDependsOn)</CoreCompileDependsOn>
+  </PropertyGroup>
+
+  <Target Name="GenerateNSwag"
+          DependsOnTargets="_GenerateNSwag"
+          Condition="'@(OpenApi)' != ''">
+    <ItemGroup>
+      <Compile Include="@(OpenApi->'$(IntermediateOutputPath)%(filename).g.cs')" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="_GenerateNSwag"
+          Inputs="$(MSBuildProjectFile);@(OpenApi)"
+          Outputs="@(OpenApi->'$(IntermediateOutputPath)%(filename).g.cs'">
+    <ItemGroup>
+      <_NSwagArguments Include="/Namespace:Hive.Controllers.Generated" />
+      <_NSwagArguments Include="/GenerateNullableReferenceTypes:true" />
+      <_NSwagArguments Include="/GenerateModelValidationAttributes:true" />
+      <_NSwagArguments Include="/GenerateOptionalParameters:true" />
+      <_NSwagArguments Include="/GenerateDtoTypes:false" />
+      <_NSwagArguments Include="/AdditionalNamespaceUsages:Hive.Models" />
+      <_NSwagArguments Include="/ResponseArrayType:System.Collections.Generic.IEnumerable" />
+      <_NSwagArguments Include="/ControllerBaseClass:Microsoft.AspNetCore.Mvc.ControllerBase" />
+    </ItemGroup>
+    <Exec 
+      Command="$(NSwagExe_Core31) openapi2cscontroller &quot;/input:%(OpenApi.Identity)&quot; &quot;/output:$(IntermediateOutputPath)%(OpenApi.filename).g.cs&quot; @(_NSwagArguments, ' ')" />
+  </Target>
+  
+</Project>

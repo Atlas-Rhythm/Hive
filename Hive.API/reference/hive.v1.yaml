@@ -121,6 +121,7 @@ paths:
       - schema:
           type: string
         name: modId
+        description: Mod ID to upload to
         in: path
         required: true
     post:
@@ -143,13 +144,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Mod'
-      parameters:
-        - schema:
-            type: string
-          in: query
-          name: modId
-          description: Mod ID to upload to
-          required: true
   /game/versions:
     get:
       summary: Returns all game versions.
