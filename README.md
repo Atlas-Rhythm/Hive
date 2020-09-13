@@ -11,5 +11,5 @@ A general backend project for modding communities.
 
 ### PostgreSQL
 
-- PostgreSQL >= 12.1
+- PostgreSQL >= 12.0
 - Add a connection string with the name `Default` to your project secrets of Hive. This should be used for connecting to Hive's specific database.
