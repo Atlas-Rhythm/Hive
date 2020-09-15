@@ -10,8 +10,16 @@
   <Import Project="..\Hive.props" />
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Hive.Dependencies\Hive.Dependencies.fsproj" />
     <ProjectReference Include="..\Hive.Versioning\Hive.Versioning.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.8.0-preview-20200812-03" />
   </ItemGroup>
 
 </Project>

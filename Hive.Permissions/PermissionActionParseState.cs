@@ -2,6 +2,7 @@
 using NodaTime;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace Hive.Permissions
@@ -10,6 +11,7 @@ namespace Hive.Permissions
     /// A structure that is used to cache parsed actions and related information.
     /// </summary>
     /// <seealso cref="PermissionsManager{TContext}.CanDo(StringView, TContext, ref PermissionActionParseState)"/>
+    [SuppressMessage("", "CA1815", Justification = "This type should not ever be compared.")]
     public struct PermissionActionParseState
     {
         internal struct SearchEntry

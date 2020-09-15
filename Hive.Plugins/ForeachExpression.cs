@@ -73,10 +73,10 @@ namespace Hive.Plugins
         /// <param name="body">The body of the loop.</param>
         public ForeachExpression(Expression enumerable, ParameterExpression loopVariable, LabelTarget @break, Expression body)
         {
-            Enumerable = enumerable;
-            LoopVariable = loopVariable;
-            Body = body;
-            BreakLabel = @break;
+            Enumerable = enumerable ?? throw new ArgumentNullException(nameof(enumerable));
+            LoopVariable = loopVariable ?? throw new ArgumentNullException(nameof(loopVariable));
+            Body = body ?? throw new ArgumentNullException(nameof(body));
+            BreakLabel = @break ?? throw new ArgumentNullException(nameof(@break));
 
             if (!typeof(IEnumerable).IsAssignableFrom(enumerable.Type))
                 throw new ArgumentException("A foreach loop can only take IEnumerable and IEnumerable<T>", nameof(enumerable));

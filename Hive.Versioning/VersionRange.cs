@@ -53,6 +53,9 @@ namespace Hive.Versioning
         /// <seealso cref="operator |(VersionRange, VersionRange)"/>
         public VersionRange Disjunction(VersionRange other)
         {
+            if (other is null)
+                throw new ArgumentNullException(nameof(other));
+
             VersionComparer? comparer = null;
             Subrange? subrange = null;
             if (additionalComparer != null && other.additionalComparer != null)
@@ -97,6 +100,7 @@ namespace Hive.Versioning
             return new VersionRange(allSubranges, comparer);
         }
 
+
         /// <summary>
         /// Computes the logical disjunction (or) of the two arguments.
         /// </summary>
@@ -104,7 +108,15 @@ namespace Hive.Versioning
         /// <param name="b">The second argument.</param>
         /// <returns>The logical disjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
         /// <seealso cref="Disjunction(VersionRange)"/>
-        public static VersionRange operator |(VersionRange a, VersionRange b) => a.Disjunction(b);
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
+            Justification = "Its named alternative is Disjunction(VersionRange)")]
+        public static VersionRange operator |(VersionRange a, VersionRange b)
+        {
+            if (a is null) throw new ArgumentNullException(nameof(a));
+            if (b is null) throw new ArgumentNullException(nameof(b));
+
+            return a.Disjunction(b);
+        }
 
         /// <summary>
         /// Computes the logical conjunction (and) of this <see cref="VersionRange"/> and <paramref name="other"/>.
@@ -125,7 +137,15 @@ namespace Hive.Versioning
         /// <param name="b">The second argument.</param>
         /// <returns>The logical disjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
         /// <seealso cref="Conjunction(VersionRange)"/>
-        public static VersionRange operator &(VersionRange a, VersionRange b) => a.Conjunction(b);
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
+            Justification = "Its named alternative is Conjunction(VersionRange)")]
+        public static VersionRange operator &(VersionRange a, VersionRange b)
+        {
+            if (a is null) throw new ArgumentNullException(nameof(a));
+            if (b is null) throw new ArgumentNullException(nameof(b));
+
+            return a.Conjunction(b);
+        }
 
         private VersionRange? _inverse;
         /// <summary>
@@ -239,7 +259,14 @@ namespace Hive.Versioning
         /// <param name="r">The <see cref="VersionRange"/> to compute the compliment of.</param>
         /// <returns>The compliment of <paramref name="r"/>.</returns>
         /// <seealso cref="Invert()"/>
-        public static VersionRange operator ~(VersionRange r) => r.Invert();
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
+            Justification = "Its named alternative is Invert()")]
+        public static VersionRange operator ~(VersionRange r)
+        {
+            if (r is null) throw new ArgumentNullException(nameof(r));
+
+            return r.Invert();
+        }
 
         /// <summary>
         /// Determines whether or not a given <see cref="Version"/> matches this <see cref="VersionRange"/>.
@@ -451,6 +478,8 @@ namespace Hive.Versioning
         /// <returns>The <see cref="StringBuilder"/> that was appended to.</returns>
         public StringBuilder ToString(StringBuilder sb)
         {
+            if (sb is null) throw new ArgumentNullException(nameof(sb));
+
             for (int i = 0; i < subranges.Length; i++)
             {
                 subranges[i].ToString(sb);
@@ -486,6 +515,7 @@ namespace Hive.Versioning
         /// <returns><see langword="true"/> if they are equivalent, <see langword="false"/> otherwise.</returns>
         public bool Equals(VersionRange other)
         {
+            if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             if (additionalComparer == null ^ other.additionalComparer == null)
                 return false;

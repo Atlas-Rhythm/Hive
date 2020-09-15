@@ -133,7 +133,7 @@ namespace Hive.Tests.Endpoints
             Assert.DoesNotContain(channelData.ElementAt(1), value);
         }
 
-        public Mock<DbSet<Channel>> GetChannels(IQueryable<Channel> channels)
+        public static Mock<DbSet<Channel>> GetChannels(IQueryable<Channel> channels)
         {
             var channelSet = new Mock<DbSet<Channel>>();
             channelSet.As<IEnumerable<Channel>>()
@@ -149,7 +149,7 @@ namespace Hive.Tests.Endpoints
             return channelSet;
         }
 
-        private Mock<IRuleProvider> MockRuleProvider()
+        private static Mock<IRuleProvider> MockRuleProvider()
         {
             var mock = new Mock<IRuleProvider>();
 
@@ -162,11 +162,11 @@ namespace Hive.Tests.Endpoints
             return mock;
         }
 
-        private Mock<IChannelsControllerPlugin> CreatePlugin() => new Mock<IChannelsControllerPlugin>();
+        private static Mock<IChannelsControllerPlugin> CreatePlugin() => new Mock<IChannelsControllerPlugin>();
 
-        private IChannelsControllerPlugin CreateDefaultPlugin() => new HiveChannelsControllerPlugin();
+        private static IChannelsControllerPlugin CreateDefaultPlugin() => new HiveChannelsControllerPlugin();
 
-        private Controllers.ChannelsController CreateController(string permissionRule, IChannelsControllerPlugin plugin, IQueryable<Channel> channelData)
+        private static Controllers.ChannelsController CreateController(string permissionRule, IChannelsControllerPlugin plugin, IQueryable<Channel> channelData)
         {
             var logger = new LoggerConfiguration().WriteTo.Debug().CreateLogger();
             var ruleProvider = MockRuleProvider();

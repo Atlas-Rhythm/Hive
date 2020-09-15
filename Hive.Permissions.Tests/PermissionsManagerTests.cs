@@ -311,9 +311,9 @@ namespace Hive.Permissions.Tests
             Assert.True(permManager.CanDo("rule", new Context()));
         }
 
-        private Mock<IRuleProvider> MockRuleProvider() => MockRuleProvider<IRuleProvider>();
+        private static Mock<IRuleProvider> MockRuleProvider() => MockRuleProvider<IRuleProvider>();
 
-        private Mock<T> MockRuleProvider<T>() where T : class, IRuleProvider
+        private static Mock<T> MockRuleProvider<T>() where T : class, IRuleProvider
         {
             var mock = new Mock<T>();
 
@@ -326,7 +326,7 @@ namespace Hive.Permissions.Tests
             return mock;
         }
 
-        private Mock<T> MockLogger<T>() where T : class, ILogger
+        private static Mock<T> MockLogger<T>() where T : class, ILogger
         {
             var mock = new Mock<T>();
             // Add setup here if ever needed

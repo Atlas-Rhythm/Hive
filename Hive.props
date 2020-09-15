@@ -6,6 +6,22 @@
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
+    
+    <NoWarn>$(NoWarn)</NoWarn>
+    
+    <!-- FXCop warnings that aren't terribly useful for tests, most of the time. -->
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepDesignWarnings)' != 'true'">
+      $(NoWarn);CA1034;CA1062
+    </NoWarn>
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepGlobalizeWarnings)' != 'true'">
+      $(NoWarn);CA1305
+    </NoWarn>
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepPerfWarnings)' != 'true'">
+      $(NoWarn);CA1805
+    </NoWarn>
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepReliableWarnings)' != 'true'">
+      $(NoWarn);CA2007;CA2225
+    </NoWarn>
   
   </PropertyGroup>
 
@@ -17,7 +33,6 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Tests)' == 'true'">
-    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.8.0-preview-20200812-03" />
     <PackageReference Include="Moq" Version="4.14.5" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">

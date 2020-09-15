@@ -23,7 +23,7 @@ namespace Hive.Models
 
         public string? Credits { get; set; }
 
-        private Mod? owningMod = null;
+        private Mod? owningMod;
 
         [BackingField(nameof(owningMod))]
         [DisallowNull]
