@@ -7,20 +7,14 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   
-  <Import Project="..\Hive.props" />
-  
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0-preview-20200812-03" />
     <PackageReference Include="NodaTime.Testing" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Hive.Permissions\Hive.Permissions.csproj" />
     <ProjectReference Include="..\Hive.Utilities\Hive.Utilities.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.8.0-preview-20200812-03" />
   </ItemGroup>
 
 </Project>

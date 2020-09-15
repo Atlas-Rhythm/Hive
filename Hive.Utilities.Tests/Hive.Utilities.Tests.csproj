@@ -6,19 +6,13 @@
     <Tests>true</Tests>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-  
-  <Import Project="..\Hive.props" />
-  
+
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <ProjectReference Include="..\Hive.Utilities\Hive.Utilities.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0-preview-20200812-03" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="16.8.0-preview-20200812-03" />
+    <ProjectReference Include="..\Hive.Utilities\Hive.Utilities.csproj" />
   </ItemGroup>
 
 </Project>

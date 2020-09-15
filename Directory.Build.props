@@ -1,28 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
-    
-  <PropertyGroup>
 
-    <LangVersion>8.0</LangVersion>
-    <Nullable>enable</Nullable>
-    <WarningsAsErrors>nullable</WarningsAsErrors>
-    
-    <NoWarn>$(NoWarn)</NoWarn>
-    
-    <!-- FXCop warnings that aren't terribly useful for tests, most of the time. -->
-    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepDesignWarnings)' != 'true'">
-      $(NoWarn);CA1034;CA1062
-    </NoWarn>
-    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepGlobalizeWarnings)' != 'true'">
-      $(NoWarn);CA1305
-    </NoWarn>
-    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepPerfWarnings)' != 'true'">
-      $(NoWarn);CA1805
-    </NoWarn>
-    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepReliableWarnings)' != 'true'">
-      $(NoWarn);CA2007;CA2225
-    </NoWarn>
-  
+  <PropertyGroup>
+    <IsCSharpProject>true</IsCSharpProject>
   </PropertyGroup>
 
   <ItemGroup>

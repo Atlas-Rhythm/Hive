@@ -7,8 +7,6 @@
     
   </PropertyGroup>
   
-  <Import Project="..\Hive.props" />
-  
   <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>

@@ -6,8 +6,6 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   
-  <Import Project="..\Hive.props" />
-  
   <ItemGroup>
     <ProjectReference Include="..\Hive.Utilities\Hive.Utilities.csproj" />
   </ItemGroup>
