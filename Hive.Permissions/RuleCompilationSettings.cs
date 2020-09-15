@@ -5,6 +5,7 @@ using MathExpr.Compiler.Compilation.Settings;
 using MathExpr.Syntax;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Text;
 
@@ -25,10 +26,6 @@ namespace Hive.Permissions
         public IDictionary<Type, TypedFactorialCompiler> TypedFactorialCompilers { get; } = new Dictionary<Type, TypedFactorialCompiler>();
 
         public IList<ISpecialBinaryOperationCompiler> PowerCompilers { get; } = new List<ISpecialBinaryOperationCompiler>();
-
-        public bool IgnoreDomainRestrictions => true;
-
-        public bool AllowDomainChangingOptimizations => false;
 
         private readonly List<IBuiltinFunction<RuleCompilationSettings>> builtins = new List<IBuiltinFunction<RuleCompilationSettings>>();
 

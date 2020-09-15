@@ -305,20 +305,20 @@ namespace Hive.Plugins
             static void AppendParam(StringBuilder sb, ParameterInfo p)
             {
                 if (p.ParameterType.IsByRef)
-                    sb.Append("R");
+                    sb.Append('R');
                 else
-                    sb.Append("N");
+                    sb.Append('N');
 
                 if (p.IsIn)
-                    sb.Append("i");
+                    sb.Append('i');
                 if (p.IsOut)
-                    sb.Append("o");
+                    sb.Append('o');
             }
 
             foreach (var p in args) AppendParam(sb, p);
 
             if (ret.ParameterType == typeof(void))
-                sb.Append("V");
+                sb.Append('V');
             else
                 AppendParam(sb, ret);
 

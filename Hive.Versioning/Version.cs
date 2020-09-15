@@ -102,17 +102,20 @@ namespace Hive.Versioning
         /// <returns>The provided <see cref="StringBuilder"/></returns>
         public StringBuilder ToString(StringBuilder sb)
         {
-            sb.Append(Major).Append(".")
-              .Append(Minor).Append(".")
+            if (sb is null)
+                throw new ArgumentNullException(nameof(sb));
+
+            sb.Append(Major).Append('.')
+              .Append(Minor).Append('.')
               .Append(Patch);
             if (prereleaseIds.Length > 0)
             {
-                sb.Append("-")
+                sb.Append('-')
                   .AppendJoin(".", prereleaseIds);
             }
             if (buildIds.Length > 0)
             {
-                sb.Append("+")
+                sb.Append('+')
                   .AppendJoin(".", buildIds);
             }
             return sb;
@@ -150,7 +153,13 @@ namespace Hive.Versioning
         /// <param name="b">The second version to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is greater than <paramref name="b"/>, <see langword="false"/></returns>
         public static bool operator >(Version a, Version b)
-            => a.CompareTo(b) > 0;
+        {
+            if (a is null) throw new ArgumentNullException(nameof(a));
+            if (b is null) throw new ArgumentNullException(nameof(b));
+
+            return a.CompareTo(b) > 0;
+        }
+
         /// <summary>
         /// Checks if <paramref name="a"/> is less than <paramref name="b"/>.
         /// </summary>
@@ -158,7 +167,12 @@ namespace Hive.Versioning
         /// <param name="b">The second version to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is less than <paramref name="b"/>, <see langword="false"/></returns>
         public static bool operator <(Version a, Version b)
-            => a.CompareTo(b) < 0;
+        {
+            if (a is null) throw new ArgumentNullException(nameof(a));
+            if (b is null) throw new ArgumentNullException(nameof(b));
+
+            return a.CompareTo(b) < 0;
+        }
         /// <summary>
         /// Checks if <paramref name="a"/> is greater than or equal to <paramref name="b"/>.
         /// </summary>
@@ -221,7 +235,8 @@ namespace Hive.Versioning
         /// <param name="other">The version to compare to.</param>
         /// <returns><see langword="true"/> if the versions are equal, <see langword="false"/> otherwise.</returns>
         public bool Equals(Version other)
-            => Major == other.Major && Minor == other.Minor && Patch == other.Patch
+            => !(other is null)
+            && Major == other.Major && Minor == other.Minor && Patch == other.Patch
             && prereleaseIds.Length == other.prereleaseIds.Length
             && prereleaseIds.Zip(other.prereleaseIds, (a, b) => a == b).All(a => a);
 
@@ -233,6 +248,8 @@ namespace Hive.Versioning
         /// more than zero if <see langword="this"/> is greater than <paramref name="other"/></returns>
         public int CompareTo(Version other)
         {
+            if (other is null) throw new ArgumentNullException(nameof(other));
+
             var val = Major.CompareTo(other.Major);
             if (val != 0) return val;
             val = Minor.CompareTo(other.Minor);

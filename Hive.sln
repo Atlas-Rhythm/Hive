@@ -12,8 +12,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{359F68C9-18C8-435C-9573-A5C7CBD0ADE0}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
-		Hive.props = Hive.props
+		.github\workflows\dotnet-core.yml = .github\workflows\dotnet-core.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities", "Hive.Utilities\Hive.Utilities.csproj", "{3C265E15-AFDF-47B1-9893-7957F9A43818}"
@@ -32,7 +33,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Versioning.Fuzz", "Hiv
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Tests", "Hive.Tests\Hive.Tests.csproj", "{FC9760DF-50AA-4FEC-A0F4-64DB4767EB4F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Plugins", "Hive.Plugins\Hive.Plugins.csproj", "{FEB62848-1C44-4ED3-B357-A5540B59C370}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins", "Hive.Plugins\Hive.Plugins.csproj", "{FEB62848-1C44-4ED3-B357-A5540B59C370}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -121,6 +121,11 @@ namespace Hive.Plugins
         /// <param name="targetName">The name of the method to use to aggregate the values.</param>
         public AggregateWithAttribute(Type targetType, string targetName)
         {
+            if (targetType is null)
+                throw new ArgumentNullException(nameof(targetType));
+            if (targetName is null)
+                throw new ArgumentNullException(nameof(targetName));
+
             TypeWithAggregator = targetType;
             AggregatorName = targetName;
 

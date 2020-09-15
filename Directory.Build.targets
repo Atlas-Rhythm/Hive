@@ -1,5 +1,30 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
+
+  <PropertyGroup Condition="'$(IsCSharpProject)' == 'true'">
+
+    <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+
+    <NoWarn>$(NoWarn);CA1826;CA2000</NoWarn>
+
+    <!-- FXCop warnings that aren't terribly useful for tests, most of the time. -->
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepDesignWarnings)' != 'true'">
+      $(NoWarn);CA1034;CA1062
+    </NoWarn>
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepGlobalizeWarnings)' != 'true'">
+      $(NoWarn);CA1305
+    </NoWarn>
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepPerfWarnings)' != 'true'">
+      $(NoWarn);CA1805
+    </NoWarn>
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepReliableWarnings)' != 'true'">
+      $(NoWarn);CA2007;CA2225
+    </NoWarn>
+
+  </PropertyGroup>
+  
   <Target Name="AddInternalsVisibleTo" BeforeTargets="BeforeCompile">
     <!-- Add default suffix if there is no InternalsVisibleTo or InternalsVisibleToSuffix defined -->
     <ItemGroup Condition="@(InternalsVisibleToSuffix->Count()) == 0 AND @(InternalsVisibleTo->Count()) == 0">
@@ -20,4 +45,5 @@
       </AssemblyAttribute>
     </ItemGroup>
   </Target>
+  
 </Project>

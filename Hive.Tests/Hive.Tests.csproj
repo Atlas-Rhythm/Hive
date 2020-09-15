@@ -6,7 +6,10 @@
     <Tests>true</Tests>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-  <Import Project="..\Hive.props" />
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0-preview-20200812-03" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Hive.Plugins\Hive.Plugins.csproj" />

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Text;
 
 namespace Hive.Utilities
@@ -36,6 +37,9 @@ namespace Hive.Utilities
         /// <param name="capacity">The minimum capacity to start with.</param>
         public ArrayBuilder(ArrayPool<T> pool, int capacity = 4)
         {
+            if (pool is null)
+                throw new ArgumentNullException(nameof(pool));
+
             this.pool = pool;
             Count = 0;
             array = pool.Rent(capacity);

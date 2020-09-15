@@ -33,7 +33,7 @@ namespace Hive.Utilities.Tests
                 Assert.Equal(sv1.GetHashCode(), sv2.GetHashCode());
         }
 
-        public static object[][] BasicEqualsCases = new object[][]
+        public static readonly object[][] BasicEqualsCases = new object[][]
         {
             new object[] { SV("hello"), SV("hello"), true },
             new object[] { SV("hello"), SV("hellu"), false },
@@ -71,7 +71,7 @@ namespace Hive.Utilities.Tests
             Assert.Equal(expect, new StringView(source).Substring(start, len));
         }
 
-        public static object[][] SubstringLenCases = new object[][]
+        public static readonly object[][] SubstringLenCases = new object[][]
         {
             new object[] { "hello", 3, 2, "lo" },
             new object[] { "hello", 3, 1, "l" },
@@ -111,7 +111,7 @@ namespace Hive.Utilities.Tests
             Assert.Equal(expect.AsEnumerable(), source.Split(splTok, ignoreEmpty).ToArray());
         }
 
-        public static object[][] SplitCases = new object[][]
+        public static readonly object[][] SplitCases = new object[][]
         {
             new object[] { SV("hi.lo"), SV("."), false, new StringView[] { "hi", "lo" } },
             new object[] { SV("hi..lo"), SV("."), false, new StringView[] { "hi", "", "lo" } },
@@ -125,7 +125,7 @@ namespace Hive.Utilities.Tests
             new object[] { SV("hi"), SV(" . "), false, new StringView[] { "hi" } },
             new object[] { SV("hi"), SV(" . "), true, new StringView[] { "hi" } },
             new object[] { SV(""), SV(" . "), false, new StringView[] { "" } },
-            new object[] { SV(""), SV(" . "), true, new StringView[] { } },
+            new object[] { SV(""), SV(" . "), true, Array.Empty<StringView>() },
         };
 
         [Theory]
@@ -135,7 +135,7 @@ namespace Hive.Utilities.Tests
             Assert.Equal(expect, StringView.Concat(a, b, c));
         }
 
-        public static object[][] ConcatCases = new object[][]
+        public static readonly object[][] ConcatCases = new object[][]
         {
             new object[] { new StringView("abc", 0, 1), SV("b"), SV("c"), SV("abc") },
             new object[] { SV("a"), new StringView("abc", 1, 1), SV("c"), SV("abc") },

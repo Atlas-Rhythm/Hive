@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Text;
 
 namespace Hive.Utilities
@@ -19,6 +20,9 @@ namespace Hive.Utilities
         /// <returns>An enumerable that is the parameters interleaved.</returns>
         public static IEnumerable<T> InterleaveWith<T>(this IEnumerable<T> first, IEnumerable<T> second)
         {
+            if (first is null) throw new ArgumentNullException(nameof(first));
+            if (second is null) throw new ArgumentNullException(nameof(second));
+
             var a = first.GetEnumerator();
             var b = second.GetEnumerator();
 

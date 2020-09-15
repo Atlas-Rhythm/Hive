@@ -42,6 +42,7 @@ namespace Hive.Versioning
             Everything
         }
 
+        [SuppressMessage("", "CA1067", Justification = "This is an internal type, and never uses Equals(object).")]
         internal partial struct VersionComparer : IEquatable<VersionComparer>
         {
             public readonly Version CompareTo;
@@ -320,6 +321,7 @@ namespace Hive.Versioning
                 => HashCode.Combine(Type, CompareTo);
         }
 
+        [SuppressMessage("", "CA1067", Justification = "This is an internal type, and never uses Equals(object).")]
         internal partial struct Subrange : IEquatable<Subrange>
         {
             public readonly VersionComparer LowerBound;
@@ -717,14 +719,9 @@ namespace Hive.Versioning
 
         internal partial struct Subrange
         {
-            public static readonly Subrange Everything;
-
-            static Subrange()
-            {
-                Everything = new Subrange(
+            public static readonly Subrange Everything = new Subrange(
                     new VersionComparer(Version.Zero, ComparisonType.LessEqual),
                     new VersionComparer(Version.Zero, ComparisonType.Greater));
-            }
         }
 
         #region Parser
@@ -777,11 +774,11 @@ namespace Hive.Versioning
                 if (Type == ComparisonType.None) return sb.Append("default");
 
                 if ((Type & ComparisonType.Greater) != ComparisonType.None)
-                    sb.Append(">");
+                    sb.Append('>');
                 if ((Type & ComparisonType.Less) != ComparisonType.None)
-                    sb.Append("<");
+                    sb.Append('<');
                 if ((Type & ComparisonType.ExactEqual) != ComparisonType.None)
-                    sb.Append("=");
+                    sb.Append('=');
                 if ((Type & ~ComparisonType._All) != ComparisonType.None)
                     sb.Append("!Invalid!");
 
@@ -882,7 +879,7 @@ namespace Hive.Versioning
                         if ((lower.Major != 0 && lower.Major + 1 == upper.Major && upper.Minor == 0 && upper.Patch == 0)
                          || (lower.Minor != 0 && lower.Minor + 1 == upper.Minor && upper.Major == 0 && upper.Patch == 0)
                          || (lower.Patch != 0 && lower.Patch + 1 == upper.Patch && upper.Major == 0 && upper.Minor == 0))
-                            return lower.ToString(sb.Append("^"));
+                            return lower.ToString(sb.Append('^'));
                     }
                 }
 

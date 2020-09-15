@@ -1,10 +1,13 @@
 ﻿using Hive.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace Hive.Permissions.Logging
 {
+    [SuppressMessage("Performance", "CA1822:Mark members as static", 
+        Justification = "The interface I want for this type has all of its members being instance members.")]
     internal struct LoggerWrapper
     {
         private readonly ILogger? logger;

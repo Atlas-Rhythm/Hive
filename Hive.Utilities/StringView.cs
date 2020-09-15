@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -33,6 +34,9 @@ namespace Hive.Utilities
         /// <param name="source">The string to wrap.</param>
         public StringView(string source)
         {
+            if (source is null)
+                throw new ArgumentNullException(nameof(source));
+
             BaseString = source;
             Start = 0;
             Length = source.Length;
@@ -49,6 +53,9 @@ namespace Hive.Utilities
         /// </exception>
         public StringView(string source, int start, int len)
         {
+            if (source is null)
+                throw new ArgumentNullException(nameof(source));
+
             if (start > source.Length)
                 throw new ArgumentException("Start is past the end of the string", nameof(start));
             if (start + len > source.Length)
@@ -80,6 +87,7 @@ namespace Hive.Utilities
             Length = len;
         }
 
+
         /// <summary>
         /// Gets the character at the specified index in the view.
         /// </summary>
@@ -88,6 +96,8 @@ namespace Hive.Utilities
         /// <exception cref="IndexOutOfRangeException">
         /// Thrown if <paramref name="index"/> is out of bounds of this view.
         /// </exception>
+        [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", 
+            Justification = "This is an indexer. It can throw IndexOutOfRangeException. That makes sense.")]
         public char this[int index]
         {
             get
@@ -150,11 +160,14 @@ namespace Hive.Utilities
                 yield return new StringView(this, regionBegin, Length - regionBegin);
         }
 
+
         /// <summary>
         /// Implicitly converts a <see cref="string"/> to a <see cref="StringView"/>, using <see cref="StringView(string)"/>.
         /// </summary>
         /// <param name="value">The string to wrap.</param>
         /// <seealso cref="StringView(string)"/>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", 
+            Justification = "The alternative is the StringValue(string) constructor.")]
         public static implicit operator StringView(string value)
             => new StringView(value);
 
@@ -287,12 +300,15 @@ namespace Hive.Utilities
             return sb.ToString();
         }
 
+
         /// <summary>
         /// Concatenates two <see cref="StringView"/>s into a single <see cref="StringView"/>.
         /// </summary>
         /// <param name="a">The first view to concatenate.</param>
         /// <param name="b">The second view to concatenate.</param>
         /// <returns>The concatenated <see cref="StringView"/>.</returns>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", 
+            Justification = "The named alternative is Concat(StringView, StringView).")]
         public static StringView operator +(StringView a, StringView b) => Concat(a, b);
 
         /// <summary>
