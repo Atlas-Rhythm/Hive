@@ -15,8 +15,8 @@ jobs:
         # As usual, obtained from: https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/5.0/releases.json
         dotnet-version: 5.0.100-rc.1
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore -clp:NoSummary
     - name: Build
-      run: dotnet build --no-restore -c Release
+      run: dotnet build --no-restore -c Release -clp:NoSummary
     - name: Test
-      run: dotnet test --no-restore -c Release
+      run: dotnet test --no-restore -c Release -clp:NoSummary
