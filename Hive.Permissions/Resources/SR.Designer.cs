@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Hive.Permissions {
+namespace Hive.Permissions.Resources {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace Hive.Permissions {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Hive.Permissions.SR", typeof(SR).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Hive.Permissions.Resources.SR", typeof(SR).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

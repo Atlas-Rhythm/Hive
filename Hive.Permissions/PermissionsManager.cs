@@ -1,6 +1,7 @@
 ﻿using FastExpressionCompiler;
 using Hive.Permissions.Functions;
 using Hive.Permissions.Logging;
+using Hive.Permissions.Resources;
 using Hive.Utilities;
 using MathExpr.Compiler;
 using MathExpr.Compiler.Compilation.Passes;
