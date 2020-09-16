@@ -1,4 +1,5 @@
 ﻿using Hive.Utilities;
+using Hive.Versioning.Resources;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -31,7 +32,7 @@ namespace Hive.Versioning
             text = text.Trim();
 
             if (!TryParse(ref text, out var ranges, out additionalComparer) || text.Length > 0)
-                throw new ArgumentException("Input is an invalid range", nameof(text));
+                throw new ArgumentException(SR.Range_InputInvalid, nameof(text));
 
             (ranges, additionalComparer) = FixupRangeList(ranges, additionalComparer);
             subranges = ranges;
@@ -595,7 +596,7 @@ namespace Hive.Versioning
         public static VersionRange Parse(ReadOnlySpan<char> text)
         {
             if (!TryParse(text, out var range))
-                throw new ArgumentException("The argument is not a valid VersionRange", nameof(text));
+                throw new ArgumentException(SR.Range_InputInvalid, nameof(text));
             return range;
         }
 
