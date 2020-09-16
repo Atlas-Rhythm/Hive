@@ -127,6 +127,23 @@ namespace Hive.Versioning
         public VersionRange Conjunction(VersionRange other)
         {
             // TODO: replace this implementation with one that doesn't allocate a load of ranges
+            
+            // the current implementation allocates 6-12 times (2-4 VersionRanges, 4-8 arrays):
+            // - (potentially) allocates the inverse of `this`
+            //   - +1 array during inversion
+            //   - +1 array during range set fixup
+            //   - +1 VersionRange object
+            // - (potentially) allocates the inverse of `other`
+            //   - same as above
+            // - allocates for disjunction
+            //   - +1 array during computation
+            //   - +1 array during range set fixup
+            //   - +1 VersionRange object
+            // - allocates for final inversion
+            //   - +1 array during inversion
+            //   - +1 array during range set fixup
+            //   - +1 VersionRange object
+
             return ~(~this | ~other);
         }
 
