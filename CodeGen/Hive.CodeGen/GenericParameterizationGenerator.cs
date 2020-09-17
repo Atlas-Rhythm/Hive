@@ -105,7 +105,7 @@ namespace Hive.CodeGen
         private static readonly DiagnosticDescriptor ToParameterizeType = new DiagnosticDescriptor(
                     id: "HCG0001",
                     title: "Found type to be parameterized",
-                    messageFormat: "Type to parameterize: {0} with {1} params ({2} to {3})",
+                    messageFormat: "Type to parameterize: {0} with {1} params ({2} to {3}) {4}",
                     category: "Hive.CodeGen.Testing",
                     defaultSeverity: DiagnosticSeverity.Warning,
                     isEnabledByDefault: true
@@ -113,7 +113,14 @@ namespace Hive.CodeGen
 
         private static string? GenerateForType(INamedTypeSymbol type, TypeDeclarationSyntax synType, int minParam, int maxParam, GeneratorExecutionContext context)
         {
-            context.ReportDiagnostic(Diagnostic.Create(ToParameterizeType, Location.Create(synType.SyntaxTree, synType.Identifier.Span), type.Name, type.Arity, minParam, maxParam));
+            context.ReportDiagnostic(Diagnostic.Create(ToParameterizeType, 
+                Location.Create(synType.SyntaxTree, synType.Identifier.Span), 
+                type.Name, 
+                type.Arity, 
+                minParam, 
+                maxParam,
+                type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+            ));
 
 
             return null;
