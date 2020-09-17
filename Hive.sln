@@ -37,7 +37,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins", "Hive.Plugin
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CodeGen", "CodeGen", "{418DF181-8405-4B69-8B32-FBEEFACADAC6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.CodeGen", "CodeGen\Hive.CodeGen\Hive.CodeGen.csproj", "{D14CCA86-C8FA-4F96-A92B-9CF454C485B1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.CodeGen", "CodeGen\Hive.CodeGen\Hive.CodeGen.csproj", "{D14CCA86-C8FA-4F96-A92B-9CF454C485B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.CodeGen.Attributes", "CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj", "{585E184E-0F14-4456-B542-9AECFAB96A15}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -97,12 +99,17 @@ Global
 		{D14CCA86-C8FA-4F96-A92B-9CF454C485B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D14CCA86-C8FA-4F96-A92B-9CF454C485B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D14CCA86-C8FA-4F96-A92B-9CF454C485B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{585E184E-0F14-4456-B542-9AECFAB96A15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{585E184E-0F14-4456-B542-9AECFAB96A15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{585E184E-0F14-4456-B542-9AECFAB96A15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{585E184E-0F14-4456-B542-9AECFAB96A15}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D14CCA86-C8FA-4F96-A92B-9CF454C485B1} = {418DF181-8405-4B69-8B32-FBEEFACADAC6}
+		{585E184E-0F14-4456-B542-9AECFAB96A15} = {418DF181-8405-4B69-8B32-FBEEFACADAC6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A1B8AB62-9337-448C-9043-E0DEDB6A4DE9}

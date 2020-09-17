@@ -6,11 +6,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace Hive.CodeGen
 {
     [Generator]
-    public class GenericParameterizationGenerator : ISourceGenerator
+    public partial class GenericParameterizationGenerator : ISourceGenerator
     {
         private class SyntaxReceiver : ISyntaxReceiver
         {
@@ -27,7 +28,7 @@ namespace Hive.CodeGen
             }
         }
 
-        private const string AttributesSource = @"
+        /*private const string AttributesSource = @"
 using System;
 using System.CodeDom.Compiler;
 
@@ -46,7 +47,7 @@ namespace Hive.CodeGen
             => (MinParameters, MaxParameters) = (min, max);
     }
 }
-";
+";*/
 
         public void Initialize(GeneratorInitializationContext context)
         {
@@ -56,16 +57,18 @@ namespace Hive.CodeGen
         public void Execute(GeneratorExecutionContext context)
         {
             // add the attributes
-            context.AddSource("CodeGen_ParameterizeGenericAttributes", SourceText.From(AttributesSource, Encoding.UTF8));
+            //context.AddSource("CodeGen_ParameterizeGenericAttributes", SourceText.From(AttributesSource, Encoding.UTF8));
 
             if (!(context.SyntaxReceiver is SyntaxReceiver receiver))
                 return;
 
             // create a new compilation with the attribute
-            var options = (CSharpParseOptions)((CSharpCompilation)context.Compilation).SyntaxTrees[0].Options;
-            var compilation = context.Compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(SourceText.From(AttributesSource, Encoding.UTF8), options));
+            //var options = (CSharpParseOptions)((CSharpCompilation)context.Compilation).SyntaxTrees[0].Options;
+            //var compilation = context.Compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(SourceText.From(AttributesSource, Encoding.UTF8), options));
 
-            var targetingAttribute = compilation.GetTypeByMetadataName("Hive.CodeGen.ParameterizeGenericParametersAttribute");
+            var compilation = context.Compilation;
+
+            var targetingAttribute = compilation.GetTypeByMetadataName(typeof(ParameterizeGenericParametersAttribute).FullName);
 
             var classes = new List<(INamedTypeSymbol typeSym, TypeDeclarationSyntax syn, int minParam, int maxParam)>();
             foreach (var synType in receiver.CandidateClasses)
@@ -110,7 +113,8 @@ namespace Hive.CodeGen
 
         private static string? GenerateForType(INamedTypeSymbol type, TypeDeclarationSyntax synType, int minParam, int maxParam, GeneratorExecutionContext context)
         {
-            context.ReportDiagnostic(Diagnostic.Create(ToParameterizeType, Location.Create(synType.SyntaxTree, synType.Span), type.Name, type.Arity, minParam, maxParam));
+            context.ReportDiagnostic(Diagnostic.Create(ToParameterizeType, Location.Create(synType.SyntaxTree, synType.Identifier.Span), type.Name, type.Arity, minParam, maxParam));
+
 
             return null;
         }
