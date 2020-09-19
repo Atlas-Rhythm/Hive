@@ -201,9 +201,12 @@ namespace Hive.CodeGen
                 sb.Append(@using.ToFullString());
             }
 
+            // TODO: fix up doc comments
+
             sb.Append($@"
 namespace {type.ContainingNamespace.ToDisplayString()}
 {{
+#pragma warning disable CS1711
 ");
 
             for (int i = minParam; i <= maxParam; i++)
