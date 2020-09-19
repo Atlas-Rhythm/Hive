@@ -123,7 +123,36 @@ namespace Hive.CodeGen
             ));
 
 
-            return null;
+
+            // Build up final file
+            {
+                var root = synType.SyntaxTree.GetCompilationUnitRoot();
+
+                var sb = new StringBuilder();
+
+                foreach (var @extern in root.Externs)
+                {
+                    sb.AppendLine(@extern.ToFullString());
+                }
+
+                foreach (var @using in root.Usings)
+                {
+                    sb.AppendLine(@using.ToFullString());
+                }
+
+                sb.Append($@"
+namespace {type.ContainingNamespace.Name}
+{{
+");
+
+                sb.Append(synType.ToFullString());
+
+                sb.Append(@"
+}
+");
+
+                return sb.ToString();
+            }
         }
     }
 }
