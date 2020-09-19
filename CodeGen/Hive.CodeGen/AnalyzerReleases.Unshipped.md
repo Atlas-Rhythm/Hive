@@ -4,4 +4,5 @@
 ### New Rules
 Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
-HCG0001 | Hive.CodeGen.Testing | Warning | GenericParameterizationGenerator
+HCG001 | Hive.CodeGen.Parameterization | Error | GenericParameterizationGenerator
+HCG999 | Hive.CodeGen.Testing | Info | GenericParameterizationGenerator

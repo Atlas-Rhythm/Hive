@@ -103,13 +103,22 @@ namespace Hive.CodeGen
         }
 
         private static readonly DiagnosticDescriptor ToParameterizeType = new DiagnosticDescriptor(
-                    id: "HCG0001",
-                    title: "Found type to be parameterized",
-                    messageFormat: "Type to parameterize: {0} with {1} params ({2} to {3}) {4}",
-                    category: "Hive.CodeGen.Testing",
-                    defaultSeverity: DiagnosticSeverity.Warning,
-                    isEnabledByDefault: true
-                );
+                id: "HCG999",
+                title: "Found type to be parameterized",
+                messageFormat: "Type to parameterize: {0} with {1} params ({2} to {3}) {4}",
+                category: "Hive.CodeGen.Testing",
+                defaultSeverity: DiagnosticSeverity.Info,
+                isEnabledByDefault: true
+            );
+
+        private static readonly DiagnosticDescriptor Err_InvalidParameterizations = new DiagnosticDescriptor(
+                id: "HCG001",
+                title: "Specified parameterization range is not valid on the type",
+                messageFormat: "Type {0} has {1} generic parameters, but the attribute specified generating {2} to {3} parameter variants",
+                category: "Hive.CodeGen.Parameterization",
+                defaultSeverity: DiagnosticSeverity.Error,
+                isEnabledByDefault: true
+            );
 
         private static string? GenerateForType(INamedTypeSymbol type, TypeDeclarationSyntax synType, int minParam, int maxParam, GeneratorExecutionContext context)
         {
@@ -122,37 +131,53 @@ namespace Hive.CodeGen
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
             ));
 
-
-
-            // Build up final file
+            if (minParam <= 0 || maxParam >= type.Arity)
             {
-                var root = synType.SyntaxTree.GetCompilationUnitRoot();
+                context.ReportDiagnostic(Diagnostic.Create(Err_InvalidParameterizations,
+                    Location.Create(synType.SyntaxTree, synType.Identifier.Span),
+                    type.Name,
+                    type.Arity,
+                    minParam,
+                    maxParam
+                ));
 
-                var sb = new StringBuilder();
+                return null;
+            }
 
-                foreach (var @extern in root.Externs)
-                {
-                    sb.AppendLine(@extern.ToFullString());
-                }
+            var root = synType.SyntaxTree.GetCompilationUnitRoot();
 
-                foreach (var @using in root.Usings)
-                {
-                    sb.AppendLine(@using.ToFullString());
-                }
+            var sb = new StringBuilder();
 
-                sb.Append($@"
+            foreach (var @extern in root.Externs)
+            {
+                sb.AppendLine(@extern.ToFullString());
+            }
+
+            foreach (var @using in root.Usings)
+            {
+                sb.AppendLine(@using.ToFullString());
+            }
+
+            sb.Append($@"
 namespace {type.ContainingNamespace.Name}
 {{
 ");
 
-                sb.Append(synType.ToFullString());
+            for (int i = minParam; i <= maxParam; i++)
+            {
 
-                sb.Append(@"
+            }
+
+            sb.Append(@"
 }
 ");
 
-                return sb.ToString();
-            }
+            return sb.ToString();
+        }
+
+        private static TypeDeclarationSyntax GenerateInstantiation(INamedTypeSymbol type, TypeDeclarationSyntax orig, int paramCount, GeneratorExecutionContext context)
+        {
+
         }
     }
 }
