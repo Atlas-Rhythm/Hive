@@ -25,6 +25,7 @@ namespace Hive.Controllers
         /// <para>Hive default is to return true.</para>
         /// </summary>
         /// <param name="user">User in context</param>
+        [StopIfReturns(false)]
         public bool GetGameVersionsAdditionalChecks(User? user) => true;
 
         /// <summary>
