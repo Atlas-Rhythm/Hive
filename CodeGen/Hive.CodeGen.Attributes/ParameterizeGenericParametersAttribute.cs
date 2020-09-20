@@ -28,12 +28,26 @@ namespace Hive.CodeGen
             => (MinParameters, MaxParameters) = (min, max);
     }
 
+    /// <summary>
+    /// Marks that a generic class is a generated parameterization of a type.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface, Inherited = false, AllowMultiple = true)]
     public sealed class GeneratedParameterizationAttribute : Attribute
     {
+        /// <summary>
+        /// Gets the type name of the type it was parameterized from.
+        /// </summary>
         public string GeneratedFrom { get; }
+        /// <summary>
+        /// Gets the number of parameters this was instantiated with.
+        /// </summary>
         public int WithParameters { get; }
 
+        /// <summary>
+        /// Constructs a <see cref="GeneratedParameterizationAttribute"/> with the specified generated source string and parameter count.
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="with"></param>
         public GeneratedParameterizationAttribute(string from, int with)
             => (GeneratedFrom, WithParameters) = (from, with);
     }

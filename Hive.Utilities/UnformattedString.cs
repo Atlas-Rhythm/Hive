@@ -97,6 +97,6 @@ namespace Hive.Utilities
         /// <returns>The formatted string.</returns>
         /// <seealso cref="Format(ValueTuple{T1, T2, T3, T4, T5, T6, T7})"/>
         public string Format(T1 _1, T2 _2, T3 _3, T4 _4, T5 _5, T6 _6, T7 _7)
-            => Format((_1, _2, _3, _4, _5, _6, _7));
+            => Format(new ValueTuple<T1, T2, T3, T4, T5, T6, T7>(_1, _2, _3, _4, _5, _6, _7));
     }
 }

@@ -646,6 +646,21 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                 return base.VisitInvocationExpression(node);
             }
 
+            public override SyntaxNode? VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
+            {
+                if (ParamsToRemove != null)
+                {
+                    var list = node.ArgumentList;
+                    if (list != null)
+                    {
+                        list = list.WithArguments(FilterArguments(list.Arguments));
+                        node = node.WithArgumentList(list);
+                    }
+                }
+
+                return base.VisitObjectCreationExpression(node);
+            }
+
             private SeparatedSyntaxList<ArgumentSyntax> FilterArguments(SeparatedSyntaxList<ArgumentSyntax> args)
             {
                 if (ParamsToRemove == null) return args;
