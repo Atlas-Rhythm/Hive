@@ -15,7 +15,7 @@ namespace Hive.Utilities
     /// <typeparam name="T4">The type of the fourth argument.</typeparam>
     /// <typeparam name="T5">The type of the fifth argument.</typeparam>
     /// <typeparam name="T6">The type of the sixth argument.</typeparam>
-    /// <typeparam name="T7">The type of the sevent argument.</typeparam>
+    /// <typeparam name="T7">The type of the seventh argument.</typeparam>
     /// <typeparam name="TRest">The type of the eighth argument, or a <see cref="ValueTuple"/> type holding the remaining elements.</typeparam>
     [ParameterizeGenericParameters(1, 7)]
     public partial struct UnformattedString<T1, T2, T3, T4, T5, T6, T7, TRest> : IEquatable<UnformattedString<T1, T2, T3, T4, T5, T6, T7, TRest>>
@@ -80,7 +80,7 @@ namespace Hive.Utilities
     /// <typeparam name="T4">The type of the fourth argument.</typeparam>
     /// <typeparam name="T5">The type of the fifth argument.</typeparam>
     /// <typeparam name="T6">The type of the sixth argument.</typeparam>
-    /// <typeparam name="T7">The type of the sevent argument.</typeparam>
+    /// <typeparam name="T7">The type of the seventh argument.</typeparam>
     [ParameterizeGenericParameters(1, 6)]
     public partial struct UnformattedString<T1, T2, T3, T4, T5, T6, T7>
     {

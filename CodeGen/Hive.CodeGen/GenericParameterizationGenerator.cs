@@ -30,27 +30,6 @@ namespace Hive.CodeGen
             }
         }
 
-        /*private const string AttributesSource = @"
-using System;
-using System.CodeDom.Compiler;
-
-namespace Hive.CodeGen
-{
-    /// <summary>Specifies that a generic class will be automatically parameterized within the range specified.</summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false, AllowMultiple = false)]
-    [GeneratedCode(""Hive.CodeGen"", """")]
-    internal sealed class ParameterizeGenericParametersAttribute : Attribute
-    {
-        public int MinParameters { get; }
-        public int MaxParameters { get; }
-        /// <param name=""min"">The minimum number of generic parameters to parameterize with.</param>
-        /// <param name=""max"">The maximum number of generic parameters to parameterize with.</param>
-        public ParameterizeGenericParametersAttribute(int min, int max)
-            => (MinParameters, MaxParameters) = (min, max);
-    }
-}
-";*/
-
         public void Initialize(GeneratorInitializationContext context)
         {
             context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
@@ -58,15 +37,8 @@ namespace Hive.CodeGen
 
         public void Execute(GeneratorExecutionContext context)
         {
-            // add the attributes
-            //context.AddSource("CodeGen_ParameterizeGenericAttributes", SourceText.From(AttributesSource, Encoding.UTF8));
-
             if (!(context.SyntaxReceiver is SyntaxReceiver receiver))
                 return;
-
-            // create a new compilation with the attribute
-            //var options = (CSharpParseOptions)((CSharpCompilation)context.Compilation).SyntaxTrees[0].Options;
-            //var compilation = context.Compilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(SourceText.From(AttributesSource, Encoding.UTF8), options));
 
             var compilation = context.Compilation;
 
@@ -127,7 +99,7 @@ namespace Hive.CodeGen
                 title: "Report",
                 messageFormat: "{0}",
                 category: "Hive.CodeGen.Testing",
-                defaultSeverity: DiagnosticSeverity.Hidden,
+                defaultSeverity: DiagnosticSeverity.Warning,
                 isEnabledByDefault: true
             );
         private static readonly DiagnosticDescriptor Report2 = new DiagnosticDescriptor(
@@ -135,7 +107,7 @@ namespace Hive.CodeGen
                 title: "Report2",
                 messageFormat: "{0}",
                 category: "Hive.CodeGen.Testing",
-                defaultSeverity: DiagnosticSeverity.Hidden,
+                defaultSeverity: DiagnosticSeverity.Warning,
                 isEnabledByDefault: true
             );
 
@@ -310,8 +282,15 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                         var attributeList = new SeparatedSyntaxList<AttributeSyntax>().Add(attrSyn);
                         var attrList = SyntaxFactory.AttributeList(attributeList);
 
-                        generateWith = synType.AddAttributeLists(attrList);
+                        var list = synType.AttributeLists.Add(attrList);
+
+                        generateWith = synType.WithAttributeLists(list);
                     }
+
+                    context.ReportDiagnostic(Diagnostic.Create(Report,
+                        null,
+                        $"Trivia: {generateWith.GetLeadingTrivia().ToFullString().Replace(Environment.NewLine, "\\n")}"
+                    ));
 
                     var decl = GenerateInstantiation(synType.SyntaxTree, generateWith, i, context);
                     var str = decl.ToFullString();
@@ -362,7 +341,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             private readonly SyntaxTree origTree;
             private readonly int rewriteWithParams;
 
-            public GenericClassTransformer(GeneratorExecutionContext context, SyntaxTree tree, int paramCount)
+            public GenericClassTransformer(GeneratorExecutionContext context, SyntaxTree tree, int paramCount) : base(true)
                 => (this.context, origTree, rewriteWithParams) = (context, tree, paramCount);
 
             public override SyntaxNode? VisitClassDeclaration(ClassDeclarationSyntax node) 
@@ -505,7 +484,70 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                 return base.VisitTupleType(node);
             }
 
-            /**/
+            public override SyntaxNode? VisitDocumentationCommentTrivia(DocumentationCommentTriviaSyntax node)
+            {
+                if (CurrentlyRewriting != null)
+                {
+                    var nodes = node.Content;
+
+                    for (int i = 0; i < nodes.Count; i++)
+                    {
+                        var elem = nodes[i];
+
+                        if (elem is XmlElementSyntax fullElem)
+                        {
+                            var start = fullElem.StartTag;
+                            var name = start.Name;
+
+                            // we don't want to process ones with a prefix
+                            if (name.Prefix != null) continue;
+
+                            var attr = start.Attributes.FirstOrDefault(a => a is XmlNameAttributeSyntax) as XmlNameAttributeSyntax;
+                            if (attr == null) continue;
+
+                            context.ReportDiagnostic(Diagnostic.Create(Report,
+                                null,
+                                $"Node: {elem.ToFullString()}"
+                            ));
+
+                            var targetName = attr.Identifier.Identifier.Text;
+
+                            bool needsRemoved = false;
+                            switch (name.LocalName.Text)
+                            {
+                                case "typeparam":
+                                    needsRemoved = TypeParamsToRemove.Any(p => p.Identifier.Text == targetName);
+                                    break;
+                                case "param":
+                                    if (ParamsToRemove != null)
+                                    {
+                                        needsRemoved =
+                                            !(ParamsToKeep != null && ParamsToKeep.Any(p => p.Identifier.Text == targetName))
+                                           && ParamsToRemove.Any(p => p.Identifier.Text == targetName);
+                                    }
+                                    break;
+                                default:
+                                    continue;
+                            }
+
+                            context.ReportDiagnostic(Diagnostic.Create(Report,
+                                null,
+                                $"Removed: {needsRemoved}"
+                            ));
+
+                            if (needsRemoved)
+                            {
+                                nodes = nodes.RemoveAt(i--);
+                            }
+                        }
+                    }
+
+                    node = node.WithContent(nodes);
+                }
+
+                return base.VisitDocumentationCommentTrivia(node);
+            }
+
             // This implements rough parameter shadowing
             // Complex cases won't work, but w/e
             private IEnumerable<ParameterSyntax>? ParamsToRemove;
@@ -581,7 +623,6 @@ namespace {type.ContainingNamespace.ToDisplayString()}
 
                 return orig(node);
             }
-            /**/
 
             public override SyntaxNode? VisitTupleExpression(TupleExpressionSyntax node)
             {
