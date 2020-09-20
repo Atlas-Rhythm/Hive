@@ -6,7 +6,7 @@ namespace Hive.CodeGen
     /// <summary>
     /// Specifies that a generic class will be automatically parameterized within the range specified.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
     public sealed class ParameterizeGenericParametersAttribute : Attribute
     {
         /// <summary>
@@ -26,5 +26,15 @@ namespace Hive.CodeGen
         /// <param name="max">The maximum number of generic parameters to parameterize with.</param>
         public ParameterizeGenericParametersAttribute(int min, int max)
             => (MinParameters, MaxParameters) = (min, max);
+    }
+
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface, Inherited = false, AllowMultiple = true)]
+    public sealed class GeneratedParameterizationAttribute : Attribute
+    {
+        public string GeneratedFrom { get; }
+        public int WithParameters { get; }
+
+        public GeneratedParameterizationAttribute(string from, int with)
+            => (GeneratedFrom, WithParameters) = (from, with);
     }
 }

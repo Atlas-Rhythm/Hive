@@ -70,7 +70,7 @@ namespace Hive.CodeGen
 
             var compilation = context.Compilation;
 
-            var targetingAttribute = compilation.GetTypeByMetadataName(typeof(ParameterizeGenericParametersAttribute).FullName)!;
+            var targetingAttribute = compilation.GetTypeByMetadataName("Hive.CodeGen." + nameof(ParameterizeGenericParametersAttribute))!;
 
             var classes = new List<(INamedTypeSymbol typeSym, TypeDeclarationSyntax syn, int minParam, int maxParam)>();
             foreach (var synType in receiver.CandidateClasses)
@@ -94,12 +94,14 @@ namespace Hive.CodeGen
                 classes.Add((type, synType, minValue, maxValue));
             }
 
+            int ct = 0;
+
             foreach (var (type, syn, min, max) in classes)
             {
                 var source = GenerateForType(type, targetingAttribute, syn, min, max, context);
                 if (source != null) 
                 {
-                    context.AddSource($"Parameterized_{type.Name}.cs", SourceText.From(source, Encoding.UTF8));
+                    context.AddSource($"Parameterized_{type.Name}_{ct++}.cs", SourceText.From(source, Encoding.UTF8));
                 }
             }
         }
@@ -168,10 +170,10 @@ namespace Hive.CodeGen
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
             ));
 
+            var semModel = context.Compilation.GetSemanticModel(synType.SyntaxTree);
+
             if (minParam <= 0 || maxParam >= type.Arity)
             {
-                var semModel = context.Compilation.GetSemanticModel(synType.SyntaxTree);
-
                 var attr = synType.AttributeLists
                     .SelectMany(l => l.Attributes)
                     .First(a => semModel.GetSymbolInfo(a.Name).Symbol?.Equals(attribute, SymbolEqualityComparer.Default) ?? false);
@@ -188,6 +190,61 @@ namespace Hive.CodeGen
             }
 
             var root = synType.SyntaxTree.GetCompilationUnitRoot();
+
+            // remove the original attribute(s)
+            {
+                var attrLists = synType.AttributeLists;
+
+                for (int i = 0; i < attrLists.Count; i++)
+                {
+                    var attrList = attrLists[i];
+
+                    if (attrList.Target != null) continue;
+
+                    var attrs = attrList.Attributes;
+                    var attrs2 = attrs;
+
+                    for (int j = 0; j < attrs.Count; j++)
+                    {
+                        var attr = attrs[j];
+
+                        var attrSymbol = semModel.GetSymbolInfo(attr.Name).Symbol?.ContainingType;
+
+                        context.ReportDiagnostic(Diagnostic.Create(Report,
+                            null,
+                            $"Expect: {attribute.ToDisplayString()} / Found: {attr.Name} == {attrSymbol?.ToDisplayString()}"
+                        ));
+
+                        if (attrSymbol?.Equals(attribute, SymbolEqualityComparer.Default) ?? false)
+                        {
+                            attrs2 = attrs.RemoveAt(j);
+                            break;
+                        }
+                    }
+
+                    if (attrs2.Count != attrs.Count)
+                    {
+                        if (attrs2.Count == 0)
+                        {
+                            attrLists = attrLists.RemoveAt(i--);
+                        }
+                        else
+                        {
+                            var newAttrList = attrList.WithAttributes(attrs2);
+                            attrLists = attrLists.Replace(attrList, newAttrList);
+                        }
+                    }
+                }
+
+                synType = synType.WithAttributeLists(attrLists);
+            }
+
+            var fullOriginalType = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+
+            context.ReportDiagnostic(Diagnostic.Create(Report,
+                null,
+                fullOriginalType
+            ));
 
             var sb = new StringBuilder();
 
@@ -218,7 +275,45 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                         $"Generating for {i} params"
                     ));
 
-                    var decl = GenerateInstantiation(synType.SyntaxTree, synType, i, context);
+                    TypeDeclarationSyntax generateWith;
+                    // add the generated attribute
+                    {
+                        var newAttr = context.Compilation.GetTypeByMetadataName("Hive.CodeGen." + nameof(GeneratedParameterizationAttribute))!;
+
+                        var argumentList = new SeparatedSyntaxList<AttributeArgumentSyntax>();
+                        argumentList = argumentList.Add(
+                            SyntaxFactory.AttributeArgument(
+                                nameEquals: null,
+                                nameColon: SyntaxFactory.NameColon("from"),
+                                expression: SyntaxFactory.LiteralExpression(
+                                    SyntaxKind.StringLiteralExpression,
+                                    SyntaxFactory.Literal(fullOriginalType)
+                                )
+                            )
+                        );
+                        argumentList = argumentList.Add(
+                            SyntaxFactory.AttributeArgument(
+                                nameEquals: null,
+                                nameColon: SyntaxFactory.NameColon("with"),
+                                expression: SyntaxFactory.LiteralExpression(
+                                    SyntaxKind.NumericLiteralExpression,
+                                    SyntaxFactory.Literal(i)
+                                )
+                            )
+                        );
+
+                        var attrSyn = SyntaxFactory.Attribute(
+                            SyntaxFactory.ParseName(newAttr.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)),
+                            SyntaxFactory.AttributeArgumentList(argumentList)
+                        );
+
+                        var attributeList = new SeparatedSyntaxList<AttributeSyntax>().Add(attrSyn);
+                        var attrList = SyntaxFactory.AttributeList(attributeList);
+
+                        generateWith = synType.AddAttributeLists(attrList);
+                    }
+
+                    var decl = GenerateInstantiation(synType.SyntaxTree, generateWith, i, context);
                     var str = decl.ToFullString();
 
                     context.ReportDiagnostic(Diagnostic.Create(Report,
@@ -256,8 +351,6 @@ namespace {type.ContainingNamespace.ToDisplayString()}
 
         private static SyntaxNode GenerateInstantiation(SyntaxTree tree, TypeDeclarationSyntax orig, int paramCount, GeneratorExecutionContext context)
         {
-            var semModel = context.Compilation.GetSemanticModel(tree);
-
             var transformer = new GenericClassTransformer(context, tree, paramCount);
 
             return transformer.Visit(orig);
@@ -344,11 +437,6 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                 {
                     var args = node.Arguments;
 
-                    context.ReportDiagnostic(Diagnostic.Create(Report,
-                        null,
-                        $"Starting with {args.Count} args"
-                    ));
-
                     //var args2 = args;
                     for (int i = 0; i < args.Count; i++)
                     {
@@ -374,23 +462,50 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                         }
                     }
 
-                    context.ReportDiagnostic(Diagnostic.Create(Report,
-                        null,
-                        $"Ending with {args.Count} args"
-                    ));
-
                     node = node.WithArguments(args);
-
-                    context.ReportDiagnostic(Diagnostic.Create(Report,
-                        null,
-                        node.ToFullString()
-                    ));
                 }
 
                 return base.VisitTypeArgumentList(node);
             }
 
-            /*
+            public override SyntaxNode? VisitTupleType(TupleTypeSyntax node)
+            {
+                if (CurrentlyRewriting != null)
+                {
+                    var args = node.Elements;
+
+                    //var args2 = args;
+                    for (int i = 0; i < args.Count; i++)
+                    {
+                        var arg = args[i].Type;
+                        if (arg is IdentifierNameSyntax simple)
+                        {
+                            foreach (var option in TypeParamsToRemove)
+                            {
+                                if (simple.Identifier.Text == option.Identifier.Text)
+                                {
+                                    context.ReportDiagnostic(Diagnostic.Create(
+                                        ToRemoveTypeArg,
+                                        Location.Create(origTree, simple.Span),
+                                        new[] { Location.Create(origTree, option.Span) },
+                                        simple.ToFullString(),
+                                        option.ToFullString()
+                                    ));
+
+                                    args = args.RemoveAt(i--);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    node = node.WithElements(args);
+                }
+
+                return base.VisitTupleType(node);
+            }
+
+            /**/
             // This implements rough parameter shadowing
             // Complex cases won't work, but w/e
             private IEnumerable<ParameterSyntax>? ParamsToRemove;
@@ -407,19 +522,19 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                 {
                     var paramList = node.ParameterList;
                     var parameters = paramList.Parameters;
-                    var params2 = parameters;
 
                     var removed = new List<ParameterSyntax>();
                     var reAdded = new List<ParameterSyntax>();
-                    foreach (var param in parameters)
+                    for (int i = 0; i < parameters.Count; i++)
                     {
+                        var param = parameters[i];
                         if (param.Type is SimpleNameSyntax simple)
                         {
                             foreach (var option in TypeParamsToRemove)
                             {
                                 if (simple.Identifier.Text == option?.Identifier.Text)
                                 {
-                                    params2 = params2.Remove(param);
+                                    parameters = parameters.RemoveAt(i--);
                                     removed.Add(param);
                                     goto @continue;
                                 }
@@ -432,7 +547,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                     @continue:;
                     }
 
-                    paramList = paramList.WithParameters(params2);
+                    paramList = paramList.WithParameters(parameters);
                     node = node.WithParameterList(paramList);
 
                     var oldParamsToRemove = ParamsToRemove;
@@ -442,6 +557,18 @@ namespace {type.ContainingNamespace.ToDisplayString()}
 
                     var oldParamsToKeep = ParamsToKeep;
                     ParamsToKeep = reAdded;
+
+                    context.ReportDiagnostic(Diagnostic.Create(Report,
+                        null,
+                        $"ParamsToRemove: {string.Join(" / ", ParamsToRemove.Select(p => p.ToFullString() + $" ({p.Identifier.Text})"))}"
+                    ));
+                    if (ParamsToKeep != null)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(Report,
+                            null,
+                            $"ParamsToKeep: {string.Join(" / ", ParamsToKeep.Select(p => p.ToFullString() + $" ({p.Identifier.Text})"))}"
+                        ));
+                    }
 
                     var rewritten = orig(node);
 
@@ -454,34 +581,81 @@ namespace {type.ContainingNamespace.ToDisplayString()}
 
                 return orig(node);
             }
-            */
+            /**/
 
-            /*
-            public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
+            public override SyntaxNode? VisitTupleExpression(TupleExpressionSyntax node)
             {
-                if (node is null) return null;
-
-                if (ParamsToKeep != null)
-                {
-                    if (ParamsToKeep.Any(p => p?.Identifier.Text == node.Identifier.Text))
-                        return node;
-                }
-
                 if (ParamsToRemove != null)
                 {
-                    if (ParamsToRemove.Any(p => p?.Identifier.Text == node.Identifier.Text))
-                        return null;
+                    node = node.WithArguments(FilterArguments(node.Arguments));
                 }
 
-                if (CurrentlyRewriting != null)
-                {
-                    if (TypeParamsToRemove.Any(p => p?.Identifier.Text == node.Identifier.Text))
-                        return null;
-                }
-
-                return node;
+                return base.VisitTupleExpression(node);
             }
-            */
+
+            public override SyntaxNode? VisitInvocationExpression(InvocationExpressionSyntax node)
+            {
+                if (ParamsToRemove != null)
+                {
+                    var list = node.ArgumentList;
+                    list = list.WithArguments(FilterArguments(list.Arguments));
+                    node = node.WithArgumentList(list);
+                }
+
+                return base.VisitInvocationExpression(node);
+            }
+
+            private SeparatedSyntaxList<ArgumentSyntax> FilterArguments(SeparatedSyntaxList<ArgumentSyntax> args)
+            {
+                if (ParamsToRemove == null) return args;
+
+                for (int i = 0; i < args.Count; i++)
+                {
+                    var arg = args[i];
+
+                    context.ReportDiagnostic(Diagnostic.Create(Report,
+                        null,
+                        $"Arg: ({arg.Expression.ToFullString()}) {arg.Expression.GetType()}"
+                    ));
+
+                    var visitor = new ReferencesRemovedParamsVisitor(ParamsToRemove, ParamsToKeep);
+                    visitor.Visit(arg.Expression);
+
+                    context.ReportDiagnostic(Diagnostic.Create(Report,
+                        null,
+                        $"Needs removal: {visitor.ReferencesParams}"
+                    ));
+
+                    if (visitor.ReferencesParams)
+                        args = args.RemoveAt(i--);
+                }
+
+                return args;
+            }
+
+            private sealed class ReferencesRemovedParamsVisitor : CSharpSyntaxVisitor
+            {
+                public bool ReferencesParams { get; private set; }
+
+                private readonly IEnumerable<ParameterSyntax> Removed;
+                private readonly IEnumerable<ParameterSyntax>? Kept;
+
+                public ReferencesRemovedParamsVisitor(IEnumerable<ParameterSyntax> rem, IEnumerable<ParameterSyntax>? keep)
+                    => (Removed, Kept) = (rem, keep);
+
+                public override void VisitArgumentList(ArgumentListSyntax node) { }
+                public override void VisitTupleExpression(TupleExpressionSyntax node) { }
+
+                public override void VisitIdentifierName(IdentifierNameSyntax node)
+                {
+                    var name = node.Identifier.Text;
+                    if (Kept != null && Kept.Any(p => p.Identifier.Text == name))
+                        return;
+
+                    if (Removed.Any(p => p.Identifier.Text.Equals(name, StringComparison.Ordinal)))
+                        ReferencesParams = true;
+                }
+            }
         }
     }
 }
