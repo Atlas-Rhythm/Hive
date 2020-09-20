@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Hive.Plugins.Resources;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -137,7 +139,7 @@ namespace Hive.Plugins
             if (exprAgg != null)
             {
                 if (!typeof(Expression).IsAssignableFrom(exprAgg.ReturnType))
-                    throw new ArgumentException("Target method takes Expressions but does not return an Expression type");
+                    throw new ArgumentException(SR.AggregateWith_AlmostExpressionAggregator);
 
                 ExpressionAggregator = exprAgg;
             }
@@ -156,7 +158,7 @@ namespace Hive.Plugins
                 .FirstOrDefault();
 
             if (valueAggregator == null)
-                throw new InvalidOperationException($"Could not find agggregator on {TypeWithAggregator} with name {AggregatorName}");
+                throw new InvalidOperationException(string.Format(SR.Culture, SR.AggregateWith_NoSuchAggregator, TypeWithAggregator, AggregatorName));
 
             return Expression.Call(valueAggregator, prev, next);
         }

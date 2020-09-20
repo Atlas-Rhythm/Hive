@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using Hive.Plugins;
+using Hive.Plugins.Resources;
 
 [assembly: InternalsVisibleTo(AggregatedInstanceGenerator.AssemblyName)]
 
@@ -59,9 +60,9 @@ namespace Hive.Plugins
         public static (IEnumerable<(MethodInfo Method, Type DelegateType)> ImplOrder, Func<Delegate[], IEnumerable<object>, object> Creator) CreateAggregatedInstance(Type ifaceType)
         {
             if (!ifaceType.IsInterface)
-                throw new ArgumentException("Aggregated instances can only be generated from interfaces!", nameof(ifaceType));
+                throw new ArgumentException(SR.Generator_CanOnlyAggregateInterfaces, nameof(ifaceType));
             if (ifaceType.GetCustomAttribute<AggregableAttribute>() == null)
-                throw new ArgumentException("Aggregated interfaces must be marked [Aggregable]!", nameof(ifaceType));
+                throw new ArgumentException(SR.Generator_AggregateMustBeAggregable, nameof(ifaceType));
 
             var gen = Module.DefineType($"{ifaceType.Namespace}.Aggregate{ifaceType.Name}", TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.AnsiClass);
             gen.AddInterfaceImplementation(ifaceType);

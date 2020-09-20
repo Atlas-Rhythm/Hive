@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Hive.Plugins.Resources;
+using System;
 using System.Collections.Generic;
 using System.IO.Pipes;
 using System.Linq;
@@ -19,13 +20,13 @@ namespace Hive.Plugins
             var returnLastAttribute = toAggregate.GetCustomAttribute<ReturnLastAttribute>();
 
             if (stopIfReturnsAttr != null && stopIfReturnsNullAttr != null)
-                throw new InvalidOperationException($"Method {toAggregate} cannot have both {nameof(StopIfReturnsAttribute)} and {nameof(StopIfReturnsNullAttribute)}");
+                throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_MethodMayHaveOneOf, toAggregate, nameof(StopIfReturnsAttribute), nameof(StopIfReturnsNullAttribute)));
 
             if (stopIfReturnsAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsAttr))
-                throw new InvalidOperationException($"Method {toAggregate} must return {typeof(bool)} to use {nameof(StopIfReturnsAttribute)}");
+                throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_MethodMustReturnBoolToUse, toAggregate, nameof(StopIfReturnsAttribute)));
 
             if (stopIfReturnsNullAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsNullAttr))
-                throw new InvalidOperationException($"Method {toAggregate} must return a nullable type to use {nameof(StopIfReturnsNullAttribute)}");
+                throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_MethodMustReturnNullableToUse, toAggregate, nameof(StopIfReturnsNullAttribute)));
 
             var targetParameters = toAggregate.GetParameters();
             var parameterAttributes = targetParameters.Select(p => (p, a: p.GetCustomAttributes())).ToArray();
@@ -214,7 +215,7 @@ namespace Hive.Plugins
                 else if (inputSpec is TakesReturnValueAttribute)
                     copyFromRet = true;
                 else
-                    throw new InvalidOperationException($"Unknown input specifying attribute {inputSpec}");
+                    throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_UnknownInputAttribute, inputSpec));
             }
 
             return new AggregateParameterInfo(
@@ -245,17 +246,17 @@ namespace Hive.Plugins
             public void ValidateForParams(Type returnType, ParameterInfo[] parameters)
             {
                 if (CopiedFromRet && !Parameter.ParameterType.IsAssignableFrom(returnType))
-                    throw new InvalidOperationException($"Parameter {Parameter} cannot take return value");
+                    throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_ParameterCannotTakeReturn, Parameter));
                 if (CopiedFromOut != null)
                 {
                     if (CopiedFromOut.Value >= parameters.Length || CopiedFromOut.Value < 0)
-                        throw new InvalidOperationException($"On parameter {Parameter}, invalid argument index {CopiedFromOut.Value}");
+                        throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_InvalidParameterIndex, CopiedFromOut.Value, Parameter));
 
                     var targetParam = parameters[CopiedFromOut.Value];
                     if (!targetParam.IsOut)
-                        throw new InvalidOperationException($"Parameter index {CopiedFromOut.Value} is not an out parameter");
+                        throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_ParameterNotOutParam, CopiedFromOut.Value));
                     if (!Parameter.ParameterType.IsAssignableFrom(targetParam.ParameterType))
-                        throw new InvalidOperationException($"Target out parameter not compatible with parameter {Parameter}");
+                        throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_OutParamNotCompatible, Parameter));
                 }
             }
         }
@@ -300,7 +301,7 @@ namespace Hive.Plugins
             foreach (var attr in attrs)
             {
                 if (!CheckAttribute(param, attr, isRetval))
-                    throw new InvalidOperationException($"Attribute {attr} invalid on parameter {param}");
+                    throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_AttributeInvalidOn, attr, param));
             }
         }
 

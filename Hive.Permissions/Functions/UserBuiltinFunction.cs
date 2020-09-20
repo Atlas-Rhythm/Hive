@@ -1,4 +1,5 @@
-﻿using MathExpr.Compiler.Compilation;
+﻿using Hive.Permissions.Resources;
+using MathExpr.Compiler.Compilation;
 using MathExpr.Syntax;
 using MathExpr.Utilities;
 using System;
@@ -43,7 +44,7 @@ namespace Hive.Permissions.Functions
             }
             catch (Exception e)
             {
-                context.Settings.Logger.Info("Error compiling reference to user-defined function", Name, e);
+                context.Settings.Logger.Info(SR.UserBuiltin_CompilationError, Name, e);
 
                 expr = null;
                 return false;

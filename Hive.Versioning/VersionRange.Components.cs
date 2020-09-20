@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Hive.Versioning.Resources;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -16,7 +17,7 @@ namespace Hive.Versioning
         private static void Assert([DoesNotReturnIf(false)] bool value)
         {
             if (!value)
-                throw new InvalidOperationException("Assertion failed");
+                throw new InvalidOperationException(SR.AssertionFailed);
         }
 
         [Flags]
