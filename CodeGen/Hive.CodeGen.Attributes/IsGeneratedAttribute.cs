@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Hive.CodeGen.Attributes
+namespace Hive.CodeGen
 {
     /// <summary>
     /// Indicates that a type or member is generated.

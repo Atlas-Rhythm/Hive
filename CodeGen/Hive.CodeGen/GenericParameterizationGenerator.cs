@@ -1,5 +1,4 @@
-﻿using Hive.CodeGen.Attributes;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
@@ -225,7 +224,7 @@ namespace Hive.CodeGen
 
                 // generate attribute to apply trivia to
                 {
-                    var genCodeAttr = context.Compilation.GetTypeByMetadataName(typeof(IsGeneratedAttribute).FullName)!;
+                    var genCodeAttr = context.Compilation.GetTypeByMetadataName("Hive.CodeGen." + nameof(IsGeneratedAttribute))!;
 
                     var attrList = SyntaxFactory.AttributeList(
                         SyntaxFactory.SingletonSeparatedList(

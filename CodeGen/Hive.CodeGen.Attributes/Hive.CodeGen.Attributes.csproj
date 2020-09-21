@@ -4,6 +4,8 @@
     <TargetFramework>netstandard2.0</TargetFramework>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <RootNamespace>Hive.CodeGen</RootNamespace>
   </PropertyGroup>
 
 </Project>
