@@ -55,7 +55,7 @@ namespace Hive.Utilities
         /// <typeparam name="T">The type of the tuple.</typeparam>
         /// <param name="tuple">The tuple to convert to an array.</param>
         /// <returns>The values in the tuple in an array.</returns>
-        public static object?[] ToArray<T>(this T tuple) where T : ITuple
+        public static object?[] ToArray<T>(this ref T tuple) where T : struct, ITuple
         {
             var array = new object?[tuple.Length];
             for (int i = 0; i < tuple.Length; i++)

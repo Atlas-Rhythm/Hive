@@ -18,7 +18,7 @@ namespace Hive.Utilities
     /// <typeparam name="T7">The type of the seventh argument.</typeparam>
     /// <typeparam name="TRest">The type of the eighth argument, or a <see cref="ValueTuple"/> type holding the remaining elements.</typeparam>
     [ParameterizeGenericParameters(1, 7)]
-    public partial struct UnformattedString<T1, T2, T3, T4, T5, T6, T7, TRest> : IEquatable<UnformattedString<T1, T2, T3, T4, T5, T6, T7, TRest>>
+    public readonly partial struct UnformattedString<T1, T2, T3, T4, T5, T6, T7, TRest> : IEquatable<UnformattedString<T1, T2, T3, T4, T5, T6, T7, TRest>>
         where TRest : struct
     {
         private readonly CultureInfo Culture;
@@ -74,7 +74,7 @@ namespace Hive.Utilities
     // Ignore the IDE warnings below. VS doesn't currently have very good support for source generators.
     
     [ParameterizeGenericParameters(1, 6)]
-    public partial struct UnformattedString<T1, T2, T3, T4, T5, T6, T7>
+    public readonly partial struct UnformattedString<T1, T2, T3, T4, T5, T6, T7>
     {
         /// <summary>
         /// Formats the internal format string using the provided values.
