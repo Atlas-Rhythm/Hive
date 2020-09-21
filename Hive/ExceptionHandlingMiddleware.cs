@@ -50,6 +50,8 @@ namespace Hive
             {
                 message = ex.Message;
                 logger.Error(ex, "Handling API Exception");
+                if (httpContext is null)
+                    throw new ArgumentNullException(nameof(httpContext));
                 httpContext.Response.StatusCode = ex.StatusCode;
             }
             catch (Exception ex)
