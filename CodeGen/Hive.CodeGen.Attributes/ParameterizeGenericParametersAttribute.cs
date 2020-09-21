@@ -37,18 +37,18 @@ namespace Hive.CodeGen
         /// <summary>
         /// Gets the type name of the type it was parameterized from.
         /// </summary>
-        public string GeneratedFrom { get; }
+        public Type GeneratedFrom { get; }
         /// <summary>
         /// Gets the number of parameters this was instantiated with.
         /// </summary>
         public int WithParameters { get; }
 
         /// <summary>
-        /// Constructs a <see cref="GeneratedParameterizationAttribute"/> with the specified generated source string and parameter count.
+        /// Constructs a <see cref="GeneratedParameterizationAttribute"/> with the specified generated source and parameter count.
         /// </summary>
-        /// <param name="from"></param>
-        /// <param name="with"></param>
-        public GeneratedParameterizationAttribute(string from, int with)
+        /// <param name="from">The type that this instantiation was generated from.</param>
+        /// <param name="with">The number of parameters it was generated with.</param>
+        public GeneratedParameterizationAttribute(Type from, int with)
             => (GeneratedFrom, WithParameters) = (from, with);
     }
 }

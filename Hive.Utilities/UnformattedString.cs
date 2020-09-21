@@ -71,16 +71,8 @@ namespace Hive.Utilities
             => !(left == right);
     }
 
-    /// <summary>
-    /// A wrapper struct representing an unformatted format string with associated culture.
-    /// </summary>
-    /// <typeparam name="T1">The type of the first argument.</typeparam>
-    /// <typeparam name="T2">The type of the second argument.</typeparam>
-    /// <typeparam name="T3">The type of the third argument.</typeparam>
-    /// <typeparam name="T4">The type of the fourth argument.</typeparam>
-    /// <typeparam name="T5">The type of the fifth argument.</typeparam>
-    /// <typeparam name="T6">The type of the sixth argument.</typeparam>
-    /// <typeparam name="T7">The type of the seventh argument.</typeparam>
+    // Ignore the IDE warnings below. VS doesn't currently have very good support for source generators.
+    
     [ParameterizeGenericParameters(1, 6)]
     public partial struct UnformattedString<T1, T2, T3, T4, T5, T6, T7>
     {

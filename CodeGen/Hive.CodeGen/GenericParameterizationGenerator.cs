@@ -1,8 +1,10 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Hive.CodeGen.Attributes;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -99,7 +101,7 @@ namespace Hive.CodeGen
                 title: "Report",
                 messageFormat: "{0}",
                 category: "Hive.CodeGen.Testing",
-                defaultSeverity: DiagnosticSeverity.Warning,
+                defaultSeverity: DiagnosticSeverity.Hidden,
                 isEnabledByDefault: true
             );
         private static readonly DiagnosticDescriptor Report2 = new DiagnosticDescriptor(
@@ -107,7 +109,7 @@ namespace Hive.CodeGen
                 title: "Report2",
                 messageFormat: "{0}",
                 category: "Hive.CodeGen.Testing",
-                defaultSeverity: DiagnosticSeverity.Warning,
+                defaultSeverity: DiagnosticSeverity.Hidden,
                 isEnabledByDefault: true
             );
 
@@ -163,13 +165,25 @@ namespace Hive.CodeGen
 
             var root = synType.SyntaxTree.GetCompilationUnitRoot();
 
+            context.ReportDiagnostic(Diagnostic.Create(Report,
+                null,
+                synType.GetLeadingTrivia().ToFullString().Replace(Environment.NewLine, "\\n")
+            ));
+
             // remove the original attribute(s)
             {
                 var attrLists = synType.AttributeLists;
 
+                var removedAttributeTrivia = new List<SyntaxTriviaList>();
+
                 for (int i = 0; i < attrLists.Count; i++)
                 {
                     var attrList = attrLists[i];
+
+                    context.ReportDiagnostic(Diagnostic.Create(Report,
+                        null,
+                        attrList.GetLeadingTrivia().ToFullString().Replace(Environment.NewLine, "\\n")
+                    ));
 
                     if (attrList.Target != null) continue;
 
@@ -182,14 +196,11 @@ namespace Hive.CodeGen
 
                         var attrSymbol = semModel.GetSymbolInfo(attr.Name).Symbol?.ContainingType;
 
-                        context.ReportDiagnostic(Diagnostic.Create(Report,
-                            null,
-                            $"Expect: {attribute.ToDisplayString()} / Found: {attr.Name} == {attrSymbol?.ToDisplayString()}"
-                        ));
-
                         if (attrSymbol?.Equals(attribute, SymbolEqualityComparer.Default) ?? false)
                         {
                             attrs2 = attrs.RemoveAt(j);
+                            removedAttributeTrivia.Add(attr.GetLeadingTrivia());
+                            removedAttributeTrivia.Add(attr.GetTrailingTrivia());
                             break;
                         }
                     }
@@ -199,23 +210,46 @@ namespace Hive.CodeGen
                         if (attrs2.Count == 0)
                         {
                             attrLists = attrLists.RemoveAt(i--);
+                            synType = attrList.CopyAnnotationsTo(synType)!;
+                            removedAttributeTrivia.Add(attrList.GetLeadingTrivia());
+                            removedAttributeTrivia.Add(attrList.GetTrailingTrivia());
                         }
                         else
                         {
                             var newAttrList = attrList.WithAttributes(attrs2);
+                            newAttrList = attrList.CopyAnnotationsTo(newAttrList)!;
                             attrLists = attrLists.Replace(attrList, newAttrList);
                         }
                     }
                 }
 
-                synType = synType.WithAttributeLists(attrLists);
+                // generate attribute to apply trivia to
+                {
+                    var genCodeAttr = context.Compilation.GetTypeByMetadataName(typeof(IsGeneratedAttribute).FullName)!;
+
+                    var attrList = SyntaxFactory.AttributeList(
+                        SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.Attribute(
+                                SyntaxFactory.ParseName(genCodeAttr.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)),
+                                null
+                            )
+                        )
+                    );
+
+                    attrList = attrList.WithLeadingTrivia(removedAttributeTrivia.SelectMany(l => l));
+
+                    attrLists = attrLists.Insert(0, attrList);
+                }
+
+                var copy = synType.WithAttributeLists(attrLists);
+                synType = synType.CopyAnnotationsTo(copy)!;
             }
 
-            var fullOriginalType = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            var fullOriginalType = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
             context.ReportDiagnostic(Diagnostic.Create(Report,
                 null,
-                fullOriginalType
+                synType.GetLeadingTrivia().ToFullString().Replace(Environment.NewLine, "\\n")
             ));
 
             var sb = new StringBuilder();
@@ -230,12 +264,9 @@ namespace Hive.CodeGen
                 sb.Append(@using.ToFullString());
             }
 
-            // TODO: fix up doc comments
-
             sb.Append($@"
 namespace {type.ContainingNamespace.ToDisplayString()}
 {{
-#pragma warning disable CS1711
 ");
 
             for (int i = minParam; i <= maxParam; i++)
@@ -247,49 +278,52 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                         $"Generating for {i} params"
                     ));
 
+                    context.ReportDiagnostic(Diagnostic.Create(Report,
+                        null,
+                        $"Trivia before: {synType.GetLeadingTrivia().ToFullString().Replace(Environment.NewLine, "\\n")}"
+                    ));
+
                     TypeDeclarationSyntax generateWith;
                     // add the generated attribute
                     {
                         var newAttr = context.Compilation.GetTypeByMetadataName("Hive.CodeGen." + nameof(GeneratedParameterizationAttribute))!;
 
-                        var argumentList = new SeparatedSyntaxList<AttributeArgumentSyntax>();
-                        argumentList = argumentList.Add(
-                            SyntaxFactory.AttributeArgument(
-                                nameEquals: null,
-                                nameColon: SyntaxFactory.NameColon("from"),
-                                expression: SyntaxFactory.LiteralExpression(
-                                    SyntaxKind.StringLiteralExpression,
-                                    SyntaxFactory.Literal(fullOriginalType)
+                        var attrList = SyntaxFactory.AttributeList(
+                            SyntaxFactory.SingletonSeparatedList(
+                                SyntaxFactory.Attribute(
+                                    SyntaxFactory.ParseName(newAttr.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)),
+                                    SyntaxFactory.AttributeArgumentList(
+                                        SyntaxFactory.SeparatedList(new[] {
+                                            SyntaxFactory.AttributeArgument(
+                                                nameEquals: null,
+                                                nameColon: SyntaxFactory.NameColon("from"),
+                                                expression: SyntaxFactory.TypeOfExpression(
+                                                    (TypeSyntax)new GenericInstantiationEmptier().Visit(
+                                                        SyntaxFactory.ParseTypeName(fullOriginalType)
+                                                    )
+                                                )
+                                            ),
+                                            SyntaxFactory.AttributeArgument(
+                                                nameEquals: null,
+                                                nameColon: SyntaxFactory.NameColon("with"),
+                                                expression: SyntaxFactory.LiteralExpression(
+                                                    SyntaxKind.NumericLiteralExpression,
+                                                    SyntaxFactory.Literal(i)
+                                                )
+                                            )
+                                        })
+                                    )
                                 )
                             )
                         );
-                        argumentList = argumentList.Add(
-                            SyntaxFactory.AttributeArgument(
-                                nameEquals: null,
-                                nameColon: SyntaxFactory.NameColon("with"),
-                                expression: SyntaxFactory.LiteralExpression(
-                                    SyntaxKind.NumericLiteralExpression,
-                                    SyntaxFactory.Literal(i)
-                                )
-                            )
-                        );
 
-                        var attrSyn = SyntaxFactory.Attribute(
-                            SyntaxFactory.ParseName(newAttr.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)),
-                            SyntaxFactory.AttributeArgumentList(argumentList)
-                        );
-
-                        var attributeList = new SeparatedSyntaxList<AttributeSyntax>().Add(attrSyn);
-                        var attrList = SyntaxFactory.AttributeList(attributeList);
-
-                        var list = synType.AttributeLists.Add(attrList);
-
-                        generateWith = synType.WithAttributeLists(list);
+                        generateWith = synType.AddAttributeLists(attrList);
+                        generateWith = synType.CopyAnnotationsTo(generateWith)!;
                     }
 
                     context.ReportDiagnostic(Diagnostic.Create(Report,
                         null,
-                        $"Trivia: {generateWith.GetLeadingTrivia().ToFullString().Replace(Environment.NewLine, "\\n")}"
+                        $"Trivia after: {generateWith.GetLeadingTrivia().ToFullString().Replace(Environment.NewLine, "\\n")}"
                     ));
 
                     var decl = GenerateInstantiation(synType.SyntaxTree, generateWith, i, context);
@@ -326,6 +360,18 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             ));
 
             return text;
+        }
+
+        private sealed class GenericInstantiationEmptier : CSharpSyntaxRewriter
+        {
+            public override SyntaxNode? VisitTypeArgumentList(TypeArgumentListSyntax node)
+                => SyntaxFactory.TypeArgumentList(
+                    node.LessThanToken,
+                    SyntaxFactory.SeparatedList<TypeSyntax>(
+                        Enumerable.Repeat(SyntaxFactory.OmittedTypeArgument(), node.Arguments.Count)
+                    ),
+                    node.GreaterThanToken
+                );
         }
 
         private static SyntaxNode GenerateInstantiation(SyntaxTree tree, TypeDeclarationSyntax orig, int paramCount, GeneratorExecutionContext context)
