@@ -65,6 +65,7 @@ namespace Hive
                 options.EnableMetrics = env.IsDevelopment();
                 options.UnhandledExceptionDelegate = ctx => logger.Error("An error has occured initializing GraphQL: {Message}", ctx.OriginalException.Message);
             }).AddSystemTextJson().AddGraphTypes(typeof(HiveSchema));
+
             services.AddControllers();
             services.AddAuthentication(a =>
             {

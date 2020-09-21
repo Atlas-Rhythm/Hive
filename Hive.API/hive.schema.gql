@@ -1,15 +1,9 @@
 type Query {
-	channels: [Channel]
-	channel(
-		name: String!
-	): Channel
+	channels(page: Int): [Channel]
+	channel(name: String!): Channel
 	mods: [Mod]
-	mod(
-		id: ID!
-	): Mod
-	modsByUser(
-		userID: ID!
-	): [Mod]
+	mod(id: ID!): Mod
+	modsByUser(userID: ID!): [Mod]
 }
 
 type User {
@@ -19,7 +13,6 @@ type User {
 
 type Channel {
 	name: String!
-	isPublic: Boolean!
 	additionalData: String!
 }
 
