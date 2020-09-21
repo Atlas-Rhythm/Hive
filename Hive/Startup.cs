@@ -55,6 +55,8 @@ namespace Hive
 
             services.AddAggregates();
 
+            services.AddHttpContextAccessor();
+
             services.AddSingleton<HiveQuery>();
             services.AddSingleton<HiveSchema>();
             services.AddGraphQL((options, provider) =>

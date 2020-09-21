@@ -86,5 +86,257 @@ namespace Hive.Resources {
                 return ResourceManager.GetString("Channels_QueryPage", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The DateTime in UTC at which the game version was created..
+        /// </summary>
+        internal static string GameVersion_CreationTime {
+            get {
+                return ResourceManager.GetString("GameVersion_CreationTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The name of the version of the game..
+        /// </summary>
+        internal static string GameVersion_Name {
+            get {
+                return ResourceManager.GetString("GameVersion_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The mods that are compatible with this version of the game..
+        /// </summary>
+        internal static string GameVersion_SupportedMods {
+            get {
+                return ResourceManager.GetString("GameVersion_SupportedMods", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The name of the source of the link..
+        /// </summary>
+        internal static string Link_Name {
+            get {
+                return ResourceManager.GetString("Link_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The URL of the link..
+        /// </summary>
+        internal static string Link_URL {
+            get {
+                return ResourceManager.GetString("Link_URL", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The changelog of the mod in the language of the localized mod info..
+        /// </summary>
+        internal static string LocalizedModInfo_Changelog {
+            get {
+                return ResourceManager.GetString("LocalizedModInfo_Changelog", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The credits of the mod in the language of the localized mod info..
+        /// </summary>
+        internal static string LocalizedModInfo_Credits {
+            get {
+                return ResourceManager.GetString("LocalizedModInfo_Credits", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The description of the mod in the language of the localized mod info..
+        /// </summary>
+        internal static string LocalizedModInfo_Description {
+            get {
+                return ResourceManager.GetString("LocalizedModInfo_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The name of the language..
+        /// </summary>
+        internal static string LocalizedModInfo_Name {
+            get {
+                return ResourceManager.GetString("LocalizedModInfo_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The mod that the localized mod info is localizing..
+        /// </summary>
+        internal static string LocalizedModInfo_OwningMod {
+            get {
+                return ResourceManager.GetString("LocalizedModInfo_OwningMod", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The authors of the mod. This is typically everyone who has added a significant amount to the mod..
+        /// </summary>
+        internal static string Mod_Authors {
+            get {
+                return ResourceManager.GetString("Mod_Authors", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The channel that this mod is located in..
+        /// </summary>
+        internal static string Mod_Channel {
+            get {
+                return ResourceManager.GetString("Mod_Channel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The mods that are incompatible with this mod and will interfere with normal function..
+        /// </summary>
+        internal static string Mod_Conflicts {
+            get {
+                return ResourceManager.GetString("Mod_Conflicts", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The contributors of the mod. This is typically anyone who has helped with creating the mod or invidiuals who helped with translation efforts..
+        /// </summary>
+        internal static string Mod_Contributors {
+            get {
+                return ResourceManager.GetString("Mod_Contributors", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The mods that are required for this mod to function properly..
+        /// </summary>
+        internal static string Mod_Dependencies {
+            get {
+                return ResourceManager.GetString("Mod_Dependencies", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The download link of the mod..
+        /// </summary>
+        internal static string Mod_DownloadLink {
+            get {
+                return ResourceManager.GetString("Mod_DownloadLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The DateTime in UTC when the mod was last edited..
+        /// </summary>
+        internal static string Mod_EditedAt {
+            get {
+                return ResourceManager.GetString("Mod_EditedAt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The ID of the mod..
+        /// </summary>
+        internal static string Mod_ID {
+            get {
+                return ResourceManager.GetString("Mod_ID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The links associated with this mod..
+        /// </summary>
+        internal static string Mod_Links {
+            get {
+                return ResourceManager.GetString("Mod_Links", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The localized information of the mod..
+        /// </summary>
+        internal static string Mod_Localizations {
+            get {
+                return ResourceManager.GetString("Mod_Localizations", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The human readable ID of the mod..
+        /// </summary>
+        internal static string Mod_ReadableID {
+            get {
+                return ResourceManager.GetString("Mod_ReadableID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The versions that this mod is supported for..
+        /// </summary>
+        internal static string Mod_SupportedVersions {
+            get {
+                return ResourceManager.GetString("Mod_SupportedVersions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The DateTime in UTC when the mod was originally uploaded..
+        /// </summary>
+        internal static string Mod_UploadedAt {
+            get {
+                return ResourceManager.GetString("Mod_UploadedAt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The user who uploaded the mod..
+        /// </summary>
+        internal static string Mod_Uploader {
+            get {
+                return ResourceManager.GetString("Mod_Uploader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The SemVer version of the mod..
+        /// </summary>
+        internal static string Mod_Version {
+            get {
+                return ResourceManager.GetString("Mod_Version", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The ID of the mod that&apos;s being referenced..
+        /// </summary>
+        internal static string ModReference_ModID {
+            get {
+                return ResourceManager.GetString("ModReference_ModID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The range of versions that the reference is corresponding to..
+        /// </summary>
+        internal static string ModReference_Versions {
+            get {
+                return ResourceManager.GetString("ModReference_Versions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The page number of the mod query..
+        /// </summary>
+        internal static string Mods_QueryPage {
+            get {
+                return ResourceManager.GetString("Mods_QueryPage", resourceCulture);
+            }
+        }
     }
 }

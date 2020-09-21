@@ -8,7 +8,7 @@ namespace Hive.GraphQL
     public static class HiveArguments
     {
         /// <summary>
-        /// Shorthand for creating a <see cref="QueryArgument"/> with a <see cref="IntGraphType"/> type with the name "page" and a default value of zero. 
+        /// Shorthand for creating a <see cref="QueryArgument"/> with an <see cref="IntGraphType"/> type with the name "page" and a default value of zero. 
         /// </summary>
         /// <param name="description">The description of the argument.</param>
         /// <returns>A configured <see cref="QueryArgument"/> to use for a page argument.</returns>
@@ -27,7 +27,21 @@ namespace Hive.GraphQL
         /// </summary>
         /// <param name="description"></param>
         /// <returns></returns>
-        public static QueryArgument<StringGraphType> ID(string description = "The ID")
+        public static QueryArgument<StringGraphType> ID(string description = "The ID.")
+        {
+            return new QueryArgument<StringGraphType>
+            {
+                Name = "id",
+                Description = description
+            };
+        }
+
+        /// <summary>
+        /// Shorthand for creating a <see cref="QueryArgument"/> with a <see cref="StringGraphType"/> type with the name "name".
+        /// </summary>
+        /// <param name="description"></param>
+        /// <returns></returns>
+        public static QueryArgument<StringGraphType> Name(string description = "The name.")
         {
             return new QueryArgument<StringGraphType>
             {

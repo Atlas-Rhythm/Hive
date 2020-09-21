@@ -126,4 +126,88 @@
   <data name="Channel_NameQuery" xml:space="preserve">
     <value>The ID of the channel being queried for.</value>
   </data>
+  <data name="GameVersion_CreationTime" xml:space="preserve">
+    <value>The DateTime in UTC at which the game version was created.</value>
+  </data>
+  <data name="GameVersion_Name" xml:space="preserve">
+    <value>The name of the version of the game.</value>
+  </data>
+  <data name="GameVersion_SupportedMods" xml:space="preserve">
+    <value>The mods that are compatible with this version of the game.</value>
+  </data>
+  <data name="Link_Name" xml:space="preserve">
+    <value>The name of the source of the link.</value>
+  </data>
+  <data name="Link_URL" xml:space="preserve">
+    <value>The URL of the link.</value>
+  </data>
+  <data name="LocalizedModInfo_Changelog" xml:space="preserve">
+    <value>The changelog of the mod in the language of the localized mod info.</value>
+  </data>
+  <data name="LocalizedModInfo_Credits" xml:space="preserve">
+    <value>The credits of the mod in the language of the localized mod info.</value>
+  </data>
+  <data name="LocalizedModInfo_Description" xml:space="preserve">
+    <value>The description of the mod in the language of the localized mod info.</value>
+  </data>
+  <data name="LocalizedModInfo_Name" xml:space="preserve">
+    <value>The name of the language.</value>
+  </data>
+  <data name="LocalizedModInfo_OwningMod" xml:space="preserve">
+    <value>The mod that the localized mod info is localizing.</value>
+  </data>
+  <data name="ModReference_ModID" xml:space="preserve">
+    <value>The ID of the mod that's being referenced.</value>
+  </data>
+  <data name="ModReference_Versions" xml:space="preserve">
+    <value>The range of versions that the reference is corresponding to.</value>
+  </data>
+  <data name="Mods_QueryPage" xml:space="preserve">
+    <value>The page number of the mod query.</value>
+  </data>
+  <data name="Mod_Authors" xml:space="preserve">
+    <value>The authors of the mod. This is typically everyone who has added a significant amount to the mod.</value>
+  </data>
+  <data name="Mod_Channel" xml:space="preserve">
+    <value>The channel that this mod is located in.</value>
+  </data>
+  <data name="Mod_Conflicts" xml:space="preserve">
+    <value>The mods that are incompatible with this mod and will interfere with normal function.</value>
+  </data>
+  <data name="Mod_Contributors" xml:space="preserve">
+    <value>The contributors of the mod. This is typically anyone who has helped with creating the mod or invidiuals who helped with translation efforts.</value>
+  </data>
+  <data name="Mod_Dependencies" xml:space="preserve">
+    <value>The mods that are required for this mod to function properly.</value>
+  </data>
+  <data name="Mod_DownloadLink" xml:space="preserve">
+    <value>The download link of the mod.</value>
+  </data>
+  <data name="Mod_EditedAt" xml:space="preserve">
+    <value>The DateTime in UTC when the mod was last edited.</value>
+  </data>
+  <data name="Mod_ID" xml:space="preserve">
+    <value>The ID of the mod.</value>
+  </data>
+  <data name="Mod_Links" xml:space="preserve">
+    <value>The links associated with this mod.</value>
+  </data>
+  <data name="Mod_Localizations" xml:space="preserve">
+    <value>The localized information of the mod.</value>
+  </data>
+  <data name="Mod_ReadableID" xml:space="preserve">
+    <value>The human readable ID of the mod.</value>
+  </data>
+  <data name="Mod_SupportedVersions" xml:space="preserve">
+    <value>The versions that this mod is supported for.</value>
+  </data>
+  <data name="Mod_UploadedAt" xml:space="preserve">
+    <value>The DateTime in UTC when the mod was originally uploaded.</value>
+  </data>
+  <data name="Mod_Uploader" xml:space="preserve">
+    <value>The user who uploaded the mod.</value>
+  </data>
+  <data name="Mod_Version" xml:space="preserve">
+    <value>The SemVer version of the mod.</value>
+  </data>
 </root>

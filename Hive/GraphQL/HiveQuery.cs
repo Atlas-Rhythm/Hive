@@ -3,13 +3,8 @@ using GraphQL;
 using System.Linq;
 using Hive.Models;
 using GraphQL.Types;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics.CodeAnalysis;
-using Hive.Permissions;
-using Hive.Plugins;
-using Hive.Controllers;
-using Hive.Services;
 
 namespace Hive.GraphQL
 {
@@ -24,6 +19,7 @@ namespace Hive.GraphQL
                 throw new ArgumentNullException(nameof(logger));
             log = logger.ForContext<HiveQuery>();
 
+            // Channel Stuff
             Field<ListGraphType<ChannelType>>(
                 "channels",
                 arguments: new QueryArguments(
@@ -52,6 +48,23 @@ namespace Hive.GraphQL
 
                     return await hiveContext.Channels.FirstOrDefaultAsync(c => c.Name == id).ConfigureAwait(false);
                 }
+            );
+
+            // Mod Stuff
+            Field<ListGraphType<ModType>>(
+                "mods",
+                arguments: new QueryArguments(
+                    HiveArguments.Page(Resources.GraphQL.Mods_QueryPage)),
+                resolve: context =>
+                {
+                    // Resolve services
+                    HiveContext hiveContext = context.Resolve<HiveContext>();
+
+                    int page = context.GetArgument<int>("page");
+
+                    return hiveContext.Mods.Skip(Math.Abs(page)).Take(itemsPerPage);
+                }
+
             );
         }
     }
