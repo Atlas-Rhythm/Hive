@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using GraphQL.Server;
+using GraphQL.Types;
 using Hive.Controllers;
 using Hive.Converters;
+using Hive.GraphQL;
 using Hive.Models;
 using Hive.Permissions;
 using Hive.Plugins;
@@ -52,6 +55,16 @@ namespace Hive
 
             services.AddAggregates();
 
+            services.AddSingleton<HiveQuery>();
+            services.AddSingleton<HiveSchema>();
+            services.AddGraphQL((options, provider) =>
+            {
+                IWebHostEnvironment env = provider.GetRequiredService<IWebHostEnvironment>();
+                Serilog.ILogger logger = provider.GetRequiredService<Serilog.ILogger>();
+
+                options.EnableMetrics = env.IsDevelopment();
+                options.UnhandledExceptionDelegate = ctx => logger.Error("An error has occured initializing GraphQL: {Message}", ctx.OriginalException.Message);
+            }).AddSystemTextJson().AddGraphTypes(typeof(HiveSchema));
             services.AddControllers();
             services.AddAuthentication(a =>
             {
@@ -83,6 +96,8 @@ namespace Hive
 
             // See: https://developer.okta.com/blog/2019/04/16/graphql-api-with-aspnetcore
             // For adding GraphQL support in a reasonable way
+            app.UseGraphQL<HiveSchema>("/graphql");
+            app.UseGraphQLAltair();
 
             app.UseEndpoints(endpoints =>
             {
