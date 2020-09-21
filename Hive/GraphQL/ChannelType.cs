@@ -7,7 +7,7 @@ namespace Hive.GraphQL
     {
         public ChannelType()
         {
-            Field(c => c.Name).Description("The name of the channel.");
+            Field(c => c.Name).Description(Resources.GraphQL.channel_name);
         }
     }
 }

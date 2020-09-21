@@ -16,7 +16,7 @@ namespace Hive.GraphQL
             Field<ListGraphType<ChannelType>>(
                 "channels",
                 arguments: new QueryArguments(
-                    HiveArguments.Page("The page number of the channel query.")
+                    HiveArguments.Page(Resources.GraphQL.channels_query_page)
                 ),
                 resolve: context =>
                 {
@@ -29,7 +29,7 @@ namespace Hive.GraphQL
             Field<ChannelType>(
                 "channel",
                 arguments: new QueryArguments(
-                    HiveArguments.ID("The ID of the channel being queried for.")
+                    HiveArguments.ID(Resources.GraphQL.channel_name_query)
                 ),
                 resolve: context =>
                 {
