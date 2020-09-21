@@ -63,27 +63,27 @@ namespace Hive.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The name of the channel..
         /// </summary>
-        internal static string channel_name {
+        internal static string Channel_Name {
             get {
-                return ResourceManager.GetString("channel_name", resourceCulture);
+                return ResourceManager.GetString("Channel_Name", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to The ID of the channel being queried for..
         /// </summary>
-        internal static string channel_name_query {
+        internal static string Channel_NameQuery {
             get {
-                return ResourceManager.GetString("channel_name_query", resourceCulture);
+                return ResourceManager.GetString("Channel_NameQuery", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to The page number of the channel query..
         /// </summary>
-        internal static string channels_query_page {
+        internal static string Channels_QueryPage {
             get {
-                return ResourceManager.GetString("channels_query_page", resourceCulture);
+                return ResourceManager.GetString("Channels_QueryPage", resourceCulture);
             }
         }
     }

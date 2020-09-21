@@ -117,13 +117,13 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="channels_query_page" xml:space="preserve">
+  <data name="Channels_QueryPage" xml:space="preserve">
     <value>The page number of the channel query.</value>
   </data>
-  <data name="channel_name" xml:space="preserve">
+  <data name="Channel_Name" xml:space="preserve">
     <value>The name of the channel.</value>
   </data>
-  <data name="channel_name_query" xml:space="preserve">
+  <data name="Channel_NameQuery" xml:space="preserve">
     <value>The ID of the channel being queried for.</value>
   </data>
 </root>
