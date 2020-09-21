@@ -3,16 +3,27 @@ using GraphQL;
 using System.Linq;
 using Hive.Models;
 using GraphQL.Types;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.CodeAnalysis;
+using Hive.Permissions;
+using Hive.Plugins;
+using Hive.Controllers;
+using Hive.Services;
 
 namespace Hive.GraphQL
 {
     public class HiveQuery : ObjectGraphType
     {
+        private readonly Serilog.ILogger log;
         private readonly int itemsPerPage = 10;
 
-        public HiveQuery()
+        public HiveQuery([DisallowNull] Serilog.ILogger logger)
         {
+            if (logger is null)
+                throw new ArgumentNullException(nameof(logger));
+            log = logger.ForContext<HiveQuery>();
+
             Field<ListGraphType<ChannelType>>(
                 "channels",
                 arguments: new QueryArguments(
@@ -20,7 +31,10 @@ namespace Hive.GraphQL
                 ),
                 resolve: context =>
                 {
-                    HiveContext hiveContext = context.Hive();
+                    // Resolve services
+                    HiveContext hiveContext = context.Resolve<HiveContext>();
+                    
+                    // Should the channels endpoint need paging?
                     int page = context.GetArgument<int>("page");
 
                     return hiveContext.Channels.Skip(Math.Abs(page)).Take(itemsPerPage);
@@ -33,7 +47,7 @@ namespace Hive.GraphQL
                 ),
                 resolve: async context =>
                 {
-                    HiveContext hiveContext = context.Hive();
+                    HiveContext hiveContext = context.Resolve<HiveContext>();
                     string id = context.GetArgument<string>("id");
 
                     return await hiveContext.Channels.FirstOrDefaultAsync(c => c.Name == id).ConfigureAwait(false);
