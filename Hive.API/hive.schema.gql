@@ -8,7 +8,11 @@ type Query {
 
 type User {
 	userID: ID!
-	username: String!
+	username: String
+	additionalData: String!
+	authenticationType: String
+	isAuthenticated: String!
+	name: String
 }
 
 type Channel {
@@ -18,18 +22,21 @@ type Channel {
 
 type Mod {
 	id: ID!
+	readableID: ID!
+	localizations: LocalizedModData
 	version: String!
-	uploaderId: String!
-	authorIds: [String!]
-	contributorIds: [String!]
-	channelId: String!
+	uploadedAt: Date!
+	editedAt: Date
+	uploader: User!
+	authors: [User!]
+	contributors: [User!]
+	supportedVersions: [String!]
+	dependencies: [ModReference!]
+	conflicts: [ModReference!]
+	channel: Channel!
+	additionalData: String!
 	links: [URL!]
 	downloadLink: String!
-	additionalData: String!
-	localizedData: LocalizedModData
-	dependencies: [ModIdentifier!]
-	conflicts: [ModIdentifier!]
-	gameVersions: [String!]
 }
 
 type LocalizedModData {
@@ -45,7 +52,7 @@ type GameVersion {
 	additionalData: String!
 }
 
-type ModIdentifier {
+type ModReference {
 	name: String!
 	versionRange: String!
 }
@@ -66,7 +73,6 @@ input PermissionInput {
 
 input ChannelInput {
 	name: String!
-	isPublic: Boolean!
 	additionalData: String
 }
 
