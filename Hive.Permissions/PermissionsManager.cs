@@ -1,6 +1,7 @@
 ﻿using FastExpressionCompiler;
 using Hive.Permissions.Functions;
 using Hive.Permissions.Logging;
+using Hive.Permissions.Resources;
 using Hive.Utilities;
 using MathExpr.Compiler;
 using MathExpr.Compiler.Compilation.Passes;
@@ -219,17 +220,13 @@ namespace Hive.Permissions
             }
         }
 
-        private const string ErrInvalidParseContextType = nameof(PermissionActionParseState) + " used when parsing action was previously used with a different context type!";
-        private const string ErrIncompatableCompiledRule = "Existing compiled rule incompatable with current permission manager";
-        private const string ErrCompilationFailed = "Rule compilation failed";
-
         private PermissionActionParseState.SearchEntry[] ParseAction(StringView action, ref PermissionActionParseState actionParseState)
         {
             using (logger.WithAction(action))
             {
                 if (actionParseState.ContextType != null && actionParseState.ContextType != typeof(TContext))
                 {
-                    logger.Warn(ErrInvalidParseContextType, typeof(TContext), actionParseState.ContextType);
+                    logger.Warn(SR.Error_InvalidParseContextType, typeof(TContext), actionParseState.ContextType);
                     // the existing compiled rules are invalid, so we will clear the parse state and retry it all
                     actionParseState.Reset();
                 }
@@ -266,7 +263,7 @@ namespace Hive.Permissions
                         }
                         else
                         {
-                            logger.Warn(ErrIncompatableCompiledRule, entry.Rule.Compiled, typeof(TContext));
+                            logger.Warn(SR.Error_IncompatibleCompiledRule, entry.Rule.Compiled, typeof(TContext));
                             entry.Rule.Compiled = null;
                             entry.Rule.CompiledAt = Instant.MinValue;
                             return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
@@ -335,7 +332,7 @@ namespace Hive.Permissions
                     }
                     else
                     {
-                        logger.Warn(ErrIncompatableCompiledRule, rule.Compiled, typeof(TContext));
+                        logger.Warn(SR.Error_IncompatibleCompiledRule, rule.Compiled, typeof(TContext));
                         rule.Compiled = null;
                         rule.CompiledAt = Instant.MinValue;
                     }
@@ -351,7 +348,7 @@ namespace Hive.Permissions
                     if (throwOnError)
                         throw logger.Exception(e);
 
-                    logger.Warn(ErrCompilationFailed, e);
+                    logger.Warn(SR.Error_RuleCompilationFailed, e);
 
                     impl = null;
                     compiledAt = ruleProvider.CurrentTime; // TODO: should this be current time, or pull from what the rule says?

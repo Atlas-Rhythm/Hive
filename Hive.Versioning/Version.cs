@@ -6,6 +6,7 @@ using System.Linq;
 using Hive.Utilities;
 using System.Diagnostics;
 using static Hive.Versioning.ParseHelpers;
+using Hive.Versioning.Resources;
 
 namespace Hive.Versioning
 {
@@ -38,10 +39,10 @@ namespace Hive.Versioning
             text = text.Trim();
 
             if (text.Length < 5)
-                throw new ArgumentException("Input too short to be a SemVer version", nameof(text));
+                throw new ArgumentException(SR.Version_InputTooShort, nameof(text));
 
             if (!TryParseInternal(ref text, out major, out minor, out patch, out var preIds, out var buildIds) || text.Length > 0)
-                throw new ArgumentException("Input was not a valid SemVer version", nameof(text));
+                throw new ArgumentException(SR.Version_InputInvalid, nameof(text));
 
             prereleaseIds = preIds;
             this.buildIds = buildIds;
@@ -308,7 +309,7 @@ namespace Hive.Versioning
         public static Version Parse(ReadOnlySpan<char> text)
         {
             if (!TryParse(text, out var ver))
-                throw new ArgumentException("Input not a valid SemVer version", nameof(text));
+                throw new ArgumentException(SR.Version_InputInvalid, nameof(text));
             return ver;
         }
 

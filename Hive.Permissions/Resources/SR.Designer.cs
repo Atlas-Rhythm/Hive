@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Hive {
+namespace Hive.Permissions.Resources {
     using System;
     
     
@@ -22,14 +22,14 @@ namespace Hive {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resource {
+    internal class SR {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
         private static global::System.Globalization.CultureInfo resourceCulture;
         
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal Resource() {
+        internal SR() {
         }
         
         /// <summary>
@@ -39,7 +39,7 @@ namespace Hive {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Hive.Resource", typeof(Resource).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Hive.Permissions.Resources.SR", typeof(SR).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -61,20 +61,38 @@ namespace Hive {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to challenge.
+        ///   Looks up a localized string similar to Existing compiled rule incompatable with current permission manager.
         /// </summary>
-        internal static string challenge_respose {
+        internal static string Error_IncompatibleCompiledRule {
             get {
-                return ResourceManager.GetString("challenge_respose", resourceCulture);
+                return ResourceManager.GetString("Error_IncompatibleCompiledRule", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to forbidden.
+        ///   Looks up a localized string similar to PermissionActionParseState used when parsing action was previously used with a different context type!.
         /// </summary>
-        internal static string forbidden_respose {
+        internal static string Error_InvalidParseContextType {
             get {
-                return ResourceManager.GetString("forbidden_respose", resourceCulture);
+                return ResourceManager.GetString("Error_InvalidParseContextType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rule compilation failed.
+        /// </summary>
+        internal static string Error_RuleCompilationFailed {
+            get {
+                return ResourceManager.GetString("Error_RuleCompilationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error compiling reference to user-defined function.
+        /// </summary>
+        internal static string UserBuiltin_CompilationError {
+            get {
+                return ResourceManager.GetString("UserBuiltin_CompilationError", resourceCulture);
             }
         }
     }

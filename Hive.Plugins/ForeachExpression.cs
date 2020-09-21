@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Hive.Plugins.Resources;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -79,7 +80,7 @@ namespace Hive.Plugins
             BreakLabel = @break ?? throw new ArgumentNullException(nameof(@break));
 
             if (!typeof(IEnumerable).IsAssignableFrom(enumerable.Type))
-                throw new ArgumentException("A foreach loop can only take IEnumerable and IEnumerable<T>", nameof(enumerable));
+                throw new ArgumentException(SR.Foreach_EnumerableInvalid, nameof(enumerable));
 
             var getEnum = enumerable.Type.GetMethod(
                 nameof(IEnumerable.GetEnumerator), 
@@ -89,24 +90,24 @@ namespace Hive.Plugins
                 Array.Empty<ParameterModifier>()
             );
             if (getEnum == null)
-                throw new ArgumentException("Enumerable has no public member GetEnumerator()", nameof(enumerable));
+                throw new ArgumentException(SR.Foreach_NoPublicGetEnumerator, nameof(enumerable));
 
             GetEnumerator = getEnum;
 
             if (!typeof(IEnumerator).IsAssignableFrom(getEnum.ReturnType))
-                throw new ArgumentException("Enumerator for enumerable is not an enumerator", nameof(enumerable));
+                throw new ArgumentException(SR.Foreach_EnumeratorNotEnumerator, nameof(enumerable));
 
             EnumeratorType = getEnum.ReturnType;
 
             var current = EnumeratorType.GetProperty(nameof(IEnumerator.Current), BindingFlags.Public | BindingFlags.Instance);
             if (current == null)
-                throw new ArgumentException("Enumerator for enumerable does not have a Current property", nameof(enumerable));
+                throw new ArgumentException(SR.Foreach_EnumeratorWithoutCurrent, nameof(enumerable));
 
             Current = current;
             EnumerationType = current.PropertyType;
 
             if (!loopVariable.Type.IsAssignableFrom(EnumerationType))
-                throw new ArgumentException($"Loop variable cannot be assigned from enumeration type {EnumerationType}", nameof(loopVariable));
+                throw new ArgumentException(string.Format(SR.Culture, SR.Foreach_IncorrectLoopVariable, EnumerationType), nameof(loopVariable));
         }
 
         private static readonly MethodInfo EnumeratorMoveNext = typeof(IEnumerator).GetMethod(nameof(IEnumerator.MoveNext), BindingFlags.Public | BindingFlags.Instance);

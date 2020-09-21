@@ -7,6 +7,8 @@
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
 
+    <NeutralLanguage>en-US</NeutralLanguage>
+    
     <NoWarn>$(NoWarn);CA1826;CA2000</NoWarn>
 
     <!-- FXCop warnings that aren't terribly useful for tests, most of the time. -->
