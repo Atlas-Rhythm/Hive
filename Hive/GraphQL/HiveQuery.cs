@@ -26,17 +26,17 @@ namespace Hive.GraphQL
                     return hiveContext.Channels.Skip(Math.Abs(page)).Take(itemsPerPage);
                 }
             );
-            Field<ChannelType>(
+            FieldAsync<ChannelType>(
                 "channel",
                 arguments: new QueryArguments(
                     HiveArguments.ID(Resources.GraphQL.Channel_NameQuery)
                 ),
-                resolve: context =>
+                resolve: async context =>
                 {
                     HiveContext hiveContext = context.Hive();
                     string id = context.GetArgument<string>("id");
 
-                    return hiveContext.Channels.FirstOrDefaultAsync(c => c.Name == id);
+                    return await hiveContext.Channels.FirstOrDefaultAsync(c => c.Name == id).ConfigureAwait(false);
                 }
             );
         }
