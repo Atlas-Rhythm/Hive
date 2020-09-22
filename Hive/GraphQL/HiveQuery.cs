@@ -5,6 +5,11 @@ using Hive.Models;
 using GraphQL.Types;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics.CodeAnalysis;
+using Hive.Permissions;
+using Hive.Controllers;
+using Hive.Plugins;
+using Hive.Services;
+using Microsoft.AspNetCore.Http;
 
 namespace Hive.GraphQL
 {
@@ -13,6 +18,8 @@ namespace Hive.GraphQL
         private readonly Serilog.ILogger log;
         private readonly int itemsPerPage = 10;
 
+        private const string HiveChannelActionName = "hive.channel";
+
         public HiveQuery([DisallowNull] Serilog.ILogger logger)
         {
             if (logger is null)
@@ -20,20 +27,42 @@ namespace Hive.GraphQL
             log = logger.ForContext<HiveQuery>();
 
             // Channel Stuff
-            Field<ListGraphType<ChannelType>>(
+            FieldAsync<ListGraphType<ChannelType>>(
                 "channels",
                 arguments: new QueryArguments(
                     HiveArguments.Page(Resources.GraphQL.Channels_QueryPage)
                 ),
-                resolve: context =>
+                resolve: async context =>
                 {
                     // Resolve services
+                    HttpContext httpContext = context.HttpContext();
                     HiveContext hiveContext = context.Resolve<HiveContext>();
-                    
+                    IProxyAuthenticationService authService = context.Resolve<IProxyAuthenticationService>();
+                    PermissionsManager<PermissionContext> perms = context.Resolve<PermissionsManager<PermissionContext>>();
+                    IAggregate<IChannelsControllerPlugin> plugin = context.Resolve<IAggregate<IChannelsControllerPlugin>>();
+
+                    // Validate and Filter
+                    User? user = await authService.GetUser(httpContext.Request).ConfigureAwait(false);
+                    PermissionActionParseState channelsParseState;
+                    if (!perms.CanDo(HiveChannelActionName, new PermissionContext { User = user }, ref channelsParseState))
+                    {
+                        context.Errors.Add(new ExecutionError("Unauthorized"));
+                        return null;
+                    }
+                    var combined = plugin.Instance;
+                    if (!combined.GetChannelsAdditionalChecks(user))
+                    {
+                        context.Errors.Add(new ExecutionError("Unauthorized"));
+                        return null;
+                    }
+                    var channels = hiveContext.Channels.ToList();
+                    var filteredChannels = channels.Where(c => perms.CanDo(HiveChannelActionName, new PermissionContext { Channel = c, User = user }, ref channelsParseState));
+                    filteredChannels = combined.GetChannelsFilter(user, filteredChannels);
+
                     // Should the channels endpoint need paging?
                     int page = context.GetArgument<int>("page");
 
-                    return hiveContext.Channels.Skip(Math.Abs(page)).Take(itemsPerPage);
+                    return filteredChannels.Skip(Math.Abs(page)).Take(itemsPerPage);
                 }
             );
             FieldAsync<ChannelType>(
