@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
 		.github\workflows\dotnet-core.yml = .github\workflows\dotnet-core.yml
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities", "Hive.Utilities\Hive.Utilities.csproj", "{3C265E15-AFDF-47B1-9893-7957F9A43818}"
@@ -39,7 +40,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CodeGen", "CodeGen", "{418D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.CodeGen", "CodeGen\Hive.CodeGen\Hive.CodeGen.csproj", "{D14CCA86-C8FA-4F96-A92B-9CF454C485B1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.CodeGen.Attributes", "CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj", "{585E184E-0F14-4456-B542-9AECFAB96A15}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.CodeGen.Attributes", "CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj", "{585E184E-0F14-4456-B542-9AECFAB96A15}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
