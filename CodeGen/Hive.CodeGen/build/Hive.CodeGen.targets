@@ -15,7 +15,7 @@
 
       <AdditionalFiles Include="%(EmbeddedResource.Identity)" Condition="'$([System.IO.Path]::GetExtension(%(EmbeddedResource.Identity)))' == '.resx'">
         <IsResXToGenerate Condition="'%(EmbeddedResource.IsResXToGenerate)' != ''">%(EmbeddedResource.IsResXToGenerate)</IsResXToGenerate>
-        <IsResXToGenerate Condition="'%(EmbeddedResource.IsResXToGenerate)' == ''">true</IsResXToGenerate>
+        <IsResXToGenerate Condition="'%(EmbeddedResource.IsResXToGenerate)' == ''">false</IsResXToGenerate>
         <Link Condition="'%(EmbeddedResource.Link)' != ''">%(EmbeddedResource.Link)</Link>
         <Namespace Condition="'%(EmbeddedResource.Namespace)' != ''">%(EmbeddedResource.Namespace)</Namespace>
         <Name Condition="'%(EmbeddedResource.Name)' != ''">%(EmbeddedResource.Name)</Name>
