@@ -162,9 +162,12 @@ namespace {@namespace}
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {{
-            get {{
-                if (object.ReferenceEquals(resourceMan, null)) {{
+        internal static global::System.Resources.ResourceManager ResourceManager 
+        {{
+            get 
+            {{
+                if (object.ReferenceEquals(resourceMan, null))
+                {{
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager(""{@namespace}.{name}"", typeof({name}).Assembly);
                     resourceMan = temp;
                 }}
@@ -177,11 +180,14 @@ namespace {@namespace}
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {{
-            get {{
+        internal static global::System.Globalization.CultureInfo Culture
+        {{
+            get
+            {{
                 return resourceCulture ?? global::System.Globalization.CultureInfo.CurrentUICulture;
             }}
-            set {{
+            set 
+            {{
                 resourceCulture = value;
             }}
         }}").AppendLine().AppendLine();
@@ -299,7 +305,7 @@ namespace {@namespace}
                     ).ToFullString();
                 }
 
-                var getResText = $"ResourceManager.GetString(\"{elName}\", Culture)";
+                var getResText = $"ResourceManager.GetString(\"{elName}\", Culture)!";
                 if (parsed != null)
                     getResText = $"new {typeName}(Culture, {getResText})";
 
