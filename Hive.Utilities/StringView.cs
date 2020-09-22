@@ -13,7 +13,7 @@ namespace Hive.Utilities
     /// A relatively light weight view into a string.
     /// </summary>
     [DebuggerDisplay("{AsString}", Type = "StringView")]
-    public struct StringView : IEnumerable<char>, IEquatable<StringView>, IEquatable<string>
+    public readonly struct StringView : IEnumerable<char>, IEquatable<StringView>, IEquatable<string>
     {
         /// <summary>
         /// Gets the string that this is a view into.

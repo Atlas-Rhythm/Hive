@@ -1,0 +1,12 @@
+﻿<Project>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="MSBuildProjectDirectory" />
+    <CompilerVisibleProperty Include="RootNamespace" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="IsResXToGenerate" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Namespace" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Name" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Link" />
+  </ItemGroup>
+  
+</Project>

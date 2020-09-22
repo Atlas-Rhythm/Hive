@@ -8,10 +8,6 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <None Include="..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
-  
-  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.0-rc.1.20451.13" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.0-rc.1.20451.13">
       <PrivateAssets>all</PrivateAssets>
@@ -39,23 +35,11 @@
   <ItemGroup>
     <ProjectReference Include="..\Hive.Permissions\Hive.Permissions.csproj" />
     <ProjectReference Include="..\Hive.Plugins\Hive.Plugins.csproj" />
-    <ProjectReference Include="..\Hive.Utilities\Hive.Utilities.csproj" />
     <ProjectReference Include="..\Hive.Versioning\Hive.Versioning.csproj" />
   </ItemGroup>
   
   <ItemGroup>
-    <Compile Update="Resources\Resource.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resource.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
-  
-  <ItemGroup>
-    <EmbeddedResource Update="Resources\Resource.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resource.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Resource.resx" IsResXToGenerate="true" />
   </ItemGroup>
 
 </Project>

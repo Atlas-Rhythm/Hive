@@ -20,13 +20,13 @@ namespace Hive.Plugins
             var returnLastAttribute = toAggregate.GetCustomAttribute<ReturnLastAttribute>();
 
             if (stopIfReturnsAttr != null && stopIfReturnsNullAttr != null)
-                throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_MethodMayHaveOneOf, toAggregate, nameof(StopIfReturnsAttribute), nameof(StopIfReturnsNullAttribute)));
+                throw new InvalidOperationException(SR.Generator_MethodMayHaveOneOf.Format(toAggregate, nameof(StopIfReturnsAttribute), nameof(StopIfReturnsNullAttribute)));
 
             if (stopIfReturnsAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsAttr))
-                throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_MethodMustReturnBoolToUse, toAggregate, nameof(StopIfReturnsAttribute)));
+                throw new InvalidOperationException(SR.Generator_MethodMustReturnBoolToUse.Format(toAggregate, nameof(StopIfReturnsAttribute)));
 
             if (stopIfReturnsNullAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsNullAttr))
-                throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_MethodMustReturnNullableToUse, toAggregate, nameof(StopIfReturnsNullAttribute)));
+                throw new InvalidOperationException(SR.Generator_MethodMustReturnNullableToUse.Format(toAggregate, nameof(StopIfReturnsNullAttribute)));
 
             var targetParameters = toAggregate.GetParameters();
             var parameterAttributes = targetParameters.Select(p => (p, a: p.GetCustomAttributes())).ToArray();
@@ -215,7 +215,7 @@ namespace Hive.Plugins
                 else if (inputSpec is TakesReturnValueAttribute)
                     copyFromRet = true;
                 else
-                    throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_UnknownInputAttribute, inputSpec));
+                    throw new InvalidOperationException(SR.Generator_UnknownInputAttribute.Format(inputSpec));
             }
 
             return new AggregateParameterInfo(
@@ -246,17 +246,17 @@ namespace Hive.Plugins
             public void ValidateForParams(Type returnType, ParameterInfo[] parameters)
             {
                 if (CopiedFromRet && !Parameter.ParameterType.IsAssignableFrom(returnType))
-                    throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_ParameterCannotTakeReturn, Parameter));
+                    throw new InvalidOperationException(SR.Generator_ParameterCannotTakeReturn.Format(Parameter));
                 if (CopiedFromOut != null)
                 {
                     if (CopiedFromOut.Value >= parameters.Length || CopiedFromOut.Value < 0)
-                        throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_InvalidParameterIndex, CopiedFromOut.Value, Parameter));
+                        throw new InvalidOperationException(SR.Generator_InvalidParameterIndex.Format(CopiedFromOut.Value, Parameter));
 
                     var targetParam = parameters[CopiedFromOut.Value];
                     if (!targetParam.IsOut)
-                        throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_ParameterNotOutParam, CopiedFromOut.Value));
+                        throw new InvalidOperationException(SR.Generator_ParameterNotOutParam.Format(CopiedFromOut.Value));
                     if (!Parameter.ParameterType.IsAssignableFrom(targetParam.ParameterType))
-                        throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_OutParamNotCompatible, Parameter));
+                        throw new InvalidOperationException(SR.Generator_OutParamNotCompatible.Format(Parameter));
                 }
             }
         }
@@ -301,7 +301,7 @@ namespace Hive.Plugins
             foreach (var attr in attrs)
             {
                 if (!CheckAttribute(param, attr, isRetval))
-                    throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_AttributeInvalidOn, attr, param));
+                    throw new InvalidOperationException(SR.Generator_AttributeInvalidOn.Format(attr, param));
             }
         }
 

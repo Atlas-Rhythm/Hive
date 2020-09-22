@@ -107,7 +107,7 @@ namespace Hive.Plugins
             EnumerationType = current.PropertyType;
 
             if (!loopVariable.Type.IsAssignableFrom(EnumerationType))
-                throw new ArgumentException(string.Format(SR.Culture, SR.Foreach_IncorrectLoopVariable, EnumerationType), nameof(loopVariable));
+                throw new ArgumentException(SR.Foreach_IncorrectLoopVariable.Format(EnumerationType), nameof(loopVariable));
         }
 
         private static readonly MethodInfo EnumeratorMoveNext = typeof(IEnumerator).GetMethod(nameof(IEnumerator.MoveNext), BindingFlags.Public | BindingFlags.Instance);

@@ -7,22 +7,7 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\Hive.Utilities\Hive.Utilities.csproj" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <Compile Update="Resources\SR.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>SR.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
-  
-  <ItemGroup>
-    <EmbeddedResource Update="Resources\SR.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>SR.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\SR.resx" IsResXToGenerate="true" />
   </ItemGroup>
 
 </Project>

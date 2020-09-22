@@ -12,6 +12,15 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(IsCodeGen)' != 'true'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(IsUtilities)' != 'true' And '$(IsCodeGen)' != 'true'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)\Hive.Utilities\Hive.Utilities.csproj" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(Tests)' == 'true'">
     <PackageReference Include="Moq" Version="4.14.5" />
     <PackageReference Include="xunit" Version="2.4.1" />
@@ -24,5 +33,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-  
+
+  <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.props" Condition="'$(IsCodeGen)' != 'true'" />
+
 </Project>

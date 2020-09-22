@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsCodeGen>true</IsCodeGen>
+
+    <RootNamespace>Hive.CodeGen</RootNamespace>
+  </PropertyGroup>
+
+</Project>

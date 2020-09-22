@@ -158,7 +158,7 @@ namespace Hive.Plugins
                 .FirstOrDefault();
 
             if (valueAggregator == null)
-                throw new InvalidOperationException(string.Format(SR.Culture, SR.AggregateWith_NoSuchAggregator, TypeWithAggregator, AggregatorName));
+                throw new InvalidOperationException(SR.AggregateWith_NoSuchAggregator.Format(TypeWithAggregator, AggregatorName));
 
             return Expression.Call(valueAggregator, prev, next);
         }

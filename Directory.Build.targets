@@ -3,7 +3,7 @@
 
   <PropertyGroup Condition="'$(IsCSharpProject)' == 'true'">
 
-    <LangVersion>8.0</LangVersion>
+    <LangVersion Condition="'$(LangVersion)' != 'preview'">preview</LangVersion>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
 
@@ -47,5 +47,7 @@
       </AssemblyAttribute>
     </ItemGroup>
   </Target>
-  
+
+  <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" Condition="'$(IsCodeGen)' != 'true'" />
+
 </Project>
