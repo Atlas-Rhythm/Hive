@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
 
+    <IsCodeGen>true</IsCodeGen>
+
     <!--<GeneratePackageOnBuild>true</GeneratePackageOnBuild>-->
     <!--<IncludeBuildOutput>false</IncludeBuildOutput>-->
     

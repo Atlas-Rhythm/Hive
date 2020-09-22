@@ -1,18 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\CodeGen\Hive.CodeGen\build\Hive.CodeGen.props" />
-  
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <LangVersion>preview</LangVersion>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsUtilities>true</IsUtilities>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" />
-    <ProjectReference Include="..\CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
-  </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Update="Resource1.resx">
@@ -20,7 +14,5 @@
       <IsResXToGenerate>true</IsResXToGenerate>
     </EmbeddedResource>
   </ItemGroup>
-
-  <Import Project="..\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" />
 
 </Project>

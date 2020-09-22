@@ -195,8 +195,11 @@ namespace {@namespace}
                 var valueEl = elem.Element("value")!;
                 var commentEl = elem.Element("comment");
 
-                var baseValue = valueEl.Value;
+                var baseValue = valueEl.Value.Replace("<", "&lt;").Replace(">", "&gt;");
                 var commentString = commentEl?.Value;
+
+                if (commentString != null)
+                    commentString = commentString.Replace("<", "&lt;").Replace(">", "&gt;");
 
                 var (commentMain, parsed) = ParseDescriptionComment(commentString);
 
@@ -370,7 +373,7 @@ namespace {@namespace}
                         if (lastText.StartsWith("is", StringComparison.InvariantCultureIgnoreCase))
                             lastText = lastText.Substring(2).Trim();
 
-                        list.Add((lastIdx, lastText));
+                        list.Add((lastIdx, lastText.Trim(',')));
                     }
 
                     lastIdx = idx;
@@ -383,7 +386,7 @@ namespace {@namespace}
                     if (lastText.StartsWith("is", StringComparison.InvariantCultureIgnoreCase))
                         lastText = lastText.Substring(2).Trim();
 
-                    list.Add((lastIdx, lastText));
+                    list.Add((lastIdx, lastText.Trim(',')));
                 }
 
                 if (list.Count == 0) return null;
