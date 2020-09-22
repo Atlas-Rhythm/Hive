@@ -39,10 +39,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <EmbeddedResource Update="Resource.resx">
-      <Generator></Generator>
-      <IsResXToGenerate>true</IsResXToGenerate>
-    </EmbeddedResource>
+    <EmbeddedResource Update="Resource.resx" IsResXToGenerate="true" />
   </ItemGroup>
 
 </Project>

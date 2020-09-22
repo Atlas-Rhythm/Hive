@@ -13,10 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Update="Resources\SR.resx">
-      <Generator></Generator>
-      <IsResXToGenerate>true</IsResXToGenerate>
-    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\SR.resx" IsResXToGenerate="true" />
   </ItemGroup>
 
 </Project>
