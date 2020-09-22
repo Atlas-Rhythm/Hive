@@ -328,6 +328,7 @@ namespace {@namespace}
             return sb.ToString();
         }
 
+        // TODO: support custom type restrictions for parameters
         private static (string? main, IReadOnlyCollection<(int index, string description)>? arguments) ParseDescriptionComment(string? comment)
         {
             if (comment == null) return (null, null);

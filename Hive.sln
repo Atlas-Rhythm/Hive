@@ -42,6 +42,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.CodeGen", "CodeGen\Hiv
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.CodeGen.Attributes", "CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj", "{585E184E-0F14-4456-B542-9AECFAB96A15}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{8D72FE69-EB86-4B03-8A93-C4ED2D47A38D}"
+	ProjectSection(SolutionItems) = preProject
+		CodeGen\docs\AutoUsage.md = CodeGen\docs\AutoUsage.md
+		CodeGen\docs\FormattedResources.md = CodeGen\docs\FormattedResources.md
+		CodeGen\docs\GenericParameterization.md = CodeGen\docs\GenericParameterization.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +118,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{D14CCA86-C8FA-4F96-A92B-9CF454C485B1} = {418DF181-8405-4B69-8B32-FBEEFACADAC6}
 		{585E184E-0F14-4456-B542-9AECFAB96A15} = {418DF181-8405-4B69-8B32-FBEEFACADAC6}
+		{8D72FE69-EB86-4B03-8A93-C4ED2D47A38D} = {418DF181-8405-4B69-8B32-FBEEFACADAC6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A1B8AB62-9337-448C-9043-E0DEDB6A4DE9}
