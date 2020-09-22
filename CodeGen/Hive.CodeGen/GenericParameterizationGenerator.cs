@@ -14,7 +14,7 @@ using System.Threading;
 namespace Hive.CodeGen
 {
     [Generator]
-    public partial class GenericParameterizationGenerator : ISourceGenerator
+    public class GenericParameterizationGenerator : ISourceGenerator
     {
         private class SyntaxReceiver : ISyntaxReceiver
         {
