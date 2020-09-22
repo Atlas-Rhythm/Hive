@@ -48,6 +48,6 @@
     </ItemGroup>
   </Target>
 
-  <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" Condition="'$(IsCodeGen)' != 'true' and '$(Tests)' != 'true' and '$(IsCSharpProject)' == 'true' and '$(IncludeCodeGen)' != 'false'" />
+  <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" Condition="'$(IsCodeGen)' != 'true'" />
 
 </Project>
