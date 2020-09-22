@@ -338,5 +338,50 @@ namespace Hive.Resources {
                 return ResourceManager.GetString("Mods_QueryPage", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The authentication type of the user..
+        /// </summary>
+        internal static string User_AuthenticationType {
+            get {
+                return ResourceManager.GetString("User_AuthenticationType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The ID of the user..
+        /// </summary>
+        internal static string User_ID {
+            get {
+                return ResourceManager.GetString("User_ID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Whether or not the user is authenticated..
+        /// </summary>
+        internal static string User_IsAuthenticated {
+            get {
+                return ResourceManager.GetString("User_IsAuthenticated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The name of the user..
+        /// </summary>
+        internal static string User_Name {
+            get {
+                return ResourceManager.GetString("User_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The username of the user..
+        /// </summary>
+        internal static string User_Username {
+            get {
+                return ResourceManager.GetString("User_Username", resourceCulture);
+            }
+        }
     }
 }

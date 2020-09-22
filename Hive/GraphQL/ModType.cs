@@ -41,9 +41,18 @@ namespace Hive.GraphQL
                     return null;
                 }
             );
-            //Field(m => m.Uploader).Description(Resources.GraphQL.Mod_Uploader);
-            //Field(m => m.Authors).Description(Resources.GraphQL.Mod_Authors);
-            //Field(m => m.Contributors).Description(Resources.GraphQL.Mod_Contributors);
+            Field<UserType>(
+                "uploader",
+                Resources.GraphQL.Mod_Uploader,
+                resolve: (context) => context.Source.Uploader);
+            Field<ListGraphType<UserType>>(
+                "authors",
+                Resources.GraphQL.Mod_Authors,
+                resolve: (context) => context.Source.Authors);
+            Field<ListGraphType<UserType>>(
+                "contributors",
+                Resources.GraphQL.Mod_Contributors,
+                resolve: (context) => context.Source.Contributors);
             Field<ListGraphType<GameVersionType>>(
                 "supportedVersions",
                 Resources.GraphQL.Mod_SupportedVersions,
