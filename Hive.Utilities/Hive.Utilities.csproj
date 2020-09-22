@@ -8,11 +8,4 @@
     <IsUtilities>true</IsUtilities>
   </PropertyGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Update="Resource1.resx">
-      <Generator></Generator>
-      <IsResXToGenerate>true</IsResXToGenerate>
-    </EmbeddedResource>
-  </ItemGroup>
-
 </Project>
