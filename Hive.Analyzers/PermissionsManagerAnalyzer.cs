@@ -128,6 +128,8 @@ namespace Hive.Analyzers
             actStringIsConst &= actStringValue.ConstantValue.HasValue;
 
             // TODO: improve reporting here (how do I want them reported?)
+            //       It currently doesn't actually report all the cases I want it to, but I'm not sure
+            //         the rules I want it to report based on.
 
             if (argumentList.Length == 2)
             {
@@ -159,10 +161,10 @@ namespace Hive.Analyzers
                 }
                 else
                 {
-                    ctx.ReportDiagnostic(Diagnostic.Create(
+                    /*ctx.ReportDiagnostic(Diagnostic.Create(
                         Wrn_UseStringLiteralForActionString,
                         invocation.Syntax.GetLocation()
-                    ));
+                    ));*/
 
                     ctx.ReportDiagnostic(Diagnostic.Create(
                         Wrn_UseNonActionParseStateOverloadForRuntime,

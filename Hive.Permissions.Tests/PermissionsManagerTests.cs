@@ -8,6 +8,7 @@ using Moq;
 using NodaTime;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Mime;
 using System.Text;
@@ -278,6 +279,8 @@ namespace Hive.Permissions.Tests
         }
 
         [Fact]
+        [SuppressMessage("Hive.Permissions", "Hive0012:Use the CanDo(StringView, TContext, ref PermissionActionParseState) overload when possible", 
+            Justification = "The action string will only ever be invoked once.")]
         public void TestUserBuiltin()
         {
             var mock = MockRuleProvider();
@@ -297,6 +300,8 @@ namespace Hive.Permissions.Tests
         }
 
         [Fact]
+        [SuppressMessage("Hive.Permissions", "Hive0012:Use the CanDo(StringView, TContext, ref PermissionActionParseState) overload when possible",
+            Justification = "The action string will only ever be invoked once.")]
         public void TestPreCompileHook()
         {
             var mock = MockRuleProvider<IPreCompileRuleProvider>();
