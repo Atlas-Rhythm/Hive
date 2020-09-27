@@ -34,6 +34,7 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="user">User to filter on</param>
         /// <param name="versions">Input versions to filter</param>
+        [StopIfReturnsEmpty]
         public IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions) => versions;
     }
 

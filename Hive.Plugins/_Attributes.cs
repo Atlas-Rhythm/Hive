@@ -82,6 +82,26 @@ namespace Hive.Plugins
     }
 
     /// <summary>
+    /// Indicates that an aggregated method should stop executing implementations if the attached <see cref="IEnumerable{T}"/> becomes empty,
+    /// either with a normal return or out parameter, depending on where this attribute is placed.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    // TODO: Needs testing (Probably requires DI for endpoint testing?)
+    public sealed class StopIfReturnsEmptyAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
+    {
+        bool IRequiresType.CheckType(Type type)
+            => type.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+
+        Expression IStopIfReturns.Test(Expression value)
+        {
+            return Expression.IsFalse(
+                Expression.Call(
+                    typeof(Enumerable).GetMethod("Any", BindingFlags.Public | BindingFlags.Static),
+                    value));
+        }
+    }
+
+    /// <summary>
     /// Indicates that the result value for this attribute's target should be the value that the last executed implementation
     /// returned.
     /// </summary>
