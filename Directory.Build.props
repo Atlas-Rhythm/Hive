@@ -13,16 +13,16 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsCodeGen)' != 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" />
-    <ProjectReference Include="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
   
   <ItemGroup Condition="'$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)\Hive.Analyzers\Hive.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)Hive.Analyzers\Hive.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
   
   <ItemGroup Condition="'$(IsUtilities)' != 'true' And '$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)\Hive.Utilities\Hive.Utilities.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)Hive.Utilities\Hive.Utilities.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Tests)' == 'true'">
