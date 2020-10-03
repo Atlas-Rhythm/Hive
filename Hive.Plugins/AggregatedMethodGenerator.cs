@@ -22,7 +22,7 @@ namespace Hive.Plugins
             if (stopIfReturnsAttr != null && stopIfReturnsNullAttr != null)
                 throw new InvalidOperationException(SR.Generator_MethodMayHaveOneOf.Format(toAggregate, nameof(StopIfReturnsAttribute), nameof(StopIfReturnsNullAttribute)));
 
-            if (stopIfReturnsAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsAttr))
+            if (stopIfReturnsAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsAttr, true))
                 throw new InvalidOperationException(SR.Generator_MethodMustReturnBoolToUse.Format(toAggregate, nameof(StopIfReturnsAttribute)));
 
             if (stopIfReturnsNullAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsNullAttr))
