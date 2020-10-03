@@ -23,6 +23,11 @@ namespace Hive.Plugins
             if (stopIfReturnsAttr != null && stopIfReturnsNullAttr != null)
                 throw new InvalidOperationException(SR.Generator_MethodMayHaveOneOf.Format(toAggregate, nameof(StopIfReturnsAttribute), nameof(StopIfReturnsNullAttribute)));
 
+            // I think StopIfReturnsNull and StopIfReturnsEmpty can go along nicely, so I wont be throwing an exception if both exist.
+
+            if (stopIfReturnsAttr != null && stopIfReturnsEmptyAttr != null)
+                throw new InvalidOperationException(SR.Generator_MethodMayHaveOneOf.Format(toAggregate, nameof(StopIfReturnsAttribute), nameof(StopIfReturnsEmptyAttribute)));
+
             if (stopIfReturnsAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsAttr, true))
                 throw new InvalidOperationException(SR.Generator_MethodMustReturnBoolToUse.Format(toAggregate, nameof(StopIfReturnsAttribute)));
 
