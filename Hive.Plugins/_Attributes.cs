@@ -35,8 +35,8 @@ namespace Hive.Plugins
     /// Indicates that an aggregated method should stop executing implementations if it returns the provided 
     /// <see cref="bool"/> value, either with a normal return or out parameter, depending on where this attribute is placed.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
-    public sealed class StopIfReturnsAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+    public sealed class StopIfReturnsAttribute : Attribute, ITargetsReturn, IRequiresType, IStopIfReturns
     {
         /// <summary>
         /// Gets the return value that signals the aggregator to exit.
@@ -62,8 +62,8 @@ namespace Hive.Plugins
     /// Indicates that an aggregated method should stop executing implementations if it returns <see langword="null"/>,
     /// either with a normal return or out parameter, depending on where this attribute is placed.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
-    public sealed class StopIfReturnsNullAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+    public sealed class StopIfReturnsNullAttribute : Attribute, ITargetsReturn, IRequiresType, IStopIfReturns
     {
         bool IRequiresType.CheckType(Type type)
             => !type.IsValueType || (type.IsConstructedGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>));
