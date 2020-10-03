@@ -1,5 +1,6 @@
 ﻿using Hive.Plugins.Resources;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -85,18 +86,23 @@ namespace Hive.Plugins
     /// Indicates that an aggregated method should stop executing implementations if the attached <see cref="IEnumerable{T}"/> becomes empty,
     /// either with a normal return or out parameter, depending on where this attribute is placed.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
-    // TODO: Needs testing (Probably requires DI for endpoint testing?)
-    public sealed class StopIfReturnsEmptyAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
+    // TODO: Needs testing (Probably requires DI for endpoint testing?) 
+    public sealed class StopIfReturnsEmptyAttribute : Attribute, ITargetsReturn, IRequiresType, IStopIfReturns
     {
         bool IRequiresType.CheckType(Type type)
-            => type.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+             => type == typeof(IEnumerable<>) ||
+                (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
+                type.GetInterfaces().Any(i
+                => i.GetType() == typeof(IEnumerable<>) || (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>)));
 
         Expression IStopIfReturns.Test(Expression value)
         {
             return Expression.IsFalse(
                 Expression.Call(
-                    typeof(Enumerable).GetMethod("Any", BindingFlags.Public | BindingFlags.Static),
+                    typeof(Enumerable),
+                    "Any",
+                    new Type[] { typeof(object) },
                     value));
         }
     }

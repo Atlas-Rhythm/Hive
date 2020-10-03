@@ -17,6 +17,7 @@ namespace Hive.Plugins
         {
             var stopIfReturnsAttr = toAggregate.GetCustomAttribute<StopIfReturnsAttribute>();
             var stopIfReturnsNullAttr = toAggregate.GetCustomAttribute<StopIfReturnsNullAttribute>();
+            var stopIfReturnsEmptyAttr = toAggregate.GetCustomAttribute<StopIfReturnsEmptyAttribute>();
             var returnLastAttribute = toAggregate.GetCustomAttribute<ReturnLastAttribute>();
 
             if (stopIfReturnsAttr != null && stopIfReturnsNullAttr != null)
@@ -25,8 +26,11 @@ namespace Hive.Plugins
             if (stopIfReturnsAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsAttr, true))
                 throw new InvalidOperationException(SR.Generator_MethodMustReturnBoolToUse.Format(toAggregate, nameof(StopIfReturnsAttribute)));
 
-            if (stopIfReturnsNullAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsNullAttr))
+            if (stopIfReturnsNullAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsNullAttr, true))
                 throw new InvalidOperationException(SR.Generator_MethodMustReturnNullableToUse.Format(toAggregate, nameof(StopIfReturnsNullAttribute)));
+
+            if (stopIfReturnsEmptyAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsEmptyAttr, true))
+                throw new InvalidOperationException(SR.Generator_MethodMustReturnEnumerableToUse.Format(toAggregate, nameof(StopIfReturnsEmptyAttribute)));
 
             var targetParameters = toAggregate.GetParameters();
             var parameterAttributes = targetParameters.Select(p => (p, a: p.GetCustomAttributes())).ToArray();
@@ -34,6 +38,7 @@ namespace Hive.Plugins
 
             if (stopIfReturnsAttr != null) returnAttributes = returnAttributes.Append(stopIfReturnsAttr);
             if (stopIfReturnsNullAttr != null) returnAttributes = returnAttributes.Append(stopIfReturnsNullAttr);
+            if (stopIfReturnsEmptyAttr != null) returnAttributes = returnAttributes.Append(stopIfReturnsEmptyAttr);
             if (returnLastAttribute != null) returnAttributes = returnAttributes.Append(returnLastAttribute);
 
             ValidateParam(toAggregate.ReturnParameter, returnAttributes, isRetval: true);
