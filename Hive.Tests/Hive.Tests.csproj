@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0-preview-20200812-03" />
+    <PackageReference Include="Xunit.DependencyInjection" Version="7.0.2" />
   </ItemGroup>
 
   <ItemGroup>
