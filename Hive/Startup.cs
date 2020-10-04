@@ -45,7 +45,7 @@ namespace Hive
                 .AddSingleton<IChannelsControllerPlugin>(sp => new HiveChannelsControllerPlugin())
                 .AddSingleton<IGameVersionsPlugin>(Span => new HiveGameVersionsControllerPlugin())
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
-                .AddSingleton<IProxyAuthenticationService>(Span => new MockAuthenticationService());
+                .AddSingleton<IProxyAuthenticationService>(sp => new MockAuthenticationService());
 
             services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
