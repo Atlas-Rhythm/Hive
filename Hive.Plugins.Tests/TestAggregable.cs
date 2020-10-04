@@ -9,7 +9,7 @@ namespace Hive.Plugins.Tests
     [Aggregable]
     public interface ITestStopIfReturns
     {
-        [StopIfReturns(false)]
+        [return: StopIfReturns(false)]
         bool Test1() => false;
 
         void Test2([StopIfReturns(false)] out bool ret) => ret = false;
@@ -18,10 +18,16 @@ namespace Hive.Plugins.Tests
     [Aggregable]
     public interface ITestStopIfReturnsNull
     {
-        [StopIfReturnsNull]
+        [return: StopIfReturnsNull]
         List<int>? Test1();
 
         void Test2([StopIfReturnsNull] out List<int>? ret);
+    }
+
+    [Aggregable]
+    public interface ITestCarryReturnValue
+    {
+        int Test1([TakesReturnValue] int x);
     }
 
     public class TestAggregable
@@ -98,6 +104,25 @@ namespace Hive.Plugins.Tests
             retFalse.Verify(m => m.Test2(out expected), Times.Once);
             // Shouldn't call retTrue.Test2 at all
             retTrue2.Verify(m => m.Test2(out expected2), Times.Never);
+        }
+
+        [Fact]
+        public void TestNormal()
+        {
+            var test1 = new Mock<ITestCarryReturnValue>();
+            test1.Setup(m => m.Test1(It.IsAny<int>())).Returns((int x) => x + 1);
+            var test2 = new Mock<ITestCarryReturnValue>();
+            test2.Setup(m => m.Test1(It.IsAny<int>())).Returns((int x) => x * -1);
+
+            IAggregate<ITestCarryReturnValue> created = new Aggregate<ITestCarryReturnValue>(new List<ITestCarryReturnValue>
+            {
+                test1.Object, test2.Object
+            });
+            // Should go till completion, return (x + 1) * -1
+            Assert.Equal(-2, created.Instance.Test1(1));
+            // Should have called both functions identically once
+            test1.Verify(m => m.Test1(It.IsAny<int>()), Times.Once);
+            test2.Verify(m => m.Test1(It.IsAny<int>()), Times.Once);
         }
     }
 }
