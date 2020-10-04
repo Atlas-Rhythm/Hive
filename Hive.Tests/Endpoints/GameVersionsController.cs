@@ -26,6 +26,7 @@ namespace Hive.Tests.Endpoints
         private ServiceProvider serviceProvider { get; set; }
 
         // oh god help me idk how to improve this
+        [ThreadStatic]
         private static string gameVersionPermissionRule = "next(false)";
 
         private static IEnumerable<GameVersion> defaultGameVersions = new List<GameVersion>()
@@ -57,6 +58,13 @@ namespace Hive.Tests.Endpoints
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
                 .AddTransient<IProxyAuthenticationService>(sp => new MockAuthenticationService())
                 .AddTransient<IGameVersionsPlugin>(sp => new HiveGameVersionsControllerPlugin())
+                .AddTransient<IEnumerable<IGameVersionsPlugin>>(sp => new List<IGameVersionsPlugin>()
+                {
+                    new HiveGameVersionsControllerPlugin(),
+                    new BullyPlugin(),
+                    new DenyUserAccessPlugin(),
+                    new FilterBetaVersionsPlugin()
+                })
                 .AddScoped(sp => new HiveContext() { GameVersions = GetGameVersions(defaultGameVersions.AsQueryable()).Object })
                 .AddScoped<Controllers.GameVersionsController>();
 
@@ -202,6 +210,7 @@ namespace Hive.Tests.Endpoints
 
         private class BullyPlugin : IGameVersionsPlugin
         {
+            [ThreadStatic]
             public static bool IsActive = false;
 
             public IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions)
@@ -213,6 +222,7 @@ namespace Hive.Tests.Endpoints
 
         private class DenyUserAccessPlugin : IGameVersionsPlugin
         {
+            [ThreadStatic]
             public static bool IsActive = false;
 
             public bool GetGameVersionsAdditionalChecks(User? _) => !IsActive; // If it is active, restrict access.
@@ -220,6 +230,7 @@ namespace Hive.Tests.Endpoints
 
         private class FilterBetaVersionsPlugin : IGameVersionsPlugin
         {
+            [ThreadStatic]
             public static bool IsActive = false;
 
             public IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions)
