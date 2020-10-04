@@ -1,10 +1,12 @@
 ﻿using Hive.Controllers;
 using Hive.Models;
 using Hive.Permissions;
+using Hive.Plugins;
 using Hive.Services;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NodaTime;
 using Serilog;
@@ -14,11 +16,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Hive.Tests.Endpoints
 {
     public class ChannelsController
     {
+        private readonly ITestOutputHelper helper;
+
+        public ChannelsController(ITestOutputHelper helper)
+        {
+            this.helper = helper;
+        }
+
         [Fact]
         public async Task PermissionForbid()
         {
@@ -149,43 +159,33 @@ namespace Hive.Tests.Endpoints
             return channelSet;
         }
 
-        private static Mock<IRuleProvider> MockRuleProvider()
-        {
-            var mock = new Mock<IRuleProvider>();
-
-            var start = SystemClock.Instance.GetCurrentInstant();
-            mock.Setup(rules => rules.CurrentTime).Returns(() => SystemClock.Instance.GetCurrentInstant());
-            mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.IsAny<Instant>())).Returns(false);
-            mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.Is<Instant>(i => i < start))).Returns(true);
-            mock.Setup(rules => rules.HasRuleChangedSince(It.IsAny<Rule>(), It.IsAny<Instant>())).Returns(false);
-            mock.Setup(rules => rules.TryGetRule(It.IsAny<StringView>(), out It.Ref<Rule>.IsAny!)).Returns(false);
-            return mock;
-        }
-
         private static Mock<IChannelsControllerPlugin> CreatePlugin() => new Mock<IChannelsControllerPlugin>();
 
         private static IChannelsControllerPlugin CreateDefaultPlugin() => new HiveChannelsControllerPlugin();
 
-        private static Controllers.ChannelsController CreateController(string permissionRule, IChannelsControllerPlugin plugin, IQueryable<Channel> channelData)
+        private Controllers.ChannelsController CreateController(string permissionRule, IChannelsControllerPlugin plugin, IQueryable<Channel> channelData)
         {
-            var logger = new LoggerConfiguration().WriteTo.Debug().CreateLogger();
-            var ruleProvider = MockRuleProvider();
+            var ruleProvider = DIHelper.CreateRuleProvider();
             var hiveRule = new Rule("hive", "next(false)");
             var r = new Rule("hive.channel", permissionRule);
             ruleProvider.Setup(m => m.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
             ruleProvider.Setup(m => m.TryGetRule(r.Name, out r)).Returns(true);
-            var manager = new PermissionsManager<PermissionContext>(ruleProvider.Object, new List<(string, Delegate)>
-            {
-                ("isNull", new Func<object?, bool>(o => o is null))
-            });
 
             var mockChannels = GetChannels(channelData);
             var mockContext = new Mock<HiveContext>();
             mockContext.Setup(m => m.Channels).Returns(mockChannels.Object);
-            var channelsControllerPlugin = new SingleAggregate<IChannelsControllerPlugin>(plugin);
-            var authService = new MockAuthenticationService();
 
-            return new Controllers.ChannelsController(logger, manager, mockContext.Object, channelsControllerPlugin, authService);
+            var services = DIHelper.ConfigureServices(helper, ruleProvider.Object, new List<(string, Delegate)>
+            {
+                ("isNull", new Func<object?, bool>(o => o is null))
+            }, mockContext.Object);
+
+            services.AddSingleton<IChannelsControllerPlugin>(sp => new HiveChannelsControllerPlugin());
+            services.AddSingleton(sp => plugin);
+            services.AddAggregates();
+            services.AddSingleton<Controllers.ChannelsController>();
+
+            return services.BuildServiceProvider().GetRequiredService<Controllers.ChannelsController>();
         }
     }
 }
