@@ -44,13 +44,7 @@ namespace Hive.Tests
             // Rule provider
             if (ruleProvider is null)
             {
-                var mockRuleProvider = new Mock<IRuleProvider>();
-                var start = SystemClock.Instance.GetCurrentInstant();
-                mockRuleProvider.Setup(rules => rules.CurrentTime).Returns(() => SystemClock.Instance.GetCurrentInstant());
-                mockRuleProvider.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.IsAny<Instant>())).Returns(false);
-                mockRuleProvider.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.Is<Instant>(i => i < start))).Returns(true);
-                mockRuleProvider.Setup(rules => rules.HasRuleChangedSince(It.IsAny<Rule>(), It.IsAny<Instant>())).Returns(false);
-                mockRuleProvider.Setup(rules => rules.TryGetRule(It.IsAny<StringView>(), out It.Ref<Rule>.IsAny!)).Returns(false);
+                var mockRuleProvider = CreateRuleProvider();
                 services.AddSingleton((sp) => mockRuleProvider.Object);
             }
             else
@@ -68,6 +62,22 @@ namespace Hive.Tests
                 context = new HiveContext();
             services.AddSingleton(sp => context);
             return services;
+        }
+
+        /// <summary>
+        /// Creates a default <see cref="IRuleProvider"/> which has no rules and uses the current time.
+        /// </summary>
+        /// <returns>The mocked rule provider for further edits.</returns>
+        public static Mock<IRuleProvider> CreateRuleProvider()
+        {
+            var mockRuleProvider = new Mock<IRuleProvider>();
+            var start = SystemClock.Instance.GetCurrentInstant();
+            mockRuleProvider.Setup(rules => rules.CurrentTime).Returns(() => SystemClock.Instance.GetCurrentInstant());
+            mockRuleProvider.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.IsAny<Instant>())).Returns(false);
+            mockRuleProvider.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.Is<Instant>(i => i < start))).Returns(true);
+            mockRuleProvider.Setup(rules => rules.HasRuleChangedSince(It.IsAny<Rule>(), It.IsAny<Instant>())).Returns(false);
+            mockRuleProvider.Setup(rules => rules.TryGetRule(It.IsAny<StringView>(), out It.Ref<Rule>.IsAny!)).Returns(false);
+            return mockRuleProvider;
         }
     }
 }

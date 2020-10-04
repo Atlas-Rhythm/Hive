@@ -165,7 +165,7 @@ namespace Hive.Tests.Endpoints
 
         private Controllers.ChannelsController CreateController(string permissionRule, IChannelsControllerPlugin plugin, IQueryable<Channel> channelData)
         {
-            var ruleProvider = new Mock<IRuleProvider>();
+            var ruleProvider = DIHelper.CreateRuleProvider();
             var hiveRule = new Rule("hive", "next(false)");
             var r = new Rule("hive.channel", permissionRule);
             ruleProvider.Setup(m => m.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
