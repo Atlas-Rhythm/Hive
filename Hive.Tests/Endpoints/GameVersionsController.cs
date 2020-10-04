@@ -18,16 +18,13 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Hive.Tests.Endpoints
 {
     public class GameVersionsController
     {
-        private ServiceProvider serviceProvider { get; set; }
-
-        // oh god help me idk how to improve this
-        [ThreadStatic]
-        private static string gameVersionPermissionRule = "next(false)";
+        private readonly ITestOutputHelper helper;
 
         private static IEnumerable<GameVersion> defaultGameVersions = new List<GameVersion>()
         {
@@ -36,57 +33,20 @@ namespace Hive.Tests.Endpoints
             new GameVersion() { Name = "1.12.0-beta" }
         };
 
-        public GameVersionsController()
+        private static IEnumerable<IGameVersionsPlugin> defaultPlugins = new List<IGameVersionsPlugin>()
         {
-            var services = new ServiceCollection();
-            services
-                .AddScoped<IRuleProvider>(sp => new GameVersionRuleProvider())
-                .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
-                .AddTransient<ILogger>(sp => new LoggerConfiguration().WriteTo.Debug().CreateLogger())
-                .AddScoped(sp =>
-                    new PermissionsManager<PermissionContext>(
-                        sp.GetRequiredService<IRuleProvider>(),
-                        sp.GetService<Permissions.Logging.ILogger>(),
-                        ".",
-                        new List<(string, Delegate)>
-                        {
-                            ("isNull", new Func<object?, bool>(o => o is null)),
-                            ("isNotBeta", new Func<string, bool>(s => !s.Contains("beta", StringComparison.InvariantCultureIgnoreCase)))
-                        }
-                    )
-                )
-                //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
-                .AddTransient<IProxyAuthenticationService>(sp => new MockAuthenticationService())
-                .AddTransient<IGameVersionsPlugin>(sp => new HiveGameVersionsControllerPlugin())
-                .AddTransient<IEnumerable<IGameVersionsPlugin>>(sp => new List<IGameVersionsPlugin>()
-                {
-                    new HiveGameVersionsControllerPlugin(), // Default implementation plugin
-                    new BullyPlugin(), // Gives empty list of game versions
-                    new DenyUserAccessPlugin(), // Denies user access to the endpoint
-                    new FilterBetaVersionsPlugin() // Filters all beta game versions
-                })
-                .AddScoped(sp => new HiveContext() { GameVersions = GetGameVersions(defaultGameVersions.AsQueryable()).Object })
-                .AddScoped<Controllers.GameVersionsController>();
+            new HiveGameVersionsControllerPlugin()
+        };
 
-            services.AddAggregates();
-
-            services.AddAuthentication(a =>
-            {
-                a.AddScheme<MockAuthenticationHandler>("Bearer", "MockAuth");
-                a.DefaultScheme = "Bearer";
-            });
-
-            serviceProvider = services.BuildServiceProvider();
+        public GameVersionsController(ITestOutputHelper helper)
+        {
+            this.helper = helper;
         }
 
         [Fact]
         public async Task PermissionForbid()
         {
-            // Reset controller state.
-            gameVersionPermissionRule = "next(false)";
-            BullyPlugin.IsActive = DenyUserAccessPlugin.IsActive = FilterBetaVersionsPlugin.IsActive = false;
-
-            var controller = serviceProvider.GetRequiredService<Controllers.GameVersionsController>();
+            var controller = CreateController("next(false)", defaultPlugins);
             var res = await controller.GetGameVersions();
 
             Assert.NotNull(res); // Result must not be null.
@@ -97,11 +57,12 @@ namespace Hive.Tests.Endpoints
         [Fact]
         public async Task PluginDeny()
         {
-            gameVersionPermissionRule = "next(true)"; // This would usually allow user access, but should be blocked by plugin.
-            BullyPlugin.IsActive = FilterBetaVersionsPlugin.IsActive = false;
-            DenyUserAccessPlugin.IsActive = true; // This plugin should immediately block access to the endpoint.
-
-            var controller = serviceProvider.GetRequiredService<Controllers.GameVersionsController>();
+            var controller = CreateController("next(true)", // This would usually allow user access, but should be blocked by plugin.
+                new List<IGameVersionsPlugin>()
+                    {
+                        new HiveGameVersionsControllerPlugin(),
+                        new DenyUserAccessPlugin(), // This plugin should deny user access.
+                    });
             var res = await controller.GetGameVersions();
 
             Assert.NotNull(res); // Result must not be null.
@@ -112,11 +73,7 @@ namespace Hive.Tests.Endpoints
         [Fact]
         public async Task Standard()
         {
-            // Reset controller state.
-            gameVersionPermissionRule = "next(true)";
-            BullyPlugin.IsActive = DenyUserAccessPlugin.IsActive = FilterBetaVersionsPlugin.IsActive = false;
-
-            var controller = serviceProvider.GetRequiredService<Controllers.GameVersionsController>();
+            var controller = CreateController("next(true)", defaultPlugins);
             var res = await controller.GetGameVersions();
 
             Assert.NotNull(res); // Result must not be null.
@@ -137,12 +94,7 @@ namespace Hive.Tests.Endpoints
         {
             // This rule will filter out all beta versions from our list.
             // See the constructor for impls of "isNull" and "isNotBeta"
-            gameVersionPermissionRule = "isNull(ctx.GameVersion) | isNotBeta(ctx.GameVersion.Name) | next(false)";
-            BullyPlugin.IsActive = DenyUserAccessPlugin.IsActive = FilterBetaVersionsPlugin.IsActive = false;
-
-            // The isNull check is for the permission check on the entire endpoint
-            // The doesNotContain check is to filter out versions marked as "beta"
-            var controller = serviceProvider.GetRequiredService<Controllers.GameVersionsController>();
+            var controller = CreateController("isNull(ctx.GameVersion) | isNotBeta(ctx.GameVersion.Name) | next(false)", defaultPlugins);
             var res = await controller.GetGameVersions();
 
             Assert.NotNull(res); // Result must not be null.
@@ -165,13 +117,12 @@ namespace Hive.Tests.Endpoints
         [Fact]
         public async Task FilterViaPlugin()
         {
-            // Reset controller state.
-            gameVersionPermissionRule = "next(true)";
-            BullyPlugin.IsActive = DenyUserAccessPlugin.IsActive = false;
-            FilterBetaVersionsPlugin.IsActive = true; // This plugin will do the same behavior as FilterViaPermissionRule.
-
-            // Create our controller like normal, and allow everything.
-            var controller = serviceProvider.GetRequiredService<Controllers.GameVersionsController>();
+            var controller = CreateController("next(true)",
+                new List<IGameVersionsPlugin>()
+                    {
+                        new HiveGameVersionsControllerPlugin(),
+                        new FilterBetaVersionsPlugin(), // This plugin should filter beta game versions
+                    });
             var res = await controller.GetGameVersions();
 
             Assert.NotNull(res); // Result must not be null.
@@ -189,6 +140,52 @@ namespace Hive.Tests.Endpoints
             {
                 Assert.Contains(defaultGameVersions.ElementAt(i), value);
             }
+        }
+
+        [Fact]
+        public async Task TestStopIfReturnsEmpty()
+        {
+            var controller = CreateController("next(true)",
+                new List<IGameVersionsPlugin>()
+                    {
+                        new HiveGameVersionsControllerPlugin(),
+                        new BullyPlugin(), // This plugin should remove all game versions
+                        new ThrowWhenRetrievingGameVerions(), // This plugin will throw an exception if it is not short-circuited by StopIfReturnsEmpty.
+                    });
+            var res = await controller.GetGameVersions();
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed, and the plugin will gives us all public versions.
+            var result = res.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var value = result!.Value as IEnumerable<GameVersion>;
+            Assert.NotNull(value); // We must be given a list of versions back.
+
+            Assert.True(!value!.Any()); // There should not be any elements in the returned enumerable.
+        }
+
+        private Controllers.GameVersionsController CreateController(string permissionRule, IEnumerable<IGameVersionsPlugin> plugins)
+        {
+            var services = DIHelper.ConfigureServices(
+                helper,
+                new GameVersionRuleProvider(permissionRule),
+                new List<(string, Delegate)>
+                {
+                    ("isNull", new Func<object?, bool>(o => o is null)),
+                    ("isNotBeta", new Func<string, bool>(s => !s.Contains("beta", StringComparison.InvariantCultureIgnoreCase)))
+                },
+                new HiveContext()
+                {
+                    GameVersions = GetGameVersions(defaultGameVersions.AsQueryable()).Object
+                });
+
+            services
+                .AddTransient(sp => plugins)
+                .AddScoped<Controllers.GameVersionsController>()
+                .AddAggregates();
+
+            return services.BuildServiceProvider().GetRequiredService<Controllers.GameVersionsController>();
         }
 
         // Taken from sc2ad's test for ChannelsControllers
@@ -210,38 +207,39 @@ namespace Hive.Tests.Endpoints
 
         private class BullyPlugin : IGameVersionsPlugin
         {
-            [ThreadStatic]
-            public static bool IsActive = false;
-
             public IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions)
             {
-                if (!IsActive) return versions;
-                return new List<GameVersion>() { };
+                return Array.Empty<GameVersion>();
             }
         }
 
         private class DenyUserAccessPlugin : IGameVersionsPlugin
         {
-            [ThreadStatic]
-            public static bool IsActive = false;
-
-            public bool GetGameVersionsAdditionalChecks(User? _) => !IsActive; // If it is active, restrict access.
+            public bool GetGameVersionsAdditionalChecks(User? _) => false; // If it is active, restrict access.
         }
 
         private class FilterBetaVersionsPlugin : IGameVersionsPlugin
         {
-            [ThreadStatic]
-            public static bool IsActive = false;
-
             public IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions)
             {
-                if (!IsActive) return versions;
                 return versions.Where(x => !x.Name.Contains("beta", StringComparison.InvariantCultureIgnoreCase));
             }
         }
 
+        private class ThrowWhenRetrievingGameVerions : IGameVersionsPlugin
+        {
+            public IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions) => throw new Exception("The Game Versions array is not empty, or the StopIfReturnsEmpty attribute does not work properly.");
+        }
+
         private class GameVersionRuleProvider : IRuleProvider
         {
+            private readonly string permissionRule;
+
+            public GameVersionRuleProvider(string permissionRule)
+            {
+                this.permissionRule = permissionRule;
+            }
+
             public bool HasRuleChangedSince(StringView name, Instant time) => true;
 
             public bool HasRuleChangedSince(Rule rule, Instant time) => true;
@@ -255,7 +253,7 @@ namespace Hive.Tests.Endpoints
                         gotten = new Rule(nameString, "next(false)");
                         return true;
                     case "hive.game.version":
-                        gotten = new Rule(nameString, gameVersionPermissionRule);
+                        gotten = new Rule(nameString, permissionRule);
                         return true;
                     default:
                         gotten = null;
