@@ -56,14 +56,9 @@ namespace Hive.Tests.Endpoints
                 )
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
                 .AddTransient<IProxyAuthenticationService>(sp => new MockAuthenticationService())
+                .AddTransient<IGameVersionsPlugin>(sp => new HiveGameVersionsControllerPlugin())
                 .AddScoped(sp => new HiveContext() { GameVersions = GetGameVersions(defaultGameVersions.AsQueryable()).Object })
-                .AddScoped(sp => new Controllers.GameVersionsController(
-                    sp.GetRequiredService<ILogger>(),
-                    sp.GetRequiredService<PermissionsManager<PermissionContext>>(),
-                    sp.GetRequiredService<HiveContext>(),
-                    sp.GetRequiredService<IAggregate<IGameVersionsPlugin>>(),
-                    sp.GetRequiredService<IProxyAuthenticationService>()
-                    ));
+                .AddScoped<Controllers.GameVersionsController>();
 
             services.AddAggregates();
 
