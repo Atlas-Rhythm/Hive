@@ -60,10 +60,10 @@ namespace Hive.Tests.Endpoints
                 .AddTransient<IGameVersionsPlugin>(sp => new HiveGameVersionsControllerPlugin())
                 .AddTransient<IEnumerable<IGameVersionsPlugin>>(sp => new List<IGameVersionsPlugin>()
                 {
-                    new HiveGameVersionsControllerPlugin(),
-                    new BullyPlugin(),
-                    new DenyUserAccessPlugin(),
-                    new FilterBetaVersionsPlugin()
+                    new HiveGameVersionsControllerPlugin(), // Default implementation plugin
+                    new BullyPlugin(), // Gives empty list of game versions
+                    new DenyUserAccessPlugin(), // Denies user access to the endpoint
+                    new FilterBetaVersionsPlugin() // Filters all beta game versions
                 })
                 .AddScoped(sp => new HiveContext() { GameVersions = GetGameVersions(defaultGameVersions.AsQueryable()).Object })
                 .AddScoped<Controllers.GameVersionsController>();
