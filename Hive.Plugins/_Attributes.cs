@@ -34,7 +34,7 @@ namespace Hive.Plugins
     /// Indicates that an aggregated method should stop executing implementations if it returns the provided 
     /// <see cref="bool"/> value, either with a normal return or out parameter, depending on where this attribute is placed.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.ReturnValue | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class StopIfReturnsAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
     {
         /// <summary>
@@ -61,7 +61,7 @@ namespace Hive.Plugins
     /// Indicates that an aggregated method should stop executing implementations if it returns <see langword="null"/>,
     /// either with a normal return or out parameter, depending on where this attribute is placed.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.ReturnValue | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class StopIfReturnsNullAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
     {
         bool IRequiresType.CheckType(Type type)
@@ -85,7 +85,7 @@ namespace Hive.Plugins
     /// Indicates that the result value for this attribute's target should be the value that the last executed implementation
     /// returned.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.ReturnValue | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class ReturnLastAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IExpressionAggregator
     {
         Expression IExpressionAggregator.Aggregate(Expression prev, Expression next)

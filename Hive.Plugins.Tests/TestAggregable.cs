@@ -9,7 +9,7 @@ namespace Hive.Plugins.Tests
     [Aggregable]
     public interface ITestStopIfReturns
     {
-        [StopIfReturns(false)]
+        [return: StopIfReturns(false)]
         bool Test1() => false;
 
         void Test2([StopIfReturns(false)] out bool ret) => ret = false;
@@ -18,7 +18,7 @@ namespace Hive.Plugins.Tests
     [Aggregable]
     public interface ITestStopIfReturnsNull
     {
-        [StopIfReturnsNull]
+        [return: StopIfReturnsNull]
         List<int>? Test1();
 
         void Test2([StopIfReturnsNull] out List<int>? ret);
