@@ -243,6 +243,7 @@ namespace Hive.Plugins
                 }
             }
         }
+
         private static OutParameterInfo CreateOutParamInfo(IEnumerable<Attribute> attrs, bool isRet = false)
         {
             return new OutParameterInfo(
@@ -276,6 +277,7 @@ namespace Hive.Plugins
         private class DefaultByRef<T>
         {
             public T Default = default!;
+
             public ref T ByRefDefault() => ref Default;
         }
 
