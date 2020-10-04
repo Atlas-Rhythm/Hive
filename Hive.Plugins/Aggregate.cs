@@ -8,7 +8,7 @@ namespace Hive.Plugins
     internal class Aggregate<T> : IAggregate<T>
         where T : class
     {
-        private Aggregate(IEnumerable<T> aggregate)
+        internal Aggregate(IEnumerable<T> aggregate)
         {
             Instance = AggregatedInstanceGenerator<T>.Create(aggregate);
         }
