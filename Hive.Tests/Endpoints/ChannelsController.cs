@@ -1,10 +1,12 @@
 ﻿using Hive.Controllers;
 using Hive.Models;
 using Hive.Permissions;
+using Hive.Plugins;
 using Hive.Services;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NodaTime;
 using Serilog;
@@ -14,20 +16,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Hive.Tests.Endpoints
 {
     public class ChannelsController
     {
-        private readonly ILogger logger;
-        private readonly PermissionsManager<PermissionContext> manager;
-        private readonly IProxyAuthenticationService authService;
+        private readonly ITestOutputHelper helper;
 
-        public ChannelsController(ILogger _logger, PermissionsManager<PermissionContext> _manager, IProxyAuthenticationService _authService)
+        public ChannelsController(ITestOutputHelper helper)
         {
-            logger = _logger;
-            manager = _manager;
-            authService = _authService;
+            this.helper = helper;
         }
 
         [Fact]
@@ -166,7 +165,7 @@ namespace Hive.Tests.Endpoints
 
         private Controllers.ChannelsController CreateController(string permissionRule, IChannelsControllerPlugin plugin, IQueryable<Channel> channelData)
         {
-            var ruleProvider = Startup.MockRuleProvider;
+            var ruleProvider = new Mock<IRuleProvider>();
             var hiveRule = new Rule("hive", "next(false)");
             var r = new Rule("hive.channel", permissionRule);
             ruleProvider.Setup(m => m.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
@@ -175,9 +174,18 @@ namespace Hive.Tests.Endpoints
             var mockChannels = GetChannels(channelData);
             var mockContext = new Mock<HiveContext>();
             mockContext.Setup(m => m.Channels).Returns(mockChannels.Object);
-            var channelsControllerPlugin = new SingleAggregate<IChannelsControllerPlugin>(plugin);
 
-            return new Controllers.ChannelsController(logger, manager, mockContext.Object, channelsControllerPlugin, authService);
+            var services = DIHelper.ConfigureServices(helper, ruleProvider.Object, new List<(string, Delegate)>
+            {
+                ("isNull", new Func<object?, bool>(o => o is null))
+            }, mockContext.Object);
+
+            services.AddSingleton<IChannelsControllerPlugin>(sp => new HiveChannelsControllerPlugin());
+            services.AddSingleton(sp => plugin);
+            services.AddAggregates();
+            services.AddSingleton<Controllers.ChannelsController>();
+
+            return services.BuildServiceProvider().GetRequiredService<Controllers.ChannelsController>();
         }
     }
 }
