@@ -36,6 +36,9 @@ namespace Hive.Plugins.Tests
     {
         [return: StopIfReturnsEmpty]
         List<int> RemoveNumber([TakesReturnValue] List<int> input);
+
+        [return: StopIfReturnsEmpty]
+        Dictionary<string, int> RemoveLastKey([TakesReturnValue] Dictionary<string, int> input);
     }
 
     public class TestAggregable
@@ -120,10 +123,12 @@ namespace Hive.Plugins.Tests
             int numberOfElements = 3;
 
             List<Mock<ITestStopIfReturnsEmpty>> plugins = new List<Mock<ITestStopIfReturnsEmpty>>();
-            List<int> numbers = new List<int>() { }; 
+            List<int> numbers = new List<int>() { };
+            Dictionary<string, int> dictionary = new Dictionary<string, int>();
             for (int i = 0; i < numberOfElements; i++)
             {
                 numbers.Add(i);
+                dictionary.Add(i.ToString(), i);
             }
 
             for (int i = 0; i < numberOfElements * 2; i++)
@@ -136,6 +141,13 @@ namespace Hive.Plugins.Tests
                     input.RemoveAt(input.Count - 1);
                     return input;
                 });
+
+                plugin.Setup(p => p.RemoveLastKey(It.IsAny<Dictionary<string, int>>())).Returns<Dictionary<string, int>>((input) =>
+                {
+                    if (!input.Any()) throw new ArgumentException("Input dictionary is empty.");
+                    input.Remove(input.Last().Key);
+                    return input;
+                });
                 plugins.Add(plugin);
             }
 
@@ -143,6 +155,7 @@ namespace Hive.Plugins.Tests
 
             // If StopIfReturnsEmpty fails, then an exception will be thrown here.
             Assert.Empty(created.Instance.RemoveNumber(numbers));
+            Assert.Empty(created.Instance.RemoveLastKey(dictionary));
 
             // Since each plugin takes away one element, we need to ensure that only the first X plugins were fired,
             // where X is the amount of elements in the initial list.

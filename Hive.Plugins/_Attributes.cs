@@ -102,14 +102,17 @@ namespace Hive.Plugins
 
         Expression IStopIfReturns.Test(Expression value)
         {
-            // Get our type argument to pass into Enumerable.Any
-            Type typeParameter = value.Type.GetGenericArguments()[0];
+            Type enumerableType = value.Type;
+            if (enumerableType.GetGenericTypeDefinition() != typeof(IEnumerable<>))
+            {
+                enumerableType = enumerableType.GetInterfaces().Where(x => x.GetGenericTypeDefinition() == typeof(IEnumerable<>)).First();
+            }
 
-            return Expression.IsFalse( 
+            return Expression.IsFalse(
                 Expression.Call(
                     typeof(Enumerable),
                     "Any",
-                    new Type[] { typeParameter },
+                    enumerableType.GetGenericArguments(),
                     value));
         }
     }
