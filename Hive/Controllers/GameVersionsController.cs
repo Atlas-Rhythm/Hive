@@ -26,7 +26,7 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="user">User in context</param>
         [return: StopIfReturns(false)]
-        public bool GetGameVersionsAdditionalChecks(User? user) => true;
+        bool GetGameVersionsAdditionalChecks(User? user) => true;
 
         /// <summary>
         /// Returns a filtered enumerable of <see cref="GameVersion"/>.
@@ -35,7 +35,7 @@ namespace Hive.Controllers
         /// <param name="user">User to filter on</param>
         /// <param name="versions">Input versions to filter</param>
         [return: StopIfReturnsEmpty]
-        public IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions) => versions;
+        IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions) => versions;
     }
 
     internal class HiveGameVersionsControllerPlugin : IGameVersionsPlugin { }
