@@ -95,16 +95,21 @@ namespace Hive.Plugins
     public sealed class StopIfReturnsEmptyAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
     {
         bool IRequiresType.CheckType(Type type)
-             => (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
-                type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+             => type == typeof(IEnumerable<>) ||
+                (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
+                type.GetInterfaces().Any(i
+                => i.GetType() == typeof(IEnumerable<>) || (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>)));
 
         Expression IStopIfReturns.Test(Expression value)
         {
-            return Expression.IsFalse(
+            // Get our type argument to pass into Enumerable.Any
+            Type typeParameter = value.Type.GetGenericArguments()[0];
+
+            return Expression.IsFalse( 
                 Expression.Call(
                     typeof(Enumerable),
                     "Any",
-                    new Type[] { typeof(object) },
+                    new Type[] { typeParameter },
                     value));
         }
     }
