@@ -25,7 +25,7 @@ namespace Hive.Controllers
         /// <para>Hive default is to return true.</para>
         /// </summary>
         /// <param name="user">User in context</param>
-        [StopIfReturns(false)]
+        [return: StopIfReturns(false)]
         public bool GetGameVersionsAdditionalChecks(User? user) => true;
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="user">User to filter on</param>
         /// <param name="versions">Input versions to filter</param>
-        [StopIfReturnsEmpty]
+        [return: StopIfReturnsEmpty]
         public IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions) => versions;
     }
 
