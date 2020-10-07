@@ -10,9 +10,13 @@ using System.Text;
 namespace Hive.Plugins
 {
     internal interface IAggregatorAttribute { }
+
     internal interface ITargetsInParam : IAggregatorAttribute { }
+
     internal interface ITargetsOutParam : IAggregatorAttribute { }
+
     internal interface ITargetsReturn : IAggregatorAttribute { }
+
     internal interface ISpecifiesInput : IAggregatorAttribute { }
 
     internal interface IRequiresType : IAggregatorAttribute
@@ -31,16 +35,17 @@ namespace Hive.Plugins
     }
 
     /// <summary>
-    /// Indicates that an aggregated method should stop executing implementations if it returns the provided 
+    /// Indicates that an aggregated method should stop executing implementations if it returns the provided
     /// <see cref="bool"/> value, either with a normal return or out parameter, depending on where this attribute is placed.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.ReturnValue | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class StopIfReturnsAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
     {
         /// <summary>
         /// Gets the return value that signals the aggregator to exit.
         /// </summary>
         public bool ReturnValue { get; }
+
         /// <summary>
         /// Constructs a <see cref="StopIfReturnsAttribute"/> with the specified return value.
         /// </summary>
@@ -61,7 +66,7 @@ namespace Hive.Plugins
     /// Indicates that an aggregated method should stop executing implementations if it returns <see langword="null"/>,
     /// either with a normal return or out parameter, depending on where this attribute is placed.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.ReturnValue | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class StopIfReturnsNullAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
     {
         bool IRequiresType.CheckType(Type type)
@@ -85,7 +90,7 @@ namespace Hive.Plugins
     /// Indicates that the result value for this attribute's target should be the value that the last executed implementation
     /// returned.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.ReturnValue | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class ReturnLastAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IExpressionAggregator
     {
         Expression IExpressionAggregator.Aggregate(Expression prev, Expression next)
@@ -108,14 +113,17 @@ namespace Hive.Plugins
         /// Gets the type that has the aggregator method to use.
         /// </summary>
         public Type TypeWithAggregator { get; }
+
         /// <summary>
         /// Gets the name of the aggregator method.
         /// </summary>
         public string AggregatorName { get; }
+
         /// <summary>
         /// Gets the <see cref="Expression"/>-based aggregator method, if it is what is targeted.
         /// </summary>
         public MethodInfo? ExpressionAggregator { get; }
+
         /// <summary>
         /// Constructs an <see cref="AggregateWithAttribute"/> with the specified target type and method name.
         /// </summary>
@@ -183,6 +191,7 @@ namespace Hive.Plugins
         /// Gets the index of the <see langword="out"/> parameter referenced.
         /// </summary>
         public int ParameterIndex { get; }
+
         /// <summary>
         /// Constructs a <see cref="TakesOutValueAttribute"/> with the index of the <see langword="out"/>  parameter to reference.
         /// </summary>
@@ -193,5 +202,4 @@ namespace Hive.Plugins
         public TakesOutValueAttribute(int index)
             => ParameterIndex = index;
     }
-
 }
