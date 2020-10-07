@@ -168,12 +168,7 @@ namespace Hive.Plugins.Tests
             // If any were fired, we would throw a regular Exception, and the test would fail here.
             for (int i = numberOfElements; i < plugins.Count; i++)
             {
-                try
-                {
-                    plugins[i].Verify(p => p.RemoveNumber(It.IsAny<List<int>>()));
-                    throw new Exception("These plugins should not have been executed.");
-                }
-                catch (MockException) { }
+                plugins[i].Verify(p => p.RemoveNumber(It.IsAny<List<int>>()), Times.Never());
             }
         }
 
