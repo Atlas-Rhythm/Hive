@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Hive.Controllers
@@ -49,7 +50,7 @@ namespace Hive.Controllers
         private readonly HiveContext context;
         private readonly IAggregate<IGameVersionsPlugin> plugin;
         private readonly IProxyAuthenticationService proxyAuth;
-        private PermissionActionParseState versionsParseState;
+        private readonly ThreadLocal<PermissionActionParseState> versionsParseState;
 
         public GameVersionsController([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IGameVersionsPlugin> plugin, IProxyAuthenticationService proxyAuth)
         {
@@ -57,6 +58,7 @@ namespace Hive.Controllers
             log = logger.ForContext<GameVersionsController>();
             permissions = perms;
             context = ctx;
+            versionsParseState = new ThreadLocal<PermissionActionParseState>();
             this.plugin = plugin;
             this.proxyAuth = proxyAuth;
         }
@@ -71,9 +73,12 @@ namespace Hive.Controllers
             log.Debug("Getting game versions...");
             // Get the user, do not need to capture context.
             User? user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+
             // iff a given user (or none) is allowed to access any game versions. This should almost always be true.
-            if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref versionsParseState))
+            var parseState = versionsParseState.Value;
+            if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref parseState))
                 return Forbid();
+            versionsParseState.Value = parseState; // We need to do this workaround to get refs to work w/ThreadLocal<T>
 
             // Combine plugins
             log.Debug("Combining plugins...");
@@ -88,7 +93,8 @@ namespace Hive.Controllers
             log.Debug("Filtering versions from all {0} versions...", versions.Count);
             // First, we perform a permission check on each game version, in case we need to filter any specific ones
             // (Use additionalData to flag beta game versions, perhaps? Could be a plugin.)
-            var filteredVersions = versions.Where(v => permissions.CanDo(ActionName, new PermissionContext { GameVersion = v, User = user }, ref versionsParseState));
+            var filteredVersions = versions.Where(v => permissions.CanDo(ActionName, new PermissionContext { GameVersion = v, User = user }, ref parseState));
+            versionsParseState.Value = parseState;
             log.Debug("Remaining versions after permissions check: {0}", filteredVersions.Count());
             // Then we filter this even further by passing it through all of our Hive plugins.
             filteredVersions = combined.GetGameVersionsFilter(user, filteredVersions);
