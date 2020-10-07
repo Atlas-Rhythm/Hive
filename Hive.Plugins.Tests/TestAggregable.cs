@@ -34,32 +34,6 @@ namespace Hive.Plugins.Tests
     public class TestAggregable
     {
         [Fact]
-        /// <summary>
-        /// Tests the construction of a <see cref="Aggregate{T}"/> (one with a collection, the other with a <see cref="IServiceProvider"/>)
-        /// </summary>
-        public void TestConstruction()
-        {
-            var o1 = new Mock<ITestCarryReturnValue>();
-            o1.Setup(m => m.Test1(It.IsAny<int>())).Returns(1);
-
-            var o2 = new Mock<ITestCarryReturnValue>();
-            o2.Setup(m => m.Test1(It.IsAny<int>())).Returns(3);
-
-            var created1 = new Aggregate<ITestCarryReturnValue>(new List<ITestCarryReturnValue>() {
-                o1.Object, o2.Object
-            });
-
-            var collection = new ServiceCollection();
-            collection.AddSingleton(sp => o1.Object);
-            collection.AddSingleton(sp => o2.Object);
-            collection.AddAggregates();
-
-            var created2 = new Aggregate<ITestCarryReturnValue>(collection.BuildServiceProvider());
-            // Confirm the results are the same
-            Assert.Equal(created1.Instance.Test1(123), created2.Instance.Test1(123));
-        }
-
-        [Fact]
         public void TestStopIfReturns()
         {
             var retTrue1 = new Mock<ITestStopIfReturns>();

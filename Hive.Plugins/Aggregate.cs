@@ -21,15 +21,6 @@ namespace Hive.Plugins
             Instance = AggregatedInstanceGenerator<T>.Create(aggregate);
         }
 
-        /// <summary>
-        /// Create an aggregate instance from an <see cref="IServiceProvider"/>.
-        /// </summary>
-        /// <remarks>This call forwards to <see cref="Aggregate{T}.Aggregate(IEnumerable{T})"/>.</remarks>
-        /// <param name="services">The service provider to use.</param>
-        public Aggregate(IServiceProvider services) : this(services.GetServices<T>())
-        {
-        }
-
         /// <inheritdoc/>
         public T Instance { get; }
     }
