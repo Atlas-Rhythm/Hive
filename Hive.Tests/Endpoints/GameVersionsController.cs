@@ -142,29 +142,6 @@ namespace Hive.Tests.Endpoints
             }
         }
 
-        [Fact]
-        public async Task TestStopIfReturnsEmpty()
-        {
-            var controller = CreateController("next(true)",
-                new List<IGameVersionsPlugin>()
-                    {
-                        new HiveGameVersionsControllerPlugin(),
-                        new BullyPlugin(), // This plugin should remove all game versions
-                        new ThrowWhenRetrievingGameVerions(), // This plugin will throw an exception if it is not short-circuited by StopIfReturnsEmpty.
-                    });
-            var res = await controller.GetGameVersions();
-
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
-            Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed, and the plugin will gives us all public versions.
-            var result = res.Result as OkObjectResult;
-            Assert.NotNull(result);
-            var value = result!.Value as IEnumerable<GameVersion>;
-            Assert.NotNull(value); // We must be given a list of versions back.
-
-            Assert.True(!value!.Any()); // There should not be any elements in the returned enumerable.
-        }
-
         private Controllers.GameVersionsController CreateController(string permissionRule, IEnumerable<IGameVersionsPlugin> plugins)
         {
             var services = DIHelper.ConfigureServices(
@@ -205,14 +182,6 @@ namespace Hive.Tests.Endpoints
             return channelSet;
         }
 
-        private class BullyPlugin : IGameVersionsPlugin
-        {
-            public IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions)
-            {
-                return Array.Empty<GameVersion>();
-            }
-        }
-
         private class DenyUserAccessPlugin : IGameVersionsPlugin
         {
             public bool GetGameVersionsAdditionalChecks(User? _) => false; // If it is active, restrict access.
@@ -224,11 +193,6 @@ namespace Hive.Tests.Endpoints
             {
                 return versions.Where(x => !x.Name.Contains("beta", StringComparison.InvariantCultureIgnoreCase));
             }
-        }
-
-        private class ThrowWhenRetrievingGameVerions : IGameVersionsPlugin
-        {
-            public IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions) => throw new Exception("The Game Versions array is not empty, or the StopIfReturnsEmpty attribute does not work properly.");
         }
 
         private class GameVersionRuleProvider : IRuleProvider

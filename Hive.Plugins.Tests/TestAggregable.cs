@@ -31,6 +31,18 @@ namespace Hive.Plugins.Tests
         int Test1([TakesReturnValue] int x);
     }
 
+    [Aggregable]
+    public interface ITestStopIfReturnsEmpty
+    {
+        [return: StopIfReturnsEmpty]
+        List<int> RemoveNumber([TakesReturnValue] List<int> input)
+        {
+            if (input.Count == 0) throw new ArgumentException("Input list is empty.");
+            input.RemoveAt(input.Count - 1);
+            return input;
+        }
+    }
+
     public class TestAggregable
     {
         [Fact]
@@ -105,6 +117,28 @@ namespace Hive.Plugins.Tests
             retFalse.Verify(m => m.Test2(out expected), Times.Once);
             // Shouldn't call retTrue.Test2 at all
             retTrue2.Verify(m => m.Test2(out expected2), Times.Never);
+        }
+
+        [Fact]
+        public void TestStopIfReturnsEmpty()
+        {
+            List<ITestStopIfReturnsEmpty> plugins = new List<ITestStopIfReturnsEmpty>();
+            for (int i = 0; i < 6; i++) // This could be any number of plugins, as long as there is more than the input list. 
+            {
+                var plugin = new Mock<ITestStopIfReturnsEmpty>();
+                plugin.Setup(p => p.RemoveNumber(It.IsAny<List<int>>())).Returns<List<int>>((input) =>
+                {
+                    if (input.Count == 0) throw new ArgumentException("Input list is empty.");
+                    input.RemoveAt(input.Count - 1);
+                    return input;
+                });
+                plugins.Add(plugin.Object);
+            }
+
+            List<int> numbers = new List<int>() { 0, 1, 2 };
+
+            var created = new Aggregate<ITestStopIfReturnsEmpty>(plugins);
+            Assert.True(created.Instance.RemoveNumber(numbers).Count == 0);
         }
 
         [Fact]
