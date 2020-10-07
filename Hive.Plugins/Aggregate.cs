@@ -23,8 +23,8 @@ namespace Hive.Plugins
 
         /// <summary>
         /// Create an aggregate instance from an <see cref="IServiceProvider"/>.
-        /// This call forwards to <see cref="Aggregate{T}.Aggregate(IEnumerable{T})"/>.
         /// </summary>
+        /// <remarks>This call forwards to <see cref="Aggregate{T}.Aggregate(IEnumerable{T})"/>.</remarks>
         /// <param name="services">The service provider to use.</param>
         public Aggregate(IServiceProvider services) : this(services.GetServices<T>())
         {

@@ -34,6 +34,32 @@ namespace Hive.Plugins.Tests
     public class TestAggregable
     {
         [Fact]
+        /// <summary>
+        /// Tests the construction of a <see cref="Aggregate{T}"/> (one with a collection, the other with a <see cref="IServiceProvider"/>)
+        /// </summary>
+        public void TestConstruction()
+        {
+            var o1 = new Mock<ITestCarryReturnValue>();
+            o1.Setup(m => m.Test1(It.IsAny<int>())).Returns(1);
+
+            var o2 = new Mock<ITestCarryReturnValue>();
+            o2.Setup(m => m.Test1(It.IsAny<int>())).Returns(3);
+
+            var created1 = new Aggregate<ITestCarryReturnValue>(new List<ITestCarryReturnValue>() {
+                o1.Object, o2.Object
+            });
+
+            var collection = new ServiceCollection();
+            collection.AddSingleton(sp => o1.Object);
+            collection.AddSingleton(sp => o2.Object);
+            collection.AddAggregates();
+
+            var created2 = new Aggregate<ITestCarryReturnValue>(collection.BuildServiceProvider());
+            // Confirm the results are the same
+            Assert.Equal(created1.Instance.Test1(123), created2.Instance.Test1(123));
+        }
+
+        [Fact]
         public void TestStopIfReturns()
         {
             var retTrue1 = new Mock<ITestStopIfReturns>();
@@ -51,7 +77,9 @@ namespace Hive.Plugins.Tests
             expected = true;
             retTrue2.Setup(m => m.Test2(out expected));
 
-            var created = DIHelper.Create(retTrue1.Object, retFalse.Object, retTrue2.Object);
+            var created = new Aggregate<ITestStopIfReturns>(new List<ITestStopIfReturns>(){
+                retTrue1.Object, retFalse.Object, retTrue2.Object
+            });
             // Should return upon the first false returned
             Assert.False(created.Instance.Test1());
             created.Instance.Test2(out var tmp);
@@ -88,7 +116,9 @@ namespace Hive.Plugins.Tests
             List<int>? expected2 = new List<int>();
             retTrue2.Setup(m => m.Test2(out expected2));
 
-            var created = DIHelper.Create(retTrue1.Object, retFalse.Object, retTrue2.Object);
+            var created = new Aggregate<ITestStopIfReturnsNull>(new List<ITestStopIfReturnsNull>(){
+                retTrue1.Object, retFalse.Object, retTrue2.Object
+            });
             // Should return upon the first null returned
             Assert.Null(created.Instance.Test1());
             created.Instance.Test2(out var tmp);
@@ -111,7 +141,9 @@ namespace Hive.Plugins.Tests
             var test2 = new Mock<ITestCarryReturnValue>();
             test2.Setup(m => m.Test1(It.IsAny<int>())).Returns((int x) => x * -1);
 
-            var created = DIHelper.Create(test1.Object, test2.Object);
+            var created = new Aggregate<ITestCarryReturnValue>(new List<ITestCarryReturnValue>(){
+                test1.Object, test2.Object
+            });
             // Should go till completion, return (x + 1) * -1
             Assert.Equal(-2, created.Instance.Test1(1));
             // Should have called both functions identically once
