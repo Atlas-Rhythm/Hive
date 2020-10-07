@@ -35,12 +35,7 @@ namespace Hive.Plugins.Tests
     public interface ITestStopIfReturnsEmpty
     {
         [return: StopIfReturnsEmpty]
-        List<int> RemoveNumber([TakesReturnValue] List<int> input)
-        {
-            if (input.Count == 0) throw new ArgumentException("Input list is empty.");
-            input.RemoveAt(input.Count - 1);
-            return input;
-        }
+        List<int> RemoveNumber([TakesReturnValue] List<int> input);
     }
 
     public class TestAggregable
@@ -122,23 +117,51 @@ namespace Hive.Plugins.Tests
         [Fact]
         public void TestStopIfReturnsEmpty()
         {
-            List<ITestStopIfReturnsEmpty> plugins = new List<ITestStopIfReturnsEmpty>();
-            for (int i = 0; i < 6; i++) // This could be any number of plugins, as long as there is more than the input list. 
+            int numberOfElements = 3;
+
+            List<Mock<ITestStopIfReturnsEmpty>> plugins = new List<Mock<ITestStopIfReturnsEmpty>>();
+            List<int> numbers = new List<int>() { }; 
+            for (int i = 0; i < numberOfElements; i++)
+            {
+                numbers.Add(i);
+            }
+
+            for (int i = 0; i < numberOfElements * 2; i++)
             {
                 var plugin = new Mock<ITestStopIfReturnsEmpty>();
+                // These plugins will each take away the last element, or throw an exception if it is empty.
                 plugin.Setup(p => p.RemoveNumber(It.IsAny<List<int>>())).Returns<List<int>>((input) =>
                 {
                     if (input.Count == 0) throw new ArgumentException("Input list is empty.");
                     input.RemoveAt(input.Count - 1);
                     return input;
                 });
-                plugins.Add(plugin.Object);
+                plugins.Add(plugin);
             }
 
-            List<int> numbers = new List<int>() { 0, 1, 2 };
+            var created = new Aggregate<ITestStopIfReturnsEmpty>(plugins.Select(x => x.Object));
 
-            var created = new Aggregate<ITestStopIfReturnsEmpty>(plugins);
-            Assert.True(created.Instance.RemoveNumber(numbers).Count == 0);
+            // If StopIfReturnsEmpty fails, then an exception will be thrown here.
+            Assert.Empty(created.Instance.RemoveNumber(numbers));
+
+            // Since each plugin takes away one element, we need to ensure that only the first X plugins were fired,
+            // where X is the amount of elements in the initial list.
+            for (int i = 0; i < numberOfElements; i++)
+            {
+                plugins[i].Verify(p => p.RemoveNumber(It.IsAny<List<int>>()));
+            }
+
+            // Next, we ensure that any plugins after the short-circuit were not fired.
+            // If any were fired, we would throw a regular Exception, and the test would fail here.
+            for (int i = numberOfElements; i < plugins.Count; i++)
+            {
+                try
+                {
+                    plugins[i].Verify(p => p.RemoveNumber(It.IsAny<List<int>>()));
+                    throw new Exception("These plugins should not have been executed.");
+                }
+                catch (MockException) { }
+            }
         }
 
         [Fact]
