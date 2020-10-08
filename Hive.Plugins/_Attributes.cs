@@ -100,20 +100,16 @@ namespace Hive.Plugins
 
         Expression IStopIfReturns.Test(Expression value)
         {
-            Type enumerableType = value.Type;
-
-            // Grab enumerable interface type
-            if (enumerableType != typeof(IEnumerable))
+            MethodInfo getEnumerator = value.Type.GetMethod("GetEnumerator", Array.Empty<Type>());
+            if (getEnumerator == null) // The value might not have a public GetEnumerator; if so, we need to look via the interface type.
             {
-                enumerableType = enumerableType.GetInterfaces().Where(x => x == typeof(IEnumerable)).First();
+                Type enumerableType = value.Type.GetInterfaces().Where(x => x == typeof(IEnumerable)).First();
+                getEnumerator = enumerableType.GetMethod("GetEnumerator");
             }
 
             return Expression.IsFalse( // return "!value.GetEnumerator().MoveNext()"
                 Expression.Call(
-                    Expression.Call(
-                        value,
-                        enumerableType.GetMethod("GetEnumerator")
-                        ),
+                    Expression.Call(value, getEnumerator),
                     typeof(IEnumerator).GetMethod("MoveNext")
                     )
                 );
