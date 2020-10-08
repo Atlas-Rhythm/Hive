@@ -1,5 +1,6 @@
 ﻿using Hive.Plugins.Resources;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -83,6 +84,35 @@ namespace Hive.Plugins
             {
                 return Expression.ReferenceEqual(value, Expression.Constant(null));
             }
+        }
+    }
+
+    /// <summary>
+    /// Indicates that an aggregated method should stop executing implementations if the attached <see cref="IEnumerable"/> becomes empty,
+    /// either with a normal return or out parameter, depending on where this attribute is placed.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.ReturnValue | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    public sealed class StopIfReturnsEmptyAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
+    {
+        bool IRequiresType.CheckType(Type type)
+             => type == typeof(IEnumerable) || // This supports both generic and non-generic IEnumerables.
+                type.GetInterfaces().Any(i => i == typeof(IEnumerable));
+
+        Expression IStopIfReturns.Test(Expression value)
+        {
+            MethodInfo getEnumerator = value.Type.GetMethod("GetEnumerator", Array.Empty<Type>());
+            if (getEnumerator == null) // The value might not have a public GetEnumerator; if so, we need to look via the interface type.
+            {
+                Type enumerableType = value.Type.GetInterfaces().Where(x => x == typeof(IEnumerable)).First();
+                getEnumerator = enumerableType.GetMethod("GetEnumerator");
+            }
+
+            return Expression.IsFalse( // return "!value.GetEnumerator().MoveNext()"
+                Expression.Call(
+                    Expression.Call(value, getEnumerator),
+                    typeof(IEnumerator).GetMethod("MoveNext")
+                    )
+                );
         }
     }
 

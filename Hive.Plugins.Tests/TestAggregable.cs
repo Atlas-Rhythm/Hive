@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
@@ -29,6 +30,23 @@ namespace Hive.Plugins.Tests
     public interface ITestCarryReturnValue
     {
         int Test1([TakesReturnValue] int x);
+    }
+
+    [Aggregable]
+    public interface ITestStopIfReturnsEmptyGeneric
+    {
+        [return: StopIfReturnsEmpty]
+        List<int> RemoveNumber([TakesReturnValue] List<int> input);
+
+        [return: StopIfReturnsEmpty]
+        Dictionary<string, int> RemoveLastKey([TakesReturnValue] Dictionary<string, int> input);
+    }
+
+    [Aggregable]
+    public interface ITestStopIfReturnsEmptyNonGeneric
+    {
+        [return: StopIfReturnsEmpty]
+        ArrayList RemoveElement([TakesReturnValue] ArrayList input);
     }
 
     public class TestAggregable
@@ -105,6 +123,101 @@ namespace Hive.Plugins.Tests
             retFalse.Verify(m => m.Test2(out expected), Times.Once);
             // Shouldn't call retTrue.Test2 at all
             retTrue2.Verify(m => m.Test2(out expected2), Times.Never);
+        }
+
+        [Fact]
+        public void TestStopIfReturnsEmptyGeneric()
+        {
+            int numberOfElements = 3;
+
+            List<Mock<ITestStopIfReturnsEmptyGeneric>> plugins = new List<Mock<ITestStopIfReturnsEmptyGeneric>>();
+            List<int> numbers = new List<int>() { };
+            Dictionary<string, int> dictionary = new Dictionary<string, int>();
+            for (int i = 0; i < numberOfElements; i++)
+            {
+                numbers.Add(i);
+                dictionary.Add(i.ToString(), i);
+            }
+
+            for (int i = 0; i < numberOfElements * 2; i++)
+            {
+                var plugin = new Mock<ITestStopIfReturnsEmptyGeneric>();
+                // These plugins will each take away the last element, or throw an exception if it is empty.
+                plugin.Setup(p => p.RemoveNumber(It.IsAny<List<int>>())).Returns<List<int>>((input) =>
+                {
+                    if (input.Count == 0) throw new ArgumentException("Input list is empty.");
+                    input.RemoveAt(input.Count - 1);
+                    return input;
+                });
+
+                plugin.Setup(p => p.RemoveLastKey(It.IsAny<Dictionary<string, int>>())).Returns<Dictionary<string, int>>((input) =>
+                {
+                    if (!input.Any()) throw new ArgumentException("Input dictionary is empty.");
+                    input.Remove(input.Last().Key);
+                    return input;
+                });
+                plugins.Add(plugin);
+            }
+
+            var created = new Aggregate<ITestStopIfReturnsEmptyGeneric>(plugins.Select(x => x.Object));
+
+            // If StopIfReturnsEmpty fails, then an exception will be thrown here.
+            Assert.Empty(created.Instance.RemoveNumber(numbers));
+            Assert.Empty(created.Instance.RemoveLastKey(dictionary));
+
+            // Since each plugin takes away one element, we need to ensure that only the first X plugins were fired,
+            // where X is the amount of elements in the initial list.
+            for (int i = 0; i < numberOfElements; i++)
+            {
+                plugins[i].Verify(p => p.RemoveNumber(It.IsAny<List<int>>()));
+            }
+
+            // Next, we ensure that any plugins after the short-circuit were not fired.
+            // If any were fired, we would throw a regular Exception, and the test would fail here.
+            for (int i = numberOfElements; i < plugins.Count; i++)
+            {
+                plugins[i].Verify(p => p.RemoveNumber(It.IsAny<List<int>>()), Times.Never());
+            }
+        }
+
+        [Fact]
+        public void TestStopIfReturnsEmptyNonGeneric()
+        {
+            // This is essentially the same as the Generic version, but instead dealing with ArrayLists.
+            int numberOfElements = 3;
+            List<Mock<ITestStopIfReturnsEmptyNonGeneric>> plugins = new List<Mock<ITestStopIfReturnsEmptyNonGeneric>>();
+            ArrayList data = new ArrayList();
+            Dictionary<string, int> dictionary = new Dictionary<string, int>();
+            for (int i = 0; i < numberOfElements; i++)
+            {
+                data.Add(i);
+            }
+
+            for (int i = 0; i < numberOfElements * 2; i++)
+            {
+                var plugin = new Mock<ITestStopIfReturnsEmptyNonGeneric>();
+                // These plugins will each take away the last element, or throw an exception if it is empty.
+                plugin.Setup(p => p.RemoveElement(It.IsAny<ArrayList>())).Returns<ArrayList>((input) =>
+                {
+                    if (input.Count == 0) throw new ArgumentException("Input list is empty.");
+                    input.RemoveAt(input.Count - 1);
+                    return input;
+                });
+                plugins.Add(plugin);
+            }
+
+            var created = new Aggregate<ITestStopIfReturnsEmptyNonGeneric>(plugins.Select(x => x.Object));
+
+            // If StopIfReturnsEmpty fails, then an exception will be thrown here.
+            Assert.Empty(created.Instance.RemoveElement(data));
+            for (int i = 0; i < numberOfElements; i++)
+            {
+                plugins[i].Verify(p => p.RemoveElement(It.IsAny<ArrayList>()));
+            }
+            for (int i = numberOfElements; i < plugins.Count; i++)
+            {
+                plugins[i].Verify(p => p.RemoveElement(It.IsAny<ArrayList>()), Times.Never());
+            }
         }
 
         [Fact]
