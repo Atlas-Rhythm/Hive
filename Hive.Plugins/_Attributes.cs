@@ -95,25 +95,55 @@ namespace Hive.Plugins
     public sealed class StopIfReturnsEmptyAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
     {
         bool IRequiresType.CheckType(Type type)
-             => type == typeof(IEnumerable<>) ||
-                (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
-                type.GetInterfaces().Any(i
-                => i.GetType() == typeof(IEnumerable<>) || (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>)));
+             => (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>)) || // Check for generic enumerable
+                type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
+                type == typeof(IEnumerable) || // Might as well add non-generic enumerables while we're at it
+                type.GetInterfaces().Any(i => i == typeof(IEnumerable));
 
         Expression IStopIfReturns.Test(Expression value)
         {
             Type enumerableType = value.Type;
-            if (enumerableType.GetGenericTypeDefinition() != typeof(IEnumerable<>))
+
+            // Grab enumerable interface type, whether generic or non-generic
+            if ((enumerableType.IsGenericType && enumerableType.GetGenericTypeDefinition() != typeof(IEnumerable<>)) ||
+                (!enumerableType.IsGenericType && enumerableType != typeof(IEnumerable)))
             {
-                enumerableType = enumerableType.GetInterfaces().Where(x => x.GetGenericTypeDefinition() == typeof(IEnumerable<>)).First();
+                // Search interfaces if we have to.
+                IEnumerable<Type> genericInterfaces = enumerableType.GetInterfaces().Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+                if (genericInterfaces.Any())
+                {
+                    enumerableType = genericInterfaces.First();
+                }
+                else
+                {
+                    // Since this should have passed the type check at runtime, it is safe to assume that we are looking at an non-generic IEnumerable.
+                    enumerableType = enumerableType.GetInterfaces().Where(x => x == typeof(IEnumerable)).First();
+                }
             }
 
-            return Expression.IsFalse(
-                Expression.Call(
-                    typeof(Enumerable),
-                    "Any",
-                    enumerableType.GetGenericArguments(),
-                    value));
+            if (enumerableType == typeof(IEnumerable)) // return "!value.GetEnumerator().MoveNext()" if it is non generic
+            {
+                return Expression.IsFalse(
+                    Expression.Call(
+                        Expression.Call(
+                            value,
+                            typeof(IEnumerable).GetMethod("GetEnumerator")
+                        ),
+                        typeof(IEnumerator).GetMethod("MoveNext")
+                    )
+                );
+            }
+            else // return "!Enumerable.Any(value)" if it is generic
+            {
+                return Expression.IsFalse(
+                    Expression.Call(
+                        typeof(Enumerable),
+                        "Any",
+                        enumerableType.GetGenericArguments(),
+                        value
+                    )
+                );
+            }                
         }
     }
 
