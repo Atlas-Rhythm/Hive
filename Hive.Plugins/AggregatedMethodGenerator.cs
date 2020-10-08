@@ -15,26 +15,9 @@ namespace Hive.Plugins
 
         public static Delegate Generate(Type iface, MethodInfo toAggregate, Type delegateType)
         {
-            var stopIfReturnsAttr = toAggregate.GetCustomAttribute<StopIfReturnsAttribute>();
-            var stopIfReturnsNullAttr = toAggregate.GetCustomAttribute<StopIfReturnsNullAttribute>();
-            var returnLastAttribute = toAggregate.GetCustomAttribute<ReturnLastAttribute>();
-
-            if (stopIfReturnsAttr != null && stopIfReturnsNullAttr != null)
-                throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_MethodMayHaveOneOf, toAggregate, nameof(StopIfReturnsAttribute), nameof(StopIfReturnsNullAttribute)));
-
-            if (stopIfReturnsAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsAttr))
-                throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_MethodMustReturnBoolToUse, toAggregate, nameof(StopIfReturnsAttribute)));
-
-            if (stopIfReturnsNullAttr != null && !CheckAttribute(toAggregate.ReturnParameter, stopIfReturnsNullAttr))
-                throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_MethodMustReturnNullableToUse, toAggregate, nameof(StopIfReturnsNullAttribute)));
-
             var targetParameters = toAggregate.GetParameters();
             var parameterAttributes = targetParameters.Select(p => (p, a: p.GetCustomAttributes())).ToArray();
             var returnAttributes = toAggregate.ReturnParameter.GetCustomAttributes().AsEnumerable();
-
-            if (stopIfReturnsAttr != null) returnAttributes = returnAttributes.Append(stopIfReturnsAttr);
-            if (stopIfReturnsNullAttr != null) returnAttributes = returnAttributes.Append(stopIfReturnsNullAttr);
-            if (returnLastAttribute != null) returnAttributes = returnAttributes.Append(returnLastAttribute);
 
             ValidateParam(toAggregate.ReturnParameter, returnAttributes, isRetval: true);
             foreach (var (param, attrs) in parameterAttributes)
@@ -215,7 +198,7 @@ namespace Hive.Plugins
                 else if (inputSpec is TakesReturnValueAttribute)
                     copyFromRet = true;
                 else
-                    throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_UnknownInputAttribute, inputSpec));
+                    throw new InvalidOperationException(SR.Generator_UnknownInputAttribute.Format(inputSpec));
             }
 
             return new AggregateParameterInfo(
@@ -245,21 +228,22 @@ namespace Hive.Plugins
 
             public void ValidateForParams(Type returnType, ParameterInfo[] parameters)
             {
-                if (CopiedFromRet && !Parameter.ParameterType.IsAssignableFrom(returnType))
-                    throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_ParameterCannotTakeReturn, Parameter));
+                if (CopiedFromRet && !Parameter.ParameterType.AsNonByRef().IsAssignableFrom(returnType))
+                    throw new InvalidOperationException(SR.Generator_ParameterCannotTakeReturn.Format(Parameter));
                 if (CopiedFromOut != null)
                 {
                     if (CopiedFromOut.Value >= parameters.Length || CopiedFromOut.Value < 0)
-                        throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_InvalidParameterIndex, CopiedFromOut.Value, Parameter));
+                        throw new InvalidOperationException(SR.Generator_InvalidParameterIndex.Format(CopiedFromOut.Value, Parameter));
 
                     var targetParam = parameters[CopiedFromOut.Value];
                     if (!targetParam.IsOut)
-                        throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_ParameterNotOutParam, CopiedFromOut.Value));
-                    if (!Parameter.ParameterType.IsAssignableFrom(targetParam.ParameterType))
-                        throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_OutParamNotCompatible, Parameter));
+                        throw new InvalidOperationException(SR.Generator_ParameterNotOutParam.Format(CopiedFromOut.Value));
+                    if (!Parameter.ParameterType.AsNonByRef().IsAssignableFrom(targetParam.ParameterType.AsNonByRef()))
+                        throw new InvalidOperationException(SR.Generator_OutParamNotCompatible.Format(Parameter));
                 }
             }
         }
+
         private static OutParameterInfo CreateOutParamInfo(IEnumerable<Attribute> attrs, bool isRet = false)
         {
             return new OutParameterInfo(
@@ -293,6 +277,7 @@ namespace Hive.Plugins
         private class DefaultByRef<T>
         {
             public T Default = default!;
+
             public ref T ByRefDefault() => ref Default;
         }
 
@@ -301,7 +286,7 @@ namespace Hive.Plugins
             foreach (var attr in attrs)
             {
                 if (!CheckAttribute(param, attr, isRetval))
-                    throw new InvalidOperationException(string.Format(SR.Culture, SR.Generator_AttributeInvalidOn, attr, param));
+                    throw new InvalidOperationException(SR.Generator_AttributeInvalidOn.Format(attr, param));
             }
         }
 
@@ -309,7 +294,7 @@ namespace Hive.Plugins
         {
             if (!(attr is IAggregatorAttribute)) return true;
             if (!CheckAttributeTarget(param, attr, isRetval)) return false;
-            if (attr is IRequiresType reqTy) return reqTy.CheckType(param.ParameterType);
+            if (attr is IRequiresType reqTy) return reqTy.CheckType(param.ParameterType.AsNonByRef());
             return true;
         }
 

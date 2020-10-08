@@ -162,6 +162,10 @@
     <value>Method {0} must return a boolean to use {1}</value>
     <comment>{0} is the method name, {1} is the attribute</comment>
   </data>
+  <data name="Generator_MethodMustReturnEnumerableToUse" xml:space="preserve">
+    <value>Method {0} must return a generic enumerable to use {1}</value>
+    <comment>{0} is the method name, {1} is the attribute</comment>
+  </data>
   <data name="Generator_MethodMustReturnNullableToUse" xml:space="preserve">
     <value>Method {0} must return a nullable type to use {1}</value>
     <comment>{0} is the method name, {1} is the attribute</comment>

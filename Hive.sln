@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
 		.github\workflows\dotnet-core.yml = .github\workflows\dotnet-core.yml
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities", "Hive.Utilities\Hive.Utilities.csproj", "{3C265E15-AFDF-47B1-9893-7957F9A43818}"
@@ -34,6 +35,21 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Tests", "Hive.Tests\Hive.Tests.csproj", "{FC9760DF-50AA-4FEC-A0F4-64DB4767EB4F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins", "Hive.Plugins\Hive.Plugins.csproj", "{FEB62848-1C44-4ED3-B357-A5540B59C370}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CodeGen", "CodeGen", "{418DF181-8405-4B69-8B32-FBEEFACADAC6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.CodeGen", "CodeGen\Hive.CodeGen\Hive.CodeGen.csproj", "{D14CCA86-C8FA-4F96-A92B-9CF454C485B1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.CodeGen.Attributes", "CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj", "{585E184E-0F14-4456-B542-9AECFAB96A15}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{8D72FE69-EB86-4B03-8A93-C4ED2D47A38D}"
+	ProjectSection(SolutionItems) = preProject
+		CodeGen\docs\AutoUsage.md = CodeGen\docs\AutoUsage.md
+		CodeGen\docs\FormattedResources.md = CodeGen\docs\FormattedResources.md
+		CodeGen\docs\GenericParameterization.md = CodeGen\docs\GenericParameterization.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Plugins.Tests", "Hive.Plugins.Tests\Hive.Plugins.Tests.csproj", "{486CEBA1-EDF4-4493-B81F-A485AA00B64C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -89,9 +105,26 @@ Global
 		{FEB62848-1C44-4ED3-B357-A5540B59C370}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FEB62848-1C44-4ED3-B357-A5540B59C370}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FEB62848-1C44-4ED3-B357-A5540B59C370}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D14CCA86-C8FA-4F96-A92B-9CF454C485B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D14CCA86-C8FA-4F96-A92B-9CF454C485B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D14CCA86-C8FA-4F96-A92B-9CF454C485B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D14CCA86-C8FA-4F96-A92B-9CF454C485B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{585E184E-0F14-4456-B542-9AECFAB96A15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{585E184E-0F14-4456-B542-9AECFAB96A15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{585E184E-0F14-4456-B542-9AECFAB96A15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{585E184E-0F14-4456-B542-9AECFAB96A15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{486CEBA1-EDF4-4493-B81F-A485AA00B64C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{486CEBA1-EDF4-4493-B81F-A485AA00B64C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{486CEBA1-EDF4-4493-B81F-A485AA00B64C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{486CEBA1-EDF4-4493-B81F-A485AA00B64C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D14CCA86-C8FA-4F96-A92B-9CF454C485B1} = {418DF181-8405-4B69-8B32-FBEEFACADAC6}
+		{585E184E-0F14-4456-B542-9AECFAB96A15} = {418DF181-8405-4B69-8B32-FBEEFACADAC6}
+		{8D72FE69-EB86-4B03-8A93-C4ED2D47A38D} = {418DF181-8405-4B69-8B32-FBEEFACADAC6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A1B8AB62-9337-448C-9043-E0DEDB6A4DE9}

@@ -54,7 +54,7 @@ namespace Hive.Plugins
         private static ParameterAttributes GetAttrsFor(ParameterInfo param)
             => param.Attributes;
 
-        private static Type AsNonByRef(Type type)
+        internal static Type AsNonByRef(this Type type)
             => type.IsByRef ? type.GetElementType() : type;
 
         public static (IEnumerable<(MethodInfo Method, Type DelegateType)> ImplOrder, Func<Delegate[], IEnumerable<object>, object> Creator) CreateAggregatedInstance(Type ifaceType)

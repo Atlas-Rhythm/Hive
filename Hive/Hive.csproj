@@ -44,7 +44,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Hive.Permissions\Hive.Permissions.csproj" />
     <ProjectReference Include="..\Hive.Plugins\Hive.Plugins.csproj" />
-    <ProjectReference Include="..\Hive.Utilities\Hive.Utilities.csproj" />
     <ProjectReference Include="..\Hive.Versioning\Hive.Versioning.csproj" />
   </ItemGroup>
   
@@ -66,10 +65,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>GraphQL.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Update="Resources\Resource.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resource.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Resource.resx" IsResXToGenerate="true" />
   </ItemGroup>
 
 </Project>
