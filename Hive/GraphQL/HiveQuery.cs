@@ -19,6 +19,8 @@ namespace Hive.GraphQL
         private readonly int itemsPerPage = 10;
 
         private const string HiveChannelActionName = "hive.channel";
+        private const string HiveGameVersionsActionName = "hive.game.version";
+        [ThreadStatic] private static PermissionActionParseState versionsParseState;
 
         public HiveQuery([DisallowNull] Serilog.ILogger logger)
         {
@@ -72,6 +74,7 @@ namespace Hive.GraphQL
                 ),
                 resolve: async context =>
                 {
+                    // Should check if user has permission to access this channel
                     HiveContext hiveContext = context.Resolve<HiveContext>();
                     string id = context.GetArgument<string>("id");
 
@@ -93,7 +96,39 @@ namespace Hive.GraphQL
 
                     return hiveContext.Mods.Skip(Math.Abs(page)).Take(itemsPerPage);
                 }
+            );
 
+            // Game Version Stuff
+            FieldAsync<ListGraphType<GameVersionType>>(
+                "gameVersions",
+                resolve: async context =>
+                {
+                    // Resolve services
+                    HttpContext httpContext = context.HttpContext();
+                    HiveContext hiveContext = context.Resolve<HiveContext>();
+                    IProxyAuthenticationService authService = context.Resolve<IProxyAuthenticationService>();
+                    PermissionsManager<PermissionContext> perms = context.Resolve<PermissionsManager<PermissionContext>>();
+                    IAggregate<IGameVersionsPlugin> plugin = context.Resolve<IAggregate<IGameVersionsPlugin>>();
+
+                    // Validate and Filter
+                    User? user = await authService.GetUser(httpContext.Request).ConfigureAwait(false);
+                    if (!perms.CanDo(HiveGameVersionsActionName, new PermissionContext { User = user }, ref versionsParseState))
+                    {
+                        context.Errors.Add(new ExecutionError("Unauthorized"));
+                        return null;
+                    }
+                    var combined = plugin.Instance;
+                    if (!combined.GetGameVersionsAdditionalChecks(user))
+                    {
+                        context.Errors.Add(new ExecutionError("Unauthorized"));
+                        return null;
+                    }
+
+                    var versions = hiveContext.GameVersions.ToList();
+                    var filteredVersions = versions.Where(v => perms.CanDo(HiveGameVersionsActionName, new PermissionContext { GameVersion = v, User = user }, ref versionsParseState));
+                    filteredVersions = combined.GetGameVersionsFilter(user, filteredVersions);
+                    return filteredVersions;
+                }
             );
         }
     }
