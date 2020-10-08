@@ -58,8 +58,15 @@ namespace Hive
 
             services.AddHttpContextAccessor();
 
+            services.AddSingleton<ModType>();
+            services.AddSingleton<UserType>();
+            services.AddSingleton<LinkType>();
             services.AddSingleton<HiveQuery>();
             services.AddSingleton<HiveSchema>();
+            services.AddSingleton<ChannelType>();
+            services.AddSingleton<GameVersionType>();
+            services.AddSingleton<ModReferenceType>();
+            services.AddSingleton<LocalizedModInfoType>();
             services.AddGraphQL((options, provider) =>
             {
                 IWebHostEnvironment env = provider.GetRequiredService<IWebHostEnvironment>();
