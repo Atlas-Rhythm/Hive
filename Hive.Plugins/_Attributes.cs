@@ -121,29 +121,15 @@ namespace Hive.Plugins
                 }
             }
 
-            if (enumerableType == typeof(IEnumerable)) // return "!value.GetEnumerator().MoveNext()" if it is non generic
-            {
-                return Expression.IsFalse(
+            return Expression.IsFalse( // return "!value.GetEnumerator().MoveNext()"
+                Expression.Call(
                     Expression.Call(
-                        Expression.Call(
-                            value,
-                            typeof(IEnumerable).GetMethod("GetEnumerator")
+                        value,
+                        enumerableType.GetMethod("GetEnumerator")
                         ),
-                        typeof(IEnumerator).GetMethod("MoveNext")
+                    typeof(IEnumerator).GetMethod("MoveNext")
                     )
                 );
-            }
-            else // return "!Enumerable.Any(value)" if it is generic
-            {
-                return Expression.IsFalse(
-                    Expression.Call(
-                        typeof(Enumerable),
-                        "Any",
-                        enumerableType.GetGenericArguments(),
-                        value
-                    )
-                );
-            }                
         }
     }
 
