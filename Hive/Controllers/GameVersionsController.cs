@@ -49,7 +49,7 @@ namespace Hive.Controllers
         private readonly HiveContext context;
         private readonly IAggregate<IGameVersionsPlugin> plugin;
         private readonly IProxyAuthenticationService proxyAuth;
-        [ThreadStatic] private PermissionActionParseState versionsParseState;
+        [ThreadStatic] private static PermissionActionParseState versionsParseState;
 
         public GameVersionsController([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IGameVersionsPlugin> plugin, IProxyAuthenticationService proxyAuth)
         {
