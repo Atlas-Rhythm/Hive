@@ -124,6 +124,8 @@ namespace Hive.Permissions
         /// <returns><see langword="true"/> if the action is permitted, <see langword="false"/> otherwise.</returns>
         /// <exception cref="PermissionException">Thrown when there is an exception when executing a rule.</exception>
         /// <seealso cref="CanDo(StringView, TContext, ref PermissionActionParseState)"/>
+        [SuppressMessage("Hive.Permissions", "Hive0013:Use the CanDo(StringView, TContext) overload for runtime-specified actions", 
+            Justification = "This is the implementation for that overload.")]
         public bool CanDo(StringView action, TContext context)
         {
             var state = new PermissionActionParseState();

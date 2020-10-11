@@ -11,8 +11,4 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0-preview-20200812-03" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Hive.Utilities\Hive.Utilities.csproj" />
-  </ItemGroup>
-
 </Project>
