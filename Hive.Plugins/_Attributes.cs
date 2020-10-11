@@ -1,5 +1,6 @@
 ﻿using Hive.Plugins.Resources;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -10,9 +11,13 @@ using System.Text;
 namespace Hive.Plugins
 {
     internal interface IAggregatorAttribute { }
+
     internal interface ITargetsInParam : IAggregatorAttribute { }
+
     internal interface ITargetsOutParam : IAggregatorAttribute { }
+
     internal interface ITargetsReturn : IAggregatorAttribute { }
+
     internal interface ISpecifiesInput : IAggregatorAttribute { }
 
     internal interface IRequiresType : IAggregatorAttribute
@@ -31,16 +36,17 @@ namespace Hive.Plugins
     }
 
     /// <summary>
-    /// Indicates that an aggregated method should stop executing implementations if it returns the provided 
+    /// Indicates that an aggregated method should stop executing implementations if it returns the provided
     /// <see cref="bool"/> value, either with a normal return or out parameter, depending on where this attribute is placed.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.ReturnValue | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class StopIfReturnsAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
     {
         /// <summary>
         /// Gets the return value that signals the aggregator to exit.
         /// </summary>
         public bool ReturnValue { get; }
+
         /// <summary>
         /// Constructs a <see cref="StopIfReturnsAttribute"/> with the specified return value.
         /// </summary>
@@ -61,7 +67,7 @@ namespace Hive.Plugins
     /// Indicates that an aggregated method should stop executing implementations if it returns <see langword="null"/>,
     /// either with a normal return or out parameter, depending on where this attribute is placed.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.ReturnValue | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class StopIfReturnsNullAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
     {
         bool IRequiresType.CheckType(Type type)
@@ -82,10 +88,39 @@ namespace Hive.Plugins
     }
 
     /// <summary>
+    /// Indicates that an aggregated method should stop executing implementations if the attached <see cref="IEnumerable"/> becomes empty,
+    /// either with a normal return or out parameter, depending on where this attribute is placed.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.ReturnValue | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    public sealed class StopIfReturnsEmptyAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IRequiresType, IStopIfReturns
+    {
+        bool IRequiresType.CheckType(Type type)
+             => type == typeof(IEnumerable) || // This supports both generic and non-generic IEnumerables.
+                type.GetInterfaces().Any(i => i == typeof(IEnumerable));
+
+        Expression IStopIfReturns.Test(Expression value)
+        {
+            MethodInfo getEnumerator = value.Type.GetMethod("GetEnumerator", Array.Empty<Type>());
+            if (getEnumerator == null) // The value might not have a public GetEnumerator; if so, we need to look via the interface type.
+            {
+                Type enumerableType = value.Type.GetInterfaces().Where(x => x == typeof(IEnumerable)).First();
+                getEnumerator = enumerableType.GetMethod("GetEnumerator");
+            }
+
+            return Expression.IsFalse( // return "!value.GetEnumerator().MoveNext()"
+                Expression.Call(
+                    Expression.Call(value, getEnumerator),
+                    typeof(IEnumerator).GetMethod("MoveNext")
+                    )
+                );
+        }
+    }
+
+    /// <summary>
     /// Indicates that the result value for this attribute's target should be the value that the last executed implementation
     /// returned.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.ReturnValue | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public sealed class ReturnLastAttribute : Attribute, ITargetsOutParam, ITargetsReturn, IExpressionAggregator
     {
         Expression IExpressionAggregator.Aggregate(Expression prev, Expression next)
@@ -108,14 +143,17 @@ namespace Hive.Plugins
         /// Gets the type that has the aggregator method to use.
         /// </summary>
         public Type TypeWithAggregator { get; }
+
         /// <summary>
         /// Gets the name of the aggregator method.
         /// </summary>
         public string AggregatorName { get; }
+
         /// <summary>
         /// Gets the <see cref="Expression"/>-based aggregator method, if it is what is targeted.
         /// </summary>
         public MethodInfo? ExpressionAggregator { get; }
+
         /// <summary>
         /// Constructs an <see cref="AggregateWithAttribute"/> with the specified target type and method name.
         /// </summary>
@@ -183,6 +221,7 @@ namespace Hive.Plugins
         /// Gets the index of the <see langword="out"/> parameter referenced.
         /// </summary>
         public int ParameterIndex { get; }
+
         /// <summary>
         /// Constructs a <see cref="TakesOutValueAttribute"/> with the index of the <see langword="out"/>  parameter to reference.
         /// </summary>
@@ -193,5 +232,4 @@ namespace Hive.Plugins
         public TakesOutValueAttribute(int index)
             => ParameterIndex = index;
     }
-
 }
