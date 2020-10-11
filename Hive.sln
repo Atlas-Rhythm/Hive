@@ -49,11 +49,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{8D72FE69-E
 		CodeGen\docs\GenericParameterization.md = CodeGen\docs\GenericParameterization.md
 	EndProjectSection
 EndProject
-<<<<<<< HEAD
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Analyzers", "Hive.Analyzers\Hive.Analyzers.csproj", "{19C11291-D96B-4607-BA44-CC32FA0E8641}"
-=======
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Plugins.Tests", "Hive.Plugins.Tests\Hive.Plugins.Tests.csproj", "{486CEBA1-EDF4-4493-B81F-A485AA00B64C}"
->>>>>>> origin/master
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -117,17 +115,14 @@ Global
 		{585E184E-0F14-4456-B542-9AECFAB96A15}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{585E184E-0F14-4456-B542-9AECFAB96A15}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{585E184E-0F14-4456-B542-9AECFAB96A15}.Release|Any CPU.Build.0 = Release|Any CPU
-<<<<<<< HEAD
 		{19C11291-D96B-4607-BA44-CC32FA0E8641}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{19C11291-D96B-4607-BA44-CC32FA0E8641}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19C11291-D96B-4607-BA44-CC32FA0E8641}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19C11291-D96B-4607-BA44-CC32FA0E8641}.Release|Any CPU.Build.0 = Release|Any CPU
-=======
 		{486CEBA1-EDF4-4493-B81F-A485AA00B64C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{486CEBA1-EDF4-4493-B81F-A485AA00B64C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{486CEBA1-EDF4-4493-B81F-A485AA00B64C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{486CEBA1-EDF4-4493-B81F-A485AA00B64C}.Release|Any CPU.Build.0 = Release|Any CPU
->>>>>>> origin/master
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
