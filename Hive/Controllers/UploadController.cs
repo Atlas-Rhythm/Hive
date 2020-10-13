@@ -8,12 +8,16 @@ using Microsoft.AspNetCore.Mvc;
 using NodaTime;
 using Serilog;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Hive.Controllers
@@ -72,21 +76,95 @@ namespace Hive.Controllers
             database = db;
         }
 
+        public enum ResultType
+        {
+            Success,
+            Error
+        }
+
         public struct UploadResult
         {
-            // TODO: include fields indicating an error state and information
+            [JsonPropertyName("type")]
+            public ResultType Type { get; init; }
 
-            public static UploadResult ErrNoFile()
-            {
-                // TODO: implement
-                throw new NotImplementedException();
-            }
+            [JsonPropertyName("error")]
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+            public object? ErrorContext { get; init; }
 
-            public static UploadResult ErrValidationFailed(object? context)
+
+            [JsonPropertyName("data")]
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+            public JsonElement ExtractedData { get; init; }
+
+            [JsonPropertyName("actionCookie")]
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+            public string? ActionCookie { get; init; }
+
+            internal static UploadResult ErrNoFile()
+                => new UploadResult
+                {
+                    Type = ResultType.Error,
+                    ErrorContext = "No file was given"
+                };
+
+            internal static UploadResult ErrValidationFailed(object? context)
+                => new UploadResult
+                {
+                    Type = ResultType.Error,
+                    ErrorContext = context
+                };
+
+            // TODO: this should take encryption keys
+            internal static UploadResult Ok(Mod data, CdnObject cdnObj)
             {
-                // TODO: implement
-                throw new NotImplementedException();
+                var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+                {
+                    IgnoreNullValues = true
+                };
+
+                var abw = new ArrayBufferWriter<byte>();
+                using (var writer = new Utf8JsonWriter(abw))
+                    JsonSerializer.Serialize(writer, data, options);
+                var doc = JsonDocument.Parse(abw.WrittenMemory);
+
+                // TODO: figure out actual encryption stuffs
+                string encData;
+                using (var rij = Rijndael.Create()) // i just picked one lmao, need to keep the key and IV around (probably constant for the lifetime of the app) for the actual impl
+                {
+                    var enc = rij.CreateEncryptor();
+
+                    using var mStream = new MemoryStream();
+                    using (var encStream = new CryptoStream(mStream, enc, CryptoStreamMode.Write))
+                    {
+                        using var writer = new Utf8JsonWriter(encStream);
+
+                        JsonSerializer.Serialize(writer,
+                            new EncryptedUploadPayload
+                            {
+                                ModData = doc.RootElement,
+                                CdnObject = cdnObj
+                            });
+                    }
+
+                    if (!mStream.TryGetBuffer(out var buffer))
+                        throw new InvalidOperationException(); // panic! this should never happen
+
+                    encData = Convert.ToBase64String(buffer);
+                }
+
+                return new UploadResult
+                {
+                    Type = ResultType.Success,
+                    ActionCookie = encData,
+                    ExtractedData = doc.RootElement.Clone()
+                };
             }
+        }
+        
+        private struct EncryptedUploadPayload
+        {
+            public JsonElement ModData { get; init; }
+            public CdnObject CdnObject { get; init; }
         }
 
         [ThreadStatic]
@@ -157,7 +235,8 @@ namespace Hive.Controllers
 
             // TODO: encrypt/sign extracted mod data and CDN link; return it
 
-            throw new NotImplementedException();
+            // this method encrypts the extracted data into a cookie in the resulting object that is sent along
+            return UploadResult.Ok(modData, cdnObject);
         }
 
     }

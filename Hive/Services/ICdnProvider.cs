@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Hive.Services
@@ -59,6 +60,7 @@ namespace Hive.Services
         /// </remarks>
         public string UniqueId { get; }
 
+        [JsonConstructor]
         public CdnObject(string uniqueId) => UniqueId = uniqueId;
 
         public override bool Equals(object? obj)
