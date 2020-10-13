@@ -51,12 +51,14 @@ namespace Hive.Controllers
         private readonly PermissionsManager<PermissionContext> permissions;
         private readonly IUploadPlugin plugins;
         private readonly IProxyAuthenticationService authService;
+        private readonly ICdnProvider cdn;
         private readonly HiveContext database;
 
-        public UploadController(ILogger log, 
-            PermissionsManager<PermissionContext> perms, 
+        public UploadController(ILogger log,
+            PermissionsManager<PermissionContext> perms,
             IAggregate<IUploadPlugin> plugins,
             IProxyAuthenticationService auth,
+            ICdnProvider cdn,
             HiveContext db)
         {
             if (plugins is null)
@@ -65,6 +67,7 @@ namespace Hive.Controllers
             logger = log;
             permissions = perms;
             this.plugins = plugins.Instance;
+            this.cdn = cdn;
             authService = auth;
             database = db;
         }
@@ -148,7 +151,9 @@ namespace Hive.Controllers
             if (!permissions.CanDo(UploadWithDataAction, new PermissionContext { User = user, Mod = modData }, ref UploadWithDataParseState))
                 return Forbid();
 
-            // TODO: upload to CDN
+            // we've gotten the OK based on all of our other checks, lets upload the file to the actual CDN
+            memStream.Seek(0, SeekOrigin.Begin);
+            var cdnObject = await cdn.UploadObject(file.FileName, memStream).ConfigureAwait(false);
 
             // TODO: encrypt/sign extracted mod data and CDN link; return it
 
