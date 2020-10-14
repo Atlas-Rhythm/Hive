@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Hive.Controllers;
@@ -48,6 +50,9 @@ namespace Hive
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
                 .AddSingleton<IProxyAuthenticationService, MockAuthenticationService>();
 
+            services
+                .AddSingleton<SymmetricAlgorithm>(sp => Rijndael.Create()); // TODO: pick an algo
+
             services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
@@ -63,7 +68,7 @@ namespace Hive
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Configure is required for Startup.")]
+        [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Configure is required for Startup.")]
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
