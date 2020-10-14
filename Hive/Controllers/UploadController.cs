@@ -34,6 +34,11 @@ namespace Hive.Controllers
             [ReturnLast] out object? validationFailureInfo)
             => ValidateAndPopulateKnownMetadata(mod, data, out validationFailureInfo);
 
+        void LatePopulateKnownMetadata(Mod mod, Stream data) { }
+
+        void LatePopulateKnownMetadata(Mod mod, Stream data,
+            [TakesOutValue(2)] [In, Out] ref object? dataContext)
+            => LatePopulateKnownMetadata(mod, data);
         // TODO: maybe do another validation after confirmation?
     }
 
@@ -56,6 +61,7 @@ namespace Hive.Controllers
         private readonly IUploadPlugin plugins;
         private readonly IProxyAuthenticationService authService;
         private readonly ICdnProvider cdn;
+        private readonly SymmetricAlgorithm tokenAlgorithm;
         private readonly HiveContext database;
 
         public UploadController(ILogger log,
@@ -63,6 +69,7 @@ namespace Hive.Controllers
             IAggregate<IUploadPlugin> plugins,
             IProxyAuthenticationService auth,
             ICdnProvider cdn,
+            SymmetricAlgorithm tokenAlgo,
             HiveContext db)
         {
             if (plugins is null)
@@ -73,6 +80,7 @@ namespace Hive.Controllers
             this.plugins = plugins.Instance;
             this.cdn = cdn;
             authService = auth;
+            tokenAlgorithm = tokenAlgo;
             database = db;
         }
 
@@ -114,43 +122,37 @@ namespace Hive.Controllers
                     ErrorContext = context
                 };
 
-            // TODO: this should take encryption keys
-            internal static UploadResult Ok(Mod data, CdnObject cdnObj)
+            internal static readonly JsonSerializerOptions Options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
             {
-                var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+                IgnoreNullValues = true
+            };
+
+            // TODO: copy all the mod information into some other model specifically for this api
+
+            internal static UploadResult Ok(SymmetricAlgorithm algo, Mod data, CdnObject cdnObj)
+            {
+                using var mStream = new MemoryStream();
+                using (var encStream = new CryptoStream(mStream, algo.CreateEncryptor(), CryptoStreamMode.Write))
                 {
-                    IgnoreNullValues = true
-                };
+                    using var writer = new Utf8JsonWriter(encStream);
+
+                    JsonSerializer.Serialize(writer,
+                        new EncryptedUploadPayload
+                        {
+                            ModData = data,
+                            CdnObject = cdnObj
+                        }, Options);
+                }
+
+                if (!mStream.TryGetBuffer(out var buffer))
+                    throw new InvalidOperationException(); // panic! this should never happen
+
+                var encData = Convert.ToBase64String(buffer);
 
                 var abw = new ArrayBufferWriter<byte>();
                 using (var writer = new Utf8JsonWriter(abw))
-                    JsonSerializer.Serialize(writer, data, options);
+                    JsonSerializer.Serialize(writer, data, Options);
                 var doc = JsonDocument.Parse(abw.WrittenMemory);
-
-                // TODO: figure out actual encryption stuffs
-                string encData;
-                using (var rij = Rijndael.Create()) // i just picked one lmao, need to keep the key and IV around (probably constant for the lifetime of the app) for the actual impl
-                {
-                    var enc = rij.CreateEncryptor();
-
-                    using var mStream = new MemoryStream();
-                    using (var encStream = new CryptoStream(mStream, enc, CryptoStreamMode.Write))
-                    {
-                        using var writer = new Utf8JsonWriter(encStream);
-
-                        JsonSerializer.Serialize(writer,
-                            new EncryptedUploadPayload
-                            {
-                                ModData = doc.RootElement,
-                                CdnObject = cdnObj
-                            });
-                    }
-
-                    if (!mStream.TryGetBuffer(out var buffer))
-                        throw new InvalidOperationException(); // panic! this should never happen
-
-                    encData = Convert.ToBase64String(buffer);
-                }
 
                 return new UploadResult
                 {
@@ -163,8 +165,19 @@ namespace Hive.Controllers
         
         private struct EncryptedUploadPayload
         {
-            public JsonElement ModData { get; init; }
+            public Mod ModData { get; init; }
             public CdnObject CdnObject { get; init; }
+
+            // TODO: replace ModData with some other model specifically for this process
+            internal static ValueTask<EncryptedUploadPayload> ExtractFromCookie(SymmetricAlgorithm algo, string cookie)
+            {
+                var data = Convert.FromBase64String(cookie);
+
+                using var mStream = new MemoryStream(data);
+                using var decStream = new CryptoStream(mStream, algo.CreateDecryptor(), CryptoStreamMode.Read);
+
+                return JsonSerializer.DeserializeAsync<EncryptedUploadPayload>(decStream, UploadResult.Options);
+            }
         }
 
         [ThreadStatic]
@@ -217,6 +230,8 @@ namespace Hive.Controllers
             //   see if it is a ZipFile, and avoid having to re-parse and re-create that information.
             object? dataContext = null;
             var result = plugins.ValidateAndPopulateKnownMetadata(modData, memStream, ref dataContext, out var valFailCtx);
+            if (result) plugins.LatePopulateKnownMetadata(modData, memStream, ref dataContext);
+
             // We try to dispose the context if possible to help clean up resources persisted in dataContext more quickly.
             if (dataContext is IAsyncDisposable adisp)
                 await adisp.DisposeAsync().ConfigureAwait(false);
@@ -232,11 +247,52 @@ namespace Hive.Controllers
             // we've gotten the OK based on all of our other checks, lets upload the file to the actual CDN
             memStream.Seek(0, SeekOrigin.Begin);
             var cdnObject = await cdn.UploadObject(file.FileName, memStream).ConfigureAwait(false);
-
-            // TODO: encrypt/sign extracted mod data and CDN link; return it
+            // TODO: ^^^ the above should take a timeout param to auto-delete without confirmation after some time
 
             // this method encrypts the extracted data into a cookie in the resulting object that is sent along
-            return UploadResult.Ok(modData, cdnObject);
+            return UploadResult.Ok(tokenAlgorithm, modData, cdnObject);
+        }
+
+        [HttpPost("finish")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult> CompleteUpload([FromForm] Mod finalMetadata, [FromForm] string cookie)
+        {
+            if (finalMetadata is null || cookie is null)
+                return BadRequest();
+
+            var user = await authService.GetUser(Request).ConfigureAwait(false);
+
+            if (user is null)
+                return Unauthorized();
+
+            // TODO: validate that finalMetadata has all needed metadata specified
+
+            // decrypt the token
+            var payload = await EncryptedUploadPayload.ExtractFromCookie(tokenAlgorithm, cookie).ConfigureAwait(false);
+
+            // TODO: ensure that finalMetadata matches what of payload.ModData is present
+
+            var cdnObject = payload.CdnObject;
+
+            // TODO: vvv transform the mod information that we got into an actual mod object
+            // (make sure to assign the LocalizedModInfo correctly)
+            var modObject = finalMetadata;
+            modObject.DownloadLink = await cdn.GetObjectActualUrl(cdnObject).ConfigureAwait(false);
+
+            // do one final permission check
+            if (!permissions.CanDo(UploadWithDataAction, new PermissionContext { User = user, Mod = finalMetadata }, ref UploadWithDataParseState))
+            {
+                await cdn.TryDeleteObject(cdnObject).ConfigureAwait(false);
+                return Forbid();
+            }
+
+            // ok, we're good to just go ahead and insert it into the database
+            database.Mods.Add(modObject);
+
+            return Ok();
         }
 
     }

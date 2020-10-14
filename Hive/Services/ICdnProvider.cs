@@ -20,6 +20,8 @@ namespace Hive.Services
         /// <returns>A <see cref="CdnObject"/> that references the uploaded object.</returns>
         Task<CdnObject> UploadObject(string name, Stream data);
 
+        // TODO: add a system for timing out objects without confirmation
+
         /// <summary>
         /// Attempts to delete an object.
         /// </summary>
