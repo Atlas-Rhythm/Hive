@@ -30,14 +30,14 @@ namespace Hive.Controllers
 
         [return: StopIfReturns(false)]
         bool ValidateAndPopulateKnownMetadata(Mod mod, Stream data, 
-            [TakesOutValue(2)] [In, Out] ref object? dataContext,
+            ref object? dataContext,
             [ReturnLast] out object? validationFailureInfo)
             => ValidateAndPopulateKnownMetadata(mod, data, out validationFailureInfo);
 
         void LatePopulateKnownMetadata(Mod mod, Stream data) { }
 
         void LatePopulateKnownMetadata(Mod mod, Stream data,
-            [TakesOutValue(2)] [In, Out] ref object? dataContext)
+            ref object? dataContext)
             => LatePopulateKnownMetadata(mod, data);
         // TODO: maybe do another validation after confirmation?
     }
