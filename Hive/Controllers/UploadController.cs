@@ -246,12 +246,13 @@ namespace Hive.Controllers
 
             // we've gotten the OK based on all of our other checks, lets upload the file to the actual CDN
             memStream.Seek(0, SeekOrigin.Begin);
-            var cdnObject = await cdn.UploadObject(file.FileName, memStream).ConfigureAwait(false);
+            var cdnObject = await cdn.UploadObject(file.FileName, memStream, SystemClock.Instance.GetCurrentInstant() + Duration.FromHours(1)).ConfigureAwait(false);
             // TODO: ^^^ the above should take a timeout param to auto-delete without confirmation after some time
 
             // this method encrypts the extracted data into a cookie in the resulting object that is sent along
             return UploadResult.Ok(tokenAlgorithm, modData, cdnObject);
         }
+
 
         [HttpPost("finish")]
         [ProducesResponseType(StatusCodes.Status200OK)]
