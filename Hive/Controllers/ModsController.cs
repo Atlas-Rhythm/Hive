@@ -32,7 +32,7 @@ namespace Hive.Controllers
         /// <param name="user">User in context</param>
         /// <param name="contextMod">Mod in context</param>
         [return: StopIfReturns(false)]
-        bool GetSpecificModAdditionalChecks(User? user, Mod? contextMod) => true;
+        bool GetSpecificModAdditionalChecks(User? user, Mod contextMod) => true;
     }
 
     internal class HiveModsControllerPlugin : IModsPlugin { }
@@ -159,20 +159,20 @@ namespace Hive.Controllers
             // Get the ID of the mod we are looking for
             Mod? mod = context.Mods.Where(x => x.ReadableID == id).FirstOrDefault();
 
-            // Forbid if a given user (or none) is not allowed to access this mod.
-            if (!permissions.CanDo(ActionName, new PermissionContext { User = user, Mod = mod }, ref modsParseState))
-                return Forbid();
-
-            // Forbid if a plugin denies permission to access this mod.
-            if (!combined.GetSpecificModAdditionalChecks(user, mod))
-                return Forbid();
-
             if (mod == null)
             {
                 return NotFound();
             }
             else
             {
+                // Forbid if a given user (or none) is not allowed to access this mod.
+                if (!permissions.CanDo(ActionName, new PermissionContext { User = user, Mod = mod }, ref modsParseState))
+                    return Forbid();
+
+                // Forbid if a plugin denies permission to access this mod.
+                if (!combined.GetSpecificModAdditionalChecks(user, mod))
+                    return Forbid();
+
                 var searchingCultureInfos = GetAcceptLanguageCultures();
 
                 // If the plugins allow us to access this mod, we then perform a search on localized data to grab what we need.
