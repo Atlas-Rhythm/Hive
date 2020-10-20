@@ -23,17 +23,19 @@ namespace Hive.Models.Serialized
 
         public string DownloadLink { get; init; } = null!;
 
-        public IList<string> Authors { get; } = new List<string>();
+        public SerializedLocalizedModInfo LocalizedModInfo { get; init; } = null!;
 
-        public IList<string> Contributors { get; } = new List<string>();
+        public List<string> Authors { get; } = new List<string>();
 
-        public IList<string> SupportedGameVersions { get; } = new List<string>();
+        public List<string> Contributors { get; } = new List<string>();
 
-        public IList<(string, string)> Links { get; } = new List<(string, string)>();
+        public List<string> SupportedGameVersions { get; } = new List<string>();
 
-        public IList<ModReference> Dependencies { get; } = new List<ModReference>();
+        public List<(string, string)> Links { get; } = new List<(string, string)>();
 
-        public IList<ModReference> ConflictsWith { get; } = new List<ModReference>();
+        public List<ModReference> Dependencies { get; } = new List<ModReference>();
+
+        public List<ModReference> ConflictsWith { get; } = new List<ModReference>();
 
         // all AdditionalData fields are public, yet readonly.
         public JsonElement AdditionalData { get; init; }
