@@ -104,7 +104,7 @@ namespace Hive.Controllers
                     LocalizedModInfo? localizedModInfo = null;
 
                     // Just cache all localizations for the mod we're looking for.
-                    var localizations = context.ModLocalizations.Where(x => x.OwningMod == mod);
+                    var localizations = mod.Localizations;
 
                     // We loop through each preferred language first, as they are what the user asked for.
                     // This list is already sorted by quality values, so none should be needed.
@@ -179,7 +179,7 @@ namespace Hive.Controllers
                 LocalizedModInfo? localizedModInfo = null;
 
                 // Just cache all localizations for the mod we're looking for.
-                var localizations = context.ModLocalizations.Where(x => x.OwningMod == mod);
+                var localizations = mod.Localizations;
 
                 // We loop through each preferred language first, as they are what the user asked for.
                 // This list is already sorted by quality values, so none should be needed.
@@ -224,8 +224,7 @@ namespace Hive.Controllers
                 DownloadLink = toSerialize.DownloadLink.AbsoluteUri,
                 // REVIEW: Perhaps replace the unserialized LocalizedModInfo parameter with a serialized version, and have callers serialize it themselves?
                 LocalizedModInfo = SerializeLocalizedModInfo(localizedModInfo),
-                // REVIEW: Is cloning necessary?
-                AdditionalData = toSerialize.AdditionalData.Clone()
+                AdditionalData = toSerialize.AdditionalData
             };
             serialized.Authors.AddRange(toSerialize.Authors.Select(x => x.Name!));
             serialized.Contributors.AddRange(toSerialize.Contributors.Select(x => x.Name!));
@@ -254,6 +253,10 @@ namespace Hive.Controllers
         // https://stackoverflow.com/questions/9414123/get-cultureinfo-from-current-visitor-and-setting-resources-based-on-that/51144362#51144362
         private IList<CultureInfo> GetAcceptLanguageCultures()
         {
+            if (Request is null) // If our request is... null somehow (should only happen via endpoint testing), then we return a blank list.
+            {
+                return new List<CultureInfo>() { };
+            }
             var requestedLanguages = Request.Headers["Accept-Language"];
             if (StringValues.IsNullOrEmpty(requestedLanguages) || requestedLanguages.Count == 0)
             {
