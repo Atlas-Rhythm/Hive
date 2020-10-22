@@ -9,7 +9,7 @@ namespace Hive.Models.Serialized
     /// </summary>
     public class SerializedMod
     {
-        public string Name { get; init; } = null!;
+        public string ID { get; init; } = null!;
 
         public Version Version { get; init; } = null!;
 
