@@ -170,6 +170,7 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        // TODO: I am once again asking for proper testing.
         public async Task<ActionResult> MoveModToChannel([FromRoute] string channelId)
         {
             log.Debug("Attempting to move a mod to a new channel...");
@@ -224,7 +225,8 @@ namespace Hive.Controllers
             }
 
             // Forbid iff a given user (or none) is allowed to move the mod.
-            if (!permissions.CanDo(MoveModActionName, new PermissionContext { User = user }, ref getModsParseState))
+            // REVIEW: Should I instead pass the origin channel into the permission context?
+            if (!permissions.CanDo(MoveModActionName, new PermissionContext { User = user, Mod = databaseMod, Channel = destination }, ref getModsParseState))
                 return Forbid();
 
             // Combine plugins and check if the user can still move the mod.
