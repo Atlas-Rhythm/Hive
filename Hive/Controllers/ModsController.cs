@@ -15,6 +15,12 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.Buffers.Text;
+using System.IO;
+using System.Linq.Expressions;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hive.Controllers
 {
@@ -33,6 +39,18 @@ namespace Hive.Controllers
         /// <param name="contextMod">Mod in context</param>
         [return: StopIfReturns(false)]
         bool GetSpecificModAdditionalChecks(User? user, Mod contextMod) => true;
+
+        /// <summary>
+        /// Returns true if the specified user has access to move a particular mod from <paramref name="origin"/> to <paramref name="destination"/>. False otherwise.
+        /// <para>Hive default is to return true.</para>
+        /// </summary>
+        /// <param name="user">User in context</param>
+        /// <param name="contextMod">Mod that is attempting to be moved</param>
+        /// <param name="origin">Channel that the Mod was located in before the move.</param>
+        /// <param name="destination">New channel that the Mod will reside in.</param>
+        /// <returns></returns>
+        [return: StopIfReturns(false)]
+        bool GetMoveModAdditionalChecks(User user, Mod contextMod, Channel origin, Channel destination) => true;
     }
 
     internal class HiveModsControllerPlugin : IModsPlugin { }
@@ -47,7 +65,8 @@ namespace Hive.Controllers
         private readonly IProxyAuthenticationService proxyAuth;
         private readonly IAggregate<IModsPlugin> plugin;
 
-        [ThreadStatic] private static PermissionActionParseState modsParseState;
+        [ThreadStatic] private static PermissionActionParseState getModsParseState;
+        [ThreadStatic] private static PermissionActionParseState moveModsParseState;
 
         public ModsController([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IModsPlugin> plugin, IProxyAuthenticationService proxyAuth)
         {
@@ -59,7 +78,8 @@ namespace Hive.Controllers
             this.plugin = plugin;
         }
 
-        private const string ActionName = "hive.mod";
+        private const string GetModsActionName = "hive.mod";
+        private const string MoveModActionName = "hive.mod.move";
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -72,15 +92,12 @@ namespace Hive.Controllers
 
             // iff a given user (or none) is allowed to access any mods. This should almost always be true.
             // REVIEW: Is this first check necessary?
-            if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref modsParseState))
+            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user }, ref getModsParseState))
                 return Forbid();
 
             // Combine plugins
             log.Debug("Combining plugins...");
             IModsPlugin combined = plugin.Instance;
-
-            // Construct a list of preferred languages
-            var searchingCultureInfos = GetAcceptLanguageCultures();
 
             // Construct our list of serialized mods here.
             log.Debug("Filtering and serializing mods by existing plugins...");
@@ -91,7 +108,7 @@ namespace Hive.Controllers
             foreach (Mod mod in context.Mods)
             {
                 // Perform a permissions check on this particular mod. If it fails, we just skip.
-                if (!permissions.CanDo(ActionName, new PermissionContext { User = user, Mod = mod }, ref modsParseState))
+                if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState))
                 {
                     continue;
                 }
@@ -99,38 +116,9 @@ namespace Hive.Controllers
                 // We perform a plugin check on each mod.
                 if (combined.GetSpecificModAdditionalChecks(user, mod))
                 {
-                    // If the plugins allow us to access this mod, we then perform a search on localized data to grab what we need.
-                    LocalizedModInfo? localizedModInfo = null;
+                    var localizedModInfo = GetLocalizedModInfoFromMod(mod);
 
-                    // Just cache all localizations for the mod we're looking for.
-                    var localizations = mod.Localizations;
-
-                    // We loop through each preferred language first, as they are what the user asked for.
-                    // This list is already sorted by quality values, so none should be needed.
-                    // We do not need to explicitly search for the System culture since it was already added to the end of this list.
-                    foreach (CultureInfo preferredLanguage in searchingCultureInfos)
-                    {
-                        var localizedInfos = localizations.Where(x => x.Language == preferredLanguage);
-                        if (localizedInfos.Any())
-                        {
-                            localizedModInfo = localizedInfos.First();
-                            break;
-                        }
-                    }
-
-                    // If no preferred languages were found, we then grab the first found LocalizedModData is found.
-                    if (localizedModInfo == null)
-                    {
-                        if (localizations.Any()) localizedModInfo = localizations.First();
-                    }
-
-                    // If we still have no language, then... fuck.
-                    if (localizedModInfo == null)
-                    {
-                        log.Error("Mod {ReadableID} does not have any LocalizedModInfos attached to it.", mod.ReadableID);
-                    }
-
-                    mods.Add(SerializeMod(mod, localizedModInfo!));
+                    mods.Add(SerializeMod(mod, localizedModInfo!)); // REVIEW: Perhaps throw an exception instead of giving out no localizations/null?
                 }
             }
 
@@ -161,52 +149,137 @@ namespace Hive.Controllers
             {
                 return NotFound();
             }
-            else
+
+            // Forbid if a given user (or none) is not allowed to access this mod.
+            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState))
+                return Forbid();
+
+            // Forbid if a plugin denies permission to access this mod.
+            if (!combined.GetSpecificModAdditionalChecks(user, mod))
+                return Forbid();
+
+            var localizedModInfo = GetLocalizedModInfoFromMod(mod);
+
+            SerializedMod serialized = SerializeMod(mod, localizedModInfo!); // REVIEW: Perhaps throw an exception instead of giving out no localizations/null?
+            return Ok(serialized);
+        }
+
+        [HttpPost("api/mod/move/{channelId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> MoveModToChannel([FromRoute] string channelId)
+        {
+            log.Debug("Attempting to move a mod to a new channel...");
+            // Get the user, do not need to capture context
+            User? user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+
+            // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
+            if (user is null)
             {
-                // Forbid if a given user (or none) is not allowed to access this mod.
-                if (!permissions.CanDo(ActionName, new PermissionContext { User = user, Mod = mod }, ref modsParseState))
-                    return Forbid();
-
-                // Forbid if a plugin denies permission to access this mod.
-                if (!combined.GetSpecificModAdditionalChecks(user, mod))
-                    return Forbid();
-
-                var searchingCultureInfos = GetAcceptLanguageCultures();
-
-                // If the plugins allow us to access this mod, we then perform a search on localized data to grab what we need.
-                LocalizedModInfo? localizedModInfo = null;
-
-                // Just cache all localizations for the mod we're looking for.
-                var localizations = mod.Localizations;
-
-                // We loop through each preferred language first, as they are what the user asked for.
-                // This list is already sorted by quality values, so none should be needed.
-                // We do not need to explicitly search for the System culture since it was already added to the end of this list.
-                foreach (CultureInfo preferredLanguage in searchingCultureInfos)
-                {
-                    var localizedInfos = localizations.Where(x => x.Language == preferredLanguage);
-                    if (localizedInfos.Any())
-                    {
-                        localizedModInfo = localizedInfos.First();
-                        break;
-                    }
-                }
-
-                // If no preferred languages were found, we then grab the first found LocalizedModData is found.
-                if (localizedModInfo == null)
-                {
-                    if (localizations.Any()) localizedModInfo = localizations.First();
-                }
-
-                // If we still have no language, then... fuck.
-                if (localizedModInfo == null)
-                {
-                    log.Error("Mod {ReadableID} does not have any LocalizedModInfos attached to it.", mod.ReadableID);
-                }
-
-                SerializedMod serialized = SerializeMod(mod, localizedModInfo!);
-                return Ok(serialized);
+                return Unauthorized();
             }
+
+            log.Debug("Serializing Mod from JSON...");
+            // Parse our body as JSON.
+            SerializedMod? postedMod = null;
+            try
+            {
+                postedMod = await JsonSerializer.DeserializeAsync<SerializedMod>(Request.Body).ConfigureAwait(false);
+            }
+            catch(Exception e) when (e is JsonException) // Catch errors that can be attributed to malformed JSON from the user
+            {
+                return BadRequest(e);
+            }
+            catch // This was not an error due to the user. Ruh roh.
+            {
+                throw;
+            }
+
+            if (postedMod == null) // So... we somehow successfully deserialized the mod, only to find that it is null. What? Should never happen (I hope).
+            {
+                throw new NullReferenceException("POSTed Mod information was successfully deserialized, but the resulting object was null.");
+            }
+
+            log.Debug("Getting database objects...");
+
+            // Get the database mod that represents the SerializedMod.
+            // REVIEW: Is there a better way to do this?
+            Mod? databaseMod = await context.Mods.Where(x => x.ReadableID == postedMod.Name).FirstOrDefaultAsync().ConfigureAwait(false);
+
+            if (databaseMod == null) // The POSTed mod was successfully deserialzed, but no Mod exists in the database. Okay, we just return 404.
+            {
+                return NotFound("POSTed Mod does not exist.");
+            }
+
+            // Grab our origin and destination channels.
+            Channel origin = databaseMod.Channel;
+            Channel? destination = await context.Channels.Where(x => x.Name == channelId).FirstOrDefaultAsync().ConfigureAwait(false);
+
+            if (destination is null) // The channelId from our Route does not point to an existing Channel. Okay, we just return 404.
+            {
+                return NotFound($"No channel exists with the name \"{channelId}\".");
+            }
+
+            // Forbid iff a given user (or none) is allowed to move the mod.
+            if (!permissions.CanDo(MoveModActionName, new PermissionContext { User = user }, ref getModsParseState))
+                return Forbid();
+
+            // Combine plugins and check if the user can still move the mod.
+            log.Debug("Combining plugins...");
+            IModsPlugin combined = plugin.Instance;
+
+            // Forbid iff a given user (or none) is allowed to move the mod.
+            if (!combined.GetMoveModAdditionalChecks(user, databaseMod, origin, destination))
+                return Forbid();
+
+            // All of our needed information is non-null, and we have permission to perform the move.
+            databaseMod.Channel = destination;
+
+            // REVIEW: Perhaps re-construct a SerializedMod from the mod we just moved, and return that back to the user?
+
+            return Ok();
+        }
+
+        private LocalizedModInfo? GetLocalizedModInfoFromMod(Mod mod)
+        {
+            // Get requested languages
+            var searchingCultureInfos = GetAcceptLanguageCultures();
+
+            // If the plugins allow us to access this mod, we then perform a search on localized data to grab what we need.
+            LocalizedModInfo? localizedModInfo = null;
+
+            // Just cache all localizations for the mod we're looking for.
+            var localizations = mod.Localizations;
+
+            // We loop through each preferred language first, as they are what the user asked for.
+            // This list is already sorted by quality values, so none should be needed.
+            // We do not need to explicitly search for the System culture since it was already added to the end of this list.
+            foreach (CultureInfo preferredLanguage in searchingCultureInfos)
+            {
+                var localizedInfos = localizations.Where(x => x.Language == preferredLanguage);
+                if (localizedInfos.Any())
+                {
+                    localizedModInfo = localizedInfos.First();
+                    break;
+                }
+            }
+
+            // If no preferred languages were found, we then grab the first found LocalizedModData is found.
+            if (localizedModInfo == null)
+            {
+                if (localizations.Any()) localizedModInfo = localizations.First();
+            }
+
+            // If we still have no language, then... fuck.
+            if (localizedModInfo == null)
+            {
+                log.Error("Mod {ReadableID} does not have any LocalizedModInfos attached to it.", mod.ReadableID);
+            }
+
+            return localizedModInfo;
         }
 
         private static SerializedMod SerializeMod(Mod toSerialize, LocalizedModInfo localizedModInfo)
