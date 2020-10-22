@@ -142,6 +142,17 @@ namespace Hive.Tests.Endpoints
             Assert.True(value?.Name == "SongCore");
         }
 
+        [Fact]
+        public async Task AllModsForbid()
+        {
+            var controller = CreateController("next(false)", defaultPlugins); // By default, no one is allowed access.
+            var res = await controller.GetAllMods(); // Send the request
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must be fail due to the permission rule.
+        }
+
         private Controllers.ModsController CreateController(string permissionRule, IEnumerable<IModsPlugin> plugins)
         {
             var services = DIHelper.ConfigureServices(

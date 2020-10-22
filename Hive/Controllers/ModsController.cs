@@ -64,7 +64,6 @@ namespace Hive.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        // TODO: I am once again asking for proper testing
         public async Task<ActionResult<IEnumerable<SerializedMod>>> GetAllMods() 
         {
             log.Debug("Getting all mods...");
@@ -145,7 +144,6 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        // TODO: I am once again asking for proper testing
         public async Task<ActionResult<SerializedMod>> GetSpecificMod([FromRoute] string id)
         {
             log.Debug("Getting a specific mod...");
