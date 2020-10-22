@@ -104,15 +104,11 @@ namespace Hive.Controllers
             log.Debug("Filtering and serializing mods by existing plugins...");
 
             // Construct our list of serialized mods via some LINQ-y bois (thanks sc2ad)
-            // We first group each mod by IDs, then grab the latest versions of each.
+            // We first perform a filtered channel check (if specified), then group each mod by IDs, then grab the latest versions of each.
             var mods = context.Mods
+                .Where(m => filteredChannel == null || m.Channel == filteredChannel)
                 .GroupBy(m => m.ReadableID)
                 .Select(g => g.OrderByDescending(m => m.Version).First());
-
-            if (filteredChannel != null) // If the user requested a channel to filter by, we run that filter operation.
-            {
-                mods = mods.Where(m => filteredChannel == null || m.Channel == filteredChannel);
-            }
 
             // We then perform a permissions and plugins check on each mod, then construct SerializedMods from them.
             var serialized = mods.Where(m => permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState) && combined.GetSpecificModAdditionalChecks(user, m))
