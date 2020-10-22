@@ -3,12 +3,10 @@ using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
-using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
-using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -16,10 +14,6 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
-using System.Buffers.Text;
-using System.IO;
-using System.Linq.Expressions;
-using System.Security.Cryptography.X509Certificates;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hive.Controllers
@@ -88,7 +82,7 @@ namespace Hive.Controllers
         {
             log.Debug("Getting all mods...");
             // Get the user, do not need to capture context
-            User? user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             // iff a given user (or none) is allowed to access any mods. This should almost always be true.
             // REVIEW: Is this first check necessary?
@@ -97,33 +91,19 @@ namespace Hive.Controllers
 
             // Combine plugins
             log.Debug("Combining plugins...");
-            IModsPlugin combined = plugin.Instance;
+            var combined = plugin.Instance;
 
             // Construct our list of serialized mods here.
             log.Debug("Filtering and serializing mods by existing plugins...");
-            var mods = new List<SerializedMod>();
 
-            // We loop through all mods in the DB.
-            // REVIEW: Not sure if there's much I can do, but I'm not really liking this code. Any way to improve it?
-            foreach (Mod mod in context.Mods)
-            {
-                // Perform a permissions check on this particular mod. If it fails, we just skip.
-                if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState))
-                {
-                    continue;
-                }
-
-                // We perform a plugin check on each mod.
-                if (combined.GetSpecificModAdditionalChecks(user, mod))
-                {
-                    var localizedModInfo = GetLocalizedModInfoFromMod(mod);
-
-                    mods.Add(SerializeMod(mod, localizedModInfo!)); // REVIEW: Perhaps throw an exception instead of giving out no localizations/null?
-                }
-            }
+            // Construct our list of serialized mods via some LINQ-y bois (thanks sc2ad)
+            // In essence, each mod MUST pass both a permissions check, and a plugins check, then we take what's left and create SerializedMods from them.
+            var mods = context.Mods
+                .Where(m => permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState) && combined.GetSpecificModAdditionalChecks(user, m))
+                .Select(m => SerializeMod(m, GetLocalizedModInfoFromMod(m)!));
 
             // After all of this is done, we should have all of the mods that we want to return back to the user.
-            log.Debug("Total amount of serialized mods: {0}", mods.Count);
+            log.Debug("Total amount of serialized mods: {0}", mods.Count());
 
             return Ok(mods);
         }
@@ -136,32 +116,28 @@ namespace Hive.Controllers
         {
             log.Debug("Getting a specific mod...");
             // Get the user, do not need to capture context
-            User? user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             // Combine plugins
             log.Debug("Combining plugins...");
-            IModsPlugin combined = plugin.Instance;
+            var combined = plugin.Instance;
 
             // Get the ID of the mod we are looking for
-            Mod? mod = context.Mods.Where(x => x.ReadableID == id).FirstOrDefault();
+            var mod = context.Mods.Where(x => x.ReadableID == id).FirstOrDefault();
 
             if (mod == null)
             {
                 return NotFound();
             }
 
-            // Forbid if a given user (or none) is not allowed to access this mod.
-            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState))
-                return Forbid();
-
-            // Forbid if a plugin denies permission to access this mod.
-            if (!combined.GetSpecificModAdditionalChecks(user, mod))
+            // Forbid if a permissions check or plugins check prevents the user from accessing this mod.
+            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState) || !combined.GetSpecificModAdditionalChecks(user, mod))
                 return Forbid();
 
             var localizedModInfo = GetLocalizedModInfoFromMod(mod);
 
-            SerializedMod serialized = SerializeMod(mod, localizedModInfo!); // REVIEW: Perhaps throw an exception instead of giving out no localizations/null?
-            return Ok(serialized);
+            var serializedMod = SerializeMod(mod, localizedModInfo!); // REVIEW: Perhaps throw an exception instead of giving out no localizations/null?
+            return Ok(serializedMod);
         }
 
         [HttpPost("api/mod/move/{channelId}")]
@@ -175,7 +151,7 @@ namespace Hive.Controllers
         {
             log.Debug("Attempting to move a mod to a new channel...");
             // Get the user, do not need to capture context
-            User? user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
             if (user is null)
@@ -199,16 +175,16 @@ namespace Hive.Controllers
                 throw;
             }
 
-            if (postedMod == null) // So... we somehow successfully deserialized the mod, only to find that it is null. What? Should never happen (I hope).
+            if (postedMod == null) // So... we somehow successfully deserialized the mod, only to find that it is null. What?
             {
-                throw new NullReferenceException("POSTed Mod information was successfully deserialized, but the resulting object was null.");
+                return BadRequest("POSTed Mod information was successfully deserialized, but the resulting object was null.");
             }
 
             log.Debug("Getting database objects...");
 
             // Get the database mod that represents the SerializedMod.
             // REVIEW: Is there a better way to do this?
-            Mod? databaseMod = await context.Mods.Where(x => x.ReadableID == postedMod.Name).FirstOrDefaultAsync().ConfigureAwait(false);
+            var databaseMod = await context.Mods.Where(x => x.ReadableID == postedMod.ID).FirstOrDefaultAsync().ConfigureAwait(false);
 
             if (databaseMod == null) // The POSTed mod was successfully deserialzed, but no Mod exists in the database. Okay, we just return 404.
             {
@@ -216,8 +192,8 @@ namespace Hive.Controllers
             }
 
             // Grab our origin and destination channels.
-            Channel origin = databaseMod.Channel;
-            Channel? destination = await context.Channels.Where(x => x.Name == channelId).FirstOrDefaultAsync().ConfigureAwait(false);
+            var origin = databaseMod.Channel;
+            var destination = await context.Channels.Where(x => x.Name == channelId).FirstOrDefaultAsync().ConfigureAwait(false);
 
             if (destination is null) // The channelId from our Route does not point to an existing Channel. Okay, we just return 404.
             {
@@ -226,12 +202,12 @@ namespace Hive.Controllers
 
             // Forbid iff a given user (or none) is allowed to move the mod.
             // REVIEW: Should I instead pass the origin channel into the permission context?
-            if (!permissions.CanDo(MoveModActionName, new PermissionContext { User = user, Mod = databaseMod, Channel = destination }, ref getModsParseState))
+            if (!permissions.CanDo(MoveModActionName, new PermissionContext { User = user, Mod = databaseMod, SourceChannel = origin, DestinationChannel = destination }, ref moveModsParseState))
                 return Forbid();
 
             // Combine plugins and check if the user can still move the mod.
             log.Debug("Combining plugins...");
-            IModsPlugin combined = plugin.Instance;
+            var combined = plugin.Instance;
 
             // Forbid iff a given user (or none) is allowed to move the mod.
             if (!combined.GetMoveModAdditionalChecks(user, databaseMod, origin, destination))
@@ -270,13 +246,13 @@ namespace Hive.Controllers
             }
 
             // If no preferred languages were found, we then grab the first found LocalizedModData is found.
-            if (localizedModInfo == null)
+            if (localizedModInfo is null)
             {
                 if (localizations.Any()) localizedModInfo = localizations.First();
             }
 
             // If we still have no language, then... fuck.
-            if (localizedModInfo == null)
+            if (localizedModInfo is null)
             {
                 log.Error("Mod {ReadableID} does not have any LocalizedModInfos attached to it.", mod.ReadableID);
             }
@@ -286,24 +262,22 @@ namespace Hive.Controllers
 
         private static SerializedMod SerializeMod(Mod toSerialize, LocalizedModInfo localizedModInfo)
         {
-            SerializedMod serialized = new SerializedMod()
+            var serialized = new SerializedMod()
             {
-                Name = toSerialize.ReadableID,
+                ID = toSerialize.ReadableID,
                 Version = toSerialize.Version,
                 UpdatedAt = toSerialize.UploadedAt.ToString(),
                 EditedAt = toSerialize.EditedAt?.ToString()!,
                 UploaderUsername = toSerialize.Uploader.Name!,
                 ChannelName = toSerialize.Channel.Name,
-                DownloadLink = toSerialize.DownloadLink.AbsoluteUri,
-                // REVIEW: Perhaps replace the unserialized LocalizedModInfo parameter with a serialized version, and have callers serialize it themselves?
+                DownloadLink = toSerialize.DownloadLink.ToString(),
                 LocalizedModInfo = SerializeLocalizedModInfo(localizedModInfo),
                 AdditionalData = toSerialize.AdditionalData
             };
             serialized.Authors.AddRange(toSerialize.Authors.Select(x => x.Name!));
             serialized.Contributors.AddRange(toSerialize.Contributors.Select(x => x.Name!));
             serialized.SupportedGameVersions.AddRange(toSerialize.SupportedVersions.Select(x => x.Name!));
-            // REVIEW: Do I need AbsoluteUri?
-            serialized.Links.AddRange(toSerialize.Links.Select(x => (x.Name, x.Url.AbsoluteUri))!);
+            serialized.Links.AddRange(toSerialize.Links.Select(x => (x.Name, x.Url.ToString()))!);
             serialized.Dependencies.AddRange(toSerialize.Dependencies);
             serialized.ConflictsWith.AddRange(toSerialize.Conflicts);
             return serialized;
@@ -324,16 +298,16 @@ namespace Hive.Controllers
 
         // This code was generously provided by the following StackOverflow user, with some slight tweaks.
         // https://stackoverflow.com/questions/9414123/get-cultureinfo-from-current-visitor-and-setting-resources-based-on-that/51144362#51144362
-        private IList<CultureInfo> GetAcceptLanguageCultures()
+        private IEnumerable<CultureInfo> GetAcceptLanguageCultures()
         {
             if (Request is null) // If our request is... null somehow (should only happen via endpoint testing), then we return a blank list.
             {
-                return new List<CultureInfo>() { };
+                return Enumerable.Empty<CultureInfo>();
             }
             var requestedLanguages = Request.Headers["Accept-Language"];
             if (StringValues.IsNullOrEmpty(requestedLanguages) || requestedLanguages.Count == 0)
             {
-                return Array.Empty<CultureInfo>().ToList();
+                return Enumerable.Empty<CultureInfo>();
             }
 
             // TODO: Ignore cases where CultureInfo constructor throws
@@ -348,9 +322,7 @@ namespace Hive.Controllers
                 // Sort by preference level
                 .OrderByDescending(sv => sv.Quality.GetValueOrDefault(1))
                 .Select(sv => new CultureInfo(sv.Value.ToString()))
-                .ToList();
-
-            preferredCultures.Add(CultureInfo.CurrentCulture); // Add system culture to the end.
+                .Append(CultureInfo.CurrentCulture); // Add system culture to the end
 
             return preferredCultures;
         }

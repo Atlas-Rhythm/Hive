@@ -60,7 +60,7 @@ namespace Hive.Tests.Endpoints
 
             // Check if the result given back contains all of the mods we put into it.
             // Pretty weird LINQ statement, but it checks that all mods has a serialized mod with the same name.
-            Assert.True(defaultMods.All(x => value?.Any(y => x.ReadableID == y.Name) ?? false));
+            Assert.True(defaultMods.All(x => value?.Any(y => x.ReadableID == y.ID) ?? false));
         }
 
         [Fact]
@@ -78,7 +78,7 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(value); // We must be given a serialized mod back.
 
             // This mod must be BSIPA.
-            Assert.True(value?.Name == "BSIPA");
+            Assert.True(value?.ID == "BSIPA");
         }
 
         [Fact]
@@ -139,7 +139,7 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(value); // We must be given a serialized mod back.
 
             // This mod must be SongCore.
-            Assert.True(value?.Name == "SongCore");
+            Assert.True(value?.ID == "SongCore");
         }
 
         [Fact]
