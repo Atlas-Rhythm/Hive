@@ -93,19 +93,32 @@ namespace Hive.Controllers
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;
 
+            Channel? filteredChannel = null;
+            if (Request.Query.TryGetValue("channel", out var filteredChannelValues))
+            {
+                var filteredChannelID = filteredChannelValues.First(); // REVIEW: Would it make sense to allow filtering through multiple channels?
+                filteredChannel = await context.Channels.Where(c => c.Name == filteredChannelID).FirstAsync().ConfigureAwait(false);
+            }
+
             // Construct our list of serialized mods here.
             log.Debug("Filtering and serializing mods by existing plugins...");
 
             // Construct our list of serialized mods via some LINQ-y bois (thanks sc2ad)
-            // In essence, each mod MUST pass both a permissions check, and a plugins check, then we take what's left and create SerializedMods from them.
+            // We first group each mod by IDs, then grab the latest versions of each.
             var mods = context.Mods
-                .Where(m => permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState) && combined.GetSpecificModAdditionalChecks(user, m))
-                .Select(m => SerializeMod(m, GetLocalizedModInfoFromMod(m)!));
+                .GroupBy(m => m.ReadableID)
+                .Select(g => g.OrderByDescending(m => m.Version).First());
 
-            // After all of this is done, we should have all of the mods that we want to return back to the user.
-            log.Debug("Total amount of serialized mods: {0}", mods.Count());
+            if (filteredChannel != null) // If the user requested a channel to filter by, we run that filter operation.
+            {
+                mods = mods.Where(m => filteredChannel == null || m.Channel == filteredChannel);
+            }
 
-            return Ok(mods);
+            // We then perform a permissions and plugins check on each mod, then construct SerializedMods from them.
+            var serialized = mods.Where(m => permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState) && combined.GetSpecificModAdditionalChecks(user, m))
+                                 .Select(m => SerializeMod(m, GetLocalizedModInfoFromMod(m)!));
+
+            return Ok(serialized);
         }
 
         [HttpGet("api/mod/{id}")]
