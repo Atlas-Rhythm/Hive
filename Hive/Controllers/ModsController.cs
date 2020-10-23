@@ -227,6 +227,8 @@ namespace Hive.Controllers
             // All of our needed information is non-null, and we have permission to perform the move.
             databaseMod.Channel = destination;
 
+            combined.ModifyAfterModMove(in databaseMod); // If any plugins want to modify the object further after the move operation, they can do so here.
+
             // REVIEW: Perhaps re-construct a SerializedMod from the mod we just moved, and return that back to the user?
 
             return Ok();
