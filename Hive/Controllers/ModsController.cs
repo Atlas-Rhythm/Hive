@@ -50,7 +50,7 @@ namespace Hive.Controllers
         /// Allows modification of a <see cref="Mod"/> object after a move operation has been performed.
         /// </summary>
         /// <param name="input">The mod in which the move operation was performed on.</param>
-        void ModifyAfterModMove([TakesReturnValue] in Mod input) { }
+        void ModifyAfterModMove(in Mod input) { }
     }
 
     internal class HiveModsControllerPlugin : IModsPlugin { }
@@ -102,11 +102,13 @@ namespace Hive.Controllers
             if (Request != null && Request.Query != null && Request.Query.TryGetValue("channel", out var filteredChannelValues))
             {
                 var filteredChannelID = filteredChannelValues.First(); // REVIEW: Would it make sense to allow filtering through multiple channels?
-                filteredChannel = await context.Channels.Where(c => c.Name == filteredChannelID).FirstAsync().ConfigureAwait(false);
+                filteredChannel = context.Channels.Where(c => c.Name == filteredChannelID).First();
             }
 
             // Construct our list of serialized mods here.
             log.Debug("Filtering and serializing mods by existing plugins...");
+            
+            // TODO: Add a "filterType" query param which takes in "all", "latest", and "recent", which controls grabbing ALL mods, grabbing the latest versions of each mod, or the most recent releases of each mod
 
             // Construct our list of serialized mods via some LINQ-y bois (thanks sc2ad)
             // We first perform a filtered channel check (if specified), then group each mod by IDs, then grab the latest versions of each.
@@ -135,8 +137,13 @@ namespace Hive.Controllers
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;
 
-            // Get the ID of the mod we are looking for
-            var mod = context.Mods.Where(x => x.ReadableID == id).FirstOrDefault();
+            // Get the latest version of the mod we are looking for
+            // TODO: Add version range query param, or more routes
+            var mod = context.Mods
+                .GroupBy(m => m.ReadableID)
+                .Where(g => g.Key == id)
+                .Select(g => g.OrderBy(m => m.Version).First())
+                .FirstOrDefault();
 
             if (mod == null)
             {
@@ -196,7 +203,7 @@ namespace Hive.Controllers
             log.Debug("Getting database objects...");
 
             // Get the database mod that represents the SerializedMod.
-            var databaseMod = await context.Mods.Where(x => x.ReadableID == postedMod.ID).FirstOrDefaultAsync().ConfigureAwait(false);
+            var databaseMod = context.Mods.Where(x => x.ReadableID == postedMod.ID).FirstOrDefault();
 
             if (databaseMod == null) // The POSTed mod was successfully deserialzed, but no Mod exists in the database. Okay, we just return 404.
             {
@@ -205,7 +212,7 @@ namespace Hive.Controllers
 
             // Grab our origin and destination channels.
             var origin = databaseMod.Channel;
-            var destination = await context.Channels.Where(x => x.Name == channelId).FirstOrDefaultAsync().ConfigureAwait(false);
+            var destination = context.Channels.Where(x => x.Name == channelId).FirstOrDefault();
 
             if (destination is null) // The channelId from our Route does not point to an existing Channel. Okay, we just return 404.
             {

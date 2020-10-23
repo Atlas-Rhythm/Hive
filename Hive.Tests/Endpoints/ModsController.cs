@@ -4,17 +4,26 @@ using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Utilities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Primitives;
+using Microsoft.Net.Http.Headers;
 using Moq;
 using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -32,6 +41,18 @@ namespace Hive.Tests.Endpoints
             GetPlaceholderMod("SiraUtil", "Public"),
             GetPlaceholderMod("ChromaToggle", "Beta"),
             GetPlaceholderMod("Counters+", "Beta"),
+        };
+
+        private static IEnumerable<Channel> defaultChannels = new List<Channel>()
+        {
+            new Channel()
+            {
+                Name = "Public"
+            },
+            new Channel()
+            {
+                Name = "Beta"
+            }
         };
         
         private static IEnumerable<IModsPlugin> defaultPlugins = new List<IModsPlugin>()
@@ -153,6 +174,56 @@ namespace Hive.Tests.Endpoints
             Assert.IsType<ForbidResult>(res.Result); // The above endpoint must be fail due to the permission rule.
         }
 
+        [Fact]
+        public async Task MoveModStandard()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+            var getMod = await controller.GetSpecificMod("ChromaToggle"); // Grab the mod we want to move.
+
+            // Serialize our mod into JSON, since we need to re-attach it with the request.
+            Assert.NotNull(getMod.Result);
+            var getModResult = getMod.Result as OkObjectResult;
+            Assert.NotNull(getModResult);
+            var serializedMod = getModResult!.Value as SerializedMod;
+
+            // Serialize our mod into JSON, since we need to re-attach it with the request.
+            var json = JsonSerializer.Serialize(serializedMod);
+
+            helper.WriteLine(json);
+
+            using var stringStream = GenerateStreamFromString(json);
+
+            // Because this endpoint reads from the request body, we need to Moq a HttpContext
+            var requestMoq = new Mock<HttpRequest>();
+            requestMoq.SetupGet(r => r.Body).Returns(stringStream);
+            requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
+                new Dictionary<string, StringValues>()
+                {
+                    { HeaderNames.Authorization, new StringValues("Bearer: test") }
+                })
+            );
+
+            var contextMoq = new Mock<HttpContext>();
+            contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
+
+            var actionContext = new ActionContext(contextMoq.Object, new RouteData(), new ControllerActionDescriptor());
+
+            controller.ControllerContext.HttpContext = contextMoq.Object;
+
+            var res = await controller.MoveModToChannel("Public");
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.IsType<OkResult>(res); // The above endpoint must succeed.
+
+            var confirmation = await controller.GetSpecificMod("ChromaToggle"); // Re-grab our mod to confirm its new home.
+
+            Assert.NotNull(confirmation.Result);
+            var confirmationResult = getMod.Result as OkObjectResult;
+            Assert.NotNull(confirmationResult);
+            var confirmationMod = confirmationResult!.Value as SerializedMod;
+            Assert.Equal("Public", confirmationMod!.ChannelName);
+        }
+
         private Controllers.ModsController CreateController(string permissionRule, IEnumerable<IModsPlugin> plugins)
         {
             var services = DIHelper.ConfigureServices(
@@ -162,6 +233,7 @@ namespace Hive.Tests.Endpoints
                 new HiveContext()
                 {
                     Mods = GetDBSetFromQueryable(defaultMods.AsQueryable()).Object,
+                    Channels = GetDBSetFromQueryable(defaultChannels.AsQueryable()).Object
                 });
 
             services
@@ -195,7 +267,12 @@ namespace Hive.Tests.Endpoints
         {
             var localization = new List<LocalizedModInfo>()
             {
-                new LocalizedModInfo() { Language = CultureInfo.CurrentCulture }
+                new LocalizedModInfo()
+                { 
+                    Language = CultureInfo.CurrentCulture,
+                    Name = name,
+                    Description = "Hi danike, this shit not null"
+                }
             };
             return new Mod()
             {
@@ -206,7 +283,8 @@ namespace Hive.Tests.Endpoints
                 Uploader = new User() { Username = "Billy bob joe" },
                 Channel = new Channel() { Name = channel },
                 DownloadLink = new Uri("https://www.github.com/AtlasRhythm/Hive"),
-                Localizations = localization
+                Localizations = localization,
+                AdditionalData = JsonDocument.Parse("{}").RootElement.Clone()
             };
         }
 
@@ -246,6 +324,16 @@ namespace Hive.Tests.Endpoints
                         return false;
                 }
             }
+        }
+
+        private static Stream GenerateStreamFromString(string s)
+        {
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(s);
+            writer.Flush();
+            stream.Position = 0;
+            return stream;
         }
     }
 }
