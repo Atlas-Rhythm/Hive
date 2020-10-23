@@ -45,6 +45,12 @@ namespace Hive.Controllers
         /// <returns></returns>
         [return: StopIfReturns(false)]
         bool GetMoveModAdditionalChecks(User user, Mod contextMod, Channel origin, Channel destination) => true;
+
+        /// <summary>
+        /// Allows modification of a <see cref="Mod"/> object after a move operation has been performed.
+        /// </summary>
+        /// <param name="input">The mod in which the move operation was performed on.</param>
+        void ModifyAfterModMove([TakesReturnValue] in Mod input) { }
     }
 
     internal class HiveModsControllerPlugin : IModsPlugin { }
@@ -110,7 +116,7 @@ namespace Hive.Controllers
                 .GroupBy(m => m.ReadableID)
                 .Select(g => g.OrderByDescending(m => m.Version).First())
                 .Where(m => permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState) && combined.GetSpecificModAdditionalChecks(user, m))
-                .Select(m => SerializeMod(m, GetLocalizedModInfoFromMod(m)!));
+                .Select(m => SerializedMod.Serialize(m, GetLocalizedModInfoFromMod(m)!));
 
             return Ok(mods);
         }
@@ -143,7 +149,7 @@ namespace Hive.Controllers
 
             var localizedModInfo = GetLocalizedModInfoFromMod(mod);
 
-            var serializedMod = SerializeMod(mod, localizedModInfo!); // REVIEW: Perhaps throw an exception instead of giving out no localizations/null?
+            var serializedMod = SerializedMod.Serialize(mod, localizedModInfo!); // REVIEW: Perhaps throw an exception instead of giving out no localizations/null?
             return Ok(serializedMod);
         }
 
@@ -265,71 +271,33 @@ namespace Hive.Controllers
             return localizedModInfo;
         }
 
-        private static SerializedMod SerializeMod(Mod toSerialize, LocalizedModInfo localizedModInfo)
-        {
-            var serialized = new SerializedMod()
-            {
-                ID = toSerialize.ReadableID,
-                Version = toSerialize.Version,
-                UpdatedAt = toSerialize.UploadedAt.ToString(),
-                EditedAt = toSerialize.EditedAt?.ToString()!,
-                UploaderUsername = toSerialize.Uploader.Name!,
-                ChannelName = toSerialize.Channel.Name,
-                DownloadLink = toSerialize.DownloadLink.ToString(),
-                LocalizedModInfo = SerializeLocalizedModInfo(localizedModInfo),
-                AdditionalData = toSerialize.AdditionalData
-            };
-            serialized.Authors.AddRange(toSerialize.Authors.Select(x => x.Name!));
-            serialized.Contributors.AddRange(toSerialize.Contributors.Select(x => x.Name!));
-            serialized.SupportedGameVersions.AddRange(toSerialize.SupportedVersions.Select(x => x.Name!));
-            serialized.Links.AddRange(toSerialize.Links.Select(x => (x.Name, x.Url.ToString()))!);
-            serialized.Dependencies.AddRange(toSerialize.Dependencies);
-            serialized.ConflictsWith.AddRange(toSerialize.Conflicts);
-            return serialized;
-        }
-
-        private static SerializedLocalizedModInfo SerializeLocalizedModInfo(LocalizedModInfo toSerialize)
-        {
-            if (toSerialize is null) return null!;
-            return new SerializedLocalizedModInfo()
-            {
-                Language = toSerialize.Language,
-                Name = toSerialize.Name,
-                Changelog = toSerialize.Changelog!,
-                Credits = toSerialize.Credits!,
-                Description = toSerialize.Description,
-            };
-        }
-
         // This code was generously provided by the following StackOverflow user, with some slight tweaks.
         // https://stackoverflow.com/questions/9414123/get-cultureinfo-from-current-visitor-and-setting-resources-based-on-that/51144362#51144362
         private IEnumerable<CultureInfo> GetAcceptLanguageCultures()
         {
-            if (Request is null) // If our request is... null somehow (should only happen via endpoint testing), then we return a blank list.
+            // We start with an empty list
+            var preferredCultures = Enumerable.Empty<CultureInfo>();
+            if (Request != null)
             {
-                return Enumerable.Empty<CultureInfo>();
-            }
-            var requestedLanguages = Request.Headers["Accept-Language"];
-            if (StringValues.IsNullOrEmpty(requestedLanguages) || requestedLanguages.Count == 0)
-            {
-                return Enumerable.Empty<CultureInfo>();
+                var requestedLanguages = Request.Headers["Accept-Language"];
+                if (!StringValues.IsNullOrEmpty(requestedLanguages) && requestedLanguages.Count > 0)
+                {
+                    // TODO: Ignore cases where CultureInfo constructor throws
+                    preferredCultures = requestedLanguages.ToString().Split(',')
+                        // Parse the header values
+                        .Select(s => new StringSegment(s))
+                        .Select(StringWithQualityHeaderValue.Parse)
+                        // Ignore the "any language" rule
+                        .Where(sv => sv.Value != "*")
+                        // Remove duplicate rules with a lower value
+                        .GroupBy(sv => sv.Value).Select(svg => svg.OrderByDescending(sv => sv.Quality.GetValueOrDefault(1)).First())
+                        // Sort by preference level
+                        .OrderByDescending(sv => sv.Quality.GetValueOrDefault(1))
+                        .Select(sv => new CultureInfo(sv.Value.ToString()));
+                }
             }
 
-            // TODO: Ignore cases where CultureInfo constructor throws
-            var preferredCultures = requestedLanguages.ToString().Split(',')
-                // Parse the header values
-                .Select(s => new StringSegment(s))
-                .Select(StringWithQualityHeaderValue.Parse)
-                // Ignore the "any language" rule
-                .Where(sv => sv.Value != "*")
-                // Remove duplicate rules with a lower value
-                .GroupBy(sv => sv.Value).Select(svg => svg.OrderByDescending(sv => sv.Quality.GetValueOrDefault(1)).First())
-                // Sort by preference level
-                .OrderByDescending(sv => sv.Quality.GetValueOrDefault(1))
-                .Select(sv => new CultureInfo(sv.Value.ToString()))
-                .Append(CultureInfo.CurrentCulture); // Add system culture to the end
-
-            return preferredCultures;
+            return preferredCultures.Append(CultureInfo.CurrentCulture); // Add system culture to the end and return the result.
         }
     }
 }
