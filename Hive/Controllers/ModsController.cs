@@ -85,7 +85,6 @@ namespace Hive.Controllers
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             // iff a given user (or none) is allowed to access any mods. This should almost always be true.
-            // REVIEW: Is this first check necessary?
             if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user }, ref getModsParseState))
                 return Forbid();
 
@@ -94,7 +93,7 @@ namespace Hive.Controllers
             var combined = plugin.Instance;
 
             Channel? filteredChannel = null;
-            if (Request.Query.TryGetValue("channel", out var filteredChannelValues))
+            if (Request != null && Request.Query != null && Request.Query.TryGetValue("channel", out var filteredChannelValues))
             {
                 var filteredChannelID = filteredChannelValues.First(); // REVIEW: Would it make sense to allow filtering through multiple channels?
                 filteredChannel = await context.Channels.Where(c => c.Name == filteredChannelID).FirstAsync().ConfigureAwait(false);
@@ -105,16 +104,15 @@ namespace Hive.Controllers
 
             // Construct our list of serialized mods via some LINQ-y bois (thanks sc2ad)
             // We first perform a filtered channel check (if specified), then group each mod by IDs, then grab the latest versions of each.
+            // We then perform a permissions and plugins check on each mod, then construct SerializedMods from them.
             var mods = context.Mods
                 .Where(m => filteredChannel == null || m.Channel == filteredChannel)
                 .GroupBy(m => m.ReadableID)
-                .Select(g => g.OrderByDescending(m => m.Version).First());
+                .Select(g => g.OrderByDescending(m => m.Version).First())
+                .Where(m => permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState) && combined.GetSpecificModAdditionalChecks(user, m))
+                .Select(m => SerializeMod(m, GetLocalizedModInfoFromMod(m)!));
 
-            // We then perform a permissions and plugins check on each mod, then construct SerializedMods from them.
-            var serialized = mods.Where(m => permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState) && combined.GetSpecificModAdditionalChecks(user, m))
-                                 .Select(m => SerializeMod(m, GetLocalizedModInfoFromMod(m)!));
-
-            return Ok(serialized);
+            return Ok(mods);
         }
 
         [HttpGet("api/mod/{id}")]
@@ -192,7 +190,6 @@ namespace Hive.Controllers
             log.Debug("Getting database objects...");
 
             // Get the database mod that represents the SerializedMod.
-            // REVIEW: Is there a better way to do this?
             var databaseMod = await context.Mods.Where(x => x.ReadableID == postedMod.ID).FirstOrDefaultAsync().ConfigureAwait(false);
 
             if (databaseMod == null) // The POSTed mod was successfully deserialzed, but no Mod exists in the database. Okay, we just return 404.
@@ -210,7 +207,6 @@ namespace Hive.Controllers
             }
 
             // Forbid iff a given user (or none) is allowed to move the mod.
-            // REVIEW: Should I instead pass the origin channel into the permission context?
             if (!permissions.CanDo(MoveModActionName, new PermissionContext { User = user, Mod = databaseMod, SourceChannel = origin, DestinationChannel = destination }, ref moveModsParseState))
                 return Forbid();
 
