@@ -1,7 +1,10 @@
-﻿using System;
+﻿using Hive.Converters;
+using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Version = Hive.Versioning.Version;
 
 namespace Hive.Models.Serialized
@@ -13,9 +16,10 @@ namespace Hive.Models.Serialized
     {
         public string ID { get; init; } = null!;
 
+        [JsonConverter(typeof(VersionJsonConverter))]
         public Version Version { get; init; } = null!;
 
-        public string UpdatedAt { get; init; } = null!;
+        public string UploadedAt { get; init; } = null!;
 
         public string EditedAt { get; init; } = null!;
 
@@ -27,17 +31,17 @@ namespace Hive.Models.Serialized
 
         public SerializedLocalizedModInfo LocalizedModInfo { get; init; } = null!;
 
-        public IReadOnlyList<string> Authors { get; init; } = new List<string>();
+        public IImmutableList<string> Authors { get; init; } = null!;
 
-        public IReadOnlyList<string> Contributors { get; init; } = new List<string>();
+        public IImmutableList<string> Contributors { get; init; } = null!;
 
-        public IReadOnlyList<string> SupportedGameVersions { get; init; } = new List<string>();
+        public IImmutableList<string> SupportedGameVersions { get; init; } = null!;
 
-        public IReadOnlyList<(string, string)> Links { get; init; } = new List<(string, string)>();
+        public IImmutableList<(string, string)> Links { get; init; } = null!;
 
-        public IReadOnlyList<ModReference> Dependencies { get; init; } = new List<ModReference>();
+        public IImmutableList<ModReference> Dependencies { get; init; } = null!;
 
-        public IReadOnlyList<ModReference> ConflictsWith { get; init; } = new List<ModReference>();
+        public IImmutableList<ModReference> ConflictsWith { get; init; } = null!;
 
         // all AdditionalData fields are public, yet readonly.
         public JsonElement AdditionalData { get; init; }
@@ -49,19 +53,19 @@ namespace Hive.Models.Serialized
             {
                 ID = toSerialize.ReadableID,
                 Version = toSerialize.Version,
-                UpdatedAt = toSerialize.UploadedAt.ToString(),
+                UploadedAt = toSerialize.UploadedAt.ToString(),
                 EditedAt = toSerialize.EditedAt?.ToString()!,
                 UploaderUsername = toSerialize.Uploader.Name!,
                 ChannelName = toSerialize.Channel.Name,
                 DownloadLink = toSerialize.DownloadLink.ToString(),
                 LocalizedModInfo = SerializedLocalizedModInfo.Serialize(localizedModInfo),
                 AdditionalData = toSerialize.AdditionalData,
-                Authors = toSerialize.Authors.Select(x => x.Name!).ToList(),
-                Contributors = toSerialize.Contributors.Select(x => x.Name!).ToList(),
-                SupportedGameVersions = toSerialize.SupportedVersions.Select(x => x.Name!).ToList(),
-                Links = toSerialize.Links.Select(x => (x.Name, x.Url.ToString()))!.ToList(),
-                Dependencies = toSerialize.Dependencies.ToList(),
-                ConflictsWith = toSerialize.Conflicts.ToList()
+                Authors = toSerialize.Authors.Select(x => x.Name!).ToImmutableList(),
+                Contributors = toSerialize.Contributors.Select(x => x.Name!).ToImmutableList(),
+                SupportedGameVersions = toSerialize.SupportedVersions.Select(x => x.Name!).ToImmutableList(),
+                Links = toSerialize.Links.Select(x => (x.Name, x.Url.ToString()))!.ToImmutableList(),
+                Dependencies = toSerialize.Dependencies.ToImmutableList(),
+                ConflictsWith = toSerialize.Conflicts.ToImmutableList()
             };
             return serialized;
         }

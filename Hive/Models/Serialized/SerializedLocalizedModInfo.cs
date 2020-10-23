@@ -7,7 +7,7 @@ namespace Hive.Models.Serialized
     /// </summary>
     public class SerializedLocalizedModInfo
     {
-        public CultureInfo Language { get; init; } = null!;
+        public string Language { get; init; } = null!;
 
         public string Name { get; init; } = null!;
 
@@ -22,7 +22,7 @@ namespace Hive.Models.Serialized
             if (toSerialize is null) return null!;
             return new SerializedLocalizedModInfo()
             {
-                Language = toSerialize.Language,
+                Language = toSerialize.Language.Name,
                 Name = toSerialize.Name,
                 Changelog = toSerialize.Changelog!,
                 Credits = toSerialize.Credits!,
