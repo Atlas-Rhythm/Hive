@@ -83,7 +83,7 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(value);
             // Order of the channels isn't explicitly tested, just that the result contains the channels.
             foreach (var item in defaultChannels)
-                Assert.Contains(value, p => p.Name == item.Name);
+                Assert.Contains(item, value);
         }
 
         [Fact]
@@ -100,8 +100,8 @@ namespace Hive.Tests.Endpoints
             var value = result!.Value as IEnumerable<Channel>;
             Assert.NotNull(value);
             // Should only contain the first channel
-            Assert.Contains(value, p => p.Name == defaultChannels.ElementAt(0).Name);
-            Assert.DoesNotContain(value, p => p.Name == defaultChannels.ElementAt(1).Name);
+            Assert.Contains(defaultChannels.ElementAt(0), value);
+            Assert.DoesNotContain(defaultChannels.ElementAt(1), value);
         }
 
         [Fact]
@@ -122,8 +122,8 @@ namespace Hive.Tests.Endpoints
             var value = result!.Value as IEnumerable<Channel>;
             Assert.NotNull(value);
             // Should only contain the first channel
-            Assert.Contains(value, p => p.Name == defaultChannels.ElementAt(0).Name);
-            Assert.DoesNotContain(value, p => p.Name == defaultChannels.ElementAt(1).Name);
+            Assert.Contains(defaultChannels.ElementAt(0), value);
+            Assert.DoesNotContain(defaultChannels.ElementAt(1), value);
         }
 
         private static Mock<IChannelsControllerPlugin> CreatePlugin() => new Mock<IChannelsControllerPlugin>();
