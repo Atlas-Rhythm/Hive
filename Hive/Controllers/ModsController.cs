@@ -15,6 +15,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Components.Forms;
+using Hive.Versioning;
 
 namespace Hive.Controllers
 {
@@ -25,10 +27,14 @@ namespace Hive.Controllers
     public interface IModsPlugin
     {
         /// <summary>
-        /// Returns true if the specified user has access to view a particular mod. False otherwise.
-        /// When retrieving all mods, the list of mods is filtered using this method before serializing and returning to the user.
+        /// Returns true if the specified user has access to view a particular mod, false otherwise.
+        /// This method is called for each mod the user wants to access.
         /// <para>Hive default is to return true for each mod.</para>
         /// </summary>
+        /// <remarks>
+        /// This method is called in a LINQ expression that is not tracked by EntityFramework,
+        /// so modifications done to the <see cref="Mod"/> object will not be reflected in the database.
+        /// </remarks>
         /// <param name="user">User in context</param>
         /// <param name="contextMod">Mod in context</param>
         [return: StopIfReturns(false)]
@@ -99,30 +105,68 @@ namespace Hive.Controllers
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;
 
-            Channel? filteredChannel = null;
-            if (Request != null && Request.Query != null && Request.Query.TryGetValue("channelId", out var filteredChannelValues))
+            // Create some objects to filter by
+            // TODO: default to the instance default Channel
+            IEnumerable<Channel>? filteredChannels = null;
+            GameVersion? filteredVersion = null;
+            string filteredType = "LATEST";
+
+            if (Request != null && Request.Query != null)
             {
-                var filteredChannelID = filteredChannelValues.First(); // REVIEW: Would it make sense to allow filtering through multiple channels?
-                filteredChannel = context.Channels.Where(c => c.Name == filteredChannelID).First();
+                if (Request.Query.TryGetValue("channelId", out var filteredChannelValues))
+                {
+                    var filteredChannelID = filteredChannelValues.First();
+                    // While, yes, this CAN return multiple objects if they have the same channel name... but why would they have the same channel name
+                    filteredChannels = context.Channels.Where(c => c.Name == filteredChannelID);
+                }
+                if (Request.Query.TryGetValue("channelIds", out var filteredChannelsValues))
+                {
+                    filteredChannels = context.Channels.Where(c => filteredChannelsValues.Contains(c.Name));
+                }
+                if (Request.Query.TryGetValue("gameVersion", out var filteredVersionValues))
+                {
+                    filteredVersion = context.GameVersions.Where(g => g.Name == filteredVersionValues.First()).FirstOrDefault();
+                }
+                if (Request.Query.TryGetValue("filterType", out var filterTypeValues))
+                {
+                    filteredType = filterTypeValues.First().ToUpperInvariant(); // To remove case-sensitivity
+                }
             }
 
             // Construct our list of serialized mods here.
             log.Debug("Filtering and serializing mods by existing plugins...");
-            
-            // TODO: Add a "filterType" query param which takes in "all", "latest", and "recent", which controls grabbing ALL mods, grabbing the latest versions of each mod, or the most recent releases of each mod
-            // TODO: Add "channelIds" and "gameVersion" query params to filter by
 
-            // Construct our list of serialized mods via some LINQ-y bois (thanks sc2ad)
-            // We first perform a filtered channel check (if specified), then group each mod by IDs, then grab the latest versions of each.
-            // We then perform a permissions and plugins check on each mod, then construct SerializedMods from them.
+            // Grab our initial set of mods, filtered by a channel and game version if provided.
             var mods = context.Mods
-                .Where(m => filteredChannel == null || m.Channel == filteredChannel)
-                .GroupBy(m => m.ReadableID)
-                .Select(g => g.OrderByDescending(m => m.Version).First())
-                .Where(m => permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState) && combined.GetSpecificModAdditionalChecks(user, m))
-                .Select(m => SerializedMod.Serialize(m, GetLocalizedModInfoFromMod(m)!));
+                .AsNoTracking()
+                .Where(m => (filteredChannels == null || filteredChannels.Contains(m.Channel)) &&
+                    (filteredVersion == null || m.SupportedVersions.Contains(filteredVersion)));
 
-            return Ok(mods);
+            // Filter these mods based on the query param we've retrieved (or default behavior)
+            switch (filteredType)
+            {
+                case "ALL":
+                    break; // We already have all of the mods that should be returned by "ALL", no need to do work.
+                case "RECENT":
+                    mods = mods // With "RECENT", we group each mod by their ID, and grab the most recently uploaded version.
+                       .GroupBy(m => m.ReadableID)
+                       .Select((g) => g.OrderByDescending(m => m.UploadedAt).First());
+                    break;
+                default: // This is "LATEST", but should probably be default behavior, just to be safe.
+                    mods = mods // With "LATEST", we group each mod by their ID, and grab the most up-to-date version.
+                       .GroupBy(m => m.ReadableID)
+                       .Select((g) => g.OrderByDescending(m => m.Version).First());
+                    break;
+            }
+
+            // Finally, perform a final permissions and plugins filter on each mod, then serialize these to return to the user.
+            var serialized = mods
+                .Where(m =>
+                    permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState)
+                    && combined.GetSpecificModAdditionalChecks(user, m))
+                .Select(m => SerializedMod.Serialize(m, GetLocalizedModInfoFromMod(m)));
+
+            return Ok(serialized);
         }
 
         [HttpGet("api/mod/{id}")]
@@ -142,6 +186,7 @@ namespace Hive.Controllers
             // Get the latest version of the mod we are looking for
             // TODO: Add version range query param, or more routes
             var mod = context.Mods
+                .AsNoTracking()
                 .GroupBy(m => m.ReadableID)
                 .Where(g => g.Key == id)
                 .Select(g => g.OrderBy(m => m.Version).First())
@@ -153,12 +198,13 @@ namespace Hive.Controllers
             }
 
             // Forbid if a permissions check or plugins check prevents the user from accessing this mod.
-            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState) || !combined.GetSpecificModAdditionalChecks(user, mod))
+            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState)
+                || !combined.GetSpecificModAdditionalChecks(user, mod))
                 return Forbid();
 
             var localizedModInfo = GetLocalizedModInfoFromMod(mod);
 
-            var serializedMod = SerializedMod.Serialize(mod, localizedModInfo!); // REVIEW: Perhaps throw an exception instead of giving out no localizations/null?
+            var serializedMod = SerializedMod.Serialize(mod, localizedModInfo);
             return Ok(serializedMod);
         }
 
@@ -207,7 +253,7 @@ namespace Hive.Controllers
             // Get the database mod that represents the SerializedMod.
             var databaseMod = context.Mods.Where(x => x.ReadableID == postedMod.ID).FirstOrDefault();
 
-            if (databaseMod == null) // The POSTed mod was successfully deserialzed, but no Mod exists in the database. Okay, we just return 404.
+            if (databaseMod == null) // The POSTed mod was successfully deserialzed, but no Mod exists in the database.
             {
                 return NotFound("POSTed Mod does not exist.");
             }
@@ -241,10 +287,10 @@ namespace Hive.Controllers
             await context.SaveChangesAsync().ConfigureAwait(false);
 
             
-            return Ok(SerializedMod.Serialize(databaseMod, GetLocalizedModInfoFromMod(databaseMod)!));
+            return Ok(SerializedMod.Serialize(databaseMod, GetLocalizedModInfoFromMod(databaseMod)));
         }
 
-        private LocalizedModInfo? GetLocalizedModInfoFromMod(Mod mod)
+        private LocalizedModInfo GetLocalizedModInfoFromMod(Mod mod)
         {
             // Get requested languages
             var searchingCultureInfos = GetAcceptLanguageCultures();
@@ -277,7 +323,7 @@ namespace Hive.Controllers
             // If we still have no language, then... fuck.
             if (localizedModInfo is null)
             {
-                log.Error("Mod {ReadableID} does not have any LocalizedModInfos attached to it.", mod.ReadableID);
+                throw new ArgumentException($"Mod {mod.ReadableID} does not have any LocalizedModInfos attached to it.");
             }
 
             return localizedModInfo;
