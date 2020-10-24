@@ -18,14 +18,14 @@ namespace Hive.Models
 
         public Instant CreationTime { get; set; }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "EF wants a setter")]
+        [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "EF wants a setter")]
         public virtual ICollection<Mod> SupportedMods { get; set; } = new List<Mod>();
 
         #region DB Schema stuff
 
         // this would be the primary key for this row
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1720:Identifier contains type name", Justification = "We use Guid as a name. Could be changed in the future.")]
+        [SuppressMessage("Naming", "CA1720:Identifier contains type name", Justification = "We use Guid as a name. Could be changed in the future.")]
         public Guid Guid { get; set; }
 
         #endregion DB Schema stuff
@@ -45,5 +45,12 @@ namespace Hive.Models
                 {
                 });
         }
+
+        [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "It is validated, though")]
+        public bool Equals(GameVersion? other) => other is not null && other.Guid == Guid;
+
+        public override bool Equals(object? obj) => Equals(obj as GameVersion);
+
+        public override int GetHashCode() => Guid.GetHashCode();
     }
 }
