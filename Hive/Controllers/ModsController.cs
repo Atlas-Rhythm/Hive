@@ -138,9 +138,16 @@ namespace Hive.Controllers
 
             // Grab our initial set of mods, filtered by a channel and game version if provided.
             var mods = context.Mods
-                .AsNoTracking()
-                .Where(m => (filteredChannels == null || filteredChannels.Contains(m.Channel)) &&
-                    (filteredVersion == null || m.SupportedVersions.Contains(filteredVersion)));
+                .AsNoTracking();
+
+            if (filteredChannels != null)
+            {
+                mods = mods.Where(m => filteredChannels.Contains(m.Channel));
+            }
+            if (filteredVersion != null)
+            {
+                mods = mods.Where(m => m.SupportedVersions.Contains(filteredVersion));
+            }
 
             // Filter these mods based on the query param we've retrieved (or default behavior)
             switch (filteredType)
