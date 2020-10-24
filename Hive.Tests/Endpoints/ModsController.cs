@@ -213,7 +213,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.MoveModToChannel("Public");
 
             Assert.NotNull(res); // Result must not be null.
-            Assert.IsType<OkResult>(res); // The above endpoint must succeed.
+            Assert.IsType<OkObjectResult>(res); // The above endpoint must succeed.
 
             var confirmation = await controller.GetSpecificMod("ChromaToggle"); // Re-grab our mod to confirm its new home.
 
@@ -245,6 +245,7 @@ namespace Hive.Tests.Endpoints
         }
 
         // Taken from sc2ad's test for ChannelsControllers
+        // TODO: Move to helper type
         private static Mock<DbSet<T>> GetDBSetFromQueryable<T>(IQueryable<T> versions) where T : class
         {
             var channelSet = new Mock<DbSet<T>>();

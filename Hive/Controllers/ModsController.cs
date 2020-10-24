@@ -44,6 +44,7 @@ namespace Hive.Controllers
         /// <param name="destination">New channel that the Mod will reside in.</param>
         /// <returns></returns>
         [return: StopIfReturns(false)]
+        // REVIEW: Consider turning these Channel objects into channel IDs, or a wrapper type, for fool/user-proofing
         bool GetMoveModAdditionalChecks(User user, Mod contextMod, Channel origin, Channel destination) => true;
 
         /// <summary>
@@ -99,7 +100,7 @@ namespace Hive.Controllers
             var combined = plugin.Instance;
 
             Channel? filteredChannel = null;
-            if (Request != null && Request.Query != null && Request.Query.TryGetValue("channel", out var filteredChannelValues))
+            if (Request != null && Request.Query != null && Request.Query.TryGetValue("channelId", out var filteredChannelValues))
             {
                 var filteredChannelID = filteredChannelValues.First(); // REVIEW: Would it make sense to allow filtering through multiple channels?
                 filteredChannel = context.Channels.Where(c => c.Name == filteredChannelID).First();
@@ -109,6 +110,7 @@ namespace Hive.Controllers
             log.Debug("Filtering and serializing mods by existing plugins...");
             
             // TODO: Add a "filterType" query param which takes in "all", "latest", and "recent", which controls grabbing ALL mods, grabbing the latest versions of each mod, or the most recent releases of each mod
+            // TODO: Add "channelIds" and "gameVersion" query params to filter by
 
             // Construct our list of serialized mods via some LINQ-y bois (thanks sc2ad)
             // We first perform a filtered channel check (if specified), then group each mod by IDs, then grab the latest versions of each.
@@ -167,7 +169,7 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         // TODO: I am once again asking for proper testing.
-        public async Task<ActionResult> MoveModToChannel([FromRoute] string channelId)
+        public async Task<ActionResult<SerializedMod>> MoveModToChannel([FromRoute] string channelId)
         {
             log.Debug("Attempting to move a mod to a new channel...");
             // Get the user, do not need to capture context
@@ -236,9 +238,10 @@ namespace Hive.Controllers
 
             combined.ModifyAfterModMove(in databaseMod); // If any plugins want to modify the object further after the move operation, they can do so here.
 
-            // REVIEW: Perhaps re-construct a SerializedMod from the mod we just moved, and return that back to the user?
+            await context.SaveChangesAsync().ConfigureAwait(false);
 
-            return Ok();
+            
+            return Ok(SerializedMod.Serialize(databaseMod, GetLocalizedModInfoFromMod(databaseMod)!));
         }
 
         private LocalizedModInfo? GetLocalizedModInfoFromMod(Mod mod)
