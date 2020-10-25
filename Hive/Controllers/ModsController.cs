@@ -229,6 +229,42 @@ namespace Hive.Controllers
             return Ok(serializedMod);
         }
 
+        [HttpGet("api/mod/{id}/latest")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        // GET /mod/{id} includes a few extra query params to further filter the returned mod, this is just a simplified version
+        // TODO: I am once again asking for proper testing
+        public async Task<ActionResult<SerializedMod>> GetSpecificModLatestVersion([FromRoute] string id)
+        {
+            log.Debug("Getting the latest version of a specific mod...");
+            // Get the user, do not need to capture context
+            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+
+            // Combine plugins
+            log.Debug("Combining plugins...");
+            var combined = plugin.Instance;
+
+            // Grab the list of mods that match our ID.
+            var mod = context.Mods
+                .AsNoTracking()
+                .Where(m => m.ReadableID == id)
+                .OrderByDescending(m => m.Version)
+                .FirstOrDefault();
+
+            if (mod == null)
+            {
+                return NotFound();
+            }
+
+            // Forbid if a permissions check or plugins check prevents the user from accessing this mod.
+            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState)
+                || !combined.GetSpecificModAdditionalChecks(user, mod))
+                return Forbid();
+
+            return Ok(SerializedMod.Serialize(mod, GetLocalizedModInfoFromMod(mod)));
+        }
+
         [HttpPost("api/mod/move/{channelId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
