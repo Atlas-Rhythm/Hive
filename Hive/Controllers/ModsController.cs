@@ -17,6 +17,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Components.Forms;
 using Hive.Versioning;
+using System.ComponentModel.Design;
 
 namespace Hive.Controllers
 {
@@ -190,13 +191,26 @@ namespace Hive.Controllers
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;
 
-            // Get the latest version of the mod we are looking for
-            // TODO: Add version range query param, or more routes
-            var mod = context.Mods
+            VersionRange? filteredRange = null;
+            if (Request != null && Request.Query != null && Request.Query.TryGetValue("range", out var rangeValues))
+            {
+                filteredRange = new VersionRange(rangeValues.First());
+            }
+
+            // Grab the list of mods that match our ID.
+            var mods = context.Mods
                 .AsNoTracking()
-                .GroupBy(m => m.ReadableID)
-                .Where(g => g.Key == id)
-                .Select(g => g.OrderBy(m => m.Version).First())
+                .Where(m => m.ReadableID == id);
+
+            // If the user wants a specific version range, filter by that.
+            if (filteredRange != null)
+            {
+                mods = mods.Where(m => filteredRange.Matches(m.Version));
+            }
+
+            // Grab the latest version in our list
+            var mod = mods
+                .OrderByDescending(m => m.Version)
                 .FirstOrDefault();
 
             if (mod == null)
@@ -236,10 +250,10 @@ namespace Hive.Controllers
 
             log.Debug("Serializing Mod from JSON...");
             // Parse our body as JSON.
-            SerializedMod? postedMod = null;
+            ModIdentifier? identifier = null;
             try
             {
-                postedMod = await JsonSerializer.DeserializeAsync<SerializedMod>(Request.Body).ConfigureAwait(false);
+                identifier = await JsonSerializer.DeserializeAsync<ModIdentifier>(Request.Body).ConfigureAwait(false);
             }
             catch(Exception e) when (e is JsonException) // Catch errors that can be attributed to malformed JSON from the user
             {
@@ -250,15 +264,17 @@ namespace Hive.Controllers
                 throw;
             }
 
-            if (postedMod == null) // So... we somehow successfully deserialized the mod, only to find that it is null. What?
+            // So... we somehow successfully deserialized the mod identifier, only to find that it is null.
+            if (identifier == null || !identifier.HasValue)
             {
                 return BadRequest("POSTed Mod information was successfully deserialized, but the resulting object was null.");
             }
 
             log.Debug("Getting database objects...");
 
-            // Get the database mod that represents the SerializedMod.
-            var databaseMod = context.Mods.Where(x => x.ReadableID == postedMod.ID).FirstOrDefault();
+            // Get the database mod that represents the ModIdentifier.
+            var databaseMod = context.Mods.Where(x => x.ReadableID == identifier.Value.ID 
+                && x.Version.ToString() == identifier.Value.Version).FirstOrDefault();
 
             if (databaseMod == null) // The POSTed mod was successfully deserialzed, but no Mod exists in the database.
             {
@@ -363,6 +379,12 @@ namespace Hive.Controllers
             }
 
             return preferredCultures.Append(CultureInfo.CurrentCulture); // Add system culture to the end and return the result.
+        }
+
+        private struct ModIdentifier
+        {
+            public string ID;
+            public string Version;
         }
     }
 }
