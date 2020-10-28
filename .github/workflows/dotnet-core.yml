@@ -7,8 +7,6 @@ jobs:
     # This obtained from: https://docs.github.com/en/free-pro-team@latest/actions/guides/creating-postgresql-service-containers
     # Containers must run in Linux based operating systems
     runs-on: ubuntu-latest
-    # Docker Hub image that `container-job` executes in
-    container: node:10.18-jessie
 
     # Service containers to run with `container-job`
     services:
@@ -19,19 +17,12 @@ jobs:
         # Provide the password for postgres
         env:
           POSTGRES_PASSWORD: postgres
-          # The hostname used to communicate with the PostgreSQL service container
-          POSTGRES_HOST: postgres
-          # The default PostgreSQL port
-          POSTGRES_PORT: 5432
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-          # Map 5432 --> 5432
-          - 5432:5432
 
     steps:
       - name: Checkout
@@ -42,7 +33,7 @@ jobs:
           # As usual, obtained from: https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/5.0/releases.json
           dotnet-version: 5.0.100-rc.1.20452.10
       - name: Setup PostgreSQL DB Test Connection String
-        run: dotnet user-secrets set "ConnectionStrings:Test" "User ID=postgres;Password=postgres;Host=localhost;Port=5432;" --project "./Hive"
+        run: dotnet user-secrets set "ConnectionStrings:Test" "User ID=postgres;Password=postgres;Host=postgres;Port=5432;" --project "./Hive"
       - name: Install dependencies
         run: dotnet restore -clp:NoSummary
       - name: Build
