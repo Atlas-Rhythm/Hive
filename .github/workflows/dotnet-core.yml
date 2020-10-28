@@ -42,7 +42,7 @@ jobs:
           # As usual, obtained from: https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/5.0/releases.json
           dotnet-version: 5.0.100-rc.1.20452.10
       - name: Setup PostgreSQL DB Test Connection String
-        run: dotnet user-secrets set "ConnectionStrings:Test" "User ID=${{ POSTGRES_HOST }};Password=${{ POSTGRES_PASSWORD }};Host=localhost;Port=${{ POSTGRES_PORT }};" --project "./Hive"
+        run: dotnet user-secrets set "ConnectionStrings:Test" "User ID=postgres;Password=postgres;Host=localhost;Port=5432;" --project "./Hive"
       - name: Install dependencies
         run: dotnet restore -clp:NoSummary
       - name: Build
