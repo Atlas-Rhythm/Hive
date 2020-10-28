@@ -29,7 +29,7 @@ namespace Hive.Tests
         {
             StackTrace stackTrace = new StackTrace(1, false);
             // We assert that there is a frame 1 above us and that it has a method, and that method has a declaring type.
-            var testId = stackTrace.GetFrame(1)!.GetMethod()!.DeclaringType!.FullName;
+            var testId = stackTrace.GetFrame(0)!.GetMethod()!.DeclaringType!.FullName;
             // DB name for the test
             var dbName = "test_" + testId;
             // Get connection string
