@@ -5,6 +5,7 @@ using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -22,8 +23,13 @@ namespace Hive.Tests
         /// </summary>
         protected DbContextOptions<HiveContext> Options { get; }
 
-        public TestDbWrapper([CallerMemberName] string testId = "", PartialContext? context = null)
+        // Avoid inlining so we can get the type name via a stack trace search
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public TestDbWrapper(PartialContext? context = null)
         {
+            StackTrace stackTrace = new StackTrace(1, false);
+            // We assert that there is a frame 1 above us and that it has a method, and that method has a declaring type.
+            var testId = stackTrace.GetFrame(1)!.GetMethod()!.DeclaringType!.FullName;
             // DB name for the test
             var dbName = "test_" + testId;
             // Get connection string

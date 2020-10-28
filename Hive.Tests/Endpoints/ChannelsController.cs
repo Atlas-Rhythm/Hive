@@ -30,7 +30,7 @@ namespace Hive.Tests.Endpoints
             new Channel { Name = "Beta", AdditionalData =  DIHelper.EmptyAdditionalData }
         };
 
-        public ChannelsController(ITestOutputHelper helper) : base(context: new PartialContext
+        public ChannelsController(ITestOutputHelper helper) : base(new PartialContext
         {
             Channels = defaultChannels
         })
