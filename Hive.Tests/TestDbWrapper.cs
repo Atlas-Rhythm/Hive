@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,8 +22,7 @@ namespace Hive.Tests
         /// </summary>
         protected DbContextOptions<HiveContext> Options { get; }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA2100:Review SQL queries for security vulnerabilities", Justification = "<Pending>")]
-        public TestDbWrapper(string testId, PartialContext? context = null)
+        public TestDbWrapper([CallerMemberName] string testId = "", PartialContext? context = null)
         {
             // DB name for the test
             var dbName = "test_" + testId;

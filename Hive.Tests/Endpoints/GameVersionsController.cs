@@ -38,7 +38,7 @@ namespace Hive.Tests.Endpoints
             new HiveGameVersionsControllerPlugin()
         };
 
-        public GameVersionsController(ITestOutputHelper helper) : base(nameof(GameVersionsController), new PartialContext
+        public GameVersionsController(ITestOutputHelper helper) : base(context: new PartialContext
         {
             GameVersions = defaultGameVersions
         })
