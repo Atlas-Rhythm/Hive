@@ -4,19 +4,42 @@ on: [push, pull_request]
 
 jobs:
   build:
-
+    # This obtained from: https://docs.github.com/en/free-pro-team@latest/actions/guides/creating-postgresql-service-containers
+    # Containers must run in Linux based operating systems
     runs-on: ubuntu-latest
 
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Add mapping of port 5432 --> 5432... Is this all we need?
+          - 5432:5432
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        # As usual, obtained from: https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/5.0/releases.json
-        dotnet-version: 5.0.100-rc.1.20452.10
-    - name: Install dependencies
-      run: dotnet restore -clp:NoSummary
-    - name: Build
-      run: dotnet build --no-restore -c Release -clp:NoSummary
-    - name: Test
-      run: dotnet test --no-restore -c Release -clp:NoSummary
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          # As usual, obtained from: https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/5.0/releases.json
+          dotnet-version: 5.0.100-rc.1.20452.10
+      - name: Setup PostgreSQL DB Test Connection String
+        run: dotnet user-secrets set "ConnectionStrings:Test" "User ID=postgres;Password=postgres;Host=127.0.0.1;Port=5432;" --project "./Hive"
+      - name: Install dependencies
+        run: dotnet restore -clp:NoSummary
+      - name: Build
+        run: dotnet build --no-restore -c Release -clp:NoSummary
+      - name: Test
+        run: dotnet test --no-restore -c Release -clp:NoSummary

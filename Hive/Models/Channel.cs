@@ -23,5 +23,12 @@ namespace Hive.Models
                 throw new ArgumentNullException(nameof(b));
             b.Entity<Channel>();
         }
+
+        [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "It is validated, though")]
+        public bool Equals(Channel? other) => other is not null && other.Name == Name;
+
+        public override bool Equals(object? obj) => Equals(obj as Channel);
+
+        public override int GetHashCode() => Name.GetHashCode(StringComparison.InvariantCulture);
     }
 }
