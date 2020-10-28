@@ -23,6 +23,9 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          # Add mapping of port 5432 --> 5432... Is this all we need?
+          - 5432:5432
 
     steps:
       - name: Checkout
