@@ -13,25 +13,40 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit.Abstractions;
 using Xunit.Sdk;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using System.Data.Common;
+using Npgsql;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using System.Reflection;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Operations;
+using Hive.Versioning;
+using System.Text.Json;
+using System.Threading;
 
 namespace Hive.Tests
 {
     public static class DIHelper
     {
+        internal static JsonElement EmptyAdditionalData => JsonDocument.Parse("{}").RootElement.Clone();
+
         /// <summary>
         /// Configures a <see cref="ServiceCollection"/> for usage in a test.
         /// Provides default services for many options.
         /// </summary>
+        /// <param name="options">The <see cref="DbContextOptions{TContext}"/> to use for this test.</param>
         /// <param name="outputHelper">The output helper to log Hive.Permissions to.</param>
         /// <param name="ruleProvider">The rule provider for the <see cref="PermissionsManager{TContext}"/>.</param>
         /// <param name="builtIns">The built in functions to provide to the <see cref="PermissionsManager{TContext}"/>.</param>
-        /// <param name="context">The context to place in the service collection.</param>
+        /// <param name="context">Additional data to explicitly add to the database.</param>
         /// <returns>The created <see cref="ServiceCollection"/></returns>
-        public static IServiceCollection ConfigureServices(
+        internal static IServiceCollection ConfigureServices(
+            DbContextOptions<HiveContext> options,
             ITestOutputHelper? outputHelper = null,
             IRuleProvider? ruleProvider = null,
             List<(string, Delegate)>? builtIns = null,
-            HiveContext? context = null
+            PartialContext? context = null
             )
         {
             var services = new ServiceCollection();
@@ -57,10 +72,17 @@ namespace Hive.Tests
                 new PermissionsManager<PermissionContext>(sp.GetRequiredService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), ".", builtIns)
             );
 
-            // Context
-            if (context is null)
-                context = new HiveContext();
-            services.AddSingleton(sp => context);
+            // Context and DB
+            // Using the created DB, create exactly one singleton object that lives on it.
+            var dbContext = new HiveContext(options);
+            // Used for ensuring objects exist in context
+            if (context is not null)
+            {
+                DbHelper.CopyData(context, dbContext);
+            }
+            // This singleton SHOULD be properly initialized to operate with the test DB.
+            // There should only ever be one per service collection, so this checks out.
+            services.AddSingleton(sp => dbContext);
             return services;
         }
 
@@ -68,7 +90,7 @@ namespace Hive.Tests
         /// Creates a default <see cref="IRuleProvider"/> which has no rules and uses the current time.
         /// </summary>
         /// <returns>The mocked rule provider for further edits.</returns>
-        public static Mock<IRuleProvider> CreateRuleProvider()
+        internal static Mock<IRuleProvider> CreateRuleProvider()
         {
             var mockRuleProvider = new Mock<IRuleProvider>();
             var start = SystemClock.Instance.GetCurrentInstant();

@@ -22,15 +22,15 @@ using Xunit.Abstractions;
 
 namespace Hive.Tests.Endpoints
 {
-    public class GameVersionsController
+    public class GameVersionsController : TestDbWrapper
     {
         private readonly ITestOutputHelper helper;
 
         private static IEnumerable<GameVersion> defaultGameVersions = new List<GameVersion>()
         {
-            new GameVersion() { Name = "1.10.0" },
-            new GameVersion() { Name = "1.11.0" },
-            new GameVersion() { Name = "1.12.0-beta" }
+            new GameVersion() { Name = "1.10.0", AdditionalData = DIHelper.EmptyAdditionalData },
+            new GameVersion() { Name = "1.11.0", AdditionalData = DIHelper.EmptyAdditionalData },
+            new GameVersion() { Name = "1.12.0-beta", AdditionalData = DIHelper.EmptyAdditionalData }
         };
 
         private static IEnumerable<IGameVersionsPlugin> defaultPlugins = new List<IGameVersionsPlugin>()
@@ -38,7 +38,10 @@ namespace Hive.Tests.Endpoints
             new HiveGameVersionsControllerPlugin()
         };
 
-        public GameVersionsController(ITestOutputHelper helper)
+        public GameVersionsController(ITestOutputHelper helper) : base(new PartialContext
+        {
+            GameVersions = defaultGameVersions
+        })
         {
             this.helper = helper;
         }
@@ -145,16 +148,13 @@ namespace Hive.Tests.Endpoints
         private Controllers.GameVersionsController CreateController(string permissionRule, IEnumerable<IGameVersionsPlugin> plugins)
         {
             var services = DIHelper.ConfigureServices(
+                Options,
                 helper,
                 new GameVersionRuleProvider(permissionRule),
                 new List<(string, Delegate)>
                 {
                     ("isNull", new Func<object?, bool>(o => o is null)),
                     ("isNotBeta", new Func<string, bool>(s => !s.Contains("beta", StringComparison.InvariantCultureIgnoreCase)))
-                },
-                new HiveContext()
-                {
-                    GameVersions = GetGameVersions(defaultGameVersions.AsQueryable()).Object
                 });
 
             services
@@ -163,23 +163,6 @@ namespace Hive.Tests.Endpoints
                 .AddAggregates();
 
             return services.BuildServiceProvider().GetRequiredService<Controllers.GameVersionsController>();
-        }
-
-        // Taken from sc2ad's test for ChannelsControllers
-        private static Mock<DbSet<GameVersion>> GetGameVersions(IQueryable<GameVersion> versions)
-        {
-            var channelSet = new Mock<DbSet<GameVersion>>();
-            channelSet.As<IEnumerable<GameVersion>>()
-                .Setup(m => m.GetEnumerator())
-                .Returns(versions.GetEnumerator());
-            channelSet.As<IQueryable<GameVersion>>()
-                .Setup(m => m.Provider)
-                .Returns(versions.Provider);
-            channelSet.As<IQueryable<GameVersion>>().Setup(m => m.Expression).Returns(versions.Expression);
-            channelSet.As<IQueryable<GameVersion>>().Setup(m => m.ElementType).Returns(versions.ElementType);
-            channelSet.As<IQueryable<GameVersion>>().Setup(m => m.GetEnumerator()).Returns(versions.GetEnumerator());
-
-            return channelSet;
         }
 
         private class DenyUserAccessPlugin : IGameVersionsPlugin
@@ -207,7 +190,7 @@ namespace Hive.Tests.Endpoints
             public bool HasRuleChangedSince(StringView name, Instant time) => true;
 
             public bool HasRuleChangedSince(Rule rule, Instant time) => true;
-            
+
             public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
             {
                 string nameString = name.ToString();
@@ -216,9 +199,11 @@ namespace Hive.Tests.Endpoints
                     case "hive":
                         gotten = new Rule(nameString, "next(false)");
                         return true;
+
                     case "hive.game.version":
                         gotten = new Rule(nameString, permissionRule);
                         return true;
+
                     default:
                         gotten = null;
                         return false;

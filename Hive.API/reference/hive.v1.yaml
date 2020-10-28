@@ -7,7 +7,7 @@ servers:
 paths:
   /auth_server:
     get:
-      summary: 'Get the URI location to the Auth Server linked to this Hive Instance'
+      summary: Get the URI location to the Auth Server linked to this Hive Instance
       tags: []
       responses:
         '200':
@@ -16,7 +16,7 @@ paths:
             application/json:
               schema:
                 type: string
-      operationId: 'get-auth_server'
+      operationId: get-auth_server
   /mods:
     parameters:
       - name: page
@@ -37,15 +37,13 @@ paths:
       summary: 'Gets all of the mods in the specified channel(s), or a default if none is specified.'
       parameters:
         - name: channelId
-          description: |
-            The ID of the channel to look up mods in.
+          description: The ID of the channel to look up mods in
           in: query
           required: false
           schema:
             type: string
         - name: channelIds
-          description: |
-            The IDs of the channels to look up mods in.
+          description: The IDs of the channels to look up mods in
           in: query
           required: false
           schema:
@@ -58,6 +56,15 @@ paths:
           in: query
           name: gameVersion
           description: Game version to filter by
+        - schema:
+            type: string
+            enum:
+              - all
+              - latest
+            default: latest
+          in: query
+          name: filterType
+          description: How to filter the returned mods
       responses:
         '200':
           description: OK
@@ -67,10 +74,24 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Mod'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
       operationId: get-mods
       description: |-
         Gets all mods for a given channelId and channelIds to look within.
         Query parameters left empty will use defaults.
+        channelId defaults to the instance default channel, typically a public channel.
+        channelIds defaults to an empty array.
+        gameVersion defaults to latest.
+        filterType defaults to latest.
+
+        Options for filterType are:
+        all: Returns all versions for each mod listed in the channel(s).
+        latest: Returns only the latest versions for each mod listed in the channel(s).
   '/mod/{modId}':
     parameters:
       - schema:
@@ -93,18 +114,77 @@ paths:
               schema:
                 type: object
                 properties: {}
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
       operationId: get-mod-modId
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: range
+          description: The version range of the mod to obtain
+        - schema:
+            type: array
+          in: header
+          name: Accept-Language
+          description: The languages to return the localized mod for
+      description: |-
+        Gets a mod from a given mod ID and version range. If range is not specified, assumes range=*.
+        If a list of languages are provided via Accept-Language, will try to return the best LocalizedModData that matches.
+        If no languages are provided, or a previous match was not found, defaults to the system culture.
+        If the system culture does not exist, uses the first LocalizedModData of the matching mod.
+      security:
+        - vaulthAuth: []
     patch:
       summary: Updates a mod with the specified ID
       tags: []
       responses:
         '204':
           description: No Content
+        '400':
+          description: Bad Request. Invalid JSON was posted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
         '401':
-          description: Unauthorized
+          description: Unauthorized. The user is not logged in.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
         '403':
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
       operationId: patch-mod
+      description: Patches a given mod ID using the body provided.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Mod'
+        description: The mod object to patch the existing one with.
+      security:
+        - vaulthAuth: []
     delete:
       summary: Deletes a mod with the specified ID
       tags: []
@@ -112,10 +192,34 @@ paths:
         '204':
           description: No Content
         '401':
-          description: Unauthorized
+          description: Unauthorized. The user is not logged in.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
         '403':
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
       operationId: delete-mod
+      description: Deletes a given mod ID with the provided version.
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: version
+          description: Version of the mod to delete
+          required: true
+      security:
+        - vaulthAuth: []
   '/mod/upload/{modId}':
     parameters:
       - schema:
@@ -163,8 +267,16 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/GameVersion'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
       operationId: get-game-versions
       description: Returns a list of all game versions stored in the instance.
+      security:
+        - vaulthAuth: []
   /resolve_dependencies:
     post:
       summary: ''
@@ -225,7 +337,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/ModIdentifier'
+                $ref: '#/components/schemas/ModIdentifierRange'
         description: Mods to resolve
   '/mod/move/{channelId}':
     parameters:
@@ -242,20 +354,43 @@ paths:
       responses:
         '200':
           description: OK
+        '400':
+          description: Bad Request. Invalid JSON was posted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
         '401':
-          $ref: '#/components/responses/UnauthorizedError'
+          description: Unauthorized. The user is not logged in.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
+              examples: {}
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
+        '404':
+          description: Not Found. There was no mod found with the given ID and version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                id:
-                  type: string
-                version:
-                  type: string
+              $ref: '#/components/schemas/ModIdentifier'
             examples: {}
-      description: Moves a mod to the provided channelId
+          application/xml:
+            schema:
+              type: object
+              properties: {}
+        description: The specific mod identifier to move. A mod ID and specific version.
+      description: Moves a specific ModIdentifier to the provided channelId.
   /channels:
     get:
       summary: 'Gets all publicly viewable channels, or all channels viewable by the given user'
@@ -276,15 +411,19 @@ paths:
               schema:
                 type: object
                 properties: {}
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
       operationId: get-channels
       description: |-
         Gets all channels that are publicly viewable.
         When passed with an auth header, then it will return all channels viewable to the authorized user.
   /instance:
     get:
-      summary: 'Get basic information about this Hive instance.'
+      summary: Get basic information about this Hive instance.
       tags: []
       responses:
         '200':
@@ -298,6 +437,41 @@ paths:
       description: |-
         Get basic information about this Hive instance.
         Information can be exposed and hidden on a per-instance basis.
+  '/mod/{modId}/latest':
+    parameters:
+      - schema:
+          type: string
+        name: modId
+        in: path
+        required: true
+    get:
+      summary: Your GET endpoint
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mod'
+              examples: {}
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exception'
+      operationId: get-mod-modId-latest
+      description: 'Returns the latest mod with the provided ID. This is equivalent to calling: /mod/{modId}?range=*'
+      parameters: []
+      security:
+        - vaulthAuth: []
 components:
   schemas:
     Channel:
@@ -320,7 +494,7 @@ components:
     Mod:
       type: object
       title: Mod
-      description: A mod
+      description: A mod.
       additionalProperties: false
       properties:
         id:
@@ -362,11 +536,11 @@ components:
         dependencies:
           type: array
           items:
-            $ref: '#/components/schemas/ModIdentifier'
+            $ref: '#/components/schemas/ModIdentifierRange'
         conflicts:
           type: array
           items:
-            $ref: '#/components/schemas/ModIdentifier'
+            $ref: '#/components/schemas/ModIdentifierRange'
         gameVersions:
           type: array
           items:
@@ -388,7 +562,7 @@ components:
     LocalizedModData:
       type: object
       title: LocalizedModData
-      description: Localized data of a mod
+      description: Localized data of a mod.
       additionalProperties: false
       properties:
         language:
@@ -417,9 +591,9 @@ components:
       required:
         - name
         - additionalData
-    ModIdentifier:
+    ModIdentifierRange:
       type: object
-      title: ModIdentifier
+      title: ModIdentifierRange
       description: A mod ID paired with a version range.
       additionalProperties: false
       properties:
@@ -430,8 +604,36 @@ components:
       required:
         - name
         - versionRange
+    Exception:
+      title: Exception
+      type: object
+      description: |-
+        When an exception occurs, or a non-200 status code is returned, this model is returned.
+        This model MAY have more or less fields than what is listed, but will always contain at least a statusCode.
+      properties:
+        statusCode:
+          type: integer
+          description: Status code of the response
+        message:
+          type: string
+          description: Message of the problem that ocurred
+      required:
+        - statusCode
+    ModIdentifier:
+      type: object
+      title: ModIdentifier
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        version:
+          type: string
+      required:
+        - id
+        - version
+      description: A mod ID paired with a specific version.
   securitySchemes:
-    vaulthAuth: # Authentication through Vaulth
+    vaulthAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
