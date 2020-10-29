@@ -30,11 +30,25 @@ using Xunit.Abstractions;
 
 namespace Hive.Tests.Endpoints
 {
-    public class ModsController
+    public class ModsController : TestDbWrapper
     {
         private readonly ITestOutputHelper helper;
 
-        private static IEnumerable<Mod> defaultMods = new List<Mod>()
+        private static readonly IEnumerable<Channel> defaultChannels = new List<Channel>()
+        {
+            new Channel
+            {
+                Name = "Public",
+                AdditionalData = DIHelper.EmptyAdditionalData
+            },
+            new Channel
+            {
+                Name = "Beta",
+                AdditionalData = DIHelper.EmptyAdditionalData
+            }
+        };
+
+        private static readonly IEnumerable<Mod> defaultMods = new List<Mod>()
         {
             GetPlaceholderMod("BSIPA", "Public"),
             GetPlaceholderMod("SongCore", "Public"),
@@ -43,24 +57,17 @@ namespace Hive.Tests.Endpoints
             GetPlaceholderMod("Counters+", "Beta"),
         };
 
-        private static IEnumerable<Channel> defaultChannels = new List<Channel>()
-        {
-            new Channel()
-            {
-                Name = "Public"
-            },
-            new Channel()
-            {
-                Name = "Beta"
-            }
-        };
-        
-        private static IEnumerable<IModsPlugin> defaultPlugins = new List<IModsPlugin>()
+        private static readonly IEnumerable<IModsPlugin> defaultPlugins = new List<IModsPlugin>()
         {
             new HiveModsControllerPlugin()
         };
 
-        public ModsController(ITestOutputHelper helper)
+        public ModsController(ITestOutputHelper helper) : base(new PartialContext
+        {
+            Channels = defaultChannels,
+            Mods = defaultMods,
+            ModLocalizations = defaultMods.SelectMany(m => m.Localizations)
+        })
         {
             this.helper = helper;
         }
@@ -132,7 +139,7 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(value); // We must be given a list of mods back.
 
             // Ensure that no mods belong to the beta channel.
-            Assert.False(value?.Any(x => x.ChannelName == "Beta"));
+            Assert.Empty(value!.Where(x => x.ChannelName == "Beta"));
         }
 
         [Fact]
@@ -186,12 +193,13 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(getModResult);
             var serializedMod = getModResult!.Value as SerializedMod;
 
-            // Serialize our mod into JSON, since we need to re-attach it with the request.
-            var json = JsonSerializer.Serialize(serializedMod);
-
-            helper.WriteLine(json);
-
-            using var stringStream = GenerateStreamFromString(json);
+            // Serialize our request JSON data into a stream, which we will feed into our channel request.
+            ModIdentifier identifier = new ModIdentifier
+            {
+                ID = "ChromaToggle",
+                Version = "1.0.0"
+            };
+            using var stringStream = GenerateStreamFromString(JsonSerializer.Serialize(identifier));
 
             // Because this endpoint reads from the request body, we need to Moq a HttpContext
             var requestMoq = new Mock<HttpRequest>();
@@ -213,12 +221,16 @@ namespace Hive.Tests.Endpoints
             var res = await controller.MoveModToChannel("Public");
 
             Assert.NotNull(res); // Result must not be null.
-            Assert.IsType<OkObjectResult>(res); // The above endpoint must succeed.
+            Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed.
 
-            var confirmation = await controller.GetSpecificMod("ChromaToggle"); // Re-grab our mod to confirm its new home.
+            // While we can just call it a day right here, I would like to ensure that the changes
+            // were properly made to the database. Thus, I will re-request the mod and confirm
+            // the channel move procedure was reflected in the database.
+
+            var confirmation = await controller.GetSpecificMod("ChromaToggle");
 
             Assert.NotNull(confirmation.Result);
-            var confirmationResult = getMod.Result as OkObjectResult;
+            var confirmationResult = confirmation.Result as OkObjectResult;
             Assert.NotNull(confirmationResult);
             var confirmationMod = confirmationResult!.Value as SerializedMod;
             Assert.Equal("Public", confirmationMod!.ChannelName);
@@ -226,15 +238,7 @@ namespace Hive.Tests.Endpoints
 
         private Controllers.ModsController CreateController(string permissionRule, IEnumerable<IModsPlugin> plugins)
         {
-            var services = DIHelper.ConfigureServices(
-                helper,
-                new ModsRuleProvider(permissionRule),
-                null,
-                new HiveContext()
-                {
-                    Mods = GetDBSetFromQueryable(defaultMods.AsQueryable()).Object,
-                    Channels = GetDBSetFromQueryable(defaultChannels.AsQueryable()).Object
-                });
+            var services = DIHelper.ConfigureServices(Options, helper, new ModsRuleProvider(permissionRule));
 
             services
                 .AddTransient(sp => plugins)
@@ -244,49 +248,33 @@ namespace Hive.Tests.Endpoints
             return services.BuildServiceProvider().GetRequiredService<Controllers.ModsController>();
         }
 
-        // Taken from sc2ad's test for ChannelsControllers
-        // TODO: Move to helper type
-        private static Mock<DbSet<T>> GetDBSetFromQueryable<T>(IQueryable<T> versions) where T : class
-        {
-            var channelSet = new Mock<DbSet<T>>();
-            channelSet.As<IEnumerable<T>>()
-                .Setup(m => m.GetEnumerator())
-                .Returns(versions.GetEnumerator());
-            channelSet.As<IQueryable<T>>()
-                .Setup(m => m.Provider)
-                .Returns(versions.Provider);
-            channelSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(versions.Expression);
-            channelSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(versions.ElementType);
-            channelSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(versions.GetEnumerator());
-
-            return channelSet;
-        }
-
         // I need to set up a "proper" Mod object so that the controller won't throw a fit
         // from (understandably) having missing data.
         private static Mod GetPlaceholderMod(string name, string channel)
         {
-            var localization = new List<LocalizedModInfo>()
-            {
-                new LocalizedModInfo()
-                { 
-                    Language = CultureInfo.CurrentCulture,
-                    Name = name,
-                    Description = "Hi danike, this shit not null"
-                }
-            };
-            return new Mod()
+            var mod = new Mod()
             {
                 ReadableID = name,
                 Version = new Versioning.Version(1, 0, 0),
                 UploadedAt = new Instant(),
                 EditedAt = null,
-                Uploader = new User() { Username = "Billy bob joe" },
-                Channel = new Channel() { Name = channel },
-                DownloadLink = new Uri("https://www.github.com/AtlasRhythm/Hive"),
-                Localizations = localization,
-                AdditionalData = JsonDocument.Parse("{}").RootElement.Clone()
+                Uploader = new User() { DumbId = new Random().Next(0, 69).ToString(), Username = "Billy bob joe" },
+                Channel = defaultChannels.First(c => c.Name == channel),
+                DownloadLink = new Uri("https://www.github.com/Atlas-Rhythm/Hive"),
+                AdditionalData = DIHelper.EmptyAdditionalData
             };
+
+            LocalizedModInfo info = new LocalizedModInfo()
+            {
+                OwningMod = mod,
+                Language = CultureInfo.CurrentCulture,
+                Name = name,
+                Description = "if you read this, william gay"
+            };
+
+            mod.Localizations.Add(info);
+
+            return mod;
         }
 
         // This plugin will filter out a mod if it's in the beta channel. Super super basic but works.

@@ -18,6 +18,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Components.Forms;
 using Hive.Versioning;
 using System.ComponentModel.Design;
+using System.Security.Cryptography.X509Certificates;
+using System.Runtime.Intrinsics.X86;
 
 namespace Hive.Controllers
 {
@@ -139,6 +141,8 @@ namespace Hive.Controllers
 
             // Grab our initial set of mods, filtered by a channel and game version if provided.
             var mods = context.Mods
+                .Include(m => m.Localizations)
+                .Include(m => m.Channel)
                 .AsNoTracking();
 
             if (filteredChannels != null)
@@ -150,25 +154,30 @@ namespace Hive.Controllers
                 mods = mods.Where(m => m.SupportedVersions.Contains(filteredVersion));
             }
 
+            // Because EF (or PostgreSQL or both) does not like GroupBy expressions, we convert to an enumerable and
+            // do the calculations on the client.
+            IEnumerable<Mod> filteredMods = mods.AsEnumerable();
+
             // Filter these mods based on the query param we've retrieved (or default behavior)
             switch (filteredType)
             {
                 case "ALL":
                     break; // We already have all of the mods that should be returned by "ALL", no need to do work.
                 case "RECENT":
-                    mods = mods // With "RECENT", we group each mod by their ID, and grab the most recently uploaded version.
-                       .GroupBy(m => m.ReadableID)
-                       .Select((g) => g.OrderByDescending(m => m.UploadedAt).First());
+                    filteredMods = filteredMods // With "RECENT", we group each mod by their ID, and grab the most recently uploaded version.
+                        .GroupBy(m => m.ReadableID)
+                        .Select(g => g.OrderByDescending(m => m.UploadedAt).First());
                     break;
                 default: // This is "LATEST", but should probably be default behavior, just to be safe.
-                    mods = mods // With "LATEST", we group each mod by their ID, and grab the most up-to-date version.
-                       .GroupBy(m => m.ReadableID)
-                       .Select((g) => g.OrderByDescending(m => m.Version).First());
+                    filteredMods = filteredMods // With "LATEST", we group each mod by their ID, and grab the most up-to-date version.
+                        .GroupBy(m => m.ReadableID)
+                        .Select(g => g.OrderByDescending(m => m.Version).First());
                     break;
             }
 
             // Finally, perform a final permissions and plugins filter on each mod, then serialize these to return to the user.
-            var serialized = mods
+            // We force into client evaluation here since SQL wouldn't know how the hell to perform a permissions and plugins check.
+            var serialized = filteredMods
                 .Where(m =>
                     permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState)
                     && combined.GetSpecificModAdditionalChecks(user, m))
@@ -199,6 +208,8 @@ namespace Hive.Controllers
 
             // Grab the list of mods that match our ID.
             var mods = context.Mods
+                .Include(m => m.Localizations)
+                .Include(m => m.Channel)
                 .AsNoTracking()
                 .Where(m => m.ReadableID == id);
 
@@ -301,16 +312,32 @@ namespace Hive.Controllers
             }
 
             // So... we somehow successfully deserialized the mod identifier, only to find that it is null.
-            if (identifier == null || !identifier.HasValue)
+            if (identifier == null)
             {
                 return BadRequest("POSTed Mod information was successfully deserialized, but the resulting object was null.");
             }
 
+            if (string.IsNullOrEmpty(identifier.ID))
+            {
+                return BadRequest("Mod information contains a null or otherwise empty ID.");
+            }
+
+            if (string.IsNullOrEmpty(identifier.Version))
+            {
+                return BadRequest("Mod information contains a null or otherwise empty Version.");
+            }
+
             log.Debug("Getting database objects...");
 
+            var targetVersion = new Versioning.Version(identifier.Version);
+
             // Get the database mod that represents the ModIdentifier.
-            var databaseMod = context.Mods.Where(x => x.ReadableID == identifier.Value.ID 
-                && x.Version.ToString() == identifier.Value.Version).FirstOrDefault();
+            var databaseMod = context.Mods
+                .Include(m => m.Localizations)
+                .Include(m => m.Channel)
+                .Where(x => x.ReadableID == identifier.ID 
+                    && x.Version == targetVersion)
+                .FirstOrDefault();
 
             if (databaseMod == null) // The POSTed mod was successfully deserialzed, but no Mod exists in the database.
             {
@@ -373,10 +400,10 @@ namespace Hive.Controllers
                 }
             }
 
-            // If no preferred languages were found, we then grab the first found LocalizedModData is found.
-            if (localizedModInfo is null)
+            // If no preferred languages were found, but localized data still exists, we grab the first that was found.
+            if (localizedModInfo is null && localizations.Any())
             {
-                if (localizations.Any()) localizedModInfo = localizations.First();
+                localizedModInfo = localizations.First();
             }
 
             // If we still have no language, then... fuck.
@@ -415,12 +442,12 @@ namespace Hive.Controllers
             }
 
             return preferredCultures.Append(CultureInfo.CurrentCulture); // Add system culture to the end and return the result.
-        }
+        }        
+    }
 
-        private struct ModIdentifier
-        {
-            public string ID;
-            public string Version;
-        }
+    public class ModIdentifier
+    {
+        public string ID { get; init; } = null!;
+        public string Version { get; init; } = null!;
     }
 }
