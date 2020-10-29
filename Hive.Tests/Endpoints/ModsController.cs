@@ -199,24 +199,10 @@ namespace Hive.Tests.Endpoints
                 ID = "ChromaToggle",
                 Version = "1.0.0"
             };
+
             using var stringStream = GenerateStreamFromString(JsonSerializer.Serialize(identifier));
 
-            // Because this endpoint reads from the request body, we need to Moq a HttpContext
-            var requestMoq = new Mock<HttpRequest>();
-            requestMoq.SetupGet(r => r.Body).Returns(stringStream);
-            requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
-                new Dictionary<string, StringValues>()
-                {
-                    { HeaderNames.Authorization, new StringValues("Bearer: test") }
-                })
-            );
-
-            var contextMoq = new Mock<HttpContext>();
-            contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
-
-            var actionContext = new ActionContext(contextMoq.Object, new RouteData(), new ControllerActionDescriptor());
-
-            controller.ControllerContext.HttpContext = contextMoq.Object;
+            controller.ControllerContext.HttpContext = CreateMockRequest(stringStream);
 
             var res = await controller.MoveModToChannel("Public");
 
@@ -234,6 +220,50 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(confirmationResult);
             var confirmationMod = confirmationResult!.Value as SerializedMod;
             Assert.Equal("Public", confirmationMod!.ChannelName);
+        }
+
+        [Fact]
+        public async Task MoveNonExistentMod()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+
+            // Serialize our request JSON data into a stream, which we will feed into our channel request.
+            ModIdentifier identifier = new ModIdentifier
+            {
+                ID = "william gay",
+                Version = "69.420.1337"
+            };
+
+            using var stringStream = GenerateStreamFromString(JsonSerializer.Serialize(identifier));
+
+            controller.ControllerContext.HttpContext = CreateMockRequest(stringStream);
+
+            var res = await controller.MoveModToChannel("Public");
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must fail.
+        }
+
+        [Fact]
+        public async Task MoveModToNonExistentChannel()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+
+            // Serialize our request JSON data into a stream, which we will feed into our channel request.
+            ModIdentifier identifier = new ModIdentifier
+            {
+                ID = "Counters+",
+                Version = "1.0.0"
+            };
+
+            using var stringStream = GenerateStreamFromString(JsonSerializer.Serialize(identifier));
+
+            controller.ControllerContext.HttpContext = CreateMockRequest(stringStream);
+
+            var res = await controller.MoveModToChannel("sc2ad check your github notifications");
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must fail.
         }
 
         private Controllers.ModsController CreateController(string permissionRule, IEnumerable<IModsPlugin> plugins)
@@ -323,6 +353,23 @@ namespace Hive.Tests.Endpoints
             writer.Flush();
             stream.Position = 0;
             return stream;
+        }
+
+        private static HttpContext CreateMockRequest(Stream body)
+        {
+            var requestMoq = new Mock<HttpRequest>();
+            requestMoq.SetupGet(r => r.Body).Returns(body);
+            requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
+                new Dictionary<string, StringValues>()
+                {
+                    { HeaderNames.Authorization, new StringValues("Bearer: test") }
+                })
+            );
+
+            var contextMoq = new Mock<HttpContext>();
+            contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
+
+            return contextMoq.Object;
         }
     }
 }
