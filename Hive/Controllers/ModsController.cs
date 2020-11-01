@@ -20,6 +20,7 @@ using Hive.Versioning;
 using System.ComponentModel.Design;
 using System.Security.Cryptography.X509Certificates;
 using System.Runtime.Intrinsics.X86;
+using Hive.Models.ReadOnly;
 
 namespace Hive.Controllers
 {
@@ -53,8 +54,7 @@ namespace Hive.Controllers
         /// <param name="destination">New channel that the Mod will reside in.</param>
         /// <returns></returns>
         [return: StopIfReturns(false)]
-        // REVIEW: Consider turning these Channel objects into channel IDs, or a wrapper type, for fool/user-proofing
-        bool GetMoveModAdditionalChecks(User user, Mod contextMod, Channel origin, Channel destination) => true;
+        bool GetMoveModAdditionalChecks(User user, Mod contextMod, ReadOnlyChannel origin, ReadOnlyChannel destination) => true;
 
         /// <summary>
         /// Allows modification of a <see cref="Mod"/> object after a move operation has been performed.
@@ -362,7 +362,7 @@ namespace Hive.Controllers
             var combined = plugin.Instance;
 
             // Forbid iff a given user (or none) is allowed to move the mod.
-            if (!combined.GetMoveModAdditionalChecks(user, databaseMod, origin, destination))
+            if (!combined.GetMoveModAdditionalChecks(user, databaseMod, new ReadOnlyChannel(origin), new ReadOnlyChannel(destination)))
                 return Forbid();
 
             // All of our needed information is non-null, and we have permission to perform the move.
