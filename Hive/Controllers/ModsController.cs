@@ -1,10 +1,13 @@
 ﻿using Hive.Models;
+using Hive.Models.ReadOnly;
 using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
+using Hive.Versioning;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using System;
@@ -14,13 +17,6 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Components.Forms;
-using Hive.Versioning;
-using System.ComponentModel.Design;
-using System.Security.Cryptography.X509Certificates;
-using System.Runtime.Intrinsics.X86;
-using Hive.Models.ReadOnly;
 
 namespace Hive.Controllers
 {
@@ -282,7 +278,6 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        // TODO: I am once again asking for proper testing.
         public async Task<ActionResult<SerializedMod>> MoveModToChannel([FromRoute] string channelId)
         {
             log.Debug("Attempting to move a mod to a new channel...");
@@ -426,7 +421,6 @@ namespace Hive.Controllers
                 var requestedLanguages = Request.Headers["Accept-Language"];
                 if (!StringValues.IsNullOrEmpty(requestedLanguages) && requestedLanguages.Count > 0)
                 {
-                    // TODO: Ignore cases where CultureInfo constructor throws
                     preferredCultures = requestedLanguages.ToString().Split(',')
                         // Parse the header values
                         .Select(s => new StringSegment(s))
@@ -437,7 +431,20 @@ namespace Hive.Controllers
                         .GroupBy(sv => sv.Value).Select(svg => svg.OrderByDescending(sv => sv.Quality.GetValueOrDefault(1)).First())
                         // Sort by preference level
                         .OrderByDescending(sv => sv.Quality.GetValueOrDefault(1))
-                        .Select(sv => new CultureInfo(sv.Value.ToString()));
+                        // Construct CultureInfos, pass "null" if user passes in an unsupported culture
+                        .Select((sv) =>
+                        {
+                            try
+                            {
+                                return new CultureInfo(sv.Value.ToString());
+                            }
+                            catch (Exception e) when (e is ArgumentNullException || e is CultureNotFoundException)
+                            {
+                                return null!;
+                            }
+                        })
+                        // Filter out all null cultures
+                        .Where(ci => ci != null);
                 }
             }
 
