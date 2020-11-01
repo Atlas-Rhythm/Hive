@@ -112,19 +112,13 @@ namespace Hive.Controllers
 
             if (Request != null && Request.Query != null)
             {
-                if (Request.Query.TryGetValue("channelId", out var filteredChannelValues))
-                {
-                    var filteredChannelID = filteredChannelValues.First();
-                    // While, yes, this CAN return multiple objects if they have the same channel name... but why would they have the same channel name
-                    filteredChannels = context.Channels.Where(c => c.Name == filteredChannelID);
-                }
                 if (Request.Query.TryGetValue("channelIds", out var filteredChannelsValues))
                 {
-                    filteredChannels = context.Channels.Where(c => filteredChannelsValues.Contains(c.Name));
+                    filteredChannels = context.Channels.AsNoTracking().Where(c => filteredChannelsValues.Contains(c.Name));
                 }
                 if (Request.Query.TryGetValue("gameVersion", out var filteredVersionValues))
                 {
-                    filteredVersion = context.GameVersions.Where(g => g.Name == filteredVersionValues.First()).FirstOrDefault();
+                    filteredVersion = context.GameVersions.AsNoTracking().Where(g => g.Name == filteredVersionValues.First()).FirstOrDefault();
                 }
                 if (Request.Query.TryGetValue("filterType", out var filterTypeValues))
                 {
@@ -150,8 +144,8 @@ namespace Hive.Controllers
                 mods = mods.Where(m => m.SupportedVersions.Contains(filteredVersion));
             }
 
-            // Because EF (or PostgreSQL or both) does not like GroupBy expressions, we convert to an enumerable and
-            // do the calculations on the client.
+            // Because EF (or PostgreSQL or both) does not like advanced LINQ expressions (like GroupBy), 
+            // we convert to an enumerable and do the calculations on the client.
             IEnumerable<Mod> filteredMods = mods.AsEnumerable();
 
             // Filter these mods based on the query param we've retrieved (or default behavior)
@@ -203,9 +197,7 @@ namespace Hive.Controllers
             }
 
             // Grab the list of mods that match our ID.
-            var mods = context.Mods
-                .Include(m => m.Localizations)
-                .Include(m => m.Channel)
+            var mods = CreateModQuery()
                 .AsNoTracking()
                 .Where(m => m.ReadableID == id);
 
@@ -241,7 +233,6 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         // GET /mod/{id} includes a few extra query params to further filter the returned mod, this is just a simplified version
-        // TODO: I am once again asking for proper testing
         public async Task<ActionResult<SerializedMod>> GetSpecificModLatestVersion([FromRoute] string id)
         {
             log.Debug("Getting the latest version of a specific mod...");
@@ -253,7 +244,7 @@ namespace Hive.Controllers
             var combined = plugin.Instance;
 
             // Grab the list of mods that match our ID.
-            var mod = context.Mods
+            var mod = CreateModQuery()
                 .AsNoTracking()
                 .Where(m => m.ReadableID == id)
                 .OrderByDescending(m => m.Version)
@@ -327,9 +318,7 @@ namespace Hive.Controllers
             var targetVersion = new Versioning.Version(identifier.Version);
 
             // Get the database mod that represents the ModIdentifier.
-            var databaseMod = context.Mods
-                .Include(m => m.Localizations)
-                .Include(m => m.Channel)
+            var databaseMod = CreateModQuery()
                 .Where(x => x.ReadableID == identifier.ID 
                     && x.Version == targetVersion)
                 .FirstOrDefault();
@@ -363,10 +352,10 @@ namespace Hive.Controllers
             // All of our needed information is non-null, and we have permission to perform the move.
             databaseMod.Channel = destination;
 
-            combined.ModifyAfterModMove(in databaseMod); // If any plugins want to modify the object further after the move operation, they can do so here.
+            // If any plugins want to modify the object further after the move operation, they can do so here.
+            combined.ModifyAfterModMove(in databaseMod); 
 
             await context.SaveChangesAsync().ConfigureAwait(false);
-
             
             return Ok(SerializedMod.Serialize(databaseMod, GetLocalizedModInfoFromMod(databaseMod)));
         }
@@ -449,12 +438,12 @@ namespace Hive.Controllers
             }
 
             return preferredCultures.Append(CultureInfo.CurrentCulture); // Add system culture to the end and return the result.
-        }        
-    }
+        }
 
-    public class ModIdentifier
-    {
-        public string ID { get; init; } = null!;
-        public string Version { get; init; } = null!;
+        private IQueryable<Mod> CreateModQuery() => context
+            .Mods
+            .Include(m => m.Localizations)
+            .Include(m => m.Channel)
+            .Include(m => m.SupportedVersions);
     }
 }
