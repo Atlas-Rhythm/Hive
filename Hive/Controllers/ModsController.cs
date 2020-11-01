@@ -130,9 +130,7 @@ namespace Hive.Controllers
             log.Debug("Filtering and serializing mods by existing plugins...");
 
             // Grab our initial set of mods, filtered by a channel and game version if provided.
-            var mods = context.Mods
-                .Include(m => m.Localizations)
-                .Include(m => m.Channel)
+            var mods = CreateModQuery()
                 .AsNoTracking();
 
             if (filteredChannels != null)
@@ -186,6 +184,10 @@ namespace Hive.Controllers
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
+            // iff a given user (or none) is allowed to access any mods. This should almost always be true.
+            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user }, ref getModsParseState))
+                return Forbid();
+
             // Combine plugins
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;
@@ -238,6 +240,10 @@ namespace Hive.Controllers
             log.Debug("Getting the latest version of a specific mod...");
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+
+            // iff a given user (or none) is allowed to access any mods. This should almost always be true.
+            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user }, ref getModsParseState))
+                return Forbid();
 
             // Combine plugins
             log.Debug("Combining plugins...");
@@ -423,6 +429,9 @@ namespace Hive.Controllers
                         // Construct CultureInfos, pass "null" if user passes in an unsupported culture
                         .Select((sv) =>
                         {
+                            // REVIEW: Perhaps make all languages strings instead of CultureInfos?
+                            // This will have a very small performance gain in cases like this, and could allow for someone to add
+                            // languages that aren't somehow supported by .NET (The only case I can see here is for joke languages)
                             try
                             {
                                 return new CultureInfo(sv.Value.ToString());
@@ -440,6 +449,7 @@ namespace Hive.Controllers
             return preferredCultures.Append(CultureInfo.CurrentCulture); // Add system culture to the end and return the result.
         }
 
+        // Abstracts the construction of a Mod access query with necessary Include calls to a helper function
         private IQueryable<Mod> CreateModQuery() => context
             .Mods
             .Include(m => m.Localizations)
