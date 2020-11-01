@@ -51,6 +51,7 @@ namespace Hive.Tests.Endpoints
         private static readonly IEnumerable<Mod> defaultMods = new List<Mod>()
         {
             GetPlaceholderMod("BSIPA", "Public"),
+            GetPlaceholderMod("BSIPA", "Public", new Versioning.Version(0, 6, 9)),
             GetPlaceholderMod("SongCore", "Public"),
             GetPlaceholderMod("SiraUtil", "Public"),
             GetPlaceholderMod("ChromaToggle", "Beta"),
@@ -92,35 +93,6 @@ namespace Hive.Tests.Endpoints
         }
 
         [Fact]
-        public async Task SpecificModStandard()
-        {
-            var controller = CreateController("next(true)", defaultPlugins);
-            var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
-
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
-            Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed.
-            var result = res.Result as OkObjectResult;
-            Assert.NotNull(result);
-            var value = result!.Value as SerializedMod;
-            Assert.NotNull(value); // We must be given a serialized mod back.
-
-            // This mod must be BSIPA.
-            Assert.True(value?.ID == "BSIPA");
-        }
-
-        [Fact]
-        public async Task GetNonExistentMod()
-        {
-            var controller = CreateController("next(true)", defaultPlugins);
-            var res = await controller.GetSpecificMod("william gay"); // Completely non-existent mod.
-
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
-            Assert.IsType<NotFoundResult>(res.Result); // The above endpoint must return 404.
-        }
-
-        [Fact]
         public async Task AllModsPluginFilter()
         {
             var controller = CreateController("next(true)", new List<IModsPlugin>()
@@ -140,6 +112,45 @@ namespace Hive.Tests.Endpoints
 
             // Ensure that no mods belong to the beta channel.
             Assert.Empty(value!.Where(x => x.ChannelName == "Beta"));
+        }
+
+        [Fact]
+        public async Task SpecificModStandard()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+            var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed.
+            var result = res.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var value = result!.Value as SerializedMod;
+            Assert.NotNull(value); // We must be given a serialized mod back.
+
+            // This mod must be BSIPA.
+            Assert.True(value?.ID == "BSIPA");
+        }
+
+        [Fact]
+        public async Task SpecificModForbid()
+        {
+            var controller = CreateController("next(false)", defaultPlugins);
+            var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
+        }
+
+        [Fact]
+        public async Task SpecificModNonExistent()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+            var res = await controller.GetSpecificMod("william gay"); // Completely non-existent mod.
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<NotFoundResult>(res.Result); // The above endpoint must return 404.
         }
 
         [Fact]
@@ -168,6 +179,77 @@ namespace Hive.Tests.Endpoints
 
             // This mod must be SongCore.
             Assert.True(value?.ID == "SongCore");
+        }
+
+        [Fact]
+        public async Task SpecificModLatestVersionStandard()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+            var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed.
+            var result = res.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var value = result!.Value as SerializedMod;
+            Assert.NotNull(value); // We must be given a serialized mod back.
+
+            // This mod must be BSIPA.
+            Assert.True(value?.ID == "BSIPA");
+            // But! There's two versions of BSIPA, so we need to check that this version is REALLY the latest version.
+            Assert.True(value?.Version == new Versioning.Version(1, 0, 0));
+        }
+
+        [Fact]
+        public async Task SpecificModLatestVersionForbid()
+        {
+            var controller = CreateController("next(false)", defaultPlugins);
+            var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
+        }
+
+        [Fact]
+        public async Task SpecificModLatestVersionNonExistent()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+            var res = await controller.GetSpecificMod("william gay"); // Completely non-existent mod.
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<NotFoundResult>(res.Result); // The above endpoint must return 404.
+        }
+
+        [Fact]
+        public async Task SpecificModLatestVersionPluginFilter()
+        {
+            var controller = CreateController("next(true)", new List<IModsPlugin>()
+            {
+                new HiveModsControllerPlugin(),
+                new BetaModsFilterPlugin() // Filters all mods on Beta channel
+            });
+            var res = await controller.GetSpecificMod("Counters+"); // We will look for Counters+, which is in Beta.
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must be fail, since Counters+ is in Beta.
+
+            res = await controller.GetSpecificMod("BSIPA"); // Next, we will look for SongCore, which is in Release.
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed, since SongCore is public.
+            var result = res.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var value = result!.Value as SerializedMod;
+            Assert.NotNull(value); // We must be given a serialized mod back.
+
+            // This mod must be SongCore.
+            Assert.True(value?.ID == "BSIPA");
+            // But! There's two versions of BSIPA, so we need to check that this version is REALLY the latest version.
+            Assert.True(value?.Version == new Versioning.Version(1, 0, 0));
         }
 
         [Fact]
@@ -260,10 +342,45 @@ namespace Hive.Tests.Endpoints
 
             controller.ControllerContext.HttpContext = CreateMockRequest(stringStream);
 
+            // Let's try moving this mod to a funny channel that doesn't exist
             var res = await controller.MoveModToChannel("sc2ad check your github notifications");
 
             Assert.NotNull(res); // Result must not be null.
             Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must fail.
+        }
+
+        [Fact]
+        public async Task MoveModForbid()
+        {
+            var controller = CreateController("next(false)", defaultPlugins);
+
+            // Serialize our request JSON data into a stream, which we will feed into our channel request.
+            ModIdentifier identifier = new ModIdentifier
+            {
+                ID = "ChromaToggle",
+                Version = "1.0.0"
+            };
+
+            using var stringStream = GenerateStreamFromString(JsonSerializer.Serialize(identifier));
+
+            controller.ControllerContext.HttpContext = CreateMockRequest(stringStream);
+
+            var res = await controller.MoveModToChannel("Public");
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
+        }
+
+        [Fact]
+        public async Task MoveModUnauthorized()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+
+            // Try to request without specifying a user
+            var res = await controller.MoveModToChannel("Public");
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.IsType<UnauthorizedResult>(res.Result); // The above endpoint must fail since a user is not logged in/
         }
 
         private Controllers.ModsController CreateController(string permissionRule, IEnumerable<IModsPlugin> plugins)
@@ -280,12 +397,12 @@ namespace Hive.Tests.Endpoints
 
         // I need to set up a "proper" Mod object so that the controller won't throw a fit
         // from (understandably) having missing data.
-        private static Mod GetPlaceholderMod(string name, string channel)
+        private static Mod GetPlaceholderMod(string name, string channel, Versioning.Version? version = null)
         {
             var mod = new Mod()
             {
                 ReadableID = name,
-                Version = new Versioning.Version(1, 0, 0),
+                Version = version ?? new Versioning.Version(1, 0, 0),
                 UploadedAt = new Instant(),
                 EditedAt = null,
                 Uploader = new User() { DumbId = new Random().Next(0, 69).ToString(), Username = "Billy bob joe" },
