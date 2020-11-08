@@ -18,6 +18,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
 using Version = Hive.Versioning.Version;
+using static Hive.Extensions.ModExtensions;
 
 namespace Hive.Controllers
 {
@@ -170,7 +171,7 @@ namespace Hive.Controllers
                 .Where(m =>
                     permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState)
                     && combined.GetSpecificModAdditionalChecks(user, m))
-                .Select(m => SerializedMod.Serialize(m, GetLocalizedModInfoFromMod(m)));
+                .Select(m => SerializedMod.Serialize(m, m.GetLocalizedInfo(GetAcceptLanguageCultures())));
 
             return Ok(serialized);
         }
@@ -225,7 +226,7 @@ namespace Hive.Controllers
                 || !combined.GetSpecificModAdditionalChecks(user, mod))
                 return Forbid();
 
-            var localizedModInfo = GetLocalizedModInfoFromMod(mod);
+            var localizedModInfo = mod.GetLocalizedInfo(GetAcceptLanguageCultures());
 
             var serializedMod = SerializedMod.Serialize(mod, localizedModInfo);
             return Ok(serializedMod);
@@ -267,7 +268,7 @@ namespace Hive.Controllers
                 || !combined.GetSpecificModAdditionalChecks(user, mod))
                 return Forbid();
 
-            return Ok(SerializedMod.Serialize(mod, GetLocalizedModInfoFromMod(mod)));
+            return Ok(SerializedMod.Serialize(mod, mod.GetLocalizedInfo(GetAcceptLanguageCultures())));
         }
 
         [HttpPost("api/mod/move/{channelId}")]
@@ -364,46 +365,7 @@ namespace Hive.Controllers
 
             await context.SaveChangesAsync().ConfigureAwait(false);
             
-            return Ok(SerializedMod.Serialize(databaseMod, GetLocalizedModInfoFromMod(databaseMod)));
-        }
-
-        private LocalizedModInfo GetLocalizedModInfoFromMod(Mod mod)
-        {
-            // Get requested languages
-            var searchingCultureInfos = GetAcceptLanguageCultures();
-
-            // If the plugins allow us to access this mod, we then perform a search on localized data to grab what we need.
-            LocalizedModInfo? localizedModInfo = null;
-
-            // Just cache all localizations for the mod we're looking for.
-            var localizations = mod.Localizations;
-
-            // We loop through each preferred language first, as they are what the user asked for.
-            // This list is already sorted by quality values, so none should be needed.
-            // We do not need to explicitly search for the System culture since it was already added to the end of this list.
-            foreach (string preferredLanguage in searchingCultureInfos)
-            {
-                var localizedInfos = localizations.Where(x => x.Language == preferredLanguage);
-                if (localizedInfos.Any())
-                {
-                    localizedModInfo = localizedInfos.First();
-                    break;
-                }
-            }
-
-            // If no preferred languages were found, but localized data still exists, we grab the first that was found.
-            if (localizedModInfo is null && localizations.Any())
-            {
-                localizedModInfo = localizations.First();
-            }
-
-            // If we still have no language, then... fuck.
-            if (localizedModInfo is null)
-            {
-                throw new ArgumentException($"Mod {mod.ReadableID} does not have any LocalizedModInfos attached to it.");
-            }
-
-            return localizedModInfo;
+            return Ok(SerializedMod.Serialize(databaseMod, databaseMod.GetLocalizedInfo(GetAcceptLanguageCultures())));
         }
 
         // This code was generously provided by the following StackOverflow user, with some slight tweaks.
