@@ -17,6 +17,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
+using Version = Hive.Versioning.Version;
 
 namespace Hive.Controllers
 {
@@ -321,7 +322,7 @@ namespace Hive.Controllers
 
             log.Debug("Getting database objects...");
 
-            var targetVersion = new Versioning.Version(identifier.Version);
+            var targetVersion = new Version(identifier.Version);
 
             // Get the database mod that represents the ModIdentifier.
             var databaseMod = CreateModQuery()
@@ -380,7 +381,7 @@ namespace Hive.Controllers
             // We loop through each preferred language first, as they are what the user asked for.
             // This list is already sorted by quality values, so none should be needed.
             // We do not need to explicitly search for the System culture since it was already added to the end of this list.
-            foreach (CultureInfo preferredLanguage in searchingCultureInfos)
+            foreach (string preferredLanguage in searchingCultureInfos)
             {
                 var localizedInfos = localizations.Where(x => x.Language == preferredLanguage);
                 if (localizedInfos.Any())
@@ -407,10 +408,10 @@ namespace Hive.Controllers
 
         // This code was generously provided by the following StackOverflow user, with some slight tweaks.
         // https://stackoverflow.com/questions/9414123/get-cultureinfo-from-current-visitor-and-setting-resources-based-on-that/51144362#51144362
-        private IEnumerable<CultureInfo> GetAcceptLanguageCultures()
+        private IEnumerable<string> GetAcceptLanguageCultures()
         {
             // We start with an empty list
-            var preferredCultures = Enumerable.Empty<CultureInfo>();
+            var preferredCultures = Enumerable.Empty<string>();
             if (Request != null)
             {
                 var requestedLanguages = Request.Headers["Accept-Language"];
@@ -426,27 +427,12 @@ namespace Hive.Controllers
                         .GroupBy(sv => sv.Value).Select(svg => svg.OrderByDescending(sv => sv.Quality.GetValueOrDefault(1)).First())
                         // Sort by preference level
                         .OrderByDescending(sv => sv.Quality.GetValueOrDefault(1))
-                        // Construct CultureInfos, pass "null" if user passes in an unsupported culture
-                        .Select((sv) =>
-                        {
-                            // REVIEW: Perhaps make all languages strings instead of CultureInfos?
-                            // This will have a very small performance gain in cases like this, and could allow for someone to add
-                            // languages that aren't somehow supported by .NET (The only case I can see here is for joke languages)
-                            try
-                            {
-                                return new CultureInfo(sv.Value.ToString());
-                            }
-                            catch (Exception e) when (e is ArgumentNullException || e is CultureNotFoundException)
-                            {
-                                return null!;
-                            }
-                        })
-                        // Filter out all null cultures
-                        .Where(ci => ci != null);
+                        // Then re-select the text values as strings.
+                        .Select(sv => sv.Value.Value);
                 }
             }
 
-            return preferredCultures.Append(CultureInfo.CurrentCulture); // Add system culture to the end and return the result.
+            return preferredCultures.Append(CultureInfo.CurrentCulture.TwoLetterISOLanguageName); // Add system culture to the end and return the result.
         }
 
         // Abstracts the construction of a Mod access query with necessary Include calls to a helper function

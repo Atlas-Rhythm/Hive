@@ -22,7 +22,7 @@ namespace Hive.Models.Serialized
             if (toSerialize is null) throw new ArgumentException($"{nameof(toSerialize)} is null.");
             return new SerializedLocalizedModInfo()
             {
-                Language = toSerialize.Language.Name,
+                Language = toSerialize.Language,
                 Name = toSerialize.Name,
                 Changelog = toSerialize.Changelog!,
                 Credits = toSerialize.Credits!,

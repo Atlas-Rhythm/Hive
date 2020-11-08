@@ -413,7 +413,7 @@ namespace Hive.Tests.Endpoints
             LocalizedModInfo info = new LocalizedModInfo()
             {
                 OwningMod = mod,
-                Language = CultureInfo.CurrentCulture,
+                Language = CultureInfo.CurrentCulture.TwoLetterISOLanguageName,
                 Name = name,
                 Description = "if you read this, william gay"
             };
