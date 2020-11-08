@@ -273,7 +273,6 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(getMod.Result);
             var getModResult = getMod.Result as OkObjectResult;
             Assert.NotNull(getModResult);
-            var serializedMod = getModResult!.Value as SerializedMod;
 
             // Serialize our request JSON data into a stream, which we will feed into our channel request.
             ModIdentifier identifier = new ModIdentifier
