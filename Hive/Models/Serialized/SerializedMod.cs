@@ -31,17 +31,17 @@ namespace Hive.Models.Serialized
 
         public SerializedLocalizedModInfo LocalizedModInfo { get; init; } = null!;
 
-        public IImmutableList<string> Authors { get; init; } = null!;
+        public ImmutableList<string> Authors { get; init; } = null!;
 
-        public IImmutableList<string> Contributors { get; init; } = null!;
+        public ImmutableList<string> Contributors { get; init; } = null!;
 
-        public IImmutableList<string> SupportedGameVersions { get; init; } = null!;
+        public ImmutableList<string> SupportedGameVersions { get; init; } = null!;
 
-        public IImmutableList<(string, string)> Links { get; init; } = null!;
+        public ImmutableList<(string, string)> Links { get; init; } = null!;
 
-        public IImmutableList<ModReference> Dependencies { get; init; } = null!;
+        public ImmutableList<ModReference> Dependencies { get; init; } = null!;
 
-        public IImmutableList<ModReference> ConflictsWith { get; init; } = null!;
+        public ImmutableList<ModReference> ConflictsWith { get; init; } = null!;
 
         // all AdditionalData fields are public, yet readonly.
         public JsonElement AdditionalData { get; init; }
