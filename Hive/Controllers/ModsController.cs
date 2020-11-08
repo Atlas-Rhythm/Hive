@@ -1,4 +1,5 @@
-﻿using Hive.Models;
+﻿using Hive.Extensions;
+using Hive.Models;
 using Hive.Models.ReadOnly;
 using Hive.Models.Serialized;
 using Hive.Permissions;
@@ -18,7 +19,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
 using Version = Hive.Versioning.Version;
-using static Hive.Extensions.ModExtensions;
 
 namespace Hive.Controllers
 {
@@ -394,7 +394,7 @@ namespace Hive.Controllers
                 }
             }
 
-            return preferredCultures.Append(CultureInfo.CurrentCulture.TwoLetterISOLanguageName); // Add system culture to the end and return the result.
+            return preferredCultures.Append(CultureInfo.CurrentCulture.ToString()); // Add system culture to the end and return the result.
         }
 
         // Abstracts the construction of a Mod access query with necessary Include calls to a helper function
