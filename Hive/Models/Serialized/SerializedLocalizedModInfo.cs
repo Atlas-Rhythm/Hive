@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+﻿using System;
 
 namespace Hive.Models.Serialized
 {
@@ -19,7 +19,7 @@ namespace Hive.Models.Serialized
 
         public static SerializedLocalizedModInfo Serialize(LocalizedModInfo toSerialize)
         {
-            if (toSerialize is null) return null!;
+            if (toSerialize is null) throw new ArgumentException($"{nameof(toSerialize)} is null.");
             return new SerializedLocalizedModInfo()
             {
                 Language = toSerialize.Language.Name,
