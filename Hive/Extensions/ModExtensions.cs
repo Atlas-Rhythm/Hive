@@ -27,7 +27,7 @@ namespace Hive.Extensions
 
             if (preferredLanguages is null || !preferredLanguages.Any())
             {
-                preferredLanguages = new[] { CultureInfo.CurrentCulture.TwoLetterISOLanguageName };
+                preferredLanguages = new[] { CultureInfo.CurrentCulture.ToString() };
             }
 
             // If the plugins allow us to access this mod, we then perform a search on localized data to grab what we need.
