@@ -9,7 +9,7 @@
 
     <NeutralLanguage>en-US</NeutralLanguage>
     
-    <NoWarn>$(NoWarn);CA1826;CA2000</NoWarn>
+    <NoWarn>$(NoWarn);CA1716;CA1826;CA2000</NoWarn>
 
     <!-- FXCop warnings that aren't terribly useful for tests, most of the time. -->
     <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepDesignWarnings)' != 'true'">
