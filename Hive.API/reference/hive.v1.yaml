@@ -36,12 +36,6 @@ paths:
     get:
       summary: 'Gets all of the mods in the specified channel(s), or a default if none is specified.'
       parameters:
-        - name: channelId
-          description: The ID of the channel to look up mods in
-          in: query
-          required: false
-          schema:
-            type: string
         - name: channelIds
           description: The IDs of the channels to look up mods in
           in: query
@@ -84,19 +78,18 @@ paths:
       description: |-
         Gets all mods for a given channelId and channelIds to look within.
         Query parameters left empty will use defaults.
-        channelId defaults to the instance default channel, typically a public channel.
-        channelIds defaults to an empty array.
+        channelIds defaults to an empty array, which will default to look in the instance default channel.
         gameVersion defaults to latest.
         filterType defaults to latest.
 
         Options for filterType are:
         all: Returns all versions for each mod listed in the channel(s).
         latest: Returns only the latest versions for each mod listed in the channel(s).
-  '/mod/{modId}':
+  '/mod/{id}':
     parameters:
       - schema:
           type: string
-        name: modId
+        name: id
         in: path
         required: true
     get:
@@ -143,81 +136,6 @@ paths:
         If a list of languages are provided via Accept-Language, will try to return the best LocalizedModData that matches.
         If no languages are provided, or a previous match was not found, defaults to the system culture.
         If the system culture does not exist, uses the first LocalizedModData of the matching mod.
-      security:
-        - vaulthAuth: []
-    patch:
-      summary: Updates a mod with the specified ID
-      tags: []
-      responses:
-        '204':
-          description: No Content
-        '400':
-          description: Bad Request. Invalid JSON was posted.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-        '401':
-          description: Unauthorized. The user is not logged in.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-        '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-      operationId: patch-mod
-      description: Patches a given mod ID using the body provided.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Mod'
-        description: The mod object to patch the existing one with.
-      security:
-        - vaulthAuth: []
-    delete:
-      summary: Deletes a mod with the specified ID
-      tags: []
-      responses:
-        '204':
-          description: No Content
-        '401':
-          description: Unauthorized. The user is not logged in.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-        '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-      operationId: delete-mod
-      description: Deletes a given mod ID with the provided version.
-      parameters:
-        - schema:
-            type: string
-          in: query
-          name: version
-          description: Version of the mod to delete
-          required: true
       security:
         - vaulthAuth: []
   '/mod/upload/{modId}':
@@ -298,7 +216,7 @@ paths:
                   - message
                   - additionalMods
         '418':
-          description: "I'm a teapot (RFC 2324)"
+          description: I'm a teapot (RFC 2324)
           content:
             application/json:
               schema:
@@ -437,11 +355,11 @@ paths:
       description: |-
         Get basic information about this Hive instance.
         Information can be exposed and hidden on a per-instance basis.
-  '/mod/{modId}/latest':
+  '/mod/{id}/latest':
     parameters:
       - schema:
           type: string
-        name: modId
+        name: id
         in: path
         required: true
     get:
@@ -468,7 +386,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Exception'
       operationId: get-mod-modId-latest
-      description: 'Returns the latest mod with the provided ID. This is equivalent to calling: /mod/{modId}?range=*'
+      description: 'Returns the latest mod with the provided ID. This is equivalent to calling: /mod/{id}?range=*'
       parameters: []
       security:
         - vaulthAuth: []
