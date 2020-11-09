@@ -12,5 +12,9 @@ namespace Hive.Permissions
         public Mod? Mod { get; set; }
         public Channel? Channel { get; set; }
         public GameVersion? GameVersion { get; set; }
+
+        // Used for moving mods between channels
+        public Channel? SourceChannel { get; set; }
+        public Channel? DestinationChannel { get; set; }
     }
 }

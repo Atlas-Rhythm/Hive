@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+﻿using System;
 
 namespace Hive.Models.Serialized
 {
@@ -7,7 +7,7 @@ namespace Hive.Models.Serialized
     /// </summary>
     public class SerializedLocalizedModInfo
     {
-        public CultureInfo Language { get; init; } = null!;
+        public string Language { get; init; } = null!;
 
         public string Name { get; init; } = null!;
 
@@ -16,5 +16,18 @@ namespace Hive.Models.Serialized
         public string Changelog { get; init; } = null!;
 
         public string Credits { get; init; } = null!;
+
+        public static SerializedLocalizedModInfo Serialize(LocalizedModInfo toSerialize)
+        {
+            if (toSerialize is null) throw new ArgumentException($"{nameof(toSerialize)} is null.");
+            return new SerializedLocalizedModInfo()
+            {
+                Language = toSerialize.Language,
+                Name = toSerialize.Name,
+                Changelog = toSerialize.Changelog!,
+                Credits = toSerialize.Credits!,
+                Description = toSerialize.Description,
+            };
+        }
     }
 }

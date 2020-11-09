@@ -26,7 +26,6 @@ namespace Hive.Models
             base.OnModelCreating(modelBuilder);
 
             Mod.Configure(modelBuilder);
-            LocalizedModInfo.Configure(modelBuilder);
             GameVersion.Configure(modelBuilder);
             Channel.Configure(modelBuilder);
         }
