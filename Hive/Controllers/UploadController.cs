@@ -6,6 +6,7 @@ using Hive.Services;
 using MathExpr.Syntax;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
 using Serilog;
@@ -18,6 +19,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Security.Policy;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -49,16 +51,17 @@ namespace Hive.Controllers
         /// <see cref="Mod.DownloadLink"/> may not be set on <paramref name="mod"/> when this is called.
         /// </remarks>
         /// <param name="mod"></param>
+        /// <param name="originalAdditionalData"></param>
         /// <param name="validationFailureInfo"></param>
         /// <returns></returns>
         [return: StopIfReturns(false)]
-        bool ValidateAndFixUploadedData(Mod mod, [ReturnLast] out object? validationFailureInfo);
+        bool ValidateAndFixUploadedData(Mod mod, JsonElement originalAdditionalData, [ReturnLast] out object? validationFailureInfo);
     }
 
     internal class HiveDefaultUploadPlugin : IUploadPlugin
     {
         [return: StopIfReturns(false)]
-        public bool ValidateAndFixUploadedData(Mod mod, [ReturnLast] out object? validationFailureInfo)
+        public bool ValidateAndFixUploadedData(Mod mod, JsonElement origAdditionalData, [ReturnLast] out object? validationFailureInfo)
         {
             validationFailureInfo = null;
             return true;
@@ -299,13 +302,25 @@ namespace Hive.Controllers
 
             // TODO: validate that finalMetadata has all needed metadata specified
 
+            if (finalMetadata.ID is null
+             || finalMetadata.Version is null
+             || finalMetadata.ChannelName is null
+             || finalMetadata.LocalizedModInfo is null
+             || finalMetadata.LocalizedModInfo.Language is null
+             || finalMetadata.LocalizedModInfo.Name is null
+             || finalMetadata.LocalizedModInfo.Description is null
+             || finalMetadata.SupportedGameVersions is null || finalMetadata.SupportedGameVersions.Count < 1)
+                return BadRequest("Missing metadata keys");
+
             // decrypt the token
             var payload = await EncryptedUploadPayload.ExtractFromCookie(tokenAlgorithm, cookie).ConfigureAwait(false);
 
             // TODO: ensure that finalMetadata matches what of payload.ModData is present
+            //       the parts that we care about being consistent are pulled from the cookie anyway
 
             var cdnObject = payload.CdnObject;
 
+            #region Create modObject
             var modObject = new Mod
             {
                 ReadableID = finalMetadata.ID,
@@ -313,17 +328,44 @@ namespace Hive.Controllers
                 UploadedAt = payload.ModData.UploadedAt,
                 EditedAt = null,
                 Uploader = user,
-                Dependencies = finalMetadata.Dependencies.ToList(),
-                Conflicts = finalMetadata.ConflictsWith.ToList(),
+                Dependencies = finalMetadata.Dependencies?.ToList() ?? new (), // if deps is null, default to empty list (it's allowed)
+                Conflicts = finalMetadata.ConflictsWith?.ToList() ?? new (),   // same as above
                 AdditionalData = finalMetadata.AdditionalData,
-                Links = finalMetadata.Links.Select(t => (t.Item1, new Uri(t.Item2))).ToList()
+                Links = finalMetadata.Links?.Select(t => (t.Item1, new Uri(t.Item2))).ToList() ?? new () // defaults to empty list
             };
 
             // TODO: set up Authors and Contributors; How do we grab User objects for this?
-            // TODO: set SupportedVersions
-            // TODO: set Channel
+            //       Authors and Contributors should both default to empty lists 
 
-            var result = plugins.ValidateAndFixUploadedData(modObject, out var validationFailureInfo);
+            var channel = await database.Channels.FirstOrDefaultAsync(c => c.Name == finalMetadata.ChannelName).ConfigureAwait(false);
+            if (channel is null)
+                return BadRequest($"Missing channel '{finalMetadata.ChannelName}'");
+            modObject.Channel = channel;
+
+            var versions = finalMetadata.SupportedGameVersions
+                .Select(name => (name, version: database.GameVersions.FirstOrDefault(v => v.Name == name)))
+                .ToList();
+
+            foreach (var (name, version) in versions)
+            {
+                if (version is null)
+                    return BadRequest($"Missing game version '{name}'");
+            }
+
+            modObject.SupportedVersions = versions.Select(t => t.version!).ToList();
+
+            var localization = new LocalizedModInfo
+            {
+                Language = finalMetadata.LocalizedModInfo.Language,
+                Name = finalMetadata.LocalizedModInfo.Name,
+                Description = finalMetadata.LocalizedModInfo.Description,
+                Credits = finalMetadata.LocalizedModInfo.Credits,
+                Changelog = finalMetadata.LocalizedModInfo.Changelog,
+                OwningMod = modObject // this adds the localization to the mod object
+            };
+            #endregion
+
+            var result = plugins.ValidateAndFixUploadedData(modObject, payload.ModData.AdditionalData, out var validationFailureInfo);
             if (!result)
                 return BadRequest(UploadResult.ErrValidationFailed(validationFailureInfo));
 
@@ -341,8 +383,12 @@ namespace Hive.Controllers
             }
 
             // ok, we're good to just go ahead and insert it into the database
-            database.Mods.Add(modObject);
-            await database.SaveChangesAsync().ConfigureAwait(false);
+            await using (await database.Database.BeginTransactionAsync().ConfigureAwait(false))
+            {
+                database.ModLocalizations.Add(localization);
+                database.Mods.Add(modObject);
+                await database.SaveChangesAsync().ConfigureAwait(false);
+            }
 
             return Ok(UploadResult.Finish());
         }
