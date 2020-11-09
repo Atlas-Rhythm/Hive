@@ -1,6 +1,11 @@
-﻿using Hive.Versioning;
+﻿using Hive.Converters;
+using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using Version = Hive.Versioning.Version;
 
 namespace Hive.Models.Serialized
 {
@@ -9,11 +14,12 @@ namespace Hive.Models.Serialized
     /// </summary>
     public class SerializedMod
     {
-        public string Name { get; init; } = null!;
+        public string ID { get; init; } = null!;
 
+        [JsonConverter(typeof(VersionJsonConverter))]
         public Version Version { get; init; } = null!;
 
-        public string UpdatedAt { get; init; } = null!;
+        public string UploadedAt { get; init; } = null!;
 
         public string EditedAt { get; init; } = null!;
 
@@ -23,19 +29,45 @@ namespace Hive.Models.Serialized
 
         public string DownloadLink { get; init; } = null!;
 
-        public IList<string> Authors { get; } = new List<string>();
+        public SerializedLocalizedModInfo LocalizedModInfo { get; init; } = null!;
 
-        public IList<string> Contributors { get; } = new List<string>();
+        public ImmutableList<string> Authors { get; init; } = null!;
 
-        public IList<string> SupportedGameVersions { get; } = new List<string>();
+        public ImmutableList<string> Contributors { get; init; } = null!;
 
-        public IList<(string, string)> Links { get; } = new List<(string, string)>();
+        public ImmutableList<string> SupportedGameVersions { get; init; } = null!;
 
-        public IList<ModReference> Dependencies { get; } = new List<ModReference>();
+        public ImmutableList<(string, string)> Links { get; init; } = null!;
 
-        public IList<ModReference> ConflictsWith { get; } = new List<ModReference>();
+        public ImmutableList<ModReference> Dependencies { get; init; } = null!;
+
+        public ImmutableList<ModReference> ConflictsWith { get; init; } = null!;
 
         // all AdditionalData fields are public, yet readonly.
         public JsonElement AdditionalData { get; init; }
+
+        public static SerializedMod Serialize(Mod toSerialize, LocalizedModInfo localizedModInfo)
+        {
+            if (toSerialize is null) throw new ArgumentException($"{nameof(toSerialize)} is null.");
+            var serialized = new SerializedMod()
+            {
+                ID = toSerialize.ReadableID,
+                Version = toSerialize.Version,
+                UploadedAt = toSerialize.UploadedAt.ToString(),
+                EditedAt = toSerialize.EditedAt?.ToString()!,
+                UploaderUsername = toSerialize.Uploader.Name!,
+                ChannelName = toSerialize.Channel.Name,
+                DownloadLink = toSerialize.DownloadLink.ToString(),
+                LocalizedModInfo = SerializedLocalizedModInfo.Serialize(localizedModInfo),
+                AdditionalData = toSerialize.AdditionalData,
+                Authors = toSerialize.Authors.Select(x => x.Name!).ToImmutableList(),
+                Contributors = toSerialize.Contributors.Select(x => x.Name!).ToImmutableList(),
+                SupportedGameVersions = toSerialize.SupportedVersions.Select(x => x.Name!).ToImmutableList(),
+                Links = toSerialize.Links.Select(x => (x.Name, x.Url.ToString()))!.ToImmutableList(),
+                Dependencies = toSerialize.Dependencies.ToImmutableList(),
+                ConflictsWith = toSerialize.Conflicts.ToImmutableList()
+            };
+            return serialized;
+        }
     }
 }

@@ -104,7 +104,7 @@ namespace Hive
                 };
                 var loc = new LocalizedModInfo
                 {
-                    Language = new System.Globalization.CultureInfo("en-US"),
+                    Language = "en-US",
                     Name = "Test Mod",
                     Description = "A mod in the DB for testing",
                     OwningMod = mod

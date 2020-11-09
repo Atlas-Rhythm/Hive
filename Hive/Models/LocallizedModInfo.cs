@@ -13,7 +13,7 @@ namespace Hive.Models
 {
     public class LocalizedModInfo
     {
-        public CultureInfo Language { get; set; } = null!;
+        public string Language { get; set; } = null!;
 
         public string Name { get; set; } = null!;
 
@@ -50,22 +50,5 @@ namespace Hive.Models
         public Guid Guid { get; set; }
 
         #endregion DB Schema stuff
-
-        public static void Configure([DisallowNull] ModelBuilder b)
-        {
-            if (b is null)
-                throw new ArgumentNullException(nameof(b));
-            // OwningMod is configured by Mod
-            /*b.Entity<LocalizedModInfo>()
-                .HasIndex(l => new { l.OwningMod, l.Language })
-                .IsUnique()
-                .IncludeProperties(l => new { l.Name });*/
-            b.Entity<LocalizedModInfo>()
-                .Property(l => l.Language)
-                .HasConversion(
-                    c => c.Name,
-                    n => new CultureInfo(n, false)
-                );
-        }
     }
 }
