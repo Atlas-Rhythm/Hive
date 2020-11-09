@@ -1,4 +1,5 @@
 ﻿using Hive.Models;
+using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
@@ -6,6 +7,7 @@ using MathExpr.Syntax;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NodaTime;
+using NodaTime.Serialization.SystemTextJson;
 using Serilog;
 using System;
 using System.Buffers;
@@ -39,11 +41,29 @@ namespace Hive.Controllers
         void LatePopulateKnownMetadata(Mod mod, Stream data,
             ref object? dataContext)
             => LatePopulateKnownMetadata(mod, data);
-        // TODO: maybe do another validation after confirmation?
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <remarks>
+        /// <see cref="Mod.DownloadLink"/> may not be set on <paramref name="mod"/> when this is called.
+        /// </remarks>
+        /// <param name="mod"></param>
+        /// <param name="validationFailureInfo"></param>
+        /// <returns></returns>
+        [return: StopIfReturns(false)]
+        bool ValidateAndFixUploadedData(Mod mod, [ReturnLast] out object? validationFailureInfo);
     }
 
     internal class HiveDefaultUploadPlugin : IUploadPlugin
     {
+        [return: StopIfReturns(false)]
+        public bool ValidateAndFixUploadedData(Mod mod, [ReturnLast] out object? validationFailureInfo)
+        {
+            validationFailureInfo = null;
+            return true;
+        }
+
         [return: StopIfReturns(false)]
         public bool ValidateAndPopulateKnownMetadata(Mod mod, Stream data, [ReturnLast] out object? validationFailureInfo)
         {
@@ -87,6 +107,7 @@ namespace Hive.Controllers
         public enum ResultType
         {
             Success,
+            Confirm,
             Error
         }
 
@@ -125,12 +146,12 @@ namespace Hive.Controllers
             internal static readonly JsonSerializerOptions Options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
             {
                 IgnoreNullValues = true
-            };
+            }.ConfigureForNodaTime(DateTimeZoneProviders.Bcl); // BCL is (I think) the best thing to use here
 
-            // TODO: copy all the mod information into some other model specifically for this api
-
-            internal static UploadResult Ok(SymmetricAlgorithm algo, Mod data, CdnObject cdnObj)
+            internal static UploadResult Confirm(SymmetricAlgorithm algo, Mod data, CdnObject cdnObj)
             {
+                var serialized = SerializedMod.Serialize(data, data.Localizations.FirstOrDefault());
+
                 using var mStream = new MemoryStream();
                 using (var encStream = new CryptoStream(mStream, algo.CreateEncryptor(), CryptoStreamMode.Write))
                 {
@@ -139,7 +160,7 @@ namespace Hive.Controllers
                     JsonSerializer.Serialize(writer,
                         new EncryptedUploadPayload
                         {
-                            ModData = data,
+                            ModData = serialized,
                             CdnObject = cdnObj
                         }, Options);
                 }
@@ -156,19 +177,24 @@ namespace Hive.Controllers
 
                 return new UploadResult
                 {
-                    Type = ResultType.Success,
+                    Type = ResultType.Confirm,
                     ActionCookie = encData,
                     ExtractedData = doc.RootElement.Clone()
                 };
             }
+
+            internal static UploadResult Finish()
+                => new UploadResult
+                {
+                    Type = ResultType.Success
+                };
         }
         
         private struct EncryptedUploadPayload
         {
-            public Mod ModData { get; init; }
+            public SerializedMod ModData { get; init; }
             public CdnObject CdnObject { get; init; }
 
-            // TODO: replace ModData with some other model specifically for this process
             internal static ValueTask<EncryptedUploadPayload> ExtractFromCookie(SymmetricAlgorithm algo, string cookie)
             {
                 var data = Convert.FromBase64String(cookie);
@@ -247,10 +273,10 @@ namespace Hive.Controllers
             // we've gotten the OK based on all of our other checks, lets upload the file to the actual CDN
             memStream.Seek(0, SeekOrigin.Begin);
             var cdnObject = await cdn.UploadObject(file.FileName, memStream, SystemClock.Instance.GetCurrentInstant() + Duration.FromHours(1)).ConfigureAwait(false);
-            // TODO: ^^^ the above should take a timeout param to auto-delete without confirmation after some time
+            // TODO: ^^^ the above should probably use a DI'd clock instance
 
             // this method encrypts the extracted data into a cookie in the resulting object that is sent along
-            return UploadResult.Ok(tokenAlgorithm, modData, cdnObject);
+            return Ok(UploadResult.Confirm(tokenAlgorithm, modData, cdnObject));
         }
 
 
@@ -259,7 +285,9 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult> CompleteUpload([FromForm] Mod finalMetadata, [FromForm] string cookie)
+        [ProducesResponseType(StatusCodes.Status410Gone)] 
+        // ^^^ returned when the object associated with the upload was deleted automatically. Basically, "You took too long"
+        public async Task<ActionResult<UploadResult>> CompleteUpload([FromForm] SerializedMod finalMetadata, [FromForm] string cookie)
         {
             if (finalMetadata is null || cookie is null)
                 return BadRequest();
@@ -278,22 +306,45 @@ namespace Hive.Controllers
 
             var cdnObject = payload.CdnObject;
 
-            // TODO: vvv transform the mod information that we got into an actual mod object
-            // (make sure to assign the LocalizedModInfo correctly)
-            var modObject = finalMetadata;
+            var modObject = new Mod
+            {
+                ReadableID = finalMetadata.ID,
+                Version = finalMetadata.Version,
+                UploadedAt = payload.ModData.UploadedAt,
+                EditedAt = null,
+                Uploader = user,
+                Dependencies = finalMetadata.Dependencies.ToList(),
+                Conflicts = finalMetadata.ConflictsWith.ToList(),
+                AdditionalData = finalMetadata.AdditionalData,
+                Links = finalMetadata.Links.Select(t => (t.Item1, new Uri(t.Item2))).ToList()
+            };
+
+            // TODO: set up Authors and Contributors; How do we grab User objects for this?
+            // TODO: set SupportedVersions
+            // TODO: set Channel
+
+            var result = plugins.ValidateAndFixUploadedData(modObject, out var validationFailureInfo);
+            if (!result)
+                return BadRequest(UploadResult.ErrValidationFailed(validationFailureInfo));
+
+            if (!await cdn.RemoveExpiry(cdnObject).ConfigureAwait(false))
+                return StatusCode(StatusCodes.Status410Gone); // the object no longer exists, tell the client as much
+
             modObject.DownloadLink = await cdn.GetObjectActualUrl(cdnObject).ConfigureAwait(false);
 
             // do one final permission check
-            if (!permissions.CanDo(UploadWithDataAction, new PermissionContext { User = user, Mod = finalMetadata }, ref UploadWithDataParseState))
+            if (!permissions.CanDo(UploadWithDataAction, new PermissionContext { User = user, Mod = modObject }, ref UploadWithDataParseState))
             {
+                // the user doesn't have permissions, so we don't want to keep the object on the CDN
                 await cdn.TryDeleteObject(cdnObject).ConfigureAwait(false);
                 return Forbid();
             }
 
             // ok, we're good to just go ahead and insert it into the database
             database.Mods.Add(modObject);
+            await database.SaveChangesAsync().ConfigureAwait(false);
 
-            return Ok();
+            return Ok(UploadResult.Finish());
         }
 
     }

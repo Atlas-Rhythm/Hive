@@ -25,12 +25,9 @@ namespace Hive.Services
         /// <summary>
         /// Removes the expiration time for the given object, causing it to exist until otherwise removed.
         /// </summary>
-        /// <remarks>
-        /// This should never fail, even if the object no longer exists.
-        /// </remarks>
         /// <param name="link">The object to remove the expiration time for.</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        Task RemoveExpiry(CdnObject link);
+        /// <returns><see langword="true"/> if the object represented by <paramref name="link"/> exists, <see langword="false"/> otherwise.</returns>
+        Task<bool> RemoveExpiry(CdnObject link);
 
         /// <summary>
         /// Sets an expiry time on the given object, replacing any existing expiration.

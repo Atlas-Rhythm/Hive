@@ -1,4 +1,5 @@
 ﻿using Hive.Converters;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -19,9 +20,9 @@ namespace Hive.Models.Serialized
         [JsonConverter(typeof(VersionJsonConverter))]
         public Version Version { get; init; } = null!;
 
-        public string UploadedAt { get; init; } = null!;
+        public Instant UploadedAt { get; init; }
 
-        public string EditedAt { get; init; } = null!;
+        public Instant? EditedAt { get; init; }
 
         public string UploaderUsername { get; init; } = null!;
 
@@ -29,7 +30,7 @@ namespace Hive.Models.Serialized
 
         public string DownloadLink { get; init; } = null!;
 
-        public SerializedLocalizedModInfo LocalizedModInfo { get; init; } = null!;
+        public SerializedLocalizedModInfo? LocalizedModInfo { get; init; } = null!;
 
         public ImmutableList<string> Authors { get; init; } = null!;
 
@@ -46,19 +47,19 @@ namespace Hive.Models.Serialized
         // all AdditionalData fields are public, yet readonly.
         public JsonElement AdditionalData { get; init; }
 
-        public static SerializedMod Serialize(Mod toSerialize, LocalizedModInfo localizedModInfo)
+        public static SerializedMod Serialize(Mod toSerialize, LocalizedModInfo? localizedModInfo)
         {
             if (toSerialize is null) throw new ArgumentException($"{nameof(toSerialize)} is null.");
             var serialized = new SerializedMod()
             {
                 ID = toSerialize.ReadableID,
                 Version = toSerialize.Version,
-                UploadedAt = toSerialize.UploadedAt.ToString(),
-                EditedAt = toSerialize.EditedAt?.ToString()!,
+                UploadedAt = toSerialize.UploadedAt,
+                EditedAt = toSerialize.EditedAt,
                 UploaderUsername = toSerialize.Uploader.Name!,
                 ChannelName = toSerialize.Channel.Name,
                 DownloadLink = toSerialize.DownloadLink.ToString(),
-                LocalizedModInfo = SerializedLocalizedModInfo.Serialize(localizedModInfo),
+                LocalizedModInfo = localizedModInfo is not null ? SerializedLocalizedModInfo.Serialize(localizedModInfo) : null,
                 AdditionalData = toSerialize.AdditionalData,
                 Authors = toSerialize.Authors.Select(x => x.Name!).ToImmutableList(),
                 Contributors = toSerialize.Contributors.Select(x => x.Name!).ToImmutableList(),
