@@ -13,7 +13,7 @@ namespace Hive.Models.Serialized
     /// <summary>
     /// A serializer-friendly version of a <see cref="Mod"/>.
     /// </summary>
-    public class SerializedMod
+    public record SerializedMod
     {
         public string ID { get; init; } = null!;
 
@@ -56,9 +56,9 @@ namespace Hive.Models.Serialized
                 Version = toSerialize.Version,
                 UploadedAt = toSerialize.UploadedAt,
                 EditedAt = toSerialize.EditedAt,
-                UploaderUsername = toSerialize.Uploader.Name!,
-                ChannelName = toSerialize.Channel.Name,
-                DownloadLink = toSerialize.DownloadLink.ToString(),
+                UploaderUsername = toSerialize.Uploader?.Name!,
+                ChannelName = toSerialize.Channel?.Name!,
+                DownloadLink = toSerialize.DownloadLink?.ToString()!,
                 LocalizedModInfo = localizedModInfo is not null ? SerializedLocalizedModInfo.Serialize(localizedModInfo) : null,
                 AdditionalData = toSerialize.AdditionalData,
                 Authors = toSerialize.Authors.Select(x => x.Name!).ToImmutableList(),
