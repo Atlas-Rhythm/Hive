@@ -125,8 +125,8 @@ namespace Hive.Controllers
 
 
             [JsonPropertyName("data")]
-            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-            public JsonElement ExtractedData { get; init; }
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+            public SerializedMod? ExtractedData { get; init; }
 
             [JsonPropertyName("actionCookie")]
             [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -156,7 +156,7 @@ namespace Hive.Controllers
                 var serialized = SerializedMod.Serialize(data, data.Localizations.FirstOrDefault());
 
                 using var mStream = new MemoryStream();
-                using (var encStream = new CryptoStream(mStream, algo.CreateEncryptor(), CryptoStreamMode.Write))
+                using (var encStream = new CryptoStream(mStream, algo.CreateEncryptor(), CryptoStreamMode.Write, true))
                 {
                     using var writer = new Utf8JsonWriter(encStream);
 
@@ -173,16 +173,11 @@ namespace Hive.Controllers
 
                 var encData = Convert.ToBase64String(buffer);
 
-                var abw = new ArrayBufferWriter<byte>();
-                using (var writer = new Utf8JsonWriter(abw))
-                    JsonSerializer.Serialize(writer, data, Options);
-                var doc = JsonDocument.Parse(abw.WrittenMemory);
-
                 return new UploadResult
                 {
                     Type = ResultType.Confirm,
                     ActionCookie = encData,
-                    ExtractedData = doc.RootElement.Clone()
+                    ExtractedData = serialized
                 };
             }
 
@@ -198,14 +193,14 @@ namespace Hive.Controllers
             public SerializedMod ModData { get; init; }
             public CdnObject CdnObject { get; init; }
 
-            internal static ValueTask<EncryptedUploadPayload> ExtractFromCookie(SymmetricAlgorithm algo, string cookie)
+            internal static async ValueTask<EncryptedUploadPayload> ExtractFromCookie(SymmetricAlgorithm algo, string cookie)
             {
                 var data = Convert.FromBase64String(cookie);
 
                 using var mStream = new MemoryStream(data);
                 using var decStream = new CryptoStream(mStream, algo.CreateDecryptor(), CryptoStreamMode.Read);
 
-                return JsonSerializer.DeserializeAsync<EncryptedUploadPayload>(decStream, UploadResult.Options);
+                return await JsonSerializer.DeserializeAsync<EncryptedUploadPayload>(decStream, UploadResult.Options).ConfigureAwait(false);
             }
         }
 
@@ -238,6 +233,8 @@ namespace Hive.Controllers
 
             // TODO: check that the file is not too large
 
+            logger.Information("Began mod upload by user {User}", user.Username);
+
             // we'll start by copying the file into an in-memory stream
             using var memStream = new MemoryStream((int)file.Length);
 
@@ -250,7 +247,8 @@ namespace Hive.Controllers
             var modData = new Mod
             {
                 UploadedAt = SystemClock.Instance.GetCurrentInstant(), // TODO: DI clock instance?
-                Uploader = user
+                Uploader = user,
+                AdditionalData = JsonDocument.Parse("{}").RootElement.Clone()
             };
 
             // the dataContext ref param allows the plugins to pass data around to avoid re-parsing, when possible
@@ -278,8 +276,11 @@ namespace Hive.Controllers
             var cdnObject = await cdn.UploadObject(file.FileName, memStream, SystemClock.Instance.GetCurrentInstant() + Duration.FromHours(1)).ConfigureAwait(false);
             // TODO: ^^^ the above should probably use a DI'd clock instance
 
+            var uploadResult = UploadResult.Confirm(tokenAlgorithm, modData, cdnObject);
+            logger.Information("First stage of mod upload complete (cookie {ID})", uploadResult.ActionCookie!.Substring(0, 16));
+
             // this method encrypts the extracted data into a cookie in the resulting object that is sent along
-            return Ok(UploadResult.Confirm(tokenAlgorithm, modData, cdnObject));
+            return uploadResult;
         }
 
 
@@ -311,6 +312,8 @@ namespace Hive.Controllers
              || finalMetadata.LocalizedModInfo.Description is null
              || finalMetadata.SupportedGameVersions is null || finalMetadata.SupportedGameVersions.Count < 1)
                 return BadRequest("Missing metadata keys");
+
+            logger.Information("Completing upload {ID}", cookie.Substring(0, 16));
 
             // decrypt the token
             var payload = await EncryptedUploadPayload.ExtractFromCookie(tokenAlgorithm, cookie).ConfigureAwait(false);
@@ -383,14 +386,18 @@ namespace Hive.Controllers
             }
 
             // ok, we're good to just go ahead and insert it into the database
-            await using (await database.Database.BeginTransactionAsync().ConfigureAwait(false))
+            await using (var transaction = await database.Database.BeginTransactionAsync().ConfigureAwait(false))
             {
                 database.ModLocalizations.Add(localization);
                 database.Mods.Add(modObject);
                 await database.SaveChangesAsync().ConfigureAwait(false);
+
+                await transaction.CommitAsync().ConfigureAwait(false);
             }
 
-            return Ok(UploadResult.Finish());
+            logger.Information("Upload {ID} complete: {Name} by {Author}", cookie.Substring(0, 16), localization.Name, modObject.Uploader.Username);
+
+            return UploadResult.Finish();
         }
 
     }
