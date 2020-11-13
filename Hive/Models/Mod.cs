@@ -64,6 +64,7 @@ namespace Hive.Models
         // this would be a JSON string, encoding arbitrary data (this should be some type that better represents that JSON data though)
         public JsonElement AdditionalData { get; set; }
 
+        // TODO: fix the serialization of this field; it doesn't seem to want to actually serialize the values here
         [Column(TypeName = "jsonb")] // use jsonb here because that will let the db handle it sanely
         [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "EF wants a setter")]
         public IList<(string Name, Uri Url)> Links { get; set; } = new List<(string, Uri)>();
