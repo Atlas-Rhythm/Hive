@@ -13,9 +13,9 @@ namespace Hive.Models.Serialized
 
         public string Description { get; init; } = null!;
 
-        public string Changelog { get; init; } = null!;
+        public string? Changelog { get; init; }
 
-        public string Credits { get; init; } = null!;
+        public string? Credits { get; init; }
 
         public static SerializedLocalizedModInfo Serialize(LocalizedModInfo toSerialize)
         {
@@ -24,8 +24,8 @@ namespace Hive.Models.Serialized
             {
                 Language = toSerialize.Language,
                 Name = toSerialize.Name,
-                Changelog = toSerialize.Changelog!,
-                Credits = toSerialize.Credits!,
+                Changelog = toSerialize.Changelog,
+                Credits = toSerialize.Credits,
                 Description = toSerialize.Description,
             };
         }
