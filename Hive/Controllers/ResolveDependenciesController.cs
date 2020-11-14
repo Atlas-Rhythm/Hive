@@ -19,7 +19,17 @@ using Version = Hive.Versioning.Version;
 
 namespace Hive.Controllers
 {
-    // TODO: Add aggregable plugin
+    [Aggregable]
+    public interface IResolveDependenciesPlugin
+    {
+        /// <summary>
+        /// Returns true if the specified/anonymous user can resolve dependencies, false otherwise.
+        /// <para>Hive default is to return true.</para>
+        /// </summary>
+        /// <param name="user">User in context</param>
+        [return: StopIfReturns(false)]
+        bool GetAdditionalChecks(User? user) => true;
+    }
 
     [Route("api/resolve_dependencies")]
     public class ResolveDependenciesController : ControllerBase
@@ -27,27 +37,40 @@ namespace Hive.Controllers
         private readonly PermissionsManager<PermissionContext> permissions;
         private readonly Serilog.ILogger log;
         private readonly HiveContext context;
-        //private readonly IAggregate<IGameVersionsPlugin> plugin;
+        private readonly IAggregate<IResolveDependenciesPlugin> plugin;
         private readonly IProxyAuthenticationService proxyAuth;
-        [ThreadStatic] private static PermissionActionParseState versionsParseState;
+        [ThreadStatic] private static PermissionActionParseState permissionParseState;
 
-        public ResolveDependenciesController([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IProxyAuthenticationService proxyAuth)
+        public ResolveDependenciesController([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IProxyAuthenticationService proxyAuth, IAggregate<IResolveDependenciesPlugin> plugin)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
             log = logger.ForContext<ResolveDependenciesController>();
             permissions = perms;
             context = ctx;
-            //this.plugin = plugin;
+            this.plugin = plugin;
             this.proxyAuth = proxyAuth;
         }
+
+        private const string ActionName = "hive.resolve_dependencies";
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult> ResolveDependencies()
         {
-            // TODO: Permissions check
-            // TODO: Plugins check
+            log.Debug("Performing dependency resolution...");
+            // Get the user, do not need to capture context
+            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+
+            // All this stuff seems pretty standard by now. Perform a permissions check for the user, forbid if they don't have permission.
+            if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref permissionParseState))
+                return Forbid();
+
+            var combined = plugin.Instance;
+
+            if (!combined.GetAdditionalChecks(user))
+                return Forbid();
 
             // I'm not gonna bother doing dependency resolution if there is nothing to resolve.
             if (Request is null || Request.Body == null)
