@@ -1,7 +1,7 @@
 ﻿using System;
 using GraphQL.Types;
 using GraphQL.Utilities;
-using Hive.GraphQL.Types;
+using Hive.Graphing.Types;
 
 namespace Hive.Graphing
 {

@@ -44,6 +44,18 @@
   </ItemGroup>
   
   <ItemGroup>
+    <Compile Update="Resources\GraphQL.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>GraphQL.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\GraphQL.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>GraphQL.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Update="Resources\Resource.resx" IsResXToGenerate="true" />
   </ItemGroup>
 
