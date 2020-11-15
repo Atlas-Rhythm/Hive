@@ -59,7 +59,7 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<DependencyResolutionResult>> ResolveDependencies()
+        public async Task<ActionResult<DependencyResolutionResult>> ResolveDependencies([FromBody] ModIdentifier[] identifiers)
         {
             log.Debug("Performing dependency resolution...");
             // Get the user, do not need to capture context
@@ -74,25 +74,7 @@ namespace Hive.Controllers
             if (!combined.GetAdditionalChecks(user))
                 return Forbid();
 
-            // I'm not gonna bother doing dependency resolution if there is nothing to resolve.
-            if (Request is null || Request.Body == null)
-            {
-                return BadRequest("No mods were provided; no dependency resolution can occur.");
-            }
-
             log.Debug("Parsing identifiers from request...");
-
-            // Extract our array of mod identifiers from the Request
-            // These are mod ID/version pairs
-            ModIdentifier[]? identifiers = null;
-            try
-            {
-                identifiers = await JsonSerializer.DeserializeAsync<ModIdentifier[]>(Request.Body).ConfigureAwait(false);
-            }
-            catch (JsonException e) // Catch errors that can be attributed to malformed JSON from the user
-            {
-                return BadRequest(e);
-            }
 
             // So... we somehow successfully deserialized the list of mod identifiers, only to find that it is null.
             if (identifiers == null)
@@ -224,6 +206,7 @@ namespace Hive.Controllers
                 }
 
                 var mods = context.Mods.AsNoTracking();
+
                 // I'm not sure how necessary this is, but it prevents Visual Studio yelling at me because:
                 // 1) Without it, Visual Studio would yell at me because I had an "async" method with no awaited calls
                 // 2) Removing "async" throws an error because now it doesn't return a Task<IEnumerable<Mod>>
