@@ -31,6 +31,8 @@ namespace Hive.Controllers
         bool GetAdditionalChecks(User? user) => true;
     }
 
+    public class HiveResolveDependenciesControllerPlugin : IResolveDependenciesPlugin { }
+
     [Route("api/resolve_dependencies")]
     public class ResolveDependenciesController : ControllerBase
     {
@@ -57,7 +59,7 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult> ResolveDependencies()
+        public async Task<ActionResult<DependencyResolutionResult>> ResolveDependencies()
         {
             log.Debug("Performing dependency resolution...");
             // Get the user, do not need to capture context
@@ -168,7 +170,8 @@ namespace Hive.Controllers
 
         // REVIEW: Perhaps move this to Hive.Models, however I'm not sure whoever else will need this.
         // REVIEW: This was taken/modified from the Hive REST Schema for this endpoint. Is this even necessary?
-        internal class DependencyResolutionResult
+        // yes, yes, I know I'm being yelled at here.
+        public class DependencyResolutionResult
         {
             public string Message { get; init; } = null!;
             public IEnumerable<Mod> AdditionalMods { get; init; } = Enumerable.Empty<Mod>();
@@ -177,7 +180,7 @@ namespace Hive.Controllers
         // REVIEW: Perhaps move this to Hive.Models, however I'm not sure whoever else will need this.
         private class HiveValueAccessor : IValueAccessor<Mod, ModReference, Version, VersionRange>
         {
-            private HiveContext context;
+            private readonly HiveContext context;
 
             public HiveValueAccessor(HiveContext ctx)
             {
@@ -220,16 +223,13 @@ namespace Hive.Controllers
                     throw new ArgumentException($"Context is null.");
                 }
 
-                var mods = context.Mods
-                    .AsNoTracking()
-                    .Where(m => m.ReadableID == @ref.ModID && @ref.Versions.Matches(m.Version));
-
+                var mods = context.Mods.AsNoTracking();
                 // I'm not sure how necessary this is, but it prevents Visual Studio yelling at me because:
                 // 1) Without it, Visual Studio would yell at me because I had an "async" method with no awaited calls
                 // 2) Removing "async" throws an error because now it doesn't return a Task<IEnumerable<Mod>>
                 await mods.LoadAsync().ConfigureAwait(false);
 
-                return mods;
+                return mods.AsEnumerable().Where(m => m.ReadableID == @ref.ModID && @ref.Versions.Matches(m.Version));
             }
         }
     }
