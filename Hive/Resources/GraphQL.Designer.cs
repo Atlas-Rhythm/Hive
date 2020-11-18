@@ -349,6 +349,15 @@ namespace Hive.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Represents an individual account on this Hive instance.
+        /// </summary>
+        internal static string User {
+            get {
+                return ResourceManager.GetString("User", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The authentication type of the user..
         /// </summary>
         internal static string User_AuthenticationType {

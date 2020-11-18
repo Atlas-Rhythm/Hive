@@ -213,6 +213,9 @@
   <data name="Mod_Version" xml:space="preserve">
     <value>The SemVer version of the mod.</value>
   </data>
+  <data name="User" xml:space="preserve">
+    <value>Represents an individual account on this Hive instance</value>
+  </data>
   <data name="User_AuthenticationType" xml:space="preserve">
     <value>The authentication type of the user.</value>
   </data>
