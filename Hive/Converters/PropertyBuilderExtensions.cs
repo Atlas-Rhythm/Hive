@@ -18,12 +18,12 @@ namespace Hive.Converters
             if (b is null)
                 throw new ArgumentNullException(nameof(b));
             b.HasConversion(new ValueConverter<User, string>(
-                u => u.DumbId,
-                s => new User { DumbId = s }, null));
+                u => u.Username,
+                s => new User { Username = s }, null));
             b.Metadata.SetValueComparer(new ValueComparer<User>(
-                    (a, b) => a.DumbId == b.DumbId,
-                    u => u.DumbId.GetHashCode(StringComparison.InvariantCulture),
-                    u => new User { DumbId = u.DumbId }
+                    (a, b) => a.Username == b.Username,
+                    u => u.Username.GetHashCode(StringComparison.InvariantCulture),
+                    u => new User { Username = u.Username }
                 ));
 
             return b;
@@ -34,11 +34,11 @@ namespace Hive.Converters
             if (b is null)
                 throw new ArgumentNullException(nameof(b));
             b.HasConversion(new ValueConverter<IList<User>, string[]>(
-                      u => u.Select(u => u.DumbId).ToArray(),
-                      s => s.Select(s => new User { DumbId = s }).ToList(), null));
+                      u => u.Select(u => u.Username).ToArray(),
+                      s => s.Select(s => new User { Username = s }).ToList(), null));
             b.Metadata.SetValueComparer(new ValueComparer<IList<User>>(
                     (a, b) => a.SequenceEqual(b, UserComparer.Instance),
-                    l => l.Aggregate(0, (a, v) => HashCode.Combine(a, v.DumbId.GetHashCode(StringComparison.InvariantCulture))),
+                    l => l.Aggregate(0, (a, v) => HashCode.Combine(a, v.Username.GetHashCode(StringComparison.InvariantCulture))),
                     l => l.ToList() as IList<User> // DO NOT REMOVE THIS CAST! IT IS REQUIRED FOR THIS TO WORK.
                 ));
 
@@ -50,10 +50,10 @@ namespace Hive.Converters
             public static readonly UserComparer Instance = new UserComparer();
 
             public bool Equals([AllowNull] User x, [AllowNull] User y)
-                => x?.DumbId == y?.DumbId;
+                => x?.Username == y?.Username;
 
             public int GetHashCode([DisallowNull] User obj)
-                => obj.DumbId.GetHashCode(StringComparison.InvariantCulture);
+                => obj.Username.GetHashCode(StringComparison.InvariantCulture);
         }
     }
 }

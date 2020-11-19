@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Principal;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Hive.Models
@@ -23,15 +24,17 @@ namespace Hive.Models
         // - an extra data object like Mod.AdditionalData
 
         [Key]
-        public string DumbId { get; set; } = null!;
+        public string Username { get; set; } = null!;
 
-        public string? Username { get; set; }
         public JsonElement AdditionalData { get; set; }
 
+        [JsonIgnore]
         public string? AuthenticationType { get; set; }
 
+        [JsonIgnore]
         public bool IsAuthenticated { get; set; }
 
+        [JsonIgnore]
         public string? Name => Username;
     }
 }
