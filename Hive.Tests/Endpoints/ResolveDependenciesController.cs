@@ -4,21 +4,14 @@ using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Utilities;
 using Hive.Versioning;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Primitives;
-using Microsoft.Net.Http.Headers;
-using Moq;
 using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -98,7 +91,7 @@ namespace Hive.Tests.Endpoints
             Assert.IsType<OkObjectResult>(res.Result); // This endpoint must succeed
             var result = res.Result as OkObjectResult;
             Assert.NotNull(result);
-            var resolutionResult = result!.Value as Controllers.ResolveDependenciesController.DependencyResolutionResult; // Get our dependency resolution result
+            var resolutionResult = result!.Value as DependencyResolutionResult; // Get our dependency resolution result
             Assert.All(defaultMods, (m) => resolutionResult?.AdditionalMods.Contains(m)); // Ensure that every input mod is included in our result, since BeatSaverDownloader (explicitly or implicitly) depends on all test input mods
         }
 

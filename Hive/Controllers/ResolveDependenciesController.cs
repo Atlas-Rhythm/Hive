@@ -12,8 +12,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Version = Hive.Versioning.Version;
 
@@ -73,8 +71,6 @@ namespace Hive.Controllers
 
             if (!combined.GetAdditionalChecks(user))
                 return Forbid();
-
-            log.Debug("Parsing identifiers from request...");
 
             // So... we somehow successfully deserialized the list of mod identifiers, only to find that it is null.
             if (identifiers == null)
@@ -151,15 +147,6 @@ namespace Hive.Controllers
         }
 
         // REVIEW: Perhaps move this to Hive.Models, however I'm not sure whoever else will need this.
-        // REVIEW: This was taken/modified from the Hive REST Schema for this endpoint. Is this even necessary?
-        // yes, yes, I know I'm being yelled at here.
-        public class DependencyResolutionResult
-        {
-            public string Message { get; init; } = null!;
-            public IEnumerable<Mod> AdditionalMods { get; init; } = Enumerable.Empty<Mod>();
-        }
-
-        // REVIEW: Perhaps move this to Hive.Models, however I'm not sure whoever else will need this.
         private class HiveValueAccessor : IValueAccessor<Mod, ModReference, Version, VersionRange>
         {
             private readonly HiveContext context;
@@ -212,8 +199,18 @@ namespace Hive.Controllers
                 // 2) Removing "async" throws an error because now it doesn't return a Task<IEnumerable<Mod>>
                 await mods.LoadAsync().ConfigureAwait(false);
 
+                // Turn it into enumerable because the Where chain is too complex for EF to handle
                 return mods.AsEnumerable().Where(m => m.ReadableID == @ref.ModID && @ref.Versions.Matches(m.Version));
             }
         }
+    }
+
+    // REVIEW: Perhaps move this to Hive.Models, however I'm not sure whoever else will need this.
+    // TODO: The ideal situation is to include lists for missing mods, conflicting mods, and version mismatches.
+    //       However, as DaNike's dependency resolution lib stands right now, these aren't really possible.
+    public class DependencyResolutionResult
+    {
+        public string Message { get; init; } = null!;
+        public IEnumerable<Mod> AdditionalMods { get; init; } = Enumerable.Empty<Mod>();
     }
 }
