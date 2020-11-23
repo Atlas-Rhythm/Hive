@@ -92,7 +92,7 @@ namespace Hive.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<IEnumerable<SerializedMod>>> GetAllMods() 
+        public async Task<ActionResult<IEnumerable<SerializedMod>>> GetAllMods([FromQuery] string[]? channelIds = null, [FromQuery] string? gameVersion = null, [FromQuery] string? filterType = null) 
         {
             log.Debug("Getting all mods...");
             // Get the user, do not need to capture context
@@ -112,20 +112,17 @@ namespace Hive.Controllers
             GameVersion? filteredVersion = null;
             string filteredType = "LATEST";
 
-            if (Request != null && Request.Query != null)
+            if (channelIds != null && channelIds.Length >= 0)
             {
-                if (Request.Query.TryGetValue("channelIds", out var filteredChannelsValues))
-                {
-                    filteredChannels = context.Channels.AsNoTracking().Where(c => filteredChannelsValues.Contains(c.Name));
-                }
-                if (Request.Query.TryGetValue("gameVersion", out var filteredVersionValues))
-                {
-                    filteredVersion = context.GameVersions.AsNoTracking().Where(g => g.Name == filteredVersionValues.First()).FirstOrDefault();
-                }
-                if (Request.Query.TryGetValue("filterType", out var filterTypeValues))
-                {
-                    filteredType = filterTypeValues.First().ToUpperInvariant(); // To remove case-sensitivity
-                }
+                filteredChannels = context.Channels.AsNoTracking().Where(c => channelIds.Contains(c.Name));
+            }
+            if (gameVersion != null)
+            {
+                filteredVersion = context.GameVersions.AsNoTracking().Where(g => g.Name == gameVersion).FirstOrDefault();
+            }
+            if (filterType != null)
+            {
+                filteredType = filterType.ToUpperInvariant(); // To remove case-sensitivity
             }
 
             // Construct our list of serialized mods here.
@@ -180,7 +177,7 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<SerializedMod>> GetSpecificMod([FromRoute] string id)
+        public async Task<ActionResult<SerializedMod>> GetSpecificMod([FromRoute] string id, [FromQuery] string? range = null)
         {
             log.Debug("Getting a specific mod...");
             // Get the user, do not need to capture context
@@ -194,11 +191,7 @@ namespace Hive.Controllers
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;
 
-            VersionRange? filteredRange = null;
-            if (Request != null && Request.Query != null && Request.Query.TryGetValue("range", out var rangeValues))
-            {
-                filteredRange = new VersionRange(rangeValues.First());
-            }
+            VersionRange? filteredRange = range != null ? new VersionRange(range) : null;
 
             // Grab the list of mods that match our ID.
             var mods = CreateModQuery()
