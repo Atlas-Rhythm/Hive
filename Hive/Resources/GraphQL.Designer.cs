@@ -322,6 +322,15 @@ namespace Hive.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to A reference to a mod with a specific version range..
+        /// </summary>
+        internal static string ModReference {
+            get {
+                return ResourceManager.GetString("ModReference", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The ID of the mod that&apos;s being referenced..
         /// </summary>
         internal static string ModReference_ModID {
@@ -333,9 +342,9 @@ namespace Hive.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The range of versions that the reference is corresponding to..
         /// </summary>
-        internal static string ModReference_Versions {
+        internal static string ModReference_VersionRange {
             get {
-                return ResourceManager.GetString("ModReference_Versions", resourceCulture);
+                return ResourceManager.GetString("ModReference_VersionRange", resourceCulture);
             }
         }
         

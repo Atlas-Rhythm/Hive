@@ -159,10 +159,13 @@
   <data name="LocalizedModInfo_OwningMod" xml:space="preserve">
     <value>The mod that the localized mod info is localizing.</value>
   </data>
+  <data name="ModReference" xml:space="preserve">
+    <value>A reference to a mod with a specific version range.</value>
+  </data>
   <data name="ModReference_ModID" xml:space="preserve">
     <value>The ID of the mod that's being referenced.</value>
   </data>
-  <data name="ModReference_Versions" xml:space="preserve">
+  <data name="ModReference_VersionRange" xml:space="preserve">
     <value>The range of versions that the reference is corresponding to.</value>
   </data>
   <data name="Mods_QueryPage" xml:space="preserve">
