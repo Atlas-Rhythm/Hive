@@ -168,6 +168,9 @@
   <data name="LocalizedModInfo_OwningMod" xml:space="preserve">
     <value>The mod that the localized mod info is localizing.</value>
   </data>
+  <data name="Mod" xml:space="preserve">
+    <value>A mod is a modification or library uploaded in this instance.</value>
+  </data>
   <data name="ModReference" xml:space="preserve">
     <value>A reference to a mod with a specific version range.</value>
   </data>

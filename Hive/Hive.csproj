@@ -53,7 +53,7 @@
   
   <ItemGroup>
     <EmbeddedResource Update="Resources\GraphQL.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
+      <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>GraphQL.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Update="Resources\Resource.resx" IsResXToGenerate="true" />

@@ -214,6 +214,15 @@ namespace Hive.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to A mod is a modification or library uploaded in this instance..
+        /// </summary>
+        public static string Mod {
+            get {
+                return ResourceManager.GetString("Mod", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The authors of the mod. This is typically everyone who has added a significant amount to the mod..
         /// </summary>
         public static string Mod_Authors {
