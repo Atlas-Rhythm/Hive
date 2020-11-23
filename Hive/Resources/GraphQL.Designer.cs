@@ -97,6 +97,15 @@ namespace Hive.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to A version of the game that the current Hive instance revolves around..
+        /// </summary>
+        public static string GameVersion {
+            get {
+                return ResourceManager.GetString("GameVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The DateTime in UTC at which the game version was created..
         /// </summary>
         public static string GameVersion_CreationTime {

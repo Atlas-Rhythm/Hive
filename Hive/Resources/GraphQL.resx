@@ -129,6 +129,9 @@
   <data name="Channel_NameQuery" xml:space="preserve">
     <value>The ID of the channel being queried for.</value>
   </data>
+  <data name="GameVersion" xml:space="preserve">
+    <value>A version of the game that the current Hive instance revolves around.</value>
+  </data>
   <data name="GameVersion_CreationTime" xml:space="preserve">
     <value>The DateTime in UTC at which the game version was created.</value>
   </data>
