@@ -160,6 +160,15 @@ namespace Hive.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to A localized version of a mod..
+        /// </summary>
+        public static string LocalizedModInfo {
+            get {
+                return ResourceManager.GetString("LocalizedModInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The changelog of the mod in the language of the localized mod info..
         /// </summary>
         public static string LocalizedModInfo_Changelog {

@@ -150,6 +150,9 @@
   <data name="Link_URL" xml:space="preserve">
     <value>The URL of the link.</value>
   </data>
+  <data name="LocalizedModInfo" xml:space="preserve">
+    <value>A localized version of a mod.</value>
+  </data>
   <data name="LocalizedModInfo_Changelog" xml:space="preserve">
     <value>The changelog of the mod in the language of the localized mod info.</value>
   </data>
