@@ -98,7 +98,7 @@ namespace Hive.Controllers
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            // if a given user (or none) is allowed to access any mods. This should almost always be true.
+            // iff a given user (or none) is allowed to access any mods. This should almost always be true.
             if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user }, ref getModsParseState))
                 return Forbid();
 
@@ -183,7 +183,7 @@ namespace Hive.Controllers
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            // if a given user (or none) is allowed to access any mods. This should almost always be true.
+            // iff a given user (or none) is allowed to access any mods. This should almost always be true.
             if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user }, ref getModsParseState))
                 return Forbid();
 
@@ -236,7 +236,7 @@ namespace Hive.Controllers
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            // if a given user (or none) is allowed to access any mods. This should almost always be true.
+            // iff a given user (or none) is allowed to access any mods. This should almost always be true.
             if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user }, ref getModsParseState))
                 return Forbid();
 
@@ -311,7 +311,7 @@ namespace Hive.Controllers
                 return NotFound($"No channel exists with the name \"{channelId}\".");
             }
 
-            // Forbid if a given user (or none) is allowed to move the mod.
+            // Forbid iff a given user (or none) is allowed to move the mod.
             if (!permissions.CanDo(MoveModActionName, new PermissionContext { User = user, Mod = databaseMod, SourceChannel = origin, DestinationChannel = destination }, ref moveModsParseState))
                 return Forbid();
 
@@ -319,7 +319,7 @@ namespace Hive.Controllers
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;
 
-            // Forbid if a given user (or none) is allowed to move the mod.
+            // Forbid iff a given user (or none) is allowed to move the mod.
             if (!combined.GetMoveModAdditionalChecks(user, databaseMod, new ReadOnlyChannel(origin), new ReadOnlyChannel(destination)))
                 return Forbid();
 
