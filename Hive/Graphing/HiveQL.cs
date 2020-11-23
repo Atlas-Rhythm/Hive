@@ -15,6 +15,7 @@ namespace Hive.Graphing
         public static void AddHiveQLTypes(this IServiceCollection services)
         {
             // Map Every Field in the Types folder
+            // Mainly for development purposes so we dont have to re-add a new type every time one is created.
             IEnumerable<Type> types = Assembly.GetExecutingAssembly().GetTypes().Where(type =>
             {
                 bool correctNamespace = type.Namespace == gqlTypesNamespace;

@@ -3,7 +3,7 @@ using GraphQL.Types;
 
 namespace Hive.Graphing.Types
 {
-    public class ModType :ObjectGraphType<Mod>
+    public class ModType : ObjectGraphType<Mod>
     {
         public ModType()
         {
