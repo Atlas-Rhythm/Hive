@@ -138,6 +138,9 @@
   <data name="GameVersion_SupportedMods" xml:space="preserve">
     <value>The mods that are compatible with this version of the game.</value>
   </data>
+  <data name="Link" xml:space="preserve">
+    <value>A named reference to a web address.</value>
+  </data>
   <data name="Link_Name" xml:space="preserve">
     <value>The name of the source of the link.</value>
   </data>
