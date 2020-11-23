@@ -79,7 +79,7 @@ namespace Hive.Controllers
             // If user is null, we can simply forward it anyways
             // TODO: Wrap with user != null, either anonymize "hive.channel" or remove entirely.
             // hive.channel with a null channel in the context should be permissible
-            // iff a given user (or none) is allowed to view any channels. Thus, this should almost always be true
+            // if a given user (or none) is allowed to view any channels. Thus, this should almost always be true
             if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref channelsParseState))
                 return Forbid();
             // Combine plugins
