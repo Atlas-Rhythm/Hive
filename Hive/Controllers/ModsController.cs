@@ -277,7 +277,7 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<SerializedMod>> MoveModToChannel([FromRoute] string channelId)
+        public async Task<ActionResult<SerializedMod>> MoveModToChannel([FromRoute] string channelId, [FromBody] ModIdentifier identifier)
         {
             log.Debug("Attempting to move a mod to a new channel...");
             // Get the user, do not need to capture context
@@ -289,36 +289,9 @@ namespace Hive.Controllers
                 return Unauthorized();
             }
 
-            log.Debug("Serializing Mod from JSON...");
-            // Parse our body as JSON.
-            ModIdentifier? identifier = null;
-            try
+            if (identifier is null)
             {
-                identifier = await JsonSerializer.DeserializeAsync<ModIdentifier>(Request.Body).ConfigureAwait(false);
-            }
-            catch(Exception e) when (e is JsonException) // Catch errors that can be attributed to malformed JSON from the user
-            {
-                return BadRequest(e);
-            }
-            catch // This was not an error due to the user. Ruh roh.
-            {
-                throw;
-            }
-
-            // So... we somehow successfully deserialized the mod identifier, only to find that it is null.
-            if (identifier == null)
-            {
-                return BadRequest("POSTed Mod information was successfully deserialized, but the resulting object was null.");
-            }
-
-            if (string.IsNullOrEmpty(identifier.ID))
-            {
-                return BadRequest("Mod information contains a null or otherwise empty ID.");
-            }
-
-            if (string.IsNullOrEmpty(identifier.Version))
-            {
-                return BadRequest("Mod information contains a null or otherwise empty Version.");
+                return BadRequest("Identifier invalid");
             }
 
             log.Debug("Getting database objects...");
