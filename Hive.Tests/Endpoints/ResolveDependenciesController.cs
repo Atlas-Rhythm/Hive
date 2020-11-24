@@ -79,6 +79,11 @@ namespace Hive.Tests.Endpoints
             {
                 new ModReference("BS_Utils", new VersionRange("^1.0.0"))
             }),
+            // This plugin is used to check for missing mods
+            GetPlaceholderMod("Chroma", new List<ModReference>()
+            {
+                new ModReference("DNEE", new VersionRange("^1.0.0")),
+            }),
         };
 
         public ResolveDependenciesController(ITestOutputHelper helper) : base(new PartialContext
@@ -231,6 +236,31 @@ namespace Hive.Tests.Endpoints
             Assert.Equal(result!.StatusCode, StatusCodes.Status424FailedDependency); // We should be given 424 error
             var dependencyResult = result.Value as DependencyResolutionResult;
             Assert.NotEmpty(dependencyResult!.ConflictingMods); // Make sure we have a conflicting mod.
+        }
+
+        [Fact]
+        public async Task ResolveDependenciesWithMissingMod()
+        {
+            var controller = CreateController("next(true)");
+
+            // Our input will be a mod that depends on a non-existent mod
+            var input = new ModIdentifier[]
+            {
+                new ModIdentifier
+                {
+                    ID = "Chroma",
+                    Version = "1.0.0"
+                },
+            };
+
+            var res = await controller.ResolveDependencies(input);
+
+            Assert.NotNull(res.Result); // Make sure we got a request back
+            Assert.IsType<ObjectResult>(res.Result); // This endpoint must fail at the dependency resolution phase
+            var result = res.Result as ObjectResult;
+            Assert.Equal(result!.StatusCode, StatusCodes.Status424FailedDependency); // We should be given 424 error
+            var dependencyResult = result.Value as DependencyResolutionResult;
+            Assert.NotEmpty(dependencyResult!.MissingMods); // Make sure that DNEE is not found.
         }
 
         private Controllers.ResolveDependenciesController CreateController(string permissionRule, IEnumerable<IResolveDependenciesPlugin>? plugins = null)
