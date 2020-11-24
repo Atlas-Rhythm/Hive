@@ -32,7 +32,7 @@ type private ResolveImpl<'Mod, 'ModRef, 'Version, 'VerRange>(access: IValueAcces
         |> Seq.map (fun struct(id, range) ->
             match range with
             | ValueSome(r) -> access.CreateRef id r
-            | _ -> raise (DependencyRangeInvalidException id))
+            | _ -> raise (DependencyRangeInvalidException(id, range)))
 
     /// The primary recursive function that resolves dependencies.
     static member private resolveLoop (access: IValueAccessor<'Mod, 'ModRef, 'Version, 'VerRange>) collectReqs mods =
