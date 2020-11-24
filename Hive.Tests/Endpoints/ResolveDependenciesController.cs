@@ -4,6 +4,7 @@ using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Utilities;
 using Hive.Versioning;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
@@ -32,9 +33,9 @@ namespace Hive.Tests.Endpoints
         // BeatSaverDownloader explicitly/implicitly depends on all other mods in this list. We'll use this later.
         private static readonly IEnumerable<Mod> defaultMods = new List<Mod>()
         {
-            GetPlaceholderMod("BSIPA", new List<ModReference>() { }),
-            GetPlaceholderMod("ScoreSaberSharp", new List<ModReference>() { }),
-            GetPlaceholderMod("BeatSaverSharp", new List<ModReference>() { }),
+            GetPlaceholderMod("BSIPA"),
+            GetPlaceholderMod("ScoreSaberSharp"),
+            GetPlaceholderMod("BeatSaverSharp"),
             GetPlaceholderMod("BS_Utils", new List<ModReference>()
             {
                 new ModReference("BSIPA", new VersionRange("^1.0.0"))
@@ -49,6 +50,11 @@ namespace Hive.Tests.Endpoints
                 new ModReference("BSIPA", new VersionRange("^1.0.0")),
                 new ModReference("BS_Utils", new VersionRange("^1.0.0")),
                 new ModReference("BSML", new VersionRange("^1.0.0"))
+            },
+            // To test conflicts, we will have this mod conflict with BeatSaberPlus
+            new List<ModReference>()
+            {
+                new ModReference("BeatSaberPlus", new VersionRange("^1.0.0"))
             }),
             GetPlaceholderMod("BeatSaverDownloader", new List<ModReference>()
             {
@@ -57,6 +63,21 @@ namespace Hive.Tests.Endpoints
                 new ModReference("BSML", new VersionRange("^1.0.0")),
                 new ModReference("ScoreSaberSharp", new VersionRange("^1.0.0")),
                 new ModReference("BeatSaverSharp", new VersionRange("^1.0.0")),
+            }),
+            // This plugin is used to check for invalid version ranges.
+            GetPlaceholderMod("ChromaToggle", new List<ModReference>()
+            {
+                new ModReference("BSIPA", new VersionRange("^2.0.0")),
+            }),
+            // This plugin is used to check for conflicts
+            GetPlaceholderMod("BeatSaberPlus", new List<ModReference>()
+            {
+                new ModReference("BSIPA", new VersionRange("^1.0.0")),
+            },
+            // To test conflicts, we will have this mod conflict with BS Utils
+            new List<ModReference>()
+            {
+                new ModReference("BS_Utils", new VersionRange("^1.0.0"))
             }),
         };
 
@@ -124,20 +145,6 @@ namespace Hive.Tests.Endpoints
         }
 
         [Fact]
-        public async Task ResolveDependenciesBlankListFailure()
-        {
-            var controller = CreateController("next(true)");
-
-            // We're inputting an empty list, which would result in a BadRequest since there is nothing to resolve.
-            var input = Array.Empty<ModIdentifier>();
-
-            var res = await controller.ResolveDependencies(input);
-
-            Assert.NotNull(res.Result); // Make sure we got a request back
-            Assert.IsType<BadRequestObjectResult>(res.Result); // This endpoint must fail.
-        }
-
-        [Fact]
         public async Task ResolveDependenciesBlankRequestFailure()
         {
             var controller = CreateController("next(true)");
@@ -146,7 +153,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.ResolveDependencies(Array.Empty<ModIdentifier>());
 
             Assert.NotNull(res.Result); // Make sure we got a request back
-            Assert.IsType<BadRequestObjectResult>(res.Result); // This endpoint must fail.
+            Assert.IsType<BadRequestObjectResult>(res.Result); // This endpoint must fail because we have no identifiers
         }
 
         [Fact]
@@ -168,7 +175,62 @@ namespace Hive.Tests.Endpoints
 
 
             Assert.NotNull(res.Result); // Make sure we got a request back
-            Assert.IsType<BadRequestObjectResult>(res.Result); // This endpoint must fail
+            Assert.IsType<NotFoundObjectResult>(res.Result); // This endpoint must fail because the mod could not be found
+        }
+
+        [Fact]
+        public async Task ResolveDependenciesVersionMismatchError()
+        {
+            var controller = CreateController("next(true)");
+
+            var input = new ModIdentifier[]
+            {
+                // The ChromaToggle mod does exist, however its dependencies aren't set up properly.
+                new ModIdentifier
+                {
+                    ID = "ChromaToggle",
+                    Version = "1.0.0"
+                }
+            };
+
+            var res = await controller.ResolveDependencies(input);
+
+            Assert.NotNull(res.Result); // Make sure we got a request back
+            Assert.IsType<ObjectResult>(res.Result); // This endpoint must fail at the dependency resolution phase
+            var result = res.Result as ObjectResult;
+            Assert.Equal(result!.StatusCode, StatusCodes.Status424FailedDependency); // We should be given 424 error
+            var dependencyResult = result.Value as DependencyResolutionResult;
+            Assert.NotEmpty(dependencyResult!.VersionMismatches); // Make sure we have a version mismatch.
+        }
+
+        [Fact]
+        public async Task ResolveDependenciesWithModConflict()
+        {
+            var controller = CreateController("next(true)");
+
+            // Our inputs will be two mods, where one mod conflicts with the other.
+            var input = new ModIdentifier[]
+            {
+                new ModIdentifier
+                {
+                    ID = "BeatSaberPlus",
+                    Version = "1.0.0"
+                },
+                new ModIdentifier
+                {
+                    ID = "SongCore",
+                    Version = "1.0.0"
+                },
+            };
+
+            var res = await controller.ResolveDependencies(input);
+
+            Assert.NotNull(res.Result); // Make sure we got a request back
+            Assert.IsType<ObjectResult>(res.Result); // This endpoint must fail at the dependency resolution phase
+            var result = res.Result as ObjectResult;
+            Assert.Equal(result!.StatusCode, StatusCodes.Status424FailedDependency); // We should be given 424 error
+            var dependencyResult = result.Value as DependencyResolutionResult;
+            Assert.NotEmpty(dependencyResult!.ConflictingMods); // Make sure we have a conflicting mod.
         }
 
         private Controllers.ResolveDependenciesController CreateController(string permissionRule, IEnumerable<IResolveDependenciesPlugin>? plugins = null)
@@ -194,7 +256,7 @@ namespace Hive.Tests.Endpoints
 
         // I need to set up a "proper" Mod object so that the controller won't throw a fit
         // from (understandably) having missing data.
-        private static Mod GetPlaceholderMod(string name, IList<ModReference> dependencies)
+        private static Mod GetPlaceholderMod(string name, IList<ModReference> dependencies = null!, IList<ModReference> conflicts = null!)
         {
             var mod = new Mod()
             {
@@ -206,7 +268,8 @@ namespace Hive.Tests.Endpoints
                 Channel = DefaultChannel,
                 DownloadLink = new Uri("https://www.github.com/Atlas-Rhythm/Hive"),
                 AdditionalData = DIHelper.EmptyAdditionalData,
-                Dependencies = dependencies
+                Dependencies = dependencies ?? new List<ModReference>(),
+                Conflicts = conflicts ?? new List<ModReference>()
             };
 
             LocalizedModInfo info = new LocalizedModInfo()

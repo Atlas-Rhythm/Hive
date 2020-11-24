@@ -70,6 +70,8 @@ namespace Hive.Dependencies.Tests
             public VersionRange Range(ModRef @ref) => @ref.Range;
 
             public Version Version(Mod mod_) => mod_.Version;
+
+            public bool IsValidVersionRange(VersionRange @ref) => @ref != null;
         }
 
         [Fact]

@@ -57,6 +57,8 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status424FailedDependency)]
         public async Task<ActionResult<DependencyResolutionResult>> ResolveDependencies([FromBody] ModIdentifier[] identifiers)
         {
             log.Debug("Performing dependency resolution...");
@@ -75,7 +77,7 @@ namespace Hive.Controllers
             // So... we somehow successfully deserialized the list of mod identifiers, only to find that it is null.
             if (identifiers == null)
             {
-                return BadRequest("Mod identifiers were successfully deserialized, but the resulting object was null.");
+                return BadRequest("Invalid identifiers.");
             }
 
             // I'm not gonna bother doing dependency resolution if there is nothing to resolve.
@@ -100,7 +102,7 @@ namespace Hive.Controllers
 
                 if (mod is null)
                 {
-                    return BadRequest($"Could not find a Mod in the database that matches identifier \"{identifier}\".");
+                    return NotFound($"Could not find a Mod in that matches identifier \"{identifier}\".");
                 }
 
                 mods.Add(mod);
@@ -112,38 +114,74 @@ namespace Hive.Controllers
 
             log.Debug("Resolving dependencies...");
 
+            var result = new DependencyResolutionResult();
+
             try
             {
                 // Run our obtained mods through DaNike's F# dependency resolution library. 
                 resolvedMods = await Resolver.Resolve(dependencyValueAccessor, mods).ConfigureAwait(false);
+                result.AdditionalMods.AddRange(resolvedMods);
             }
             catch (AggregateException exceptionAggregate)
             {
-                var failure = new DependencyResolutionResult
+                foreach (var e in exceptionAggregate.InnerExceptions)
                 {
-                    Message = "A multitude of errors occured: " + string.Join(", ", exceptionAggregate.InnerExceptions.Select(e => e.Message))
-                };
+                    var isDependencyException = await HandleDependencyException(e, result).ConfigureAwait(false);
 
-                // REVIEW: For dependency resolution failures, is it wise to return 400? Is there a better error code to represent this?
-                return BadRequest(failure);
+                    if (!isDependencyException)
+                    {
+                        throw;
+                    }
+                }
             }
-            catch (Exception e) when (e is DependencyRangeInvalidException || e is VersionNotFoundException<ModReference>)
+            catch (Exception e)
             {
-                var failure = new DependencyResolutionResult
+                var isDependencyException = await HandleDependencyException(e, result).ConfigureAwait(false);
+
+                if (!isDependencyException) throw;
+            }
+
+            if (result.MissingMods.Any() || result.ConflictingMods.Any() || result.VersionMismatches.Any())
+            {
+                result.Message = "Dependency Resolution completed with some errors.";
+                return StatusCode(StatusCodes.Status424FailedDependency, result);
+            }
+
+            result.Message = "Dependency Resolution completed.";
+            return Ok(result);
+        }
+
+        // Helper function that handles certain dependency resolution exceptions.
+        // Returns false if Hive should re-throw the exception
+        private async Task<bool> HandleDependencyException(Exception e, DependencyResolutionResult result)
+        {
+            if (e is DependencyRangeInvalidException<VersionRange> depRangeInvalid)
+            {
+                result.ConflictingMods.Add(new ModReference(depRangeInvalid.ID, depRangeInvalid.Range));
+                return true;
+            }
+            else if (e is VersionNotFoundException<ModReference> versionNotFound)
+            {
+                var reference = versionNotFound.ModReference;
+
+                // I'm pretty sure we need to check if a mod even exists with this ID to tell if its a version mismatch, or a missing mod
+                var mod = await context.Mods
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(m => m.ReadableID == reference.ModID)
+                    .ConfigureAwait(false);
+
+                if (mod is null)
                 {
-                    Message = e.Message,
-                };
+                    result.MissingMods.Add(reference);
+                }
+                else
+                {
+                    result.VersionMismatches.Add(versionNotFound.ModReference);
+                }
 
-                return BadRequest(failure);
+                return true;
             }
-
-            var success = new DependencyResolutionResult()
-            {
-                Message = "Dependency resolution succeeded. The input mods, as well as any retrieved dependencies, are included below.",
-                AdditionalMods = resolvedMods
-            };
-
-            return Ok(success);
+            return false;
         }
 
         // REVIEW: Perhaps move this to Hive.Models, however I'm not sure whoever else will need this.
@@ -171,6 +209,8 @@ namespace Hive.Controllers
             public VersionRange Range(ModReference @ref) => @ref.Versions;
 
             public ModReference CreateRef(string id, VersionRange range) => new ModReference(id, range);
+
+            public bool IsValidVersionRange(VersionRange range) => range != null && !string.IsNullOrEmpty(range.ToString());
 
             // Comparisons
             public bool Matches(VersionRange range, Version version) => range.Matches(version);
@@ -206,11 +246,12 @@ namespace Hive.Controllers
     }
 
     // REVIEW: Perhaps move this to Hive.Models, however I'm not sure whoever else will need this.
-    // TODO: The ideal situation is to include lists for missing mods, conflicting mods, and version mismatches.
-    //       However, as DaNike's dependency resolution lib stands right now, these aren't really possible.
     public class DependencyResolutionResult
     {
-        public string Message { get; init; } = null!;
-        public IEnumerable<Mod> AdditionalMods { get; init; } = Enumerable.Empty<Mod>();
+        public string Message { get; set; } = null!;
+        public List<Mod> AdditionalMods { get; } = new List<Mod>();
+        public List<ModReference> MissingMods { get; } = new List<ModReference>();
+        public List<ModReference> ConflictingMods { get; } = new List<ModReference>();
+        public List<ModReference> VersionMismatches { get; } = new List<ModReference>();
     }
 }
