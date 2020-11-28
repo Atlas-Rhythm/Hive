@@ -54,11 +54,6 @@ namespace Hive
             services.AddAggregates();
 
             services.AddControllers();
-            services.AddAuthentication(a =>
-            {
-                a.AddScheme<MockAuthenticationHandler>("Bearer", "MockAuth");
-                a.DefaultScheme = "Bearer";
-            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
