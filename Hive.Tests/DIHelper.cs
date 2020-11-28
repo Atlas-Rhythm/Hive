@@ -1,4 +1,4 @@
-﻿using Hive.Models;
+using Hive.Models;
 using Hive.Permissions;
 using Hive.Services;
 using Hive.Utilities;
@@ -95,9 +95,9 @@ namespace Hive.Tests
             var mockRuleProvider = new Mock<IRuleProvider>();
             var start = SystemClock.Instance.GetCurrentInstant();
             mockRuleProvider.Setup(rules => rules.CurrentTime).Returns(() => SystemClock.Instance.GetCurrentInstant());
-            mockRuleProvider.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.IsAny<Instant>())).Returns(false);
+            mockRuleProvider.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.IsAny<Instant>())).Returns(true);
             mockRuleProvider.Setup(rules => rules.HasRuleChangedSince(It.IsAny<StringView>(), It.Is<Instant>(i => i < start))).Returns(true);
-            mockRuleProvider.Setup(rules => rules.HasRuleChangedSince(It.IsAny<Rule>(), It.IsAny<Instant>())).Returns(false);
+            mockRuleProvider.Setup(rules => rules.HasRuleChangedSince(It.IsAny<Rule>(), It.IsAny<Instant>())).Returns(true);
             mockRuleProvider.Setup(rules => rules.TryGetRule(It.IsAny<StringView>(), out It.Ref<Rule>.IsAny!)).Returns(false);
             return mockRuleProvider;
         }
