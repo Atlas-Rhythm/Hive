@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +13,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Hive.Models
 {
+    /// <summary>
+    /// A Mod object
+    /// </summary>
     [SuppressMessage("Naming", "CA1716:Identifiers should not match keywords", Justification = "Mod is the best name for what we have, although it could theoretically become 'HiveMod'")]
     public class Mod
     {
@@ -120,6 +121,9 @@ namespace Hive.Models
         }
     }
 
+    /// <summary>
+    /// A reference to a range of mods.
+    /// </summary>
     public readonly struct ModReference : IEquatable<ModReference>
     {
         public string ModID { get; }

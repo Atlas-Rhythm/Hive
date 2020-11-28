@@ -9,6 +9,9 @@ using System.Text.Json;
 
 namespace Hive.Models
 {
+    /// <summary>
+    /// A game version.
+    /// </summary>
     public class GameVersion
     {
         public string Name { get; set; } = null!;

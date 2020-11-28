@@ -6,6 +6,9 @@ using System.Text.Json;
 
 namespace Hive.Models
 {
+    /// <summary>
+    /// A channel object.
+    /// </summary>
     public class Channel
     {
         // this could also act as a primary key

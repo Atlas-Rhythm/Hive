@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace Hive.Logging
 {
+    /// <summary>
+    /// A proxy logger that proxies <see cref="Permissions.Logging.ILogger"/> to a <see cref="Serilog.ILogger"/>.
+    /// </summary>
     public class PermissionsProxy : Permissions.Logging.ILogger
     {
         private readonly ILogger logger;

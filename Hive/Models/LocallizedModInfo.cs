@@ -11,6 +11,10 @@ using System.Threading.Tasks;
 
 namespace Hive.Models
 {
+    /// <summary>
+    /// Localized information about a mod.
+    /// </summary>
+    /// <seealso cref="Mod"/>
     public class LocalizedModInfo
     {
         public string Language { get; set; } = null!;
