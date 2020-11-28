@@ -51,7 +51,6 @@ namespace Hive.Controllers
         private readonly HiveContext context;
         private readonly IAggregate<IChannelsControllerPlugin> plugin;
         private readonly IProxyAuthenticationService authService;
-        [ThreadStatic] private static PermissionActionParseState channelsParseState;
 
         public ChannelsController([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IChannelsControllerPlugin> plugin, IProxyAuthenticationService authService)
         {
@@ -69,8 +68,7 @@ namespace Hive.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        // TODO: Perhaps return a subset of Channel, instead only containing information desired as opposed to the whole model?
-        // This is probably applicable via a GraphQL endpoint, however.
+        [SuppressMessage("Hive.Permissions", "Hive0012:Use the CanDo(StringView, TContext, ref PermissionActionParseState) overload when possible", Justification = "Caching causes problems with two varying contexts")]
         public async Task<ActionResult<IEnumerable<Channel>>> GetChannels()
         {
             log.Debug("Getting channels...");
@@ -80,7 +78,7 @@ namespace Hive.Controllers
             // TODO: Wrap with user != null, either anonymize "hive.channel" or remove entirely.
             // hive.channel with a null channel in the context should be permissible
             // iff a given user (or none) is allowed to view any channels. Thus, this should almost always be true
-            if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref channelsParseState))
+            if (!permissions.CanDo(ActionName, new PermissionContext { User = user }))
                 return Forbid();
             // Combine plugins
             log.Debug("Combining plugins...");
@@ -97,7 +95,7 @@ namespace Hive.Controllers
             log.Debug("Filtering channels from {0} channels...", channels.Count);
             // First, we filter over if the given channel is accessible to the given user.
             // This allows for much more specific permissions, although chances are that roles will be used (and thus a plugin) instead.
-            var filteredChannels = channels.Where(c => permissions.CanDo(ActionName, new PermissionContext { Channel = c, User = user }, ref channelsParseState));
+            var filteredChannels = channels.Where(c => permissions.CanDo(ActionName, new PermissionContext { Channel = c, User = user }));
             log.Debug("Remaining channels before plugin: {0}", filteredChannels.Count());
             filteredChannels = combined.GetChannelsFilter(user, filteredChannels);
             log.Debug("Remaining channels: {0}", filteredChannels.Count());
