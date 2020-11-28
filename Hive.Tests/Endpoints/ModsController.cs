@@ -6,10 +6,6 @@ using Hive.Plugins;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
@@ -21,8 +17,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
@@ -451,9 +445,11 @@ namespace Hive.Tests.Endpoints
                     case "hive":
                         gotten = new Rule(nameString, "next(false)");
                         return true;
+
                     case "hive.mod":
                         gotten = new Rule(nameString, permissionRule);
                         return true;
+
                     default:
                         gotten = null;
                         return false;
