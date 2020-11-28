@@ -12,6 +12,7 @@ using NodaTime;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -132,16 +133,10 @@ namespace Hive.Tests.Endpoints
 
         private Controllers.ChannelsController CreateController(string permissionRule, IChannelsControllerPlugin plugin)
         {
-            var ruleProvider = DIHelper.CreateRuleProvider();
-            var hiveRule = new Rule("hive", "next(false)");
-            var r = new Rule("hive.channel", permissionRule);
-            ruleProvider.Setup(m => m.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
-            ruleProvider.Setup(m => m.TryGetRule(r.Name, out r)).Returns(true);
-
             var services = DIHelper.ConfigureServices(
                 Options,
                 helper,
-                ruleProvider.Object,
+                new ChannelsControllerRuleProvider(permissionRule),
                 new List<(string, Delegate)>
                 {
                     ("isNull", new Func<object?, bool>(o => o is null))
@@ -153,6 +148,39 @@ namespace Hive.Tests.Endpoints
             services.AddScoped<Controllers.ChannelsController>();
 
             return services.BuildServiceProvider().GetRequiredService<Controllers.ChannelsController>();
+        }
+
+        private class ChannelsControllerRuleProvider : IRuleProvider
+        {
+            private readonly string permissionRule;
+
+            public ChannelsControllerRuleProvider(string permissionRule)
+            {
+                this.permissionRule = permissionRule;
+            }
+
+            public bool HasRuleChangedSince(StringView name, Instant time) => true;
+
+            public bool HasRuleChangedSince(Rule rule, Instant time) => true;
+
+            public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
+            {
+                string nameString = name.ToString();
+                switch (nameString)
+                {
+                    case "hive":
+                        gotten = new Rule(nameString, "next(false)");
+                        return true;
+
+                    case "hive.channel":
+                        gotten = new Rule(nameString, permissionRule);
+                        return true;
+
+                    default:
+                        gotten = null;
+                        return false;
+                }
+            }
         }
     }
 }
