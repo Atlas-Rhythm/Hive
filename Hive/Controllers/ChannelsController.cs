@@ -51,7 +51,7 @@ namespace Hive.Controllers
         private readonly HiveContext context;
         private readonly IAggregate<IChannelsControllerPlugin> plugin;
         private readonly IProxyAuthenticationService authService;
-        private PermissionActionParseState channelsParseState;
+        [ThreadStatic] private static PermissionActionParseState channelsParseState;
 
         public ChannelsController([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IChannelsControllerPlugin> plugin, IProxyAuthenticationService authService)
         {
@@ -93,7 +93,7 @@ namespace Hive.Controllers
             // Filter channels based off of user-level permission
             // Permission for a given channel is entirely plugin-based, channels in Hive are defaultly entirely public.
             // For a mix of private/public channels, a plugin that maintains a user-level list of read/write channels is probably ideal.
-            var channels = context.Channels.ToList();
+            var channels = await context.Channels.AsNoTracking().ToListAsync().ConfigureAwait(false);
             log.Debug("Filtering channels from {0} channels...", channels.Count);
             // First, we filter over if the given channel is accessible to the given user.
             // This allows for much more specific permissions, although chances are that roles will be used (and thus a plugin) instead.
