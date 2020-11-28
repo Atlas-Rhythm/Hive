@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Hive.Models
 {
     // User would ideally come from the auth server, and be a thin proxy to the appropriate RPC calls
-    public class User : IIdentity
+    public class User
     {
         // TODO: this should be from the authentication client library
 
@@ -27,14 +27,5 @@ namespace Hive.Models
         public string Username { get; set; } = null!;
 
         public JsonElement AdditionalData { get; set; }
-
-        [JsonIgnore]
-        public string? AuthenticationType { get; set; }
-
-        [JsonIgnore]
-        public bool IsAuthenticated { get; set; }
-
-        [JsonIgnore]
-        public string? Name => Username;
     }
 }
