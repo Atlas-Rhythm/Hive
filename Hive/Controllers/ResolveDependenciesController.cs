@@ -91,12 +91,12 @@ namespace Hive.Controllers
             // We iterate through each mod identifier, then attempt to grab mods that match them.
             // REVIEW: Ways to optimize?
             var mods = new List<Mod>() { };
+            var query = context.Mods.AsNoTracking();
             foreach (var identifier in identifiers)
             {
                 var targetVersion = new Version(identifier.Version);
 
-                var mod = await context.Mods
-                    .AsNoTracking()
+                var mod = await query
                     .FirstOrDefaultAsync(m => m.ReadableID == identifier.ID && m.Version == targetVersion)
                     .ConfigureAwait(false);
 
@@ -126,17 +126,14 @@ namespace Hive.Controllers
             {
                 foreach (var e in exceptionAggregate.InnerExceptions)
                 {
-                    var isDependencyException = await HandleDependencyException(e, result).ConfigureAwait(false);
+                    var isDependencyException = await HandleDependencyException(e, result, query).ConfigureAwait(false);
 
-                    if (!isDependencyException)
-                    {
-                        throw;
-                    }
+                    if (!isDependencyException) throw;
                 }
             }
             catch (Exception e)
             {
-                var isDependencyException = await HandleDependencyException(e, result).ConfigureAwait(false);
+                var isDependencyException = await HandleDependencyException(e, result, query).ConfigureAwait(false);
 
                 if (!isDependencyException) throw;
             }
@@ -153,7 +150,7 @@ namespace Hive.Controllers
 
         // Helper function that handles certain dependency resolution exceptions.
         // Returns false if Hive should re-throw the exception
-        private async Task<bool> HandleDependencyException(Exception e, DependencyResolutionResult result)
+        private static async Task<bool> HandleDependencyException(Exception e, DependencyResolutionResult result, IQueryable<Mod> query)
         {
             if (e is DependencyRangeInvalidException<VersionRange> depRangeInvalid)
             {
@@ -165,8 +162,7 @@ namespace Hive.Controllers
                 var reference = versionNotFound.ModReference;
 
                 // I'm pretty sure we need to check if a mod even exists with this ID to tell if its a version mismatch, or a missing mod
-                var mod = await context.Mods
-                    .AsNoTracking()
+                var mod = await query
                     .FirstOrDefaultAsync(m => m.ReadableID == reference.ModID)
                     .ConfigureAwait(false);
 
