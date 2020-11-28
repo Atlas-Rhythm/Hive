@@ -89,9 +89,9 @@ namespace Hive.Controllers
             log.Debug("Finding mods from parsed identifiers...");
 
             // We iterate through each mod identifier, then attempt to grab mods that match them.
-            // REVIEW: Ways to optimize?
             var mods = new List<Mod>() { };
             var query = context.Mods.AsNoTracking();
+
             foreach (var identifier in identifiers)
             {
                 var targetVersion = new Version(identifier.Version);
@@ -109,12 +109,10 @@ namespace Hive.Controllers
             }
 
             var dependencyValueAccessor = new HiveValueAccessor(context);
-
             var resolvedMods = Enumerable.Empty<Mod>();
+            var result = new DependencyResolutionResult();
 
             log.Debug("Resolving dependencies...");
-
-            var result = new DependencyResolutionResult();
 
             try
             {
@@ -180,7 +178,6 @@ namespace Hive.Controllers
             return false;
         }
 
-        // REVIEW: Perhaps move this to Hive.Models, however I'm not sure whoever else will need this.
         private class HiveValueAccessor : IValueAccessor<Mod, ModReference, Version, VersionRange>
         {
             private readonly HiveContext context;
@@ -239,15 +236,5 @@ namespace Hive.Controllers
                 return mods.AsEnumerable().Where(m => m.ReadableID == @ref.ModID && @ref.Versions.Matches(m.Version));
             }
         }
-    }
-
-    // REVIEW: Perhaps move this to Hive.Models, however I'm not sure whoever else will need this.
-    public class DependencyResolutionResult
-    {
-        public string Message { get; set; } = null!;
-        public List<Mod> AdditionalMods { get; } = new List<Mod>();
-        public List<ModReference> MissingMods { get; } = new List<ModReference>();
-        public List<ModReference> ConflictingMods { get; } = new List<ModReference>();
-        public List<ModReference> VersionMismatches { get; } = new List<ModReference>();
     }
 }
