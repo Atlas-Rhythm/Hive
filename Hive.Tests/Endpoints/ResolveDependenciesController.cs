@@ -206,6 +206,8 @@ namespace Hive.Tests.Endpoints
             Assert.Equal(result!.StatusCode, StatusCodes.Status424FailedDependency); // We should be given 424 error
             var dependencyResult = result.Value as DependencyResolutionResult;
             Assert.NotEmpty(dependencyResult!.VersionMismatches); // Make sure we have a version mismatch.
+            var mod = dependencyResult!.VersionMismatches.First();
+            Assert.Equal("BSIPA", mod.ModID); // Ensure that the mismatched mod is BSIPA; we ask for 2.0.0 when only 1.0.0 exists.
         }
 
         [Fact]
@@ -236,6 +238,8 @@ namespace Hive.Tests.Endpoints
             Assert.Equal(result!.StatusCode, StatusCodes.Status424FailedDependency); // We should be given 424 error
             var dependencyResult = result.Value as DependencyResolutionResult;
             Assert.NotEmpty(dependencyResult!.ConflictingMods); // Make sure we have a conflicting mod.
+            var mod = dependencyResult!.ConflictingMods.First();
+            Assert.Equal("BS_Utils", mod.ModID); // Ensure that the conflicting mod is BS_Utils; BS+ conflicts with it while SongCore depends on it
         }
 
         [Fact]
@@ -261,6 +265,8 @@ namespace Hive.Tests.Endpoints
             Assert.Equal(result!.StatusCode, StatusCodes.Status424FailedDependency); // We should be given 424 error
             var dependencyResult = result.Value as DependencyResolutionResult;
             Assert.NotEmpty(dependencyResult!.MissingMods); // Make sure that DNEE is not found.
+            var mod = dependencyResult!.MissingMods.First();
+            Assert.Equal("DNEE", mod.ModID); // Ensure that DNEE is not found, it does not exist in our list of default mods.
         }
 
         private Controllers.ResolveDependenciesController CreateController(string permissionRule, IEnumerable<IResolveDependenciesPlugin>? plugins = null)
