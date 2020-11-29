@@ -16,8 +16,8 @@ namespace Hive.Graphing
         {
             // Map Every Field in the Types folder
             // Mainly for development purposes so we dont have to re-add a new type every time one is created.
-            IEnumerable<Type> types = Assembly.GetExecutingAssembly().GetTypes()
-                .Where(type => type.Namespace == gqlTypesNamespace && type.IsSubclassOf(typeof(GraphType));
+            var types = Assembly.GetExecutingAssembly().GetTypes()
+                .Where(type => type.Namespace == gqlTypesNamespace && type.IsSubclassOf(typeof(GraphType)));
 
             foreach (var graphType in types)
             {
