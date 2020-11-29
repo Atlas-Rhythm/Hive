@@ -41,7 +41,7 @@ namespace Hive.Tests.Endpoints
                 new ModReference("BSIPA", new VersionRange("^1.0.0"))
             }),
             GetPlaceholderMod("BSML", new List<ModReference>()
-            { 
+            {
                 new ModReference("BSIPA", new VersionRange("^1.0.0")),
                 new ModReference("BS_Utils", new VersionRange("^1.0.0"))
             }),
@@ -165,7 +165,7 @@ namespace Hive.Tests.Endpoints
         public async Task ResolveDependenciesNonexistentMod()
         {
             var controller = CreateController("next(true)");
-            
+
             var input = new ModIdentifier[]
             {
                 // Wait a minute. This mod doesn't exist!
@@ -177,7 +177,6 @@ namespace Hive.Tests.Endpoints
             };
 
             var res = await controller.ResolveDependencies(input);
-
 
             Assert.NotNull(res.Result); // Make sure we got a request back
             Assert.IsType<NotFoundObjectResult>(res.Result); // This endpoint must fail because the mod could not be found
@@ -300,7 +299,7 @@ namespace Hive.Tests.Endpoints
                 Version = new Versioning.Version(1, 0, 0),
                 UploadedAt = new Instant(),
                 EditedAt = null,
-                Uploader = new User() { DumbId = new Random().Next(0, 69).ToString(), Username = "Billy bob joe" },
+                Uploader = new User() { Username = "Billy bob joe" },
                 Channel = DefaultChannel,
                 DownloadLink = new Uri("https://www.github.com/Atlas-Rhythm/Hive"),
                 AdditionalData = DIHelper.EmptyAdditionalData,
