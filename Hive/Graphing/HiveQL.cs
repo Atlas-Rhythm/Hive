@@ -10,7 +10,7 @@ namespace Hive.Graphing
 {
     public static class HiveQL
     {
-        private const string gqlTypesNamespace = "Hive.GraphQL.Types";
+        private const string gqlTypesNamespace = nameof(Types);
 
         public static void AddHiveQLTypes(this IServiceCollection services)
         {
