@@ -404,7 +404,7 @@ namespace Hive.Tests.Endpoints
                 Version = version ?? new Versioning.Version(1, 0, 0),
                 UploadedAt = new Instant(),
                 EditedAt = null,
-                Uploader = new User() { DumbId = new Random().Next(0, 69).ToString(), Username = "Billy bob joe" },
+                Uploader = new User() { Username = "Billy bob joe" },
                 Channel = defaultChannels.First(c => c.Name == channel),
                 DownloadLink = new Uri("https://www.github.com/Atlas-Rhythm/Hive"),
                 AdditionalData = DIHelper.EmptyAdditionalData
@@ -451,9 +451,11 @@ namespace Hive.Tests.Endpoints
                     case "hive":
                         gotten = new Rule(nameString, "next(false)");
                         return true;
+
                     case "hive.mod":
                         gotten = new Rule(nameString, permissionRule);
                         return true;
+
                     default:
                         gotten = null;
                         return false;

@@ -97,7 +97,7 @@ namespace Hive
                     ReadableID = "test-mod",
                     Version = new Version("0.1.0"),
                     UploadedAt = SystemClock.Instance.GetCurrentInstant(),
-                    Uploader = new User { DumbId = "me" },
+                    Uploader = new User { Username = "me" },
                     Channel = channel,
                     AdditionalData = emptyObject,
                     DownloadLink = new Uri("file:///"),

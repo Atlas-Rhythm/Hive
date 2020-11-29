@@ -19,6 +19,10 @@ namespace Hive.Services
     public sealed class VaulthAuthenticationService : IProxyAuthenticationService, IDisposable
     {
         private const string vaulthGetUserApi = "user";
+
+        // TODO: Bother raft for this correct value + query for username
+        private const string vaulthGetGenericUserApi = "user";
+
         private readonly Uri vaulthUri;
         private readonly HttpClient client;
         private readonly ILogger logger;
@@ -46,6 +50,44 @@ namespace Hive.Services
             // If the token matches, we should be good to say that the token is valid and that the user is logged in
             // TODO: Implement
             return Task.FromResult(false);
+        }
+
+        public async Task<User?> GetUser(string userId, bool throwOnError = false)
+        {
+            if (string.IsNullOrEmpty(userId))
+                if (throwOnError)
+                    throw new ArgumentNullException(nameof(userId));
+                else
+                    return null;
+            try
+            {
+                // TODO: Add username as query parameter, or body, dependening on what vaulth decides.
+                return await client.GetFromJsonAsync<User?>(vaulthGetGenericUserApi, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                }).ConfigureAwait(false);
+            }
+            catch (HttpRequestException e)
+            {
+                logger.Error(e, "HTTP Exception!");
+                if (throwOnError)
+                    throw;
+                return null;
+            }
+            catch (JsonException e)
+            {
+                logger.Error(e, "JSON Exception!");
+                if (throwOnError)
+                    throw;
+                return null;
+            }
+            catch (TaskCanceledException e)
+            {
+                logger.Error(e, "Task Cancelled Exception!");
+                if (throwOnError)
+                    throw;
+                return null;
+            }
         }
 
         public async Task<User?> GetUser(HttpRequest request, bool throwOnError = false)
