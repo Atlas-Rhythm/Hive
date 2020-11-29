@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
-using GraphQL.Types;
-using GraphQL.Server;
 using System.Reflection;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
+using GraphQL.Types;
+using GraphQL.Server;
 
 namespace Hive.Graphing
 {
@@ -16,11 +16,9 @@ namespace Hive.Graphing
         {
             // Map Every Field in the Types folder
             // Mainly for development purposes so we dont have to re-add a new type every time one is created.
-            IEnumerable<Type> types = Assembly.GetExecutingAssembly().GetTypes().Where(type =>
-            {
-                bool correctNamespace = type.Namespace == gqlTypesNamespace;
-                return correctNamespace && type.IsSubclassOf(typeof(GraphType));
-            });
+            IEnumerable<Type> types = Assembly.GetExecutingAssembly().GetTypes()
+                .Where(type => type.Namespace == gqlTypesNamespace && type.IsSubclassOf(typeof(GraphType));
+
             foreach (var graphType in types)
             {
                 services.AddSingleton(graphType);
