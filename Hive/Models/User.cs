@@ -4,12 +4,13 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Principal;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Hive.Models
 {
     // User would ideally come from the auth server, and be a thin proxy to the appropriate RPC calls
-    public class User : IIdentity
+    public class User
     {
         // TODO: this should be from the authentication client library
 
@@ -23,15 +24,8 @@ namespace Hive.Models
         // - an extra data object like Mod.AdditionalData
 
         [Key]
-        public string DumbId { get; set; } = null!;
+        public string Username { get; set; } = null!;
 
-        public string? Username { get; set; }
         public JsonElement AdditionalData { get; set; }
-
-        public string? AuthenticationType { get; set; }
-
-        public bool IsAuthenticated { get; set; }
-
-        public string? Name => Username;
     }
 }

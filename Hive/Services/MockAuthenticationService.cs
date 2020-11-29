@@ -37,6 +37,18 @@ namespace Hive.Services
             return Task.FromResult<User?>(null);
         }
 
+        public Task<User?> GetUser(string userId, bool throwOnError = false)
+        {
+            if (string.IsNullOrEmpty(userId))
+                if (throwOnError)
+                    throw new ArgumentNullException(nameof(userId));
+                else
+                    return Task.FromResult<User?>(null);
+            if (Users.TryGetValue(userId, out User? outp))
+                return Task.FromResult(outp);
+            return Task.FromResult<User?>(null);
+        }
+
         public Task<bool> IsValid(HttpRequest request) => throw new NotImplementedException();
     }
 }

@@ -134,6 +134,8 @@ namespace Hive.Models
             Versions = versions;
         }
 
+        public override string ToString() => $"{ModID}@{Versions}";
+
         public override bool Equals(object? obj) => obj != null && obj is ModReference r && Equals(r);
 
         public bool Equals(ModReference other) => other.ModID == ModID && other.Versions == Versions;

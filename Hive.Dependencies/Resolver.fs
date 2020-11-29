@@ -26,12 +26,16 @@ type private ResolveImpl<'Mod, 'ModRef, 'Version, 'VerRange>(access: IValueAcces
     member private this.collectReqs mods =
         let access = access
         let deps = this.collectDeps mods
-        let conflicts = this.collectConflicts mods
+        let conflicts = (this.collectConflicts mods
+            |> Map.filter (fun id _ -> 
+                (||) (deps |> Map.containsKey id)
+                     (mods |> Seq.map (fun m -> access.ID m) |> Seq.contains id)))
+
         Helpers.mapMerge (fun dep conflict -> Helpers.unwrapMap2 access.And dep (ValueOption.map access.Not conflict)) deps conflicts
         |> Helpers.mapKeyValues
         |> Seq.map (fun struct(id, range) ->
             match range with
-            | ValueSome(r) -> access.CreateRef id r
+            | ValueSome r -> access.CreateRef id r
             | _ -> raise (DependencyRangeInvalidException id))
 
     /// The primary recursive function that resolves dependencies.
