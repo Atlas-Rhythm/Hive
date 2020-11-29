@@ -23,6 +23,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NodaTime;
 using Serilog;
 
 namespace Hive
@@ -40,6 +41,7 @@ namespace Hive
         public void ConfigureServices(IServiceCollection services)
         {
             services
+                .AddSingleton<IClock>(SystemClock.Instance)
                 .AddTransient<IRuleProvider, ConfigRuleProvider>()
                 .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
                 .AddSingleton(sp =>

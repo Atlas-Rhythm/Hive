@@ -8,6 +8,7 @@ using Hive.Utilities;
 using Hive.Versioning;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
@@ -128,6 +129,7 @@ namespace Hive.Tests.Endpoints
                 .AddScoped<Controllers.UploadController>()
                 .AddSingleton<ICdnProvider, MemoryTestCdn>()
                 .AddSingleton<SymmetricAlgorithm>(sp => Rijndael.Create())
+                .AddSingleton<IConfiguration>(new ConfigurationBuilder().Build())
                 .AddAggregates();
 
             return services.BuildServiceProvider().GetRequiredService<Controllers.UploadController>();

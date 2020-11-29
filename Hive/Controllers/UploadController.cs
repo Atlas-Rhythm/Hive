@@ -7,6 +7,7 @@ using MathExpr.Syntax;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
 using Serilog;
@@ -86,6 +87,8 @@ namespace Hive.Controllers
         private readonly ICdnProvider cdn;
         private readonly SymmetricAlgorithm tokenAlgorithm;
         private readonly HiveContext database;
+        private readonly IClock nodaClock;
+        private readonly long maxFileSize;
 
         public UploadController(ILogger log,
             PermissionsManager<PermissionContext> perms,
@@ -93,10 +96,14 @@ namespace Hive.Controllers
             IProxyAuthenticationService auth,
             ICdnProvider cdn,
             SymmetricAlgorithm tokenAlgo,
-            HiveContext db)
+            HiveContext db,
+            IClock clock,
+            IConfiguration config)
         {
             if (plugins is null)
                 throw new ArgumentNullException(nameof(plugins));
+            if (config is null)
+                throw new ArgumentNullException(nameof(config));
 
             logger = log;
             permissions = perms;
@@ -105,6 +112,9 @@ namespace Hive.Controllers
             authService = auth;
             tokenAlgorithm = tokenAlgo;
             database = db;
+            nodaClock = clock;
+            maxFileSize = config.GetSection("Uploads:MaxFileSize").Get<long>();
+            if (maxFileSize == 0) maxFileSize = 32 * 1024 * 1024;
         }
 
         public enum ResultType
@@ -137,6 +147,13 @@ namespace Hive.Controllers
                 {
                     Type = ResultType.Error,
                     ErrorContext = "No file was given"
+                };
+
+            internal static UploadResult ErrTooBig()
+                => new UploadResult
+                {
+                    Type = ResultType.Error,
+                    ErrorContext = "Uploaded file was too large"
                 };
 
             internal static UploadResult ErrValidationFailed(object? context)
@@ -219,19 +236,20 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<UploadResult>> Upload(IFormFile file)
         {
-            if (file is null)
-                return BadRequest(UploadResult.ErrNoFile()); // TODO: add error information
-
             var user = await authService.GetUser(Request).ConfigureAwait(false);
 
             if (user is null)
                 return Unauthorized();
 
+            if (file is null)
+                return BadRequest(UploadResult.ErrNoFile());
+
+            if (file.Length > maxFileSize)
+                return BadRequest(UploadResult.ErrTooBig());
+
             // check if the user is allowed to upload at all
             if (!permissions.CanDo(BaseUploadAction, new PermissionContext { User = user }, ref BaseUploadParseState))
                 return Forbid();
-
-            // TODO: check that the file is not too large
 
             logger.Information("Began mod upload by user {User}", user.Username);
 
@@ -246,7 +264,7 @@ namespace Hive.Controllers
             // TODO: figure out what the default channel should be
             var modData = new Mod
             {
-                UploadedAt = SystemClock.Instance.GetCurrentInstant(), // TODO: DI clock instance?
+                UploadedAt = nodaClock.GetCurrentInstant(),
                 Uploader = user,
                 AdditionalData = JsonDocument.Parse("{}").RootElement.Clone()
             };
@@ -273,8 +291,7 @@ namespace Hive.Controllers
 
             // we've gotten the OK based on all of our other checks, lets upload the file to the actual CDN
             memStream.Seek(0, SeekOrigin.Begin);
-            var cdnObject = await cdn.UploadObject(file.FileName, memStream, SystemClock.Instance.GetCurrentInstant() + Duration.FromHours(1)).ConfigureAwait(false);
-            // TODO: ^^^ the above should probably use a DI'd clock instance
+            var cdnObject = await cdn.UploadObject(file.FileName, memStream, nodaClock.GetCurrentInstant() + Duration.FromHours(1)).ConfigureAwait(false);
 
             var uploadResult = UploadResult.Confirm(tokenAlgorithm, modData, cdnObject);
             logger.Information("First stage of mod upload complete (cookie {ID})", uploadResult.ActionCookie!.Substring(0, 16));
@@ -301,8 +318,6 @@ namespace Hive.Controllers
             if (user is null)
                 return Unauthorized();
 
-            // TODO: validate that finalMetadata has all needed metadata specified
-
             if (finalMetadata.ID is null
              || finalMetadata.Version is null
              || finalMetadata.ChannelName is null
@@ -317,9 +332,6 @@ namespace Hive.Controllers
 
             // decrypt the token
             var payload = await EncryptedUploadPayload.ExtractFromCookie(tokenAlgorithm, cookie).ConfigureAwait(false);
-
-            // TODO: ensure that finalMetadata matches what of payload.ModData is present
-            //       the parts that we care about being consistent are pulled from the cookie anyway
 
             var cdnObject = payload.CdnObject;
 
