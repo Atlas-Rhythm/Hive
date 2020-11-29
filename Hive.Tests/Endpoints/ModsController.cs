@@ -285,7 +285,7 @@ namespace Hive.Tests.Endpoints
 
             controller.ControllerContext.HttpContext = CreateMockRequest(stringStream);
 
-            var res = await controller.MoveModToChannel("Public");
+            var res = await controller.MoveModToChannel("Public", identifier);
 
             Assert.NotNull(res); // Result must not be null.
             Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed.
@@ -319,7 +319,7 @@ namespace Hive.Tests.Endpoints
 
             controller.ControllerContext.HttpContext = CreateMockRequest(stringStream);
 
-            var res = await controller.MoveModToChannel("Public");
+            var res = await controller.MoveModToChannel("Public", identifier);
 
             Assert.NotNull(res); // Result must not be null.
             Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must fail.
@@ -342,7 +342,7 @@ namespace Hive.Tests.Endpoints
             controller.ControllerContext.HttpContext = CreateMockRequest(stringStream);
 
             // Let's try moving this mod to a funny channel that doesn't exist
-            var res = await controller.MoveModToChannel("sc2ad check your github notifications");
+            var res = await controller.MoveModToChannel("sc2ad check your github notifications", identifier);
 
             Assert.NotNull(res); // Result must not be null.
             Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must fail.
@@ -364,7 +364,7 @@ namespace Hive.Tests.Endpoints
 
             controller.ControllerContext.HttpContext = CreateMockRequest(stringStream);
 
-            var res = await controller.MoveModToChannel("Public");
+            var res = await controller.MoveModToChannel("Public", identifier);
 
             Assert.NotNull(res); // Result must not be null.
             Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
@@ -376,7 +376,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", defaultPlugins);
 
             // Try to request without specifying a user
-            var res = await controller.MoveModToChannel("Public");
+            var res = await controller.MoveModToChannel("Public", null!);
 
             Assert.NotNull(res); // Result must not be null.
             Assert.IsType<UnauthorizedResult>(res.Result); // The above endpoint must fail since a user is not logged in/
