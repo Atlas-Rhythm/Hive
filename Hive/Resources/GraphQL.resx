@@ -231,18 +231,6 @@
   <data name="User" xml:space="preserve">
     <value>Represents an individual account on this Hive instance</value>
   </data>
-  <data name="User_AuthenticationType" xml:space="preserve">
-    <value>The authentication type of the user.</value>
-  </data>
-  <data name="User_ID" xml:space="preserve">
-    <value>The ID of the user.</value>
-  </data>
-  <data name="User_IsAuthenticated" xml:space="preserve">
-    <value>Whether or not the user is authenticated.</value>
-  </data>
-  <data name="User_Name" xml:space="preserve">
-    <value>The name of the user.</value>
-  </data>
   <data name="User_Username" xml:space="preserve">
     <value>The username of the user.</value>
   </data>
