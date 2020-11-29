@@ -41,6 +41,8 @@ namespace Hive
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We want to catch all exceptions and handle them as internal server errors.")]
         public async Task Invoke(HttpContext httpContext)
         {
+            if (httpContext is null)
+                throw new ArgumentNullException(nameof(httpContext));
             string? message = null;
             try
             {

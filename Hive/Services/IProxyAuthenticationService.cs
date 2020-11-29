@@ -15,5 +15,7 @@ namespace Hive.Services
         public Task<bool> IsValid(HttpRequest request);
 
         public Task<User?> GetUser(HttpRequest request, bool throwOnError = false);
+
+        public Task<User?> GetUser(string userId, bool throwOnError = false);
     }
 }

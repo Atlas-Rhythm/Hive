@@ -47,8 +47,10 @@ namespace Hive
                 .AddSingleton(sp =>
                     new PermissionsManager<PermissionContext>(sp.GetRequiredService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."))
                 .AddSingleton<IChannelsControllerPlugin, HiveChannelsControllerPlugin>()
-                .AddSingleton<IUploadPlugin, HiveDefaultUploadPlugin>()
                 .AddSingleton<IGameVersionsPlugin, HiveGameVersionsControllerPlugin>()
+                .AddSingleton<IModsPlugin, HiveModsControllerPlugin>()
+                .AddSingleton<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>()
+                .AddSingleton<IUploadPlugin, HiveDefaultUploadPlugin>()
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
                 .AddSingleton<IProxyAuthenticationService, MockAuthenticationService>();
 
@@ -62,11 +64,6 @@ namespace Hive
             services.AddAggregates();
 
             services.AddControllers();
-            services.AddAuthentication(a =>
-            {
-                a.AddScheme<MockAuthenticationHandler>("Bearer", "MockAuth");
-                a.DefaultScheme = "Bearer";
-            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
