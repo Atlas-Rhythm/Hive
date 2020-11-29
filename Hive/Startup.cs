@@ -43,7 +43,9 @@ namespace Hive
                 .AddSingleton(sp =>
                     new PermissionsManager<PermissionContext>(sp.GetRequiredService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."))
                 .AddSingleton<IChannelsControllerPlugin>(sp => new HiveChannelsControllerPlugin())
-                .AddSingleton<IGameVersionsPlugin>(Span => new HiveGameVersionsControllerPlugin())
+                .AddSingleton<IGameVersionsPlugin>(sp => new HiveGameVersionsControllerPlugin())
+                .AddSingleton<IModsPlugin>(sp => new HiveModsControllerPlugin())
+                .AddSingleton<IResolveDependenciesPlugin>(sp => new HiveResolveDependenciesControllerPlugin())
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
                 .AddSingleton<IProxyAuthenticationService>(sp => new MockAuthenticationService());
 
