@@ -56,7 +56,7 @@ namespace Hive.Models.Serialized
                 Version = toSerialize.Version,
                 UploadedAt = toSerialize.UploadedAt,
                 EditedAt = toSerialize.EditedAt,
-                UploaderUsername = toSerialize.Uploader?.Name!,
+                UploaderUsername = toSerialize.Uploader?.Username!,
                 ChannelName = toSerialize.Channel?.Name!,
                 DownloadLink = toSerialize.DownloadLink?.ToString()!,
                 LocalizedModInfo = localizedModInfo is not null ? SerializedLocalizedModInfo.Serialize(localizedModInfo) : null,

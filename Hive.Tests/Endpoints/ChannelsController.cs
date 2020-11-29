@@ -24,7 +24,7 @@ namespace Hive.Tests.Endpoints
     {
         private readonly ITestOutputHelper helper;
 
-        private static IEnumerable<Channel> defaultChannels = new List<Channel>
+        private static readonly IEnumerable<Channel> defaultChannels = new List<Channel>
         {
             new Channel { Name = "Public", AdditionalData = DIHelper.EmptyAdditionalData },
             new Channel { Name = "Beta", AdditionalData =  DIHelper.EmptyAdditionalData }
