@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Hive.Controllers;
 using Hive.Converters;
+using Hive.Graphing;
 using Hive.Models;
 using Hive.Permissions;
 using Hive.Plugins;
@@ -55,6 +56,9 @@ namespace Hive
 
             services.AddAggregates();
 
+            services.AddHiveQLTypes();
+            services.AddHiveGraphQL();
+
             services.AddControllers();
         }
 
@@ -79,8 +83,8 @@ namespace Hive
 
             app.UseAuthorization();
 
-            // See: https://developer.okta.com/blog/2019/04/16/graphql-api-with-aspnetcore
-            // For adding GraphQL support in a reasonable way
+            app.UseGraphQL<HiveSchema>("/graphql");
+            app.UseGraphQLAltair();
 
             app.UseEndpoints(endpoints =>
             {
