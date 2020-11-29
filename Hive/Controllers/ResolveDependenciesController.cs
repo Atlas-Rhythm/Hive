@@ -150,9 +150,9 @@ namespace Hive.Controllers
         // Returns false if Hive should re-throw the exception
         private static async Task<bool> HandleDependencyException(Exception e, DependencyResolutionResult result, IQueryable<Mod> query)
         {
-            if (e is DependencyRangeInvalidException<VersionRange> depRangeInvalid)
+            if (e is DependencyRangeInvalidException depRangeInvalid)
             {
-                result.ConflictingMods.Add(new ModReference(depRangeInvalid.ID, depRangeInvalid.Range));
+                result.ConflictingMods.Add(depRangeInvalid.ID);
                 return true;
             }
             else if (e is VersionNotFoundException<ModReference> versionNotFound)
@@ -202,9 +202,7 @@ namespace Hive.Controllers
             public VersionRange Range(ModReference @ref) => @ref.Versions;
 
             public ModReference CreateRef(string id, VersionRange range) => new ModReference(id, range);
-
-            public bool IsValidVersionRange(VersionRange range) => range != null && !string.IsNullOrEmpty(range.ToString());
-
+            
             // Comparisons
             public bool Matches(VersionRange range, Version version) => range.Matches(version);
 
@@ -213,18 +211,19 @@ namespace Hive.Controllers
             // Combiners
             public VersionRange Either(VersionRange a, VersionRange b) => a.Disjunction(b);
 
-            public FSharpValueOption<VersionRange> And(VersionRange a, VersionRange b) => a.Conjunction(b);
+            public FSharpValueOption<VersionRange> And(VersionRange a, VersionRange b)
+            {
+                var res = a & b;
+                if (res == VersionRange.Nothing)
+                    return FSharpValueOption<VersionRange>.None;
+                return FSharpValueOption<VersionRange>.Some(res);
+            }
 
             public VersionRange Not(VersionRange a) => a.Invert();
 
             // External
             public async Task<IEnumerable<Mod>> ModsMatching(ModReference @ref)
             {
-                if (context is null)
-                {
-                    throw new ArgumentException($"Context is null.");
-                }
-
                 var mods = context.Mods.AsNoTracking();
 
                 // I'm not sure how necessary this is, but it prevents Visual Studio yelling at me because:

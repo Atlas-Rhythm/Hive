@@ -21,7 +21,6 @@ type IValueAccessor<'Mod, 'ModRef, 'Version, 'VerRange> =
         abstract member ID : ref:'ModRef -> string;
         abstract member Range : ref:'ModRef -> 'VerRange;
         abstract member CreateRef : id:string -> range:'VerRange -> 'ModRef
-        abstract member IsValidVersionRange : ref:'VerRange -> bool;
 
         // Comparisons
         abstract member Matches : range:'VerRange -> version:'Version -> bool;

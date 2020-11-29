@@ -239,7 +239,7 @@ namespace Hive.Tests.Endpoints
             var dependencyResult = result.Value as DependencyResolutionResult;
             Assert.NotEmpty(dependencyResult!.ConflictingMods); // Make sure we have a conflicting mod.
             var mod = dependencyResult!.ConflictingMods.First();
-            Assert.Equal("BS_Utils", mod.ModID); // Ensure that the conflicting mod is BS_Utils; BS+ conflicts with it while SongCore depends on it
+            Assert.Equal("BS_Utils", mod); // Ensure that the conflicting mod is BS_Utils; BS+ conflicts with it while SongCore depends on it
         }
 
         [Fact]
