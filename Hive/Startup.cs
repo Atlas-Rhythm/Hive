@@ -56,6 +56,7 @@ namespace Hive
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
 
             services.AddScoped<ChannelService>();
+            services.AddScoped<GameVersionService>();
 
             services.AddAggregates();
 
