@@ -24,7 +24,7 @@ namespace Hive.Services.Common
         public GameVersionService([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IGameVersionsPlugin> plugin)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
-            log = logger.ForContext<GameVersionsController>();
+            log = logger.ForContext<GameVersionService>();
             context = ctx;
             permissions = perms;
             this.plugin = plugin;
