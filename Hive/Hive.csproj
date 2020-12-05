@@ -48,9 +48,5 @@
     <EmbeddedResource Update="Resources\GraphQL.resx" IsResXToGenerate="true" />
     <EmbeddedResource Update="Resources\Resource.resx" IsResXToGenerate="true" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <Folder Include="Services\Common\" />
-  </ItemGroup>
 
 </Project>

@@ -4,6 +4,7 @@ using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
 using Hive.Utilities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,8 +48,9 @@ namespace Hive.Tests.Endpoints
             var res = await controller.GetChannels();
             Assert.NotNull(res);
             // Should forbid based off of a permission failure.
-            Assert.IsType<ForbidResult>(res.Result);
+            Assert.IsType<ObjectResult>(res.Result);
             Assert.NotNull(res.Result);
+            Assert.Equal(StatusCodes.Status403Forbidden, (res.Result as ObjectResult)!.StatusCode);
         }
 
         [Fact]
@@ -63,8 +65,10 @@ namespace Hive.Tests.Endpoints
             var res = await controller.GetChannels();
             Assert.NotNull(res);
             // Should forbid based off of a plugin failure.
-            Assert.IsType<ForbidResult>(res.Result);
             Assert.NotNull(res.Result);
+            Assert.IsType<ObjectResult>(res.Result);
+            var objectRes = res.Result as ObjectResult;
+            Assert.Equal(403, objectRes!.StatusCode);
         }
 
         [Fact]
@@ -150,6 +154,7 @@ namespace Hive.Tests.Endpoints
             services.AddSingleton<IChannelsControllerPlugin>(sp => new HiveChannelsControllerPlugin());
             services.AddSingleton(sp => plugin);
             services.AddAggregates();
+            services.AddScoped<Services.Common.ChannelService>();
             services.AddScoped<Controllers.ChannelsController>();
 
             return services.BuildServiceProvider().GetRequiredService<Controllers.ChannelsController>();

@@ -54,8 +54,11 @@ namespace Hive.Services.Common
             // First, we filter over if the given channel is accessible to the given user.
             // This allows for much more specific permissions, although chances are that roles will be used (and thus a plugin) instead.
             var filteredChannels = channels.Where(c => permissions.CanDo(ActionName, new PermissionContext { Channel = c, User = user }, ref channelsParseState));
+            log.Debug("Remaining channels before plugin: {0}", filteredChannels.Count());
+            filteredChannels = combined.GetChannelsFilter(user, filteredChannels);
+            log.Debug("Remaining channels: {0}", filteredChannels.Count());
 
-            return new Query<IEnumerable<Channel>>(filteredChannels, null, StatusCodes.Status404NotFound);
+            return new Query<IEnumerable<Channel>>(filteredChannels, null, StatusCodes.Status200OK);
         }
     }
 }
