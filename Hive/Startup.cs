@@ -58,6 +58,7 @@ namespace Hive
             services.AddScoped<ModService>();
             services.AddScoped<ChannelService>();
             services.AddScoped<GameVersionService>();
+            services.AddScoped<DependencyResolverService>();
 
             services.AddAggregates();
 
