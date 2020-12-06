@@ -139,7 +139,9 @@ namespace Hive.Tests.Endpoints
             var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
 
             Assert.NotNull(res); // Result must not be null.
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
+            Assert.IsType<ObjectResult>(res.Result);
+            Assert.NotNull(res.Result);
+            Assert.Equal(StatusCodes.Status403Forbidden, (res.Result as ObjectResult)!.StatusCode); ; // The above endpoint must fail due to the permission rule.
         }
 
         [Fact]
@@ -150,7 +152,9 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<NotFoundResult>(res.Result); // The above endpoint must return 404.
+            Assert.IsType<ObjectResult>(res.Result);
+            Assert.NotNull(res.Result);
+            Assert.Equal(StatusCodes.Status404NotFound, (res.Result as ObjectResult)!.StatusCode); // The above endpoint must return 404.
         }
 
         [Fact]
@@ -165,7 +169,9 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must be fail, since Counters+ is in Beta.
+            Assert.IsType<ObjectResult>(res.Result);
+            Assert.NotNull(res.Result);
+            Assert.Equal(StatusCodes.Status403Forbidden, (res.Result as ObjectResult)!.StatusCode); // The above endpoint must be fail, since Counters+ is in Beta.
 
             res = await controller.GetSpecificMod("SongCore"); // Next, we will look for SongCore, which is in Release.
 
@@ -208,7 +214,9 @@ namespace Hive.Tests.Endpoints
             var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
 
             Assert.NotNull(res); // Result must not be null.
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
+            Assert.IsType<ObjectResult>(res.Result);
+            Assert.NotNull(res.Result);
+            Assert.Equal(StatusCodes.Status403Forbidden, (res.Result as ObjectResult)!.StatusCode); // The above endpoint must fail due to the permission rule.
         }
 
         [Fact]
@@ -219,7 +227,9 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<NotFoundResult>(res.Result); // The above endpoint must return 404.
+            Assert.IsType<ObjectResult>(res.Result);
+            Assert.NotNull(res.Result);
+            Assert.Equal(StatusCodes.Status404NotFound, (res.Result as ObjectResult)!.StatusCode); // The above endpoint must return 404.
         }
 
         [Fact]
@@ -234,7 +244,9 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must be fail, since Counters+ is in Beta.
+            Assert.IsType<ObjectResult>(res.Result);
+            Assert.NotNull(res.Result);
+            Assert.Equal(StatusCodes.Status403Forbidden, (res.Result as ObjectResult)!.StatusCode); // The above endpoint must be fail, since Counters+ is in Beta.
 
             res = await controller.GetSpecificMod("BSIPA"); // Next, we will look for SongCore, which is in Release.
 
@@ -260,7 +272,9 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must be fail due to the permission rule.
+            Assert.IsType<ObjectResult>(res.Result);
+            Assert.NotNull(res.Result);
+            Assert.Equal(StatusCodes.Status403Forbidden, (res.Result as ObjectResult)!.StatusCode); // The above endpoint must be fail due to the permission rule.
         }
 
         [Fact]
@@ -322,7 +336,9 @@ namespace Hive.Tests.Endpoints
             var res = await controller.MoveModToChannel("Public", identifier);
 
             Assert.NotNull(res); // Result must not be null.
-            Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must fail.
+            Assert.IsType<ObjectResult>(res.Result);
+            Assert.NotNull(res.Result);
+            Assert.Equal(StatusCodes.Status404NotFound, (res.Result as ObjectResult)!.StatusCode); // The above endpoint must fail.
         }
 
         [Fact]
@@ -345,7 +361,9 @@ namespace Hive.Tests.Endpoints
             var res = await controller.MoveModToChannel("sc2ad check your github notifications", identifier);
 
             Assert.NotNull(res); // Result must not be null.
-            Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must fail.
+            Assert.IsType<ObjectResult>(res.Result);
+            Assert.NotNull(res.Result);
+            Assert.Equal(StatusCodes.Status404NotFound, (res.Result as ObjectResult)!.StatusCode); // The above endpoint must fail.
         }
 
         [Fact]
@@ -367,7 +385,9 @@ namespace Hive.Tests.Endpoints
             var res = await controller.MoveModToChannel("Public", identifier);
 
             Assert.NotNull(res); // Result must not be null.
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
+            Assert.IsType<ObjectResult>(res.Result);
+            Assert.NotNull(res.Result);
+            Assert.Equal(StatusCodes.Status403Forbidden, (res.Result as ObjectResult)!.StatusCode); // The above endpoint must fail due to the permission rule.
         }
 
         [Fact]
@@ -388,6 +408,7 @@ namespace Hive.Tests.Endpoints
 
             services
                 .AddTransient(sp => plugins)
+                .AddScoped<Services.Common.ModService>()
                 .AddScoped<Controllers.ModsController>()
                 .AddAggregates();
 

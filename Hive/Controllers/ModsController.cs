@@ -19,6 +19,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
 using Version = Hive.Versioning.Version;
+using Hive.Services.Common;
 
 namespace Hive.Controllers
 {
@@ -68,26 +69,16 @@ namespace Hive.Controllers
     public class ModsController : ControllerBase
     {
         private readonly Serilog.ILogger log;
-        private readonly PermissionsManager<PermissionContext> permissions;
-        private readonly HiveContext context;
+        private readonly ModService modService;
         private readonly IProxyAuthenticationService proxyAuth;
-        private readonly IAggregate<IModsPlugin> plugin;
 
-        [ThreadStatic] private static PermissionActionParseState getModsParseState;
-        [ThreadStatic] private static PermissionActionParseState moveModsParseState;
-
-        public ModsController([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IModsPlugin> plugin, IProxyAuthenticationService proxyAuth)
+        public ModsController([DisallowNull] Serilog.ILogger logger, ModService modService, IProxyAuthenticationService proxyAuth)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
             log = logger.ForContext<ModsController>();
-            permissions = perms;
-            context = ctx;
+            this.modService = modService;
             this.proxyAuth = proxyAuth;
-            this.plugin = plugin;
         }
-
-        private const string GetModsActionName = "hive.mod";
-        private const string MoveModActionName = "hive.mod.move";
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -98,77 +89,14 @@ namespace Hive.Controllers
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            // iff a given user (or none) is allowed to access any mods. This should almost always be true.
-            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user }, ref getModsParseState))
-                return Forbid();
+            var queryResult = modService.GetAllMods(user, channelIds, gameVersion, filterType);
 
-            // Combine plugins
-            log.Debug("Combining plugins...");
-            var combined = plugin.Instance;
-
-            // Create some objects to filter by
-            // TODO: default to the instance default Channel
-            IEnumerable<Channel>? filteredChannels = null;
-            GameVersion? filteredVersion = null;
-            string filteredType = "LATEST";
-
-            if (channelIds != null && channelIds.Length >= 0)
+            if (queryResult.Value == null)
             {
-                filteredChannels = context.Channels.AsNoTracking().Where(c => channelIds.Contains(c.Name));
-            }
-            if (gameVersion != null)
-            {
-                filteredVersion = context.GameVersions.AsNoTracking().Where(g => g.Name == gameVersion).FirstOrDefault();
-            }
-            if (filterType != null)
-            {
-                filteredType = filterType.ToUpperInvariant(); // To remove case-sensitivity
+                return StatusCode(queryResult.StatusCode, queryResult.Message);
             }
 
-            // Construct our list of serialized mods here.
-            log.Debug("Filtering and serializing mods by existing plugins...");
-
-            // Grab our initial set of mods, filtered by a channel and game version if provided.
-            var mods = CreateModQuery()
-                .AsNoTracking();
-
-            if (filteredChannels != null)
-            {
-                mods = mods.Where(m => filteredChannels.Contains(m.Channel));
-            }
-            if (filteredVersion != null)
-            {
-                mods = mods.Where(m => m.SupportedVersions.Contains(filteredVersion));
-            }
-
-            // Because EF (or PostgreSQL or both) does not like advanced LINQ expressions (like GroupBy), 
-            // we convert to an enumerable and do the calculations on the client.
-            IEnumerable<Mod> filteredMods = mods.AsEnumerable();
-
-            // Filter these mods based on the query param we've retrieved (or default behavior)
-            switch (filteredType)
-            {
-                case "ALL":
-                    break; // We already have all of the mods that should be returned by "ALL", no need to do work.
-                case "RECENT":
-                    filteredMods = filteredMods // With "RECENT", we group each mod by their ID, and grab the most recently uploaded version.
-                        .GroupBy(m => m.ReadableID)
-                        .Select(g => g.OrderByDescending(m => m.UploadedAt).First());
-                    break;
-                default: // This is "LATEST", but should probably be default behavior, just to be safe.
-                    filteredMods = filteredMods // With "LATEST", we group each mod by their ID, and grab the most up-to-date version.
-                        .GroupBy(m => m.ReadableID)
-                        .Select(g => g.OrderByDescending(m => m.Version).First());
-                    break;
-            }
-
-            // Finally, perform a final permissions and plugins filter on each mod, then serialize these to return to the user.
-            // We force into client evaluation here since SQL wouldn't know how the hell to perform a permissions and plugins check.
-            var serialized = filteredMods
-                .Where(m =>
-                    permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState)
-                    && combined.GetSpecificModAdditionalChecks(user, m))
-                .Select(m => SerializedMod.Serialize(m, m.GetLocalizedInfo(GetAcceptLanguageCultures())));
+            var serialized = queryResult.Value.Select(m => SerializedMod.Serialize(m, m.GetLocalizedInfo(GetAcceptLanguageCultures())));
 
             return Ok(serialized);
         }
@@ -183,45 +111,17 @@ namespace Hive.Controllers
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            // iff a given user (or none) is allowed to access any mods. This should almost always be true.
-            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user }, ref getModsParseState))
-                return Forbid();
-
-            // Combine plugins
-            log.Debug("Combining plugins...");
-            var combined = plugin.Instance;
-
             VersionRange? filteredRange = range != null ? new VersionRange(range) : null;
+            var queryResult = modService.GetMod(user, id, filteredRange);
 
-            // Grab the list of mods that match our ID.
-            var mods = CreateModQuery()
-                .AsNoTracking()
-                .Where(m => m.ReadableID == id);
-
-            // If the user wants a specific version range, filter by that.
-            if (filteredRange != null)
+            if (queryResult.Value == null)
             {
-                mods = mods.Where(m => filteredRange.Matches(m.Version));
+                return StatusCode(queryResult.StatusCode, queryResult.Message);
             }
 
-            // Grab the latest version in our list
-            var mod = mods
-                .OrderByDescending(m => m.Version)
-                .FirstOrDefault();
+            var localizedModInfo = queryResult.Value.GetLocalizedInfo(GetAcceptLanguageCultures());
+            var serializedMod = SerializedMod.Serialize(queryResult.Value, localizedModInfo);
 
-            if (mod == null)
-            {
-                return NotFound();
-            }
-
-            // Forbid if a permissions check or plugins check prevents the user from accessing this mod.
-            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState)
-                || !combined.GetSpecificModAdditionalChecks(user, mod))
-                return Forbid();
-
-            var localizedModInfo = mod.GetLocalizedInfo(GetAcceptLanguageCultures());
-
-            var serializedMod = SerializedMod.Serialize(mod, localizedModInfo);
             return Ok(serializedMod);
         }
 
@@ -236,30 +136,12 @@ namespace Hive.Controllers
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            // iff a given user (or none) is allowed to access any mods. This should almost always be true.
-            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user }, ref getModsParseState))
-                return Forbid();
-
-            // Combine plugins
-            log.Debug("Combining plugins...");
-            var combined = plugin.Instance;
-
-            // Grab the list of mods that match our ID.
-            var mod = CreateModQuery()
-                .AsNoTracking()
-                .Where(m => m.ReadableID == id)
-                .OrderByDescending(m => m.Version)
-                .FirstOrDefault();
-
-            if (mod == null)
+            var queryResult = modService.GetMod(user, id);
+            if (queryResult.Value == null)
             {
-                return NotFound();
+                return StatusCode(queryResult.StatusCode, queryResult.Message);
             }
-
-            // Forbid if a permissions check or plugins check prevents the user from accessing this mod.
-            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState)
-                || !combined.GetSpecificModAdditionalChecks(user, mod))
-                return Forbid();
+            var mod = queryResult.Value;
 
             return Ok(SerializedMod.Serialize(mod, mod.GetLocalizedInfo(GetAcceptLanguageCultures())));
         }
@@ -282,56 +164,14 @@ namespace Hive.Controllers
                 return Unauthorized();
             }
 
-            if (identifier is null)
+            var queryResult = await modService.MoveMod(user, channelId, identifier).ConfigureAwait(false);
+            if (queryResult.Value == null)
             {
-                return BadRequest("Identifier invalid");
+                return StatusCode(queryResult.StatusCode, queryResult.Message);
             }
+            var mod = queryResult.Value;
 
-            log.Debug("Getting database objects...");
-
-            var targetVersion = new Version(identifier.Version);
-
-            // Get the database mod that represents the ModIdentifier.
-            var databaseMod = CreateModQuery()
-                .Where(x => x.ReadableID == identifier.ID 
-                    && x.Version == targetVersion)
-                .FirstOrDefault();
-
-            if (databaseMod == null) // The POSTed mod was successfully deserialzed, but no Mod exists in the database.
-            {
-                return NotFound("POSTed Mod does not exist.");
-            }
-
-            // Grab our origin and destination channels.
-            var origin = databaseMod.Channel;
-            var destination = context.Channels.Where(x => x.Name == channelId).FirstOrDefault();
-
-            if (destination is null) // The channelId from our Route does not point to an existing Channel. Okay, we just return 404.
-            {
-                return NotFound($"No channel exists with the name \"{channelId}\".");
-            }
-
-            // Forbid iff a given user (or none) is allowed to move the mod.
-            if (!permissions.CanDo(MoveModActionName, new PermissionContext { User = user, Mod = databaseMod, SourceChannel = origin, DestinationChannel = destination }, ref moveModsParseState))
-                return Forbid();
-
-            // Combine plugins and check if the user can still move the mod.
-            log.Debug("Combining plugins...");
-            var combined = plugin.Instance;
-
-            // Forbid iff a given user (or none) is allowed to move the mod.
-            if (!combined.GetMoveModAdditionalChecks(user, databaseMod, new ReadOnlyChannel(origin), new ReadOnlyChannel(destination)))
-                return Forbid();
-
-            // All of our needed information is non-null, and we have permission to perform the move.
-            databaseMod.Channel = destination;
-
-            // If any plugins want to modify the object further after the move operation, they can do so here.
-            combined.ModifyAfterModMove(in databaseMod); 
-
-            await context.SaveChangesAsync().ConfigureAwait(false);
-            
-            return Ok(SerializedMod.Serialize(databaseMod, databaseMod.GetLocalizedInfo(GetAcceptLanguageCultures())));
+            return Ok(SerializedMod.Serialize(mod, mod.GetLocalizedInfo(GetAcceptLanguageCultures())));
         }
 
         // This code was generously provided by the following StackOverflow user, with some slight tweaks.
@@ -362,12 +202,5 @@ namespace Hive.Controllers
 
             return preferredCultures.Append(CultureInfo.CurrentCulture.ToString()); // Add system culture to the end and return the result.
         }
-
-        // Abstracts the construction of a Mod access query with necessary Include calls to a helper function
-        private IQueryable<Mod> CreateModQuery() => context
-            .Mods
-            .Include(m => m.Localizations)
-            .Include(m => m.Channel)
-            .Include(m => m.SupportedVersions);
     }
 }
