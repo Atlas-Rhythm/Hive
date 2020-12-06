@@ -18,7 +18,7 @@ namespace Hive.Services.Common
         private readonly PermissionsManager<PermissionContext> permissions;
         private PermissionActionParseState channelsParseState;
 
-        private static readonly Query<IEnumerable<Channel>> forbiddenResponse = new Query<IEnumerable<Channel>>(null, "Forbidden", StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<IEnumerable<Channel>> forbiddenResponse = new HiveObjectQuery<IEnumerable<Channel>>(null, "Forbidden", StatusCodes.Status403Forbidden);
         private const string ActionName = "hive.channel";
 
         public ChannelService([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IChannelsControllerPlugin> plugin)
@@ -31,7 +31,7 @@ namespace Hive.Services.Common
             this.plugin = plugin;
         }
 
-        public Query<IEnumerable<Channel>> RetrieveAllChannels(User? user)
+        public HiveObjectQuery<IEnumerable<Channel>> RetrieveAllChannels(User? user)
         {
             // TODO: Wrap with user != null, either anonymize "hive.channel" or remove entirely.
             // hive.channel with a null channel in the context should be permissible
@@ -58,7 +58,7 @@ namespace Hive.Services.Common
             filteredChannels = combined.GetChannelsFilter(user, filteredChannels);
             log.Debug("Remaining channels: {0}", filteredChannels.Count());
 
-            return new Query<IEnumerable<Channel>>(filteredChannels, null, StatusCodes.Status200OK);
+            return new HiveObjectQuery<IEnumerable<Channel>>(filteredChannels, null, StatusCodes.Status200OK);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Hive.Services.Common
         [ThreadStatic] private static PermissionActionParseState versionsParseState;
 
         private const string ActionName = "hive.game.version";
-        private static readonly Query<IEnumerable<GameVersion>> forbiddenResponse = new Query<IEnumerable<GameVersion>>(null, "Forbidden", StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<IEnumerable<GameVersion>> forbiddenResponse = new HiveObjectQuery<IEnumerable<GameVersion>>(null, "Forbidden", StatusCodes.Status403Forbidden);
 
         public GameVersionService([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IGameVersionsPlugin> plugin)
         {
@@ -30,7 +30,7 @@ namespace Hive.Services.Common
             this.plugin = plugin;
         }
 
-        public Query<IEnumerable<GameVersion>> RetrieveAllVersions(User? user)
+        public HiveObjectQuery<IEnumerable<GameVersion>> RetrieveAllVersions(User? user)
         {
             if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref versionsParseState))
                 return forbiddenResponse;
@@ -55,7 +55,7 @@ namespace Hive.Services.Common
             // This final filtered list of versions is what we'll return back to the user.
             log.Debug("Remaining versions after plugin filters: {0}", filteredVersions.Count());
 
-            return new Query<IEnumerable<GameVersion>>(filteredVersions, null, StatusCodes.Status200OK);
+            return new HiveObjectQuery<IEnumerable<GameVersion>>(filteredVersions, null, StatusCodes.Status200OK);
         }
     }
 }
