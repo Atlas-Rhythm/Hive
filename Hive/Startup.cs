@@ -43,12 +43,12 @@ namespace Hive
                 .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
                 .AddSingleton(sp =>
                     new PermissionsManager<PermissionContext>(sp.GetRequiredService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."))
-                .AddSingleton<IChannelsControllerPlugin>(sp => new HiveChannelsControllerPlugin())
-                .AddSingleton<IGameVersionsPlugin>(sp => new HiveGameVersionsControllerPlugin())
-                .AddSingleton<IModsPlugin>(sp => new HiveModsControllerPlugin())
-                .AddSingleton<IResolveDependenciesPlugin>(sp => new HiveResolveDependenciesControllerPlugin())
+                .AddSingleton<IChannelsControllerPlugin, HiveChannelsControllerPlugin>()
+                .AddSingleton<IGameVersionsPlugin, HiveGameVersionsControllerPlugin>()
+                .AddSingleton<IModsPlugin, HiveModsControllerPlugin>()
+                .AddSingleton<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>()
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
-                .AddSingleton<IProxyAuthenticationService>(sp => new MockAuthenticationService());
+                .AddSingleton<IProxyAuthenticationService, MockAuthenticationService>();
 
             services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
@@ -73,9 +73,7 @@ namespace Hive
 
             app.UseExceptionHandlingMiddleware();
 
-            app.UseSerilogRequestLogging(options =>
-            {
-            });
+            app.UseSerilogRequestLogging();
 
             app.UseHttpsRedirection();
 
@@ -86,10 +84,7 @@ namespace Hive
             app.UseGraphQL<HiveSchema>("/graphql");
             app.UseGraphQLAltair();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseEndpoints(endpoints => endpoints.MapControllers());
         }
     }
 }
