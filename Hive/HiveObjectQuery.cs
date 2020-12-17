@@ -15,6 +15,7 @@ namespace Hive
                 StatusCodes.Status401Unauthorized => new UnauthorizedObjectResult(Message),
                 StatusCodes.Status403Forbidden => new ForbidResult(),
                 StatusCodes.Status404NotFound => new NotFoundObjectResult(Message),
+                StatusCodes.Status424FailedDependency => new ObjectResult(Value) { StatusCode = StatusCode },
                 _ => new ObjectResult(Message) { StatusCode = StatusCode },
             };
         }
