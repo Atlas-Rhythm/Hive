@@ -374,7 +374,7 @@ namespace Hive.Controllers
                     .ConfigureAwait(false);
             }
 
-            var channel = await ((IQueryable<Channel>)database.Channels).FirstOrDefaultAsync(c => c.Name == finalMetadata.ChannelName).ConfigureAwait(false);
+            var channel = await database.Channels.FirstOrDefaultAsync(c => c.Name == finalMetadata.ChannelName).ConfigureAwait(false);
             if (channel is null)
                 return BadRequest($"Missing channel '{finalMetadata.ChannelName}'");
             modObject.Channel = channel;
