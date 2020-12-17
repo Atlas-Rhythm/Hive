@@ -3,6 +3,7 @@ using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
+using Hive.Utilities;
 using MathExpr.Syntax;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -343,16 +344,37 @@ namespace Hive.Controllers
                 UploadedAt = payload.ModData.UploadedAt,
                 EditedAt = null,
                 Uploader = user,
-                Dependencies = finalMetadata.Dependencies?.ToList() ?? new (), // if deps is null, default to empty list (it's allowed)
-                Conflicts = finalMetadata.ConflictsWith?.ToList() ?? new (),   // same as above
+                Dependencies = finalMetadata.Dependencies?.ToList() ?? new(), // if deps is null, default to empty list (it's allowed)
+                Conflicts = finalMetadata.ConflictsWith?.ToList() ?? new(),   // same as above
                 AdditionalData = finalMetadata.AdditionalData,
-                Links = finalMetadata.Links?.Select(t => (t.Item1, new Uri(t.Item2))).ToList() ?? new () // defaults to empty list
+                Links = finalMetadata.Links?.Select(t => (t.Item1, new Uri(t.Item2))).ToList() ?? new(), // defaults to empty list
+                Authors = new List<User>(), // both of these default to empty lists
+                Contributors = new List<User>(),
             };
 
-            // TODO: set up Authors and Contributors; How do we grab User objects for this?
-            //       Authors and Contributors should both default to empty lists 
+            // REVIEW: should nonexistent users be an error?
 
-            var channel = await database.Channels.FirstOrDefaultAsync(c => c.Name == finalMetadata.ChannelName).ConfigureAwait(false);
+            if (finalMetadata.Authors is not null)
+            {
+                modObject.Authors = await finalMetadata.Authors
+                    .Select(n => authService.GetUser(n))
+                    .FlattenToAsyncEnumerable()
+                    .WhereNotNull()
+                    .ToListAsync()
+                    .ConfigureAwait(false);
+            }
+
+            if (finalMetadata.Contributors is not null)
+            {
+                modObject.Contributors = await finalMetadata.Contributors
+                    .Select(n => authService.GetUser(n))
+                    .FlattenToAsyncEnumerable()
+                    .WhereNotNull()
+                    .ToListAsync()
+                    .ConfigureAwait(false);
+            }
+
+            var channel = await ((IQueryable<Channel>)database.Channels).FirstOrDefaultAsync(c => c.Name == finalMetadata.ChannelName).ConfigureAwait(false);
             if (channel is null)
                 return BadRequest($"Missing channel '{finalMetadata.ChannelName}'");
             modObject.Channel = channel;
