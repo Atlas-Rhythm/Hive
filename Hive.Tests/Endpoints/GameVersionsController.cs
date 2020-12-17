@@ -4,7 +4,6 @@ using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
 using Hive.Utilities;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -55,9 +54,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<ObjectResult>(res.Result);
-            Assert.NotNull(res.Result);
-            Assert.Equal(StatusCodes.Status403Forbidden, (res.Result as ObjectResult)!.StatusCode); // The above endpoint must fail from the permission rule.
+            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail from the permission rule.
         }
 
         [Fact]
@@ -73,9 +70,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<ObjectResult>(res.Result);
-            Assert.NotNull(res.Result);
-            Assert.Equal(StatusCodes.Status403Forbidden, (res.Result as ObjectResult)!.StatusCode); // The above endpoint must fail from the plugin.
+            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail from the plugin.
         }
 
         [Fact]

@@ -132,9 +132,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.ResolveDependencies(input);
 
             Assert.NotNull(res.Result); // Make sure we got a request back
-            Assert.IsType<ObjectResult>(res.Result);
-            Assert.NotNull(res.Result);
-            Assert.Equal(StatusCodes.Status403Forbidden, (res.Result as ObjectResult)!.StatusCode); // This endpoint must fail at the permissions check.
+            Assert.IsType<ForbidResult>(res.Result); // This endpoint must fail at the permissions check.
         }
 
         [Fact]
@@ -148,9 +146,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.ResolveDependencies(input);
 
             Assert.NotNull(res.Result); // Make sure we got a request back
-            Assert.IsType<ObjectResult>(res.Result);
-            Assert.NotNull(res.Result);
-            Assert.Equal(StatusCodes.Status403Forbidden, (res.Result as ObjectResult)!.StatusCode); // This endpoint must fail at the plugin check.
+            Assert.IsType<ForbidResult>(res.Result); // This endpoint must fail at the plugin check.
         }
 
         [Fact]
@@ -162,9 +158,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.ResolveDependencies(Array.Empty<ModIdentifier>());
 
             Assert.NotNull(res.Result); // Make sure we got a request back
-            Assert.IsType<ObjectResult>(res.Result);
-            Assert.NotNull(res.Result);
-            Assert.Equal(StatusCodes.Status400BadRequest, (res.Result as ObjectResult)!.StatusCode); // This endpoint must fail because we have no identifiers
+            Assert.IsType<BadRequestObjectResult>(res.Result); // This endpoint must fail because we have no identifiers
         }
 
         [Fact]
@@ -185,9 +179,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.ResolveDependencies(input);
 
             Assert.NotNull(res.Result); // Make sure we got a request back
-            Assert.IsType<ObjectResult>(res.Result);
-            Assert.NotNull(res.Result);
-            Assert.Equal(StatusCodes.Status404NotFound, (res.Result as ObjectResult)!.StatusCode); // This endpoint must fail because the mod could not be found
+            Assert.IsType<NotFoundObjectResult>(res.Result); // This endpoint must fail because the mod could not be found
         }
 
         [Fact]
