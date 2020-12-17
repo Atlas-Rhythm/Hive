@@ -67,13 +67,8 @@ namespace Hive.Controllers
             User? user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             var queryResult = gameVersionService.RetrieveAllVersions(user);
-            
-            if (queryResult.Value == null)
-            {
-                return StatusCode(queryResult.StatusCode, queryResult.Message);
-            }
-            
-            return Ok(queryResult.Value);
+
+            return queryResult.Convert();
         }
     }
 }

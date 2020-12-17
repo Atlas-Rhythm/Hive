@@ -65,13 +65,7 @@ namespace Hive.Controllers
                 return StatusCode(queryResult.StatusCode, queryResult.Message);
             }
 
-            // special handler for when dependencies fail
-            if (queryResult.StatusCode == StatusCodes.Status424FailedDependency)
-            {
-                return StatusCode(StatusCodes.Status424FailedDependency, queryResult.Value);
-            }
-
-            return Ok(queryResult.Value);
+            return queryResult.Convert();
         }
     }
 }

@@ -75,12 +75,7 @@ namespace Hive.Controllers
             // If user is null, we can simply forward it anyways
             var queryResult = channelService.RetrieveAllChannels(user);
 
-            if (queryResult.Value == null)
-            {
-                return StatusCode(queryResult.StatusCode, queryResult.Message);
-            }
-
-            return Ok(queryResult.Value);
+            return queryResult.Convert();
         }
     }
 }
