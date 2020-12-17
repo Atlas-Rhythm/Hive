@@ -60,11 +60,6 @@ namespace Hive.Controllers
 
             var queryResult = await dependencyResolverService.ResolveAsync(user, identifiers).ConfigureAwait(false);
 
-            if (queryResult.Value == null)
-            {
-                return StatusCode(queryResult.StatusCode, queryResult.Message);
-            }
-
             return queryResult.Convert();
         }
     }
