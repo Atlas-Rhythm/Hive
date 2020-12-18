@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <UserSecretsId>a7289d55-bdb8-47a6-8078-9d0de29ea78c</UserSecretsId>
+
+    <IsCLSCompliant>false</IsCLSCompliant>
   </PropertyGroup>
   
   <ItemGroup>

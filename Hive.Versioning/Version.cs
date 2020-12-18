@@ -56,6 +56,7 @@ namespace Hive.Versioning
         /// <param name="patch">The patch number.</param>
         /// <param name="prereleaseIds">A sequence of IDs specifying the prerelease.</param>
         /// <param name="buildIds">A sequence of IDs representing the build.</param>
+        [CLSCompliant(false)]
         public Version(ulong major, ulong minor, ulong patch, IEnumerable<string> prereleaseIds, IEnumerable<string> buildIds)
         {
             this.major = major;
@@ -68,23 +69,51 @@ namespace Hive.Versioning
         /// <summary>
         /// Creates a version object from the component parts of the version.
         /// </summary>
+        /// <include file="docs.xml" path='csdocs/class[@name="Version"]/cls-compliance/*'/>
         /// <param name="major">The major version number.</param>
         /// <param name="minor">The minor version number.</param>
         /// <param name="patch">The patch number.</param>
+        /// <param name="prereleaseIds">A sequence of IDs specifying the prerelease.</param>
+        /// <param name="buildIds">A sequence of IDs representing the build.</param>
+        public Version(long major, long minor, long patch, IEnumerable<string> prereleaseIds, IEnumerable<string> buildIds)
+            : this((ulong)major, (ulong)minor, (ulong)patch, prereleaseIds, buildIds)
+        { }
+
+        /// <summary>
+        /// Creates a version object from the component parts of the version.
+        /// </summary>
+        /// <param name="major">The major version number.</param>
+        /// <param name="minor">The minor version number.</param>
+        /// <param name="patch">The patch number.</param>
+        [CLSCompliant(false)]
         public Version(ulong major, ulong minor, ulong patch) : this(major, minor, patch, Enumerable.Empty<string>(), Enumerable.Empty<string>())
+        { }
+
+        /// <summary>
+        /// Creates a version object from the component parts of the version.
+        /// </summary>
+        /// <include file="docs.xml" path='csdocs/class[@name="Version"]/cls-compliance/*'/>
+        /// <param name="major">The major version number.</param>
+        /// <param name="minor">The minor version number.</param>
+        /// <param name="patch">The patch number.</param>
+        public Version(long major, long minor, long patch)
+            : this((ulong)major, (ulong)minor, (ulong)patch)
         { }
 
         /// <summary>
         /// Gets the major version number.
         /// </summary>
+        [CLSCompliant(false)]
         public ulong Major => major;
         /// <summary>
         /// Gets the minor version number.
         /// </summary>
+        [CLSCompliant(false)]
         public ulong Minor => minor;
         /// <summary>
         /// Gets the patch number.
         /// </summary>
+        [CLSCompliant(false)]
         public ulong Patch => patch;
 
         /// <summary>
@@ -95,6 +124,17 @@ namespace Hive.Versioning
         /// Gets the sequence of build IDs.
         /// </summary>
         public IEnumerable<string> BuildIds => buildIds;
+
+        /// <summary>
+        /// Vers the version number, as signed integers.
+        /// </summary>
+        /// <include file="docs.xml" path='csdocs/class[@name="Version"]/cls-compliance/*'/>
+        /// <param name="major">The major version number.</param>
+        /// <param name="minor">The minor version number.</param>
+        /// <param name="patch">The patch number.</param>
+        [Obsolete("This member is provided only for CLS compliance. Please use the non-CLS properties if possible.")]
+        public void GetVersionNumber(out long major, out long minor, out long patch)
+            => (major, minor, patch) = ((long)Major, (long)Minor, (long)Patch);
 
         /// <summary>
         /// Appends this <see cref="Version"/> to the provided <see cref="StringBuilder"/>.
@@ -335,6 +375,7 @@ namespace Hive.Versioning
         /// <param name="text">The sequence of characters to parse.</param>
         /// <param name="version">The parsed version, if the input is valid.</param>
         /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
+        [CLSCompliant(false)]
         public static bool TryParse(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out Version version)
             => TryParse(ref text, false, out version);
 

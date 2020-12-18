@@ -624,6 +624,7 @@ namespace Hive.Versioning
         /// <param name="text">The string to try to parse.</param>
         /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
         /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
+        [CLSCompliant(false)]
         public static bool TryParse(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out VersionRange range)
             => TryParse(ref text, false, out range);
 
