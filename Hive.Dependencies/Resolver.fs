@@ -85,5 +85,5 @@ type private ResolveImpl<'Mod, 'ModRef, 'Version, 'VerRange>(access: IValueAcces
         ResolveImpl.resolveLoop access this.collectReqs mods |> Helpers.asyncStartAsTask
 
 module Resolver =
-    let Resolve (access: IValueAccessor<'Mod, 'ModRef, 'Version, 'VerRange>) (mods: 'Mod seq) =
-        (ResolveImpl access).resolve (Seq.toList mods)
+    let Resolve (accessor: IValueAccessor<'Mod, 'ModRef, 'Version, 'VerRange>) (mods: 'Mod seq) =
+        (ResolveImpl accessor).resolve (Seq.toList mods)
