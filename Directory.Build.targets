@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
 
-  <PropertyGroup Condition="'$(IsCSharpProject)' == 'true'">
+  <PropertyGroup Condition="'$(Language)' == 'C#'">
 
     <LangVersion Condition="'$(LangVersion)' != 'preview'">9</LangVersion>
     <Nullable>enable</Nullable>
@@ -26,7 +26,16 @@
       $(NoWarn);CA2007;CA2225
     </NoWarn>
 
+    <IsRoslynExtension Condition="'$(IsRoslynExtension)' == ''">false</IsRoslynExtension>
+    <IsRoslynExtension Condition="'$(IsCodeGen)' == 'true' or '$(IsAnalyzer)' == 'true'">true</IsRoslynExtension>
+    <IsCLSCompliant Condition="'$(Tests)' == 'true' or '$(IsRoslynExtension)' == 'true'">false</IsCLSCompliant>
   </PropertyGroup>
+
+  <ItemGroup>
+    <LiteralAssemblyAttribute Include="System.CLSCompliantAttribute" Condition="'$(IsCLSCompliant)' != ''">
+      <_Parameters>$(IsCLSCompliant)</_Parameters>
+    </LiteralAssemblyAttribute>
+  </ItemGroup>
   
   <Target Name="AddInternalsVisibleTo" BeforeTargets="BeforeCompile">
     <!-- Add default suffix if there is no InternalsVisibleTo or InternalsVisibleToSuffix defined -->
@@ -47,6 +56,32 @@
         <_Parameter1>$(AssemblyName)%(InternalsVisibleToSuffix.Identity)</_Parameter1>
       </AssemblyAttribute>
     </ItemGroup>
+  </Target>
+
+  <PropertyGroup>
+    <_LiteralAssemblyFile Condition="'$(Language)' == 'C#'">$(IntermediateOutputPath)LiteralAssemblyAttribytes.cs</_LiteralAssemblyFile>
+    <CoreCompileDependsOn>
+      AddLiteralAssemblyAttributes;
+      $(CoreCompileDependsOn);
+    </CoreCompileDependsOn>
+  </PropertyGroup>
+  
+  <Target Name="AddLiteralAssemblyAttributes"
+          BeforeTargets="CoreCompile"
+          Condition="'$(Language)' == 'C#'"
+          Inputs="$(MSBuildAllProjects)"
+          Outputs="$(_LiteralAssemblyFile)">
+
+    <ItemGroup>
+      <_LiteralAssemblyAttrDecls Include="[assembly: %(LiteralAssemblyAttribute.Identity)(%(LiteralAssemblyAttribute._Parameters))]" />
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(_LiteralAssemblyFile)" Encoding="UTF-8" Lines="@(_LiteralAssemblyAttrDecls)" Overwrite="true" />
+
+    <ItemGroup>
+      <Compile Include="$(_LiteralAssemblyFile)" />
+    </ItemGroup>
+    
   </Target>
 
   <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" Condition="'$(IsCodeGen)' != 'true'" />

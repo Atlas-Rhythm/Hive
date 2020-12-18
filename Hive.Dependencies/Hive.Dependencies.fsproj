@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
 
-    <IsCSharpProject>false</IsCSharpProject>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 

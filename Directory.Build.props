@@ -2,10 +2,10 @@
 <Project>
 
   <PropertyGroup>
-    <IsCSharpProject>true</IsCSharpProject>
-
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+
+    <IsCLSCompliant>true</IsCLSCompliant>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(IsCodeGen)' != 'true'">
