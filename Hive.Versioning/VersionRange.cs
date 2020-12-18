@@ -603,6 +603,9 @@ namespace Hive.Versioning
         /// <summary>
         /// Attempts to parse a whole string as a <see cref="VersionRange"/>.
         /// </summary>
+        /// <remarks>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
+        /// </remarks>
         /// <param name="text">The string to try to parse.</param>
         /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
         /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
