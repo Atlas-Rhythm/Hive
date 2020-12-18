@@ -3,7 +3,7 @@
 
   <PropertyGroup Condition="'$(IsCSharpProject)' == 'true'">
 
-    <LangVersion Condition="'$(LangVersion)' != 'preview'">preview</LangVersion>
+    <LangVersion Condition="'$(LangVersion)' != 'preview'">9</LangVersion>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
 
