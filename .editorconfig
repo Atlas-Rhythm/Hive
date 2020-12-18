@@ -6,10 +6,8 @@ csharp_style_expression_bodied_methods = when_on_single_line:suggestion
 # IDE0053: Use expression body for lambda expressions
 csharp_style_expression_bodied_lambdas = true:suggestion
 
-# CA2000: Dispose objects before losing scope
-dotnet_diagnostic.CA2000.severity = none
-# the above sees `using var` and warns about it
+# IDE0044: Make field readonly
+dotnet_diagnostic.IDE0044.severity = warning
 
-# CA1826: Do not use Enumerable methods on indexable collections
-dotnet_diagnostic.CA1826.severity = none
-# Enumerable methods are sometimes more readable than indexing imo
+# IDE0052: Private member can be removed as it is never used
+dotnet_diagnostic.IDE0052.severity = warning

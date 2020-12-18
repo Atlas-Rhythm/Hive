@@ -6,6 +6,7 @@
     <LangVersion Condition="'$(LangVersion)' != 'preview'">9</LangVersion>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 
     <NeutralLanguage>en-US</NeutralLanguage>
     
