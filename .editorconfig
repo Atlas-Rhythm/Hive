@@ -119,9 +119,9 @@ dotnet_diagnostic.IDE0001.severity = warning
 # IDE0002: Simplify member access
 dotnet_diagnostic.IDE0002.severity = warning
 # IDE0004: Remove unnecessary cast
-dotnet_diagnostic.IDE0004.severity = suggestion
+dotnet_diagnostic.IDE0004.severity = warning
 # IDE0005: Remove unnecessary import
-dotnet_diagnostic.IDE0005.severity = suggestion
+dotnet_diagnostic.IDE0005.severity = warning
 # IDE0035: Remove unreachable code
 dotnet_diagnostic.IDE0035.severity = warning
 # IDE0052: Private member can be removed as it is never used
@@ -215,7 +215,7 @@ csharp_prefer_simple_default_expression = true
 dotnet_diagnostic.IDE0042.severity = suggestion
 csharp_style_deconstructed_variable_declaration = true
 
-dotnet_diagnostic.IDE0090.severity = warning # REVIEW: this gives a *lot* of warnings, do we really want it?
+dotnet_diagnostic.IDE0090.severity = warning
 csharp_style_implicit_object_creation_when_type_is_apparent = true:warning
 
 dotnet_diagnostic.IDE0018.severity = warning
@@ -236,7 +236,7 @@ csharp_style_throw_expression = true:warning
 dotnet_diagnostic.IDE0059.severity = warning
 csharp_style_unused_value_assignment_preference = discard_variable:warning
 
-dotnet_diagnostic.IDE0058.severity = warning # REVIEW: this causes most of our warnings, but IMO its worth
+dotnet_diagnostic.IDE0058.severity = warning
 csharp_style_unused_value_expression_statement_preference = discard_variable:warning
 
 # 'using' directive preferences
@@ -312,13 +312,17 @@ dotnet_naming_rule.interface_should_be_begins_with_i.severity = warning
 dotnet_naming_rule.interface_should_be_begins_with_i.symbols = interface
 dotnet_naming_rule.interface_should_be_begins_with_i.style = begins_with_i
 
-dotnet_naming_rule.types_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.types_should_be_pascal_case.severity = warning
 dotnet_naming_rule.types_should_be_pascal_case.symbols = types
 dotnet_naming_rule.types_should_be_pascal_case.style = pascal_case
 
-dotnet_naming_rule.non_field_members_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.non_field_members_should_be_pascal_case.severity = warning
 dotnet_naming_rule.non_field_members_should_be_pascal_case.symbols = non_field_members
 dotnet_naming_rule.non_field_members_should_be_pascal_case.style = pascal_case
+
+dotnet_naming_rule.public_fields_should_be_pascal_case.severity = warning
+dotnet_naming_rule.public_fields_should_be_pascal_case.symbols = public_fields
+dotnet_naming_rule.public_fields_should_be_pascal_case.style = pascal_case
 
 # Symbol specifications
 
@@ -326,13 +330,17 @@ dotnet_naming_symbols.interface.applicable_kinds = interface
 dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
 dotnet_naming_symbols.interface.required_modifiers = 
 
-dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
+dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum, delegate
 dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
 dotnet_naming_symbols.types.required_modifiers = 
 
 dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, method
 dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
 dotnet_naming_symbols.non_field_members.required_modifiers = 
+
+dotnet_naming_symbols.public_fields.applicable_kinds = field
+dotnet_naming_symbols.public_fields.applicable_accessibilities = public, protected, protected_internal, private_protected
+dotnet_naming_symbols.public_fields.required_modifiers = 
 
 # Naming styles
 
