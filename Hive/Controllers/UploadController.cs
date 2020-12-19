@@ -4,7 +4,6 @@ using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
 using Hive.Utilities;
-using MathExpr.Syntax;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,15 +12,10 @@ using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
 using Serilog;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using System.Security.Policy;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -205,7 +199,7 @@ namespace Hive.Controllers
                     Type = ResultType.Success
                 };
         }
-        
+
         private struct EncryptedUploadPayload
         {
             public SerializedMod ModData { get; init; }
@@ -260,7 +254,7 @@ namespace Hive.Controllers
             await file.CopyToAsync(memStream).ConfigureAwait(false);
 
             // go back to the beginning
-            memStream.Seek(0, SeekOrigin.Begin);
+            _ = memStream.Seek(0, SeekOrigin.Begin);
 
             // TODO: figure out what the default channel should be
             var modData = new Mod
@@ -291,7 +285,7 @@ namespace Hive.Controllers
                 return Forbid();
 
             // we've gotten the OK based on all of our other checks, lets upload the file to the actual CDN
-            memStream.Seek(0, SeekOrigin.Begin);
+            _ = memStream.Seek(0, SeekOrigin.Begin);
             var cdnObject = await cdn.UploadObject(file.FileName, memStream, nodaClock.GetCurrentInstant() + Duration.FromHours(1)).ConfigureAwait(false);
 
             var uploadResult = UploadResult.Confirm(tokenAlgorithm, modData, cdnObject);
@@ -307,7 +301,7 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status410Gone)] 
+        [ProducesResponseType(StatusCodes.Status410Gone)]
         // ^^^ returned when the object associated with the upload was deleted automatically. Basically, "You took too long"
         public async Task<ActionResult<UploadResult>> CompleteUpload([FromForm] SerializedMod finalMetadata, [FromForm] string cookie)
         {
@@ -415,16 +409,18 @@ namespace Hive.Controllers
             if (!permissions.CanDo(UploadWithDataAction, new PermissionContext { User = user, Mod = modObject }, ref UploadWithDataParseState))
             {
                 // the user doesn't have permissions, so we don't want to keep the object on the CDN
-                await cdn.TryDeleteObject(cdnObject).ConfigureAwait(false);
+                _ = await cdn.TryDeleteObject(cdnObject).ConfigureAwait(false); // if it failed, that should mean that it doesn't exist
                 return Forbid();
             }
 
             // ok, we're good to just go ahead and insert it into the database
             await using (var transaction = await database.Database.BeginTransactionAsync().ConfigureAwait(false))
             {
-                database.ModLocalizations.Add(localization);
-                database.Mods.Add(modObject);
-                await database.SaveChangesAsync().ConfigureAwait(false);
+                // we don't care about the created entries
+                _ = database.ModLocalizations.Add(localization);
+                _ = database.Mods.Add(modObject);
+                // we don't care how many things were saved
+                _ = await database.SaveChangesAsync().ConfigureAwait(false);
 
                 await transaction.CommitAsync().ConfigureAwait(false);
             }

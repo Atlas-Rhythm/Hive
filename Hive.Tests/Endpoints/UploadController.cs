@@ -7,7 +7,6 @@ using Hive.Services;
 using Hive.Utilities;
 using Hive.Versioning;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
@@ -21,9 +20,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -124,7 +121,7 @@ namespace Hive.Tests.Endpoints
         {
             var services = DIHelper.ConfigureServices(Options, helper, new UploadsRuleProvider(rule));
 
-            services
+            _ = services
                 .AddTransient(sp => plugins)
                 .AddScoped<Controllers.UploadController>()
                 .AddSingleton<ICdnProvider, MemoryTestCdn>()
@@ -138,8 +135,8 @@ namespace Hive.Tests.Endpoints
         private static HttpContext CreateMockRequest(Stream body)
         {
             var requestMoq = new Mock<HttpRequest>();
-            requestMoq.SetupGet(r => r.Body).Returns(body);
-            requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
+            _ = requestMoq.SetupGet(r => r.Body).Returns(body);
+            _ = requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
                 new Dictionary<string, StringValues>()
                 {
                     { HeaderNames.Authorization, new StringValues("Bearer: test") }
@@ -147,7 +144,7 @@ namespace Hive.Tests.Endpoints
             );
 
             var contextMoq = new Mock<HttpContext>();
-            contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
+            _ = contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
 
             return contextMoq.Object;
         }
@@ -166,7 +163,7 @@ namespace Hive.Tests.Endpoints
 
             public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
             {
-                string nameString = name.ToString();
+                var nameString = name.ToString();
                 switch (nameString)
                 {
                     case "hive.mods.upload":
@@ -202,14 +199,14 @@ namespace Hive.Tests.Endpoints
                 var objName = Interlocked.Increment(ref nextId).ToString();
 
                 var obj = new CdnObject(objName);
-                memoryStore.AddOrUpdate(objName, (barr, name), (_, _) => (barr, name));
+                _ = memoryStore.AddOrUpdate(objName, (barr, name), (_, _) => (barr, name));
                 if (expireAt is not null)
                 {
                     var delay = expireAt.Value - SystemClock.Instance.GetCurrentInstant();
                     var timer = new Timer(
-                        _ => Task.Factory.StartNew(() => TryDeleteObject(obj), default, default, TaskScheduler.Default).Unwrap().Wait(), 
+                        _ => Task.Factory.StartNew(() => TryDeleteObject(obj), default, default, TaskScheduler.Default).Unwrap().Wait(),
                         null, (int)delay.TotalMilliseconds, Timeout.Infinite);
-                    expirationTimers.AddOrUpdate(objName, timer, (_, _) => timer);
+                    _ = expirationTimers.AddOrUpdate(objName, timer, (_, _) => timer);
                 }
 
                 return obj;
@@ -239,10 +236,10 @@ namespace Hive.Tests.Endpoints
 
                 if (expirationTimers.TryRemove(link.UniqueId, out var timer))
                 {
-                    timer.Change(Timeout.Infinite, Timeout.Infinite);
+                    _ = timer.Change(Timeout.Infinite, Timeout.Infinite);
                     await timer.DisposeAsync();
                 }
-                
+
                 return true;
             }
             public Task SetExpiry(CdnObject link, Instant expireAt)
@@ -251,7 +248,7 @@ namespace Hive.Tests.Endpoints
                 var timer = new Timer(
                     _ => Task.Factory.StartNew(() => TryDeleteObject(link), default, default, TaskScheduler.Default).Unwrap().Wait(),
                     null, delay.Milliseconds, Timeout.Infinite);
-                expirationTimers.AddOrUpdate(link.UniqueId, timer, (_, _) => timer);
+                _ = expirationTimers.AddOrUpdate(link.UniqueId, timer, (_, _) => timer);
 
                 return Task.CompletedTask;
             }
@@ -259,7 +256,7 @@ namespace Hive.Tests.Endpoints
             {
                 if (expirationTimers.TryRemove(link.UniqueId, out var timer))
                 {
-                    timer.Change(Timeout.Infinite, Timeout.Infinite);
+                    _ = timer.Change(Timeout.Infinite, Timeout.Infinite);
                     await timer.DisposeAsync();
                 }
 
