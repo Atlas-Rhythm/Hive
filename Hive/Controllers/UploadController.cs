@@ -22,34 +22,87 @@ using System.Threading.Tasks;
 
 namespace Hive.Controllers
 {
+    /// <summary>
+    /// A plugin for the mod upload flow.
+    /// </summary>
     [Aggregable]
     public interface IUploadPlugin
     {
+        /// <summary>
+        /// Validates an upload and populates the object to be added from the uploaded file.
+        /// </summary>
+        /// <remarks>
+        /// <para><paramref name="data"/> may not be at the beginning of the stream. It is recommended to seek to the beginning of the stream before reading.</para>
+        /// <para>If you can, you should use <see cref="ValidateAndPopulateKnownMetadata(Mod, Stream, ref object?, out object?)"/> and check the third parameter
+        /// for a deserialized representation of the uploaded file to avoid reparsing it.</para>
+        /// </remarks>
+        /// <param name="mod">The mod object to populate.</param>
+        /// <param name="data">The uploaded file.</param>
+        /// <param name="validationFailureInfo">An object containing information about the rejection, if any.</param>
+        /// <returns><see langword="true"/> if the uploaded file is valid, <see langword="false"/> otherwise.</returns>
+        /// <seealso cref="ValidateAndPopulateKnownMetadata(Mod, Stream, ref object?, out object?)"/>
         [return: StopIfReturns(false)]
         bool ValidateAndPopulateKnownMetadata(Mod mod, Stream data, [ReturnLast] out object? validationFailureInfo);
 
+        /// <summary>
+        /// Validates an upload and populates the object to be added from the uploaded file.
+        /// </summary>
+        /// <remarks>
+        /// <para><paramref name="data"/> may not be at the beginning of the stream. It is recommended to seek to the beginning of the stream before reading.</para>
+        /// <para>The <paramref name="dataContext"/> parameter should be used to persist deserialized information about the file to avoid reparsing it. For example,
+        /// if the upload is a zip file, a plugin may ensure that it is a <see cref="System.IO.Compression.ZipFile"/>, and in the case that it is already, it would
+        /// completely avoid reparsing the entire file.</para>
+        /// </remarks>
+        /// <param name="mod">The mod object to populate.</param>
+        /// <param name="data">The uploaded file.</param>
+        /// <param name="dataContext">The context persisted between plugins for sharing data instead of reparsing it.</param>
+        /// <param name="validationFailureInfo">An object containing information about the rejection, if any.</param>
+        /// <returns><see langword="true"/> if the uploaded file is valid, <see langword="false"/> otherwise.</returns>
         [return: StopIfReturns(false)]
-        bool ValidateAndPopulateKnownMetadata(Mod mod, Stream data, 
+        bool ValidateAndPopulateKnownMetadata(Mod mod, Stream data,
             ref object? dataContext,
             [ReturnLast] out object? validationFailureInfo)
             => ValidateAndPopulateKnownMetadata(mod, data, out validationFailureInfo);
 
+        /// <summary>
+        /// Attempts to populate mod metadata from an uploaded file after it has been validated.
+        /// </summary>
+        /// <remarks>
+        /// This is invoked after every plugins' <see cref="ValidateAndPopulateKnownMetadata(Mod, Stream, ref object?, out object?)"/> is called, and only if
+        /// they all return <see langword="true"/>.
+        /// </remarks>
+        /// <param name="mod">The mod object to populate.</param>
+        /// <param name="data">The uploaded file.</param>
+        /// <seealso cref="LatePopulateKnownMetadata(Mod, Stream, ref object?)"/>
         void LatePopulateKnownMetadata(Mod mod, Stream data) { }
 
+        /// <summary>
+        /// Attempts to populate mod metadata from an uploaded file after it has been validated.
+        /// </summary>
+        /// <remarks>
+        /// <para>This is invoked after every plugins' <see cref="ValidateAndPopulateKnownMetadata(Mod, Stream, ref object?, out object?)"/> is called, and only if
+        /// they all return <see langword="true"/>.</para>
+        /// <para>The <paramref name="dataContext"/> parameter behaves like the corresponding parameter on <see cref="ValidateAndPopulateKnownMetadata(Mod, Stream, ref object?, out object?)"/>.
+        /// Whatever value the last plugin left in <paramref name="dataContext"/> in <see cref="ValidateAndPopulateKnownMetadata(Mod, Stream, ref object?, out object?)"/> is the value
+        /// the first plugin will see in this method.</para>
+        /// </remarks>
+        /// <param name="mod">The mod object to populate.</param>
+        /// <param name="data">The uploaded file.</param>
+        /// <param name="dataContext">The context persisted between plugins for sharing data instead of reparsing it.</param>
         void LatePopulateKnownMetadata(Mod mod, Stream data,
             ref object? dataContext)
             => LatePopulateKnownMetadata(mod, data);
 
         /// <summary>
-        /// 
+        /// Validates and fixes the mod data after the user has supplied all metadata.
         /// </summary>
         /// <remarks>
-        /// <see cref="Mod.DownloadLink"/> may not be set on <paramref name="mod"/> when this is called.
+        /// <para><see cref="Mod.DownloadLink"/> may not be set on <paramref name="mod"/> when this is called.</para>
         /// </remarks>
-        /// <param name="mod"></param>
-        /// <param name="originalAdditionalData"></param>
-        /// <param name="validationFailureInfo"></param>
-        /// <returns></returns>
+        /// <param name="mod">The mod object as populated by the user.</param>
+        /// <param name="originalAdditionalData">The value of the <see cref="Mod.AdditionalData"/> property as populated in the initial upload phase.</param>
+        /// <param name="validationFailureInfo">An object containing information about the rejection, if any.</param>
+        /// <returns><see langword="true"/> if the upload is valid, <see langword="false"/> otherwise.</returns>
         [return: StopIfReturns(false)]
         bool ValidateAndFixUploadedData(Mod mod, JsonElement originalAdditionalData, [ReturnLast] out object? validationFailureInfo);
     }
