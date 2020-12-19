@@ -44,7 +44,7 @@ namespace Hive.Plugins
 
     internal static class AggregatedInstanceGenerator
     {
-        internal static readonly object Lock = new object();
+        internal static readonly object Lock = new();
 
         public const string AssemblyName = "Hive.Plugins.Aggregates";
 
@@ -73,6 +73,7 @@ namespace Hive.Plugins
             const MethodAttributes MethodAttrs = MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Final;
 
             #region IAggregateList
+
             {
                 var aggList = typeof(IAggregateList<>).MakeGenericType(ifaceType);
                 gen.AddInterfaceImplementation(aggList);
@@ -90,7 +91,8 @@ namespace Hive.Plugins
                     il.Emit(OpCodes.Ret);
                 }
             }
-            #endregion
+
+            #endregion IAggregateList
 
             var methods = ifaceType.GetMethods();
             var fields = new List<FieldBuilder>(methods.Length);
@@ -102,18 +104,23 @@ namespace Hive.Plugins
                     case 0:
                         il.Emit(OpCodes.Ldarg_0);
                         break;
+
                     case 1:
                         il.Emit(OpCodes.Ldarg_1);
                         break;
+
                     case 2:
                         il.Emit(OpCodes.Ldarg_2);
                         break;
+
                     case 3:
                         il.Emit(OpCodes.Ldarg_3);
                         break;
+
                     case var j when j <= byte.MaxValue:
                         il.Emit(OpCodes.Ldarg_S, j);
                         break;
+
                     default:
                         il.Emit(OpCodes.Ldarg, i);
                         break;
@@ -121,6 +128,7 @@ namespace Hive.Plugins
             }
 
             #region Method Implementation
+
             foreach (var method in methods)
             {
                 var args = method.GetParameters();
@@ -136,8 +144,8 @@ namespace Hive.Plugins
                 fields.Add(genField);
 
                 var genMethod = gen.DefineMethod(
-                    $"<{method.Name}>", 
-                    MethodAttrs, 
+                    $"<{method.Name}>",
+                    MethodAttrs,
                     CallingConventions.Standard,
                     ret.ParameterType,
                     ret.GetRequiredCustomModifiers(),
@@ -148,12 +156,12 @@ namespace Hive.Plugins
                 );
                 gen.DefineMethodOverride(genMethod, method);
 
-                genMethod.DefineParameter(0, GetAttrsFor(ret), ret.Name);
+                _ = genMethod.DefineParameter(0, GetAttrsFor(ret), ret.Name);
 
                 for (int i = 0; i < args.Length; i++)
                 {
                     var param = args[i];
-                    genMethod.DefineParameter(i + 1, GetAttrsFor(param), param.Name);
+                    _ = genMethod.DefineParameter(i + 1, GetAttrsFor(param), param.Name);
                 }
 
                 {
@@ -175,7 +183,8 @@ namespace Hive.Plugins
                     il.Emit(OpCodes.Ret);
                 }
             }
-            #endregion
+
+            #endregion Method Implementation
 
             var ctor = gen.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, new[] { typeof(Delegate[]), enumerableType });
             {
@@ -269,27 +278,27 @@ namespace Hive.Plugins
             var invoke = newDelType.DefineMethod("Invoke", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual,
                 retType, coreArgTypes);
             invoke.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
-            invoke.DefineParameter(0, GetAttrsFor(ret), "return");
-            invoke.DefineParameter(1, ParameterAttributes.None, "inst");
+            _ = invoke.DefineParameter(0, GetAttrsFor(ret), "return");
+            _ = invoke.DefineParameter(1, ParameterAttributes.None, "inst");
             for (int i = 0; i < args.Length; i++)
             {
-                invoke.DefineParameter(i + 2, GetAttrsFor(args[i]), $"arg{i}");
+                _ = invoke.DefineParameter(i + 2, GetAttrsFor(args[i]), $"arg{i}");
             }
 
             var beginInvoke = newDelType.DefineMethod("BeginInvoke", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual,
                 typeof(IAsyncResult), coreArgTypes.Append(typeof(AsyncCallback)).Append(typeof(object)).ToArray());
             beginInvoke.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
-            beginInvoke.DefineParameter(1, ParameterAttributes.None, "inst");
+            _ = beginInvoke.DefineParameter(1, ParameterAttributes.None, "inst");
             for (int i = 0; i < args.Length; i++)
             {
-                beginInvoke.DefineParameter(i + 2, GetAttrsFor(args[i]), $"arg{i}");
+                _ = beginInvoke.DefineParameter(i + 2, GetAttrsFor(args[i]), $"arg{i}");
             }
 
             var endInvoke = newDelType.DefineMethod("EndInvoke", MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual,
                 retType, new[] { typeof(IAsyncResult) });
             endInvoke.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
-            endInvoke.DefineParameter(0, GetAttrsFor(ret), "return");
-            endInvoke.DefineParameter(1, ParameterAttributes.None, "result");
+            _ = endInvoke.DefineParameter(0, GetAttrsFor(ret), "return");
+            _ = endInvoke.DefineParameter(1, ParameterAttributes.None, "result");
 
             type = newDelType.CreateType();
 
@@ -300,26 +309,26 @@ namespace Hive.Plugins
         {
             var sb = new StringBuilder();
 
-            sb.Append($"{AssemblyName}.D")
+            _ = sb.Append($"{AssemblyName}.D")
               .Append(args.Length);
 
             static void AppendParam(StringBuilder sb, ParameterInfo p)
             {
                 if (p.ParameterType.IsByRef)
-                    sb.Append('R');
+                    _ = sb.Append('R');
                 else
-                    sb.Append('N');
+                    _ = sb.Append('N');
 
                 if (p.IsIn)
-                    sb.Append('i');
+                    _ = sb.Append('i');
                 if (p.IsOut)
-                    sb.Append('o');
+                    _ = sb.Append('o');
             }
 
             foreach (var p in args) AppendParam(sb, p);
 
             if (ret.ParameterType == typeof(void))
-                sb.Append('V');
+                _ = sb.Append('V');
             else
                 AppendParam(sb, ret);
 

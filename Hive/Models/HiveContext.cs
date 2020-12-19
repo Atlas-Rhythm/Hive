@@ -1,8 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Hive.Models
 {
@@ -27,7 +23,6 @@ namespace Hive.Models
 
             Mod.Configure(modelBuilder);
             GameVersion.Configure(modelBuilder);
-            Channel.Configure(modelBuilder);
         }
     }
 }

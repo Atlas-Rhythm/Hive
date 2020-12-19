@@ -107,6 +107,7 @@ namespace Hive.Versioning
                         comparer = default;
                         range = new Subrange(new VersionComparer(CompareTo, ComparisonType.Less), new VersionComparer(CompareTo, ComparisonType.Greater));
                         return CombineResult.OneSubrange;
+
                     default:
                         range = default;
                         comparer = new VersionComparer(CompareTo,
@@ -152,7 +153,7 @@ namespace Hive.Versioning
                 range = default;
 
                 if ((Type & other.Type & ~ComparisonType.ExactEqual) != ComparisonType.None) // they're pointing the same direction
-                { 
+                {
                     // so we want to pick the one that is encapsulated completely (the conjunction)
                     comparer = Matches(other) ? other : this;
                     return CombineResult.OneComparer;
@@ -230,7 +231,7 @@ namespace Hive.Versioning
             ///     </item>
             ///     <item>
             ///         <term><see cref="CombineResult.Everything"/></term>
-            ///         <description>The disjunction result matches every valid value. For convenience, 
+            ///         <description>The disjunction result matches every valid value. For convenience,
             ///             <paramref name="range"/> is set to <see cref="Subrange.Everything"/>.</description>
             ///     </item>
             ///     <item>
@@ -554,7 +555,7 @@ namespace Hive.Versioning
             ///     </item>
             ///     <item>
             ///         <term><see cref="CombineResult.Everything"/></term>
-            ///         <description>The disjunction result matches every valid value. For convenience, 
+            ///         <description>The disjunction result matches every valid value. For convenience,
             ///             <paramref name="result"/> is set to <see cref="Everything"/>.</description>
             ///     </item>
             /// </list>
@@ -607,7 +608,7 @@ namespace Hive.Versioning
                     Assert(LowerBound.TryDisjunction(other.LowerBound, out var lowCompare, out _) == CombineResult.OneComparer);
                     Assert(UpperBound.TryDisjunction(other.UpperBound, out var highCompare, out _) == CombineResult.OneComparer);
 
-                    result = lowCompare.CompareTo < highCompare.CompareTo 
+                    result = lowCompare.CompareTo < highCompare.CompareTo
                         ? new Subrange(lowCompare, highCompare)
                         : new Subrange(highCompare, lowCompare);
                     result2 = default;
@@ -720,12 +721,13 @@ namespace Hive.Versioning
 
         internal partial struct Subrange
         {
-            public static readonly Subrange Everything = new Subrange(
+            public static readonly Subrange Everything = new(
                     new VersionComparer(Version.Zero, ComparisonType.LessEqual),
                     new VersionComparer(Version.Zero, ComparisonType.Greater));
         }
 
         #region Parser
+
         internal partial struct VersionComparer
         {
             public static bool TryParse(ref ReadOnlySpan<char> text, out VersionComparer comparer)
@@ -775,13 +777,13 @@ namespace Hive.Versioning
                 if (Type == ComparisonType.None) return sb.Append("default");
 
                 if ((Type & ComparisonType.Greater) != ComparisonType.None)
-                    sb.Append('>');
+                    _ = sb.Append('>');
                 if ((Type & ComparisonType.Less) != ComparisonType.None)
-                    sb.Append('<');
+                    _ = sb.Append('<');
                 if ((Type & ComparisonType.ExactEqual) != ComparisonType.None)
-                    sb.Append('=');
+                    _ = sb.Append('=');
                 if ((Type & ~ComparisonType._All) != ComparisonType.None)
-                    sb.Append("!Invalid!");
+                    _ = sb.Append("!Invalid!");
 
                 return CompareTo.ToString(sb);
             }
@@ -789,6 +791,7 @@ namespace Hive.Versioning
             public override string ToString()
                 => ToString(new StringBuilder()).ToString();
         }
+
         internal partial struct Subrange
         {
             public static bool TryParse(ref ReadOnlySpan<char> text, bool allowOutward, out Subrange subrange)
@@ -876,7 +879,8 @@ namespace Hive.Versioning
                     var lower = LowerBound.CompareTo;
                     var upper = UpperBound.CompareTo;
 
-                    if (!upper.PreReleaseIds.Any()) {
+                    if (!upper.PreReleaseIds.Any())
+                    {
                         if ((lower.Major != 0 && lower.Major + 1 == upper.Major && upper.Minor == 0 && upper.Patch == 0)
                          || (lower.Minor != 0 && lower.Minor + 1 == upper.Minor && upper.Major == 0 && upper.Patch == 0)
                          || (lower.Patch != 0 && lower.Patch + 1 == upper.Patch && upper.Major == 0 && upper.Minor == 0))
@@ -887,13 +891,15 @@ namespace Hive.Versioning
                 if (IsExactEqual)
                     return ToExactEqualComparer().ToString(sb);
 
-                LowerBound.ToString(sb).Append(IsInward ? " " : " || ");
-                UpperBound.ToString(sb);
+                _ = LowerBound.ToString(sb).Append(IsInward ? " " : " || ");
+                _ = UpperBound.ToString(sb);
                 return sb;
             }
+
             public override string ToString()
                 => ToString(new StringBuilder()).ToString();
         }
-        #endregion
+
+        #endregion Parser
     }
 }

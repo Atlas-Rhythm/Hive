@@ -92,7 +92,7 @@ namespace Hive.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<IEnumerable<SerializedMod>>> GetAllMods([FromQuery] string[]? channelIds = null, [FromQuery] string? gameVersion = null, [FromQuery] string? filterType = null) 
+        public async Task<ActionResult<IEnumerable<SerializedMod>>> GetAllMods([FromQuery] string[]? channelIds = null, [FromQuery] string? gameVersion = null, [FromQuery] string? filterType = null)
         {
             log.Debug("Getting all mods...");
             // Get the user, do not need to capture context
@@ -141,7 +141,7 @@ namespace Hive.Controllers
                 mods = mods.Where(m => m.SupportedVersions.Contains(filteredVersion));
             }
 
-            // Because EF (or PostgreSQL or both) does not like advanced LINQ expressions (like GroupBy), 
+            // Because EF (or PostgreSQL or both) does not like advanced LINQ expressions (like GroupBy),
             // we convert to an enumerable and do the calculations on the client.
             IEnumerable<Mod> filteredMods = mods.AsEnumerable();
 
@@ -155,6 +155,7 @@ namespace Hive.Controllers
                         .GroupBy(m => m.ReadableID)
                         .Select(g => g.OrderByDescending(m => m.UploadedAt).First());
                     break;
+
                 default: // This is "LATEST", but should probably be default behavior, just to be safe.
                     filteredMods = filteredMods // With "LATEST", we group each mod by their ID, and grab the most up-to-date version.
                         .GroupBy(m => m.ReadableID)
@@ -293,7 +294,7 @@ namespace Hive.Controllers
 
             // Get the database mod that represents the ModIdentifier.
             var databaseMod = CreateModQuery()
-                .Where(x => x.ReadableID == identifier.ID 
+                .Where(x => x.ReadableID == identifier.ID
                     && x.Version == targetVersion)
                 .FirstOrDefault();
 
@@ -327,10 +328,10 @@ namespace Hive.Controllers
             databaseMod.Channel = destination;
 
             // If any plugins want to modify the object further after the move operation, they can do so here.
-            combined.ModifyAfterModMove(in databaseMod); 
+            combined.ModifyAfterModMove(in databaseMod);
 
-            await context.SaveChangesAsync().ConfigureAwait(false);
-            
+            _ = await context.SaveChangesAsync().ConfigureAwait(false);
+
             return Ok(SerializedMod.Serialize(databaseMod, databaseMod.GetLocalizedInfo(GetAcceptLanguageCultures())));
         }
 

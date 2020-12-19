@@ -1,15 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Hive.Models;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using NodaTime;
 using Serilog;
 using Serilog.Configuration;
@@ -18,13 +14,18 @@ using Serilog.Exceptions.Core;
 using Serilog.Exceptions.EntityFrameworkCore.Destructurers;
 using Hive.Versioning;
 using Version = Hive.Versioning.Version;
-using Hive.Plugins;
-using Hive.Controllers;
 
 namespace Hive
 {
+    /// <summary>
+    ///
+    /// </summary>
     public static class Program
     {
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="args"></param>
         public static void Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
@@ -32,14 +33,14 @@ namespace Hive
             using (var scope = host.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
-                var log = services.GetRequiredService<Serilog.ILogger>();
+                var log = services.GetRequiredService<ILogger>();
                 try
                 {
                     log.Debug("Configuring database");
 
                     var context = services.GetRequiredService<HiveContext>();
 
-                    context.Database.EnsureCreated();
+                    _ = context.Database.EnsureCreated();
 
                     log.Debug("Database prepared");
 
@@ -55,6 +56,11 @@ namespace Hive
             host.Run();
         }
 
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .UseSerilog((host, services, logger) => logger
@@ -68,7 +74,7 @@ namespace Hive
                     .WriteTo.Console())
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    _ = webBuilder.UseStartup<Startup>();
                 });
 
         private static LoggerConfiguration LibraryTypes(this LoggerDestructuringConfiguration conf)
@@ -76,7 +82,7 @@ namespace Hive
             .Destructure.AsScalar<VersionRange>();
 
         [Conditional("DEBUG")]
-        private static void DemoData(Serilog.ILogger log, HiveContext context, IServiceProvider services)
+        private static void DemoData(ILogger log, HiveContext context, IServiceProvider services)
         {
             if (context.Mods.Any()) return;
 
@@ -87,10 +93,10 @@ namespace Hive
                 var emptyObject = JsonDocument.Parse("{}").RootElement.Clone();
 
                 var channel = new Channel { Name = "default", AdditionalData = emptyObject };
-                context.Channels.Add(channel);
+                _ = context.Channels.Add(channel);
 
                 var gameVersion = new GameVersion { Name = "1.0.0", AdditionalData = emptyObject, CreationTime = SystemClock.Instance.GetCurrentInstant() };
-                context.GameVersions.Add(gameVersion);
+                _ = context.GameVersions.Add(gameVersion);
 
                 var mod = new Mod
                 {
@@ -115,9 +121,9 @@ namespace Hive
                 mod.Dependencies.Add(mr);
                 mod.AddGameVersion(gameVersion);
 
-                context.ModLocalizations.Add(loc);
-                context.Mods.Add(mod);
-                context.SaveChanges();
+                _ = context.ModLocalizations.Add(loc);
+                _ = context.Mods.Add(mod);
+                _ = context.SaveChanges();
 
                 transaction.Commit();
             }

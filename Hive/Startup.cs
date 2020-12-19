@@ -1,44 +1,45 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
 using Hive.Controllers;
-using Hive.Converters;
 using Hive.Graphing;
 using Hive.Models;
 using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Serilog;
 
 namespace Hive
 {
+    /// <summary>
+    ///
+    /// </summary>
     public class Startup
     {
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="configuration"></param>
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
 
+        /// <summary>
+        ///
+        /// </summary>
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
+        /// <summary>
+        /// This method gets called by the runtime. Use this method to add services to the container.
+        /// </summary>
+        /// <param name="services"></param>
         public void ConfigureServices(IServiceCollection services)
         {
-            services
+            _ = services
                 .AddTransient<IRuleProvider, ConfigRuleProvider>()
                 .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
                 .AddSingleton(sp =>
@@ -50,41 +51,38 @@ namespace Hive
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
                 .AddSingleton<IProxyAuthenticationService, MockAuthenticationService>();
 
-            services.AddDbContext<HiveContext>(options =>
+            _ = services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
 
-            services.AddAggregates();
+            _ = services.AddAggregates();
 
             services.AddHiveQLTypes();
             services.AddHiveGraphQL();
 
-            services.AddControllers();
+            _ = services.AddControllers();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Configure is required for Startup.")]
+        /// <summary>
+        /// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        /// </summary>
+        /// <param name="app"></param>
+        /// <param name="env"></param>
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
+                _ = app.UseDeveloperExceptionPage();
             }
 
-            app.UseExceptionHandlingMiddleware();
-
-            app.UseSerilogRequestLogging();
-
-            app.UseHttpsRedirection();
-
-            app.UseRouting();
-
-            app.UseAuthorization();
-
-            app.UseGraphQL<HiveSchema>("/graphql");
-            app.UseGraphQLAltair();
-
-            app.UseEndpoints(endpoints => endpoints.MapControllers());
+            _ = app.UseExceptionHandlingMiddleware()
+                .UseSerilogRequestLogging()
+                .UseHttpsRedirection()
+                .UseRouting()
+                .UseAuthorization()
+                .UseGraphQL<HiveSchema>("/graphql")
+                .UseGraphQLAltair()
+                .UseEndpoints(endpoints => endpoints.MapControllers());
         }
     }
 }

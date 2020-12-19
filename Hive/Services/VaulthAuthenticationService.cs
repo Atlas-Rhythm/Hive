@@ -2,12 +2,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Serilog;
-using Serilog.Core;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -16,6 +12,9 @@ using System.Threading.Tasks;
 
 namespace Hive.Services
 {
+    /// <summary>
+    ///
+    /// </summary>
     public sealed class VaulthAuthenticationService : IProxyAuthenticationService, IDisposable
     {
         private const string vaulthGetUserApi = "user";
@@ -27,6 +26,11 @@ namespace Hive.Services
         private readonly HttpClient client;
         private readonly ILogger logger;
 
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="log"></param>
+        /// <param name="configuration"></param>
         public VaulthAuthenticationService([DisallowNull] ILogger log, IConfiguration configuration)
         {
             if (log is null)
@@ -43,6 +47,7 @@ namespace Hive.Services
             };
         }
 
+        /// <inheritdoc/>
         public Task<bool> IsValid(HttpRequest request)
         {
             // Check the header of the request for a token
@@ -52,6 +57,7 @@ namespace Hive.Services
             return Task.FromResult(false);
         }
 
+        /// <inheritdoc/>
         public async Task<User?> GetUser(string userId, bool throwOnError = false)
         {
             if (string.IsNullOrEmpty(userId))
@@ -90,6 +96,7 @@ namespace Hive.Services
             }
         }
 
+        /// <inheritdoc/>
         public async Task<User?> GetUser(HttpRequest request, bool throwOnError = false)
         {
             if (request is null)
@@ -132,6 +139,9 @@ namespace Hive.Services
             }
         }
 
+        /// <summary>
+        /// Dispose
+        /// </summary>
         public void Dispose() => client.Dispose();
     }
 }

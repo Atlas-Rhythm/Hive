@@ -23,7 +23,7 @@ namespace Hive.Tests.Endpoints
     {
         private readonly ITestOutputHelper helper;
 
-        private static readonly Channel DefaultChannel = new Channel
+        private static readonly Channel DefaultChannel = new()
         {
             Name = "Public",
             AdditionalData = DIHelper.EmptyAdditionalData

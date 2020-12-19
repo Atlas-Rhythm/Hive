@@ -105,11 +105,13 @@ namespace Hive.Versioning
         /// </summary>
         [CLSCompliant(false)]
         public ulong Major => major;
+
         /// <summary>
         /// Gets the minor version number.
         /// </summary>
         [CLSCompliant(false)]
         public ulong Minor => minor;
+
         /// <summary>
         /// Gets the patch number.
         /// </summary>
@@ -120,6 +122,7 @@ namespace Hive.Versioning
         /// Gets the sequence of prerelease IDs.
         /// </summary>
         public IEnumerable<string> PreReleaseIds => prereleaseIds;
+
         /// <summary>
         /// Gets the sequence of build IDs.
         /// </summary>
@@ -146,17 +149,17 @@ namespace Hive.Versioning
             if (sb is null)
                 throw new ArgumentNullException(nameof(sb));
 
-            sb.Append(Major).Append('.')
+            _ = sb.Append(Major).Append('.')
               .Append(Minor).Append('.')
               .Append(Patch);
             if (prereleaseIds.Length > 0)
             {
-                sb.Append('-')
+                _ = sb.Append('-')
                   .AppendJoin(".", prereleaseIds);
             }
             if (buildIds.Length > 0)
             {
-                sb.Append('+')
+                _ = sb.Append('+')
                   .AppendJoin(".", buildIds);
             }
             return sb;
@@ -178,6 +181,7 @@ namespace Hive.Versioning
             if (a is null || b is null) return false;
             return a.Equals(b);
         }
+
         /// <summary>
         /// Compares two versions for inequality.
         /// </summary>
@@ -214,6 +218,7 @@ namespace Hive.Versioning
 
             return a.CompareTo(b) < 0;
         }
+
         /// <summary>
         /// Checks if <paramref name="a"/> is greater than or equal to <paramref name="b"/>.
         /// </summary>
@@ -222,6 +227,7 @@ namespace Hive.Versioning
         /// <returns><see langword="true"/> if <paramref name="a"/> is greater than or equal to <paramref name="b"/>, <see langword="false"/></returns>
         public static bool operator >=(Version a, Version b)
             => !(a < b);
+
         /// <summary>
         /// Checks if <paramref name="a"/> is less than or equal to <paramref name="b"/>.
         /// </summary>
@@ -239,6 +245,7 @@ namespace Hive.Versioning
         /// <returns>The maximum of <paramref name="a"/> and <paramref name="b"/></returns>
         public static Version Max(Version a, Version b)
             => a > b ? a : b;
+
         /// <summary>
         /// Determines the minimum of two versions.
         /// </summary>
@@ -285,7 +292,7 @@ namespace Hive.Versioning
         /// Compares this version to another version according to the SemVer specification.
         /// </summary>
         /// <param name="other">The version to compare to.</param>
-        /// <returns>Less than zero if <see langword="this"/> is less than <paramref name="other"/>, zero if they are equal, and 
+        /// <returns>Less than zero if <see langword="this"/> is less than <paramref name="other"/>, zero if they are equal, and
         /// more than zero if <see langword="this"/> is greater than <paramref name="other"/></returns>
         public int CompareTo(Version other)
         {
@@ -393,8 +400,9 @@ namespace Hive.Versioning
         }
 
         #region Parser
+
         private static bool TryParseInternal(
-            ref ReadOnlySpan<char> text, 
+            ref ReadOnlySpan<char> text,
             out ulong major,
             out ulong minor,
             out ulong patch,
@@ -637,6 +645,7 @@ namespace Hive.Versioning
             id = default;
             return false;
         }
-        #endregion
+
+        #endregion Parser
     }
 }

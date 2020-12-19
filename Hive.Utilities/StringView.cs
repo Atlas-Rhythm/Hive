@@ -19,10 +19,12 @@ namespace Hive.Utilities
         /// Gets the string that this is a view into.
         /// </summary>
         public string BaseString { get; }
+
         /// <summary>
         /// Gets the starting index of the view in <see cref="BaseString"/>.
         /// </summary>
         public int Start { get; }
+
         /// <summary>
         /// Gets the length of this view.
         /// </summary>
@@ -87,7 +89,6 @@ namespace Hive.Utilities
             Length = len;
         }
 
-
         /// <summary>
         /// Gets the character at the specified index in the view.
         /// </summary>
@@ -96,7 +97,7 @@ namespace Hive.Utilities
         /// <exception cref="IndexOutOfRangeException">
         /// Thrown if <paramref name="index"/> is out of bounds of this view.
         /// </exception>
-        [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", 
+        [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations",
             Justification = "This is an indexer. It can throw IndexOutOfRangeException. That makes sense.")]
         public char this[int index]
         {
@@ -116,6 +117,7 @@ namespace Hive.Utilities
         /// <seealso cref="Substring(int, int)"/>
         public StringView Substring(int start)
             => Substring(start, Length - start);
+
         /// <summary>
         /// Gets a view of a substring of this view. Equivalent to <see cref="StringView(StringView, int, int)"/>.
         /// </summary>
@@ -124,7 +126,7 @@ namespace Hive.Utilities
         /// <returns>A view over the substring.</returns>
         /// <seealso cref="StringView(StringView, int, int)"/>
         public StringView Substring(int start, int length)
-            => new StringView(this, start, length);
+            => new(this, start, length);
 
         /// <summary>
         /// Lazily splits this view into sub-views, using <paramref name="sep"/> as the seperator.
@@ -160,16 +162,13 @@ namespace Hive.Utilities
                 yield return new StringView(this, regionBegin, Length - regionBegin);
         }
 
-
         /// <summary>
         /// Implicitly converts a <see cref="string"/> to a <see cref="StringView"/>, using <see cref="StringView(string)"/>.
         /// </summary>
         /// <param name="value">The string to wrap.</param>
         /// <seealso cref="StringView(string)"/>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", 
-            Justification = "The alternative is the StringValue(string) constructor.")]
         public static implicit operator StringView(string value)
-            => new StringView(value);
+            => new(value);
 
         /// <summary>
         /// Compares content of the two <see cref="StringView"/>s for equality.
@@ -212,6 +211,7 @@ namespace Hive.Utilities
         /// <returns><see langword="true"/> if the two are equal, <see langword="false"/> otherwise.</returns>
         /// <seealso cref="Equals(StringView)"/>
         public bool Equals(string other) => Equals((StringView)other);
+
         /// <summary>
         /// Compares the content of this view to the provided view for equality.
         /// </summary>
@@ -239,6 +239,7 @@ namespace Hive.Utilities
         /// <param name="views">An array of views to concatenate.</param>
         /// <returns>The concatenated <see cref="StringView"/>.</returns>
         public static StringView Concat(params StringView[] views) => Concat(views.AsEnumerable());
+
         /// <summary>
         /// Concatenates a sequence of <see cref="StringView"/>s into a single <see cref="StringView"/>.
         /// </summary>
@@ -295,11 +296,10 @@ namespace Hive.Utilities
             {
                 var sv = list[i];
                 if (sv.Length == 0) continue;
-                sb.Append(sv.BaseString, sv.Start, sv.Length);
+                _ = sb.Append(sv.BaseString, sv.Start, sv.Length);
             }
             return sb.ToString();
         }
-
 
         /// <summary>
         /// Concatenates two <see cref="StringView"/>s into a single <see cref="StringView"/>.
@@ -307,8 +307,6 @@ namespace Hive.Utilities
         /// <param name="a">The first view to concatenate.</param>
         /// <param name="b">The second view to concatenate.</param>
         /// <returns>The concatenated <see cref="StringView"/>.</returns>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", 
-            Justification = "The named alternative is Concat(StringView, StringView).")]
         public static StringView operator +(StringView a, StringView b) => Concat(a, b);
 
         /// <summary>
@@ -317,12 +315,12 @@ namespace Hive.Utilities
         /// <returns>The hash code for the content of this view.</returns>
         public override int GetHashCode()
         {
-            int code = Length ^ unchecked(0x0adeb890);
+            var code = Length ^ unchecked(0x0adeb890);
             code ^= code << 8;
             code ^= code << 16;
             for (int i = 0; i < Length; i++)
             {
-                code ^= ((ushort)BaseString[Start + i]) << 8 * (i % 4);
+                code ^= BaseString[Start + i] << (8 * (i % 4));
             }
             return code;
         }
@@ -341,7 +339,7 @@ namespace Hive.Utilities
         /// Gets an enumerator for the characters in this view.
         /// </summary>
         /// <returns>An enumerator capable of enumerating this view's characters.</returns>
-        public Enumerator GetEnumerator() => new Enumerator(this);
+        public Enumerator GetEnumerator() => new(this);
 
         /// <summary>
         /// An enumerator capable of enumerating the characters in a <see cref="StringView"/>.
@@ -358,7 +356,7 @@ namespace Hive.Utilities
                 this.source = source.BaseString;
                 start = source.Start;
                 end = start + source.Length;
-                current = start-1;
+                current = start - 1;
             }
 
             /// <summary>
@@ -372,15 +370,17 @@ namespace Hive.Utilities
             /// Disposes of this enumerator.
             /// </summary>
             public void Dispose() { }
+
             /// <summary>
             /// Advances to the next character.
             /// </summary>
             /// <returns><see langword="true"/> if there is another character, <see langword="false"/> otherwise.</returns>
             public bool MoveNext() => ++current < end;
+
             /// <summary>
             /// Resets this enumerator to the beginning of the view.
             /// </summary>
-            public void Reset() => current = start-1;
+            public void Reset() => current = start - 1;
         }
 
         IEnumerator<char> IEnumerable<char>.GetEnumerator() => GetEnumerator();

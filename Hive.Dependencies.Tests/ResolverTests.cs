@@ -1,8 +1,6 @@
 ﻿using Microsoft.FSharp.Core;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Hive.Versioning;
@@ -24,6 +22,7 @@ namespace Hive.Dependencies.Tests
         {
             public string Id { get; }
             public VersionRange Range { get; }
+
             public ModRef(string id, VersionRange vers)
             {
                 Id = id;
@@ -31,10 +30,10 @@ namespace Hive.Dependencies.Tests
             }
         }
 
-        
         private class Accessor : IValueAccessor<Mod, ModRef, Version, VersionRange>
         {
             public readonly List<Mod> ExistingMods;
+
             public Accessor(List<Mod> mods) => ExistingMods = mods;
 
             public Task<IEnumerable<Mod>> ModsMatching(ModRef @ref)
@@ -53,7 +52,8 @@ namespace Hive.Dependencies.Tests
             public int Compare(Version a, Version b) => a.CompareTo(b);
 
             public IEnumerable<ModRef> Conflicts(Mod mod_) => mod_.Conflicts;
-            public ModRef CreateRef(string id, VersionRange range) => new ModRef(id, range);
+
+            public ModRef CreateRef(string id, VersionRange range) => new(id, range);
 
             public IEnumerable<ModRef> Dependencies(Mod mod_) => mod_.Dependencies;
 

@@ -27,7 +27,7 @@ namespace Hive.Permissions
 
         public IList<ISpecialBinaryOperationCompiler> PowerCompilers { get; } = new List<ISpecialBinaryOperationCompiler>();
 
-        private readonly List<IBuiltinFunction<RuleCompilationSettings>> builtins = new List<IBuiltinFunction<RuleCompilationSettings>>();
+        private readonly List<IBuiltinFunction<RuleCompilationSettings>> builtins = new();
 
         public IReadOnlyCollection<IBuiltinFunction<RuleCompilationSettings>> BuiltinFunctions => builtins;
 

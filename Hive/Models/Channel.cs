@@ -6,29 +6,33 @@ using System.Text.Json;
 
 namespace Hive.Models
 {
-    public class Channel
+    /// <summary>
+    /// Represents a channel of mods.
+    /// </summary>
+    public class Channel : IEquatable<Channel>
     {
-        // this could also act as a primary key
+        /// <summary>
+        /// Name of the Channel
+        /// </summary>
         [Key]
         public string Name { get; set; } = null!;
 
-        // like Mod's
+        /// <summary>
+        /// Additional data associated with the Channel
+        /// </summary>
         public JsonElement AdditionalData { get; set; }
 
-        // TODO: is there anything else that needs to be on any particular channel object?
-
-        public static void Configure([DisallowNull] ModelBuilder b)
-        {
-            if (b is null)
-                throw new ArgumentNullException(nameof(b));
-            b.Entity<Channel>();
-        }
-
-        [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "It is validated, though")]
+        /// <summary>
+        /// Equality comparison
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
         public bool Equals(Channel? other) => other is not null && other.Name == Name;
 
+        /// <inheritdoc/>
         public override bool Equals(object? obj) => Equals(obj as Channel);
 
+        /// <inheritdoc/>
         public override int GetHashCode() => Name.GetHashCode(StringComparison.InvariantCulture);
     }
 }

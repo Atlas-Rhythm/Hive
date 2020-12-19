@@ -126,7 +126,7 @@ namespace Hive.Tests.Endpoints
             Assert.DoesNotContain(defaultChannels.ElementAt(1), value);
         }
 
-        private static Mock<IChannelsControllerPlugin> CreatePlugin() => new Mock<IChannelsControllerPlugin>();
+        private static Mock<IChannelsControllerPlugin> CreatePlugin() => new();
 
         private static IChannelsControllerPlugin CreateDefaultPlugin() => new HiveChannelsControllerPlugin();
 

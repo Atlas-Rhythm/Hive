@@ -116,7 +116,7 @@ namespace Hive.Controllers
 
             try
             {
-                // Run our obtained mods through DaNike's F# dependency resolution library. 
+                // Run our obtained mods through DaNike's F# dependency resolution library.
                 resolvedMods = await Resolver.Resolve(dependencyValueAccessor, mods).ConfigureAwait(false);
                 result.AdditionalMods.AddRange(resolvedMods);
             }
@@ -201,8 +201,8 @@ namespace Hive.Controllers
 
             public VersionRange Range(ModReference @ref) => @ref.Versions;
 
-            public ModReference CreateRef(string id, VersionRange range) => new ModReference(id, range);
-            
+            public ModReference CreateRef(string id, VersionRange range) => new(id, range);
+
             // Comparisons
             public bool Matches(VersionRange range, Version version) => range.Matches(version);
 
