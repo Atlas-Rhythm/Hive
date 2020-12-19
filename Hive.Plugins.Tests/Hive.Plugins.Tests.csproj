@@ -8,12 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0-preview-20200812-03" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.0-preview-20201123-03" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Hive.Plugins\Hive.Plugins.csproj" />
     <ProjectReference Include="..\Hive\Hive.csproj" />
   </ItemGroup>
-
+  
 </Project>
