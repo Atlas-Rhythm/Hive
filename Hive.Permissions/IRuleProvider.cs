@@ -73,6 +73,7 @@ namespace Hive.Permissions
     /// An interface that, in addition to what <see cref="IRuleProvider"/> provides, allows an arbitrary transformation
     /// to be applied to the rule expressions before being compiled.
     /// </summary>
+    [CLSCompliant(false)]
     public interface IPreCompileRuleProvider : IRuleProvider
     {
         /// <summary>

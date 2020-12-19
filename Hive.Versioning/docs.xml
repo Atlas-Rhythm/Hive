@@ -45,4 +45,12 @@
       </list>
     </syntax>
   </class>
+  <class name="Version">
+    <cls-compliance>
+      <remarks>
+        <para>This interface is provided only for CLS compliance. The actual version number is unsigned.</para>
+        <para>Because of this, very large version numbers may cause issues with this interface.</para>
+      </remarks>
+    </cls-compliance>
+  </class>
 </csdocs>
