@@ -10,10 +10,10 @@ namespace Hive.Graphing.Types
             Name = nameof(ModReference);
             Description = Resources.GraphQL.ModReference;
 
-            Field(mr => mr.ModID)
+            _ = Field(mr => mr.ModID)
                 .Description(Resources.GraphQL.ModReference_ModID);
 
-            Field<StringGraphType>(
+            _ = Field<StringGraphType>(
                 "versionRange",
                 Resources.GraphQL.ModReference_VersionRange,
                 resolve: ctx => ctx.Source.Versions.ToString()

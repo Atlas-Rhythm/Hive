@@ -16,8 +16,10 @@ namespace Hive.Plugins
     {
         /// <inheritdoc/>
         public override bool CanReduce => true;
+
         /// <inheritdoc/>
         public override ExpressionType NodeType => (ExpressionType)1000;
+
         /// <inheritdoc/>
         public override Type Type => typeof(void);
 
@@ -25,30 +27,37 @@ namespace Hive.Plugins
         /// Gets the type of the elements of the enumeration.
         /// </summary>
         public Type EnumerationType { get; }
+
         /// <summary>
         /// Gets the type of the <see cref="IEnumerator"/> being used for iteration.
         /// </summary>
         public Type EnumeratorType { get; }
+
         /// <summary>
         /// Gets the method on the enumerable that gets its enumerator.
         /// </summary>
         public MethodInfo GetEnumerator { get; }
+
         /// <summary>
         /// Gets the property on <see cref="EnumeratorType"/> that gets is current value.
         /// </summary>
         public PropertyInfo Current { get; }
+
         /// <summary>
         /// Gets the expression representing the value to enumerate.
         /// </summary>
         public Expression Enumerable { get; }
+
         /// <summary>
         /// Gets the variable that is populated with the value during each iteration.
         /// </summary>
         public ParameterExpression LoopVariable { get; }
+
         /// <summary>
         /// Gets the expression to be evaluated as the body of the loop.
         /// </summary>
         public Expression Body { get; }
+
         /// <summary>
         /// Gets the <see cref="LabelTarget"/> that can be used with <see cref="Expression.Break(LabelTarget)"/> to break out of the loop early.
         /// </summary>
@@ -83,10 +92,10 @@ namespace Hive.Plugins
                 throw new ArgumentException(SR.Foreach_EnumerableInvalid, nameof(enumerable));
 
             var getEnum = enumerable.Type.GetMethod(
-                nameof(IEnumerable.GetEnumerator), 
-                BindingFlags.Public | BindingFlags.Instance, 
-                null, 
-                Array.Empty<Type>(), 
+                nameof(IEnumerable.GetEnumerator),
+                BindingFlags.Public | BindingFlags.Instance,
+                null,
+                Array.Empty<Type>(),
                 Array.Empty<ParameterModifier>()
             );
             if (getEnum == null)

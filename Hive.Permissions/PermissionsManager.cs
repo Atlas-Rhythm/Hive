@@ -124,7 +124,7 @@ namespace Hive.Permissions
         /// <returns><see langword="true"/> if the action is permitted, <see langword="false"/> otherwise.</returns>
         /// <exception cref="PermissionException">Thrown when there is an exception when executing a rule.</exception>
         /// <seealso cref="CanDo(StringView, TContext, ref PermissionActionParseState)"/>
-        [SuppressMessage("Hive.Permissions", "Hive0013:Use the CanDo(StringView, TContext) overload for runtime-specified actions", 
+        [SuppressMessage("Hive.Permissions", "Hive0013:Use the CanDo(StringView, TContext) overload for runtime-specified actions",
             Justification = "This is the implementation for that overload.")]
         public bool CanDo(StringView action, TContext context)
         {
@@ -175,7 +175,7 @@ namespace Hive.Permissions
         /// </remarks>
         /// <param name="action">The action to compile the rules for.</param>
         /// <exception cref="PermissionException">Thrown if there was an error while compiling one of the rules for <paramref name="action"/>.</exception>
-        /// <exception cref="AggregateException">Thrown if there were errors while compiling multiple rules for <paramref name="action"/>. 
+        /// <exception cref="AggregateException">Thrown if there were errors while compiling multiple rules for <paramref name="action"/>.
         /// <see cref="AggregateException.InnerExceptions"/> will all be <see cref="PermissionException"/>s.</exception>
         public void PreCompile(StringView action)
         {
@@ -279,7 +279,7 @@ namespace Hive.Permissions
                             return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
                         }
                         else
-                        { // the rule no longer exists, so we clear out 
+                        { // the rule no longer exists, so we clear out
                             logger.ReplaceRule(null);
                             entry.Rule = null;
                             del = null;

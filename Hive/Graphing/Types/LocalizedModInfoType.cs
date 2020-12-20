@@ -10,16 +10,16 @@ namespace Hive.Graphing.Types
             Name = nameof(LocalizedModInfo);
             Description = Resources.GraphQL.LocalizedModInfo;
 
-            Field(lmi => lmi.Name)
+            _ = Field(lmi => lmi.Name)
                 .Description(Resources.GraphQL.LocalizedModInfo_Name);
 
-            Field(lmi => lmi.Description)
+            _ = Field(lmi => lmi.Description)
                 .Description(Resources.GraphQL.LocalizedModInfo_Description);
 
-            Field(lmi => lmi.Changelog, nullable: true)
+            _ = Field(lmi => lmi.Changelog, nullable: true)
                 .Description(Resources.GraphQL.LocalizedModInfo_Changelog);
 
-            Field(lmi => lmi.Credits, nullable: true)
+            _ = Field(lmi => lmi.Credits, nullable: true)
                 .Description(Resources.GraphQL.LocalizedModInfo_Credits);
         }
     }

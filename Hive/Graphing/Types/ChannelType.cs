@@ -10,7 +10,7 @@ namespace Hive.Graphing.Types
             Name = nameof(Channel);
             Description = Resources.GraphQL.Channel;
 
-            Field(c => c.Name)
+            _ = Field(c => c.Name)
                 .Description(Resources.GraphQL.Channel_Name);
         }
     }

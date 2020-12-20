@@ -17,7 +17,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Text.Json;
 using Version = Hive.Versioning.Version;
 
 namespace Hive.Controllers

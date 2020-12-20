@@ -2,16 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Hive.Models;
 using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Hive.Controllers
 {
@@ -24,7 +21,7 @@ namespace Hive.Controllers
         /// <summary>
         /// Returns true if the specified user has access to ANY of the channels. False otherwise.
         /// A false return will cause the endpoint in question to return a Forbid before executing the rest of the endpoint.
-        /// <para>It is recommended to use <see cref="GetChannelsFilter(IEnumerable{Channel})"/> for filtering user specific channels.</para>
+        /// <para>It is recommended to use <see cref="GetChannelsFilter(User?, IEnumerable{Channel})"/> for filtering user specific channels.</para>
         /// <para>Hive default is to return true.</para>
         /// </summary>
         /// <param name="user">User in context</param>
@@ -75,7 +72,7 @@ namespace Hive.Controllers
         {
             log.Debug("Getting channels...");
             // Get the user, do not need to capture context.
-            User? user = await authService.GetUser(Request).ConfigureAwait(false);
+            var user = await authService.GetUser(Request).ConfigureAwait(false);
             // If user is null, we can simply forward it anyways
             // TODO: Wrap with user != null, either anonymize "hive.channel" or remove entirely.
             // hive.channel with a null channel in the context should be permissible

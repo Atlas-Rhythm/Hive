@@ -23,7 +23,7 @@ namespace Hive.Utilities
     {
         private readonly CultureInfo Culture;
         private readonly string FormatString;
-        
+
         /// <summary>
         /// Constructs a new wrapper for the provided culture and format string.
         /// </summary>
@@ -72,7 +72,7 @@ namespace Hive.Utilities
     }
 
     // Ignore the IDE warnings below. VS doesn't currently have very good support for source generators.
-    
+
     [ParameterizeGenericParameters(1, 6)]
     public readonly partial struct UnformattedString<T1, T2, T3, T4, T5, T6, T7>
     {

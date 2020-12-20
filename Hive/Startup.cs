@@ -55,11 +55,9 @@ namespace Hive
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
 
-            _ = services.AddAggregates();
-
-            services.AddHiveQLTypes();
-            services.AddHiveGraphQL();
-
+            _ = services.AddAggregates()
+                .AddHiveQLTypes()
+                .AddHiveGraphQL();
             _ = services.AddControllers();
         }
 

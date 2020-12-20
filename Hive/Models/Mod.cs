@@ -81,37 +81,37 @@ namespace Hive.Models
         {
             if (ver is null)
                 throw new ArgumentNullException(nameof(ver));
-            SupportedVersions.Remove(ver);
-            ver.SupportedMods.Remove(this);
+            _ = SupportedVersions.Remove(ver);
+            _ = ver.SupportedMods.Remove(this);
         }
 
         public static void Configure([DisallowNull] ModelBuilder b)
         {
             if (b is null)
                 throw new ArgumentNullException(nameof(b));
-            b.Entity<Mod>()
+            _ = b.Entity<Mod>()
                 .HasMany(m => m.Localizations)
                 .WithOne(l => l.OwningMod)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
 
             // SupportedMods is set up by GameVersion
-            b.Entity<Mod>()
+            _ = b.Entity<Mod>()
                 .Property(m => m.Version)
                 .HasConversion( // TODO: maybe encode this differently (say in a json structure?)
                     v => v.ToString(),
                     s => new Version(s)
                 );
-            b.Entity<Mod>()
+            _ = b.Entity<Mod>()
                 .HasIndex(m => new { m.ReadableID, m.Version })
                 .IsUnique();
-            b.Entity<Mod>()
+            _ = b.Entity<Mod>()
                 .Property(m => m.Uploader)
                 .IsVaulthUser();
-            b.Entity<Mod>()
+            _ = b.Entity<Mod>()
                 .Property(m => m.Authors)
                 .IsVaulthUsers();
-            b.Entity<Mod>()
+            _ = b.Entity<Mod>()
                 .Property(m => m.Contributors)
                 .IsVaulthUsers();
         }
@@ -131,22 +131,20 @@ namespace Hive.Models
             Versions = versions;
         }
 
+        /// <inheritdoc/>
         public override string ToString() => $"{ModID}@{Versions}";
 
+        /// <inheritdoc/>
         public override bool Equals(object? obj) => obj != null && obj is ModReference r && Equals(r);
 
+        /// <inheritdoc/>
         public bool Equals(ModReference other) => other.ModID == ModID && other.Versions == Versions;
 
+        /// <inheritdoc/>
         public override int GetHashCode() => ModID.GetHashCode(StringComparison.InvariantCulture) ^ Versions.GetHashCode();
 
-        public static bool operator ==(ModReference left, ModReference right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(ModReference left, ModReference right) => left.Equals(right);
 
-        public static bool operator !=(ModReference left, ModReference right)
-        {
-            return !(left == right);
-        }
+        public static bool operator !=(ModReference left, ModReference right) => !(left == right);
     }
 }

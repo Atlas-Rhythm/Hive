@@ -70,7 +70,7 @@ namespace Hive.Controllers
         {
             log.Debug("Getting game versions...");
             // Get the user, do not need to capture context.
-            User? user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             // iff a given user (or none) is allowed to access any game versions. This should almost always be true.
             if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref versionsParseState))

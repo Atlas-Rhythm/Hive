@@ -10,7 +10,7 @@ namespace Hive.Graphing.Types
             Name = nameof(User);
             Description = Resources.GraphQL.User;
 
-            Field(u => u.Username)
+            _ = Field(u => u.Username)
                 .Description(Resources.GraphQL.User_Username);
         }
     }

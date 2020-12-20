@@ -104,7 +104,6 @@ namespace Hive.Versioning.Tests.Ranges
             new object[] { "<1.0.0", ">=2.0.0", "2.0.0", true },
         };
 
-
         [Theory]
         [InlineData(">=1.0.0 <2.0.0", ">=1.0.1 <2.0.0-pre.1", nameof(CombineResult.OneSubrange), ">=1.0.1 <2.0.0-pre.1", null)]
         [InlineData(">=1.0.0 <2.0.0", ">=1.0.1 <2.0.0", nameof(CombineResult.OneSubrange), ">=1.0.1 <2.0.0", null)]
@@ -133,7 +132,6 @@ namespace Hive.Versioning.Tests.Ranges
                 CheckEqual(expect1.Value, result1);
             if (expect2 != null)
                 CheckEqual(expect2.Value, result2);
-
         }
 
         [Theory]
@@ -165,7 +163,6 @@ namespace Hive.Versioning.Tests.Ranges
                 CheckEqual(expect1.Value, result1);
             if (expect2 != null)
                 CheckEqual(expect2.Value, result2);
-
         }
 
         private static void CheckEqual(in Subrange expect, in Subrange result)
