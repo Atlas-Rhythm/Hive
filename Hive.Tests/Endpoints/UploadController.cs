@@ -148,6 +148,7 @@ namespace Hive.Tests.Endpoints
 
             return contextMoq.Object;
         }
+
         private class UploadsRuleProvider : IRuleProvider
         {
             private readonly string permissionRule;
@@ -242,6 +243,7 @@ namespace Hive.Tests.Endpoints
 
                 return true;
             }
+
             public Task SetExpiry(CdnObject link, Instant expireAt)
             {
                 var delay = expireAt - SystemClock.Instance.GetCurrentInstant();
@@ -252,6 +254,7 @@ namespace Hive.Tests.Endpoints
 
                 return Task.CompletedTask;
             }
+            
             public async Task<bool> TryDeleteObject(CdnObject link)
             {
                 if (expirationTimers.TryRemove(link.UniqueId, out var timer))
