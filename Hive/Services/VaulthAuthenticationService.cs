@@ -61,10 +61,10 @@ namespace Hive.Services
         public async Task<User?> GetUser(string userId, bool throwOnError = false)
         {
             if (string.IsNullOrEmpty(userId))
-                if (throwOnError)
-                    throw new ArgumentNullException(nameof(userId));
-                else
-                    return null;
+            {
+                return throwOnError ? throw new ArgumentNullException(nameof(userId)) : null;
+            }
+
             try
             {
                 // TODO: Add username as query parameter, or body, dependening on what vaulth decides.

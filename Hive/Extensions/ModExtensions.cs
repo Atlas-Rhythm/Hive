@@ -56,12 +56,9 @@ namespace Hive.Extensions
             }
 
             // If we still have no language, then... fuck.
-            if (localizedModInfo is null)
-            {
-                throw new ArgumentException($"Mod {mod.ReadableID} does not have any LocalizedModInfos attached to it.");
-            }
-
-            return localizedModInfo;
+            return localizedModInfo is null
+                ? throw new ArgumentException($"Mod {mod.ReadableID} does not have any LocalizedModInfos attached to it.")
+                : localizedModInfo;
         }
     }
 }

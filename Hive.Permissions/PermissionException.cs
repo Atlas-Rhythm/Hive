@@ -1,22 +1,18 @@
 ﻿using Hive.Utilities;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.Serialization;
-using System.Text;
 
 namespace Hive.Permissions
 {
     /// <summary>
     /// An exception that ocurred while compiling or executing rules in the permission system.
     /// </summary>
-    [SuppressMessage("", "CA1032", Justification = "All normal exception constructors have variants that take the action and rule.")]
     public class PermissionException : Exception
     {
         /// <summary>
         /// Gets the action that was being evaluated when this error ocurred.
         /// </summary>
         public StringView Action { get; }
+
         /// <summary>
         /// Gets the rule that was being compiled or evaluated when this error ocurred, if any.
         /// </summary>

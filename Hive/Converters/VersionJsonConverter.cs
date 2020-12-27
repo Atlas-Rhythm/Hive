@@ -11,13 +11,9 @@ namespace Hive.Converters
         [return: MaybeNull]
         public override Version? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            if (reader.TokenType == JsonTokenType.Null)
-                return null;
-
-            if (reader.TokenType != JsonTokenType.String)
-                throw new JsonException();
-
-            return new Version(reader.GetString()!);
+            return reader.TokenType == JsonTokenType.Null
+                ? null
+                : reader.TokenType != JsonTokenType.String ? throw new JsonException() : new Version(reader.GetString()!);
         }
 
         public override void Write(Utf8JsonWriter writer, Version value, JsonSerializerOptions options)

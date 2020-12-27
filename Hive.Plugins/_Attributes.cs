@@ -1,12 +1,9 @@
 ﻿using Hive.Plugins.Resources;
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace Hive.Plugins
 {
@@ -100,10 +97,10 @@ namespace Hive.Plugins
 
         Expression IStopIfReturns.Test(Expression value)
         {
-            MethodInfo getEnumerator = value.Type.GetMethod("GetEnumerator", Array.Empty<Type>());
+            var getEnumerator = value.Type.GetMethod("GetEnumerator", Array.Empty<Type>());
             if (getEnumerator == null) // The value might not have a public GetEnumerator; if so, we need to look via the interface type.
             {
-                Type enumerableType = value.Type.GetInterfaces().Where(x => x == typeof(IEnumerable)).First();
+                var enumerableType = value.Type.GetInterfaces().Where(x => x == typeof(IEnumerable)).First();
                 getEnumerator = enumerableType.GetMethod("GetEnumerator");
             }
 

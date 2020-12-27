@@ -7,9 +7,6 @@ namespace Hive.Graphing
 {
     public class HiveSchema : Schema
     {
-        public HiveSchema(IServiceProvider provider)
-        {
-            Query = provider.GetRequiredService<HiveQuery>();
-        }
+        public HiveSchema(IServiceProvider provider) => Query = provider.GetRequiredService<HiveQuery>();
     }
 }

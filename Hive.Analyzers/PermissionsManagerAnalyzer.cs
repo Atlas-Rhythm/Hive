@@ -3,9 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Text;
 
 namespace Hive.Analyzers
 {
@@ -22,17 +20,17 @@ namespace Hive.Analyzers
             });
 
         private static readonly DiagnosticDescriptor Wrn_UseStringLiteralForActionString
-            = new DiagnosticDescriptor(
+            = new(
                 id: "Hive0011",
                 title: "Action strings provided to PermissionManager.CanDo should be string literals",
-                messageFormat: "Permission action strings should be string literals, because one location should only check one permission" ,
+                messageFormat: "Permission action strings should be string literals, because one location should only check one permission",
                 category: "Hive.Permissions",
                 defaultSeverity: DiagnosticSeverity.Warning,
                 isEnabledByDefault: true
             );
 
         private static readonly DiagnosticDescriptor Wrn_UseActionParseStateOverload
-            = new DiagnosticDescriptor(
+            = new(
                 id: "Hive0012",
                 title: "Use the CanDo(StringView, TContext, ref PermissionActionParseState) overload when possible",
                 messageFormat: "Use the action parse state overload of CanDo when possible to avoid re-parsing the action string",
@@ -42,7 +40,7 @@ namespace Hive.Analyzers
             );
 
         private static readonly DiagnosticDescriptor Wrn_UseNonActionParseStateOverloadForRuntime
-            = new DiagnosticDescriptor(
+            = new(
                 id: "Hive0013",
                 title: "Use the CanDo(StringView, TContext) overload for runtime-specified actions",
                 messageFormat: "Use the non-ActionParseState overload of CanDo when the action string isn't known until runtime",
@@ -52,7 +50,7 @@ namespace Hive.Analyzers
             );
 
         private static readonly DiagnosticDescriptor Wrn_UnknownCanDoOverload
-            = new DiagnosticDescriptor(
+            = new(
                 id: "Hive0019",
                 title: "Unknown overload of CanDo",
                 messageFormat: "This overload of CanDo is unrecognized by the analyzer",
@@ -98,7 +96,7 @@ namespace Hive.Analyzers
 
             var argumentList = invocation.Arguments;
 
-            if (argumentList.Length < 2 || argumentList.Length > 3)
+            if (argumentList.Length is < 2 or > 3)
             {
                 ctx.ReportDiagnostic(Diagnostic.Create(
                     Wrn_UnknownCanDoOverload,
@@ -107,7 +105,7 @@ namespace Hive.Analyzers
                 return;
             }
 
-            bool actStringIsConst = true;
+            var actStringIsConst = true;
             var actStringArg = argumentList[0];
             var actStringValue = actStringArg.Value;
 

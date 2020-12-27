@@ -12,15 +12,9 @@ namespace Hive.Permissions
         {
         }
 
-        public bool HasRuleChangedSince(StringView name, Instant time)
-        {
-            return false;
-        }
+        public bool HasRuleChangedSince(StringView name, Instant time) => false;
 
-        public bool HasRuleChangedSince(Rule rule, Instant time)
-        {
-            return false;
-        }
+        public bool HasRuleChangedSince(Rule rule, Instant time) => false;
 
         public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
         {

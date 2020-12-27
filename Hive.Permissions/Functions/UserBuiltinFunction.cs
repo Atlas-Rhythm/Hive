@@ -8,7 +8,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace Hive.Permissions.Functions
 {
@@ -23,7 +22,6 @@ namespace Hive.Permissions.Functions
             this.@delegate = @delegate;
         }
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "This method should never throw, instead returning false.")]
         public bool TryCompile(IReadOnlyList<MathExpression> arguments, ICompilationContext<RuleCompilationSettings> context, ITypeHintHandler typeHintHandler, [MaybeNullWhen(false)] out Expression expr)
         {
             try

@@ -72,10 +72,7 @@ namespace Hive
                         .WithDefaultDestructurers()
                         .WithDestructurers(new[] { new DbUpdateExceptionDestructurer() }))
                     .WriteTo.Console())
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    _ = webBuilder.UseStartup<Startup>();
-                });
+                .ConfigureWebHostDefaults(webBuilder => _ = webBuilder.UseStartup<Startup>());
 
         private static LoggerConfiguration LibraryTypes(this LoggerDestructuringConfiguration conf)
             => conf.AsScalar<Version>()

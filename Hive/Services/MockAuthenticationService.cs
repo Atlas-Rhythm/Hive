@@ -23,10 +23,10 @@ namespace Hive.Services
         public Task<User?> GetUser(HttpRequest request, bool throwOnError = false)
         {
             if (request is null)
-                if (throwOnError)
-                    throw new ArgumentNullException(nameof(request));
-                else
-                    return Task.FromResult<User?>(null);
+            {
+                return throwOnError ? throw new ArgumentNullException(nameof(request)) : Task.FromResult<User?>(null);
+            }
+
             if (request.Headers.TryGetValue(HeaderNames.Authorization, out var authHeader))
             {
                 if (Users.TryGetValue(authHeader, out var outp))
@@ -37,14 +37,9 @@ namespace Hive.Services
 
         public Task<User?> GetUser(string userId, bool throwOnError = false)
         {
-            if (string.IsNullOrEmpty(userId))
-                if (throwOnError)
-                    throw new ArgumentNullException(nameof(userId));
-                else
-                    return Task.FromResult<User?>(null);
-            if (Users.TryGetValue(userId, out var outp))
-                return Task.FromResult(outp);
-            return Task.FromResult<User?>(null);
+            return string.IsNullOrEmpty(userId)
+                ? throwOnError ? throw new ArgumentNullException(nameof(userId)) : Task.FromResult<User?>(null)
+                : Users.TryGetValue(userId, out var outp) ? Task.FromResult(outp) : Task.FromResult<User?>(null);
         }
 
         public Task<bool> IsValid(HttpRequest request) => throw new NotImplementedException();

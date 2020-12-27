@@ -19,15 +19,16 @@ namespace Hive.Models.Serialized
 
         public static SerializedLocalizedModInfo Serialize(LocalizedModInfo toSerialize)
         {
-            if (toSerialize is null) throw new ArgumentException($"{nameof(toSerialize)} is null.");
-            return new SerializedLocalizedModInfo()
-            {
-                Language = toSerialize.Language,
-                Name = toSerialize.Name,
-                Changelog = toSerialize.Changelog!,
-                Credits = toSerialize.Credits!,
-                Description = toSerialize.Description,
-            };
+            return toSerialize is null
+                ? throw new ArgumentException($"{nameof(toSerialize)} is null.")
+                : new SerializedLocalizedModInfo()
+                {
+                    Language = toSerialize.Language,
+                    Name = toSerialize.Name,
+                    Changelog = toSerialize.Changelog!,
+                    Credits = toSerialize.Credits!,
+                    Description = toSerialize.Description,
+                };
         }
     }
 }

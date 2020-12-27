@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Hive.Plugins
+﻿namespace Hive.Plugins
 {
     /// <summary>
     /// An interface that provides access to an implementation of <typeparamref name="T"/> that aggregates

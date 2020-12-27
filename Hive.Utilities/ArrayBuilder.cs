@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Text;
 
 namespace Hive.Utilities
 {
@@ -18,10 +15,12 @@ namespace Hive.Utilities
     {
         private ArrayPool<T> pool;
         private T[] array;
+
         /// <summary>
         /// The number of items currently in the <see cref="ArrayBuilder{T}"/>.
         /// </summary>
         public int Count { get; private set; }
+
         private bool rented;
 
         /// <summary>
@@ -29,6 +28,7 @@ namespace Hive.Utilities
         /// </summary>
         /// <param name="capacity">The minimum capacity to initialize with.</param>
         public ArrayBuilder(int capacity = 4) : this(ArrayPool<T>.Shared, capacity) { }
+
         /// <summary>
         /// Constructs a new <see cref="ArrayBuilder{T}"/> with the specified <see cref="ArrayPool{T}"/>
         /// and minimumm capcacity.

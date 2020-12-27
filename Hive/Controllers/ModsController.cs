@@ -217,7 +217,9 @@ namespace Hive.Controllers
             // Forbid if a permissions check or plugins check prevents the user from accessing this mod.
             if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState)
                 || !combined.GetSpecificModAdditionalChecks(user, mod))
+            {
                 return Forbid();
+            }
 
             var localizedModInfo = mod.GetLocalizedInfo(GetAcceptLanguageCultures());
 
@@ -257,11 +259,10 @@ namespace Hive.Controllers
             }
 
             // Forbid if a permissions check or plugins check prevents the user from accessing this mod.
-            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState)
-                || !combined.GetSpecificModAdditionalChecks(user, mod))
-                return Forbid();
-
-            return Ok(SerializedMod.Serialize(mod, mod.GetLocalizedInfo(GetAcceptLanguageCultures())));
+            return !permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState)
+                || !combined.GetSpecificModAdditionalChecks(user, mod)
+                ? Forbid()
+                : (ActionResult<SerializedMod>)Ok(SerializedMod.Serialize(mod, mod.GetLocalizedInfo(GetAcceptLanguageCultures())));
         }
 
         [HttpPost("api/mod/move/{channelId}")]

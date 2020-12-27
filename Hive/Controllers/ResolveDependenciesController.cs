@@ -182,10 +182,7 @@ namespace Hive.Controllers
         {
             private readonly HiveContext context;
 
-            public HiveValueAccessor(HiveContext ctx)
-            {
-                context = ctx;
-            }
+            public HiveValueAccessor(HiveContext ctx) => context = ctx;
 
             // Mod Accessors
             public string ID(Mod mod_) => mod_.ReadableID;
@@ -214,9 +211,7 @@ namespace Hive.Controllers
             public FSharpValueOption<VersionRange> And(VersionRange a, VersionRange b)
             {
                 var res = a & b;
-                if (res == VersionRange.Nothing)
-                    return FSharpValueOption<VersionRange>.None;
-                return FSharpValueOption<VersionRange>.Some(res);
+                return res == VersionRange.Nothing ? FSharpValueOption<VersionRange>.None : FSharpValueOption<VersionRange>.Some(res);
             }
 
             public VersionRange Not(VersionRange a) => a.Invert();

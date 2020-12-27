@@ -25,15 +25,7 @@ namespace Hive.Models.ReadOnly
 
         public bool Equals(ReadOnlyChannel other) => Name == other.Name;
 
-        public override bool Equals(object? obj)
-        {
-            if (obj is not ReadOnlyChannel readOnlyChannel)
-            {
-                return false;
-            }
-
-            return Equals(readOnlyChannel);
-        }
+        public override bool Equals(object? obj) => obj is ReadOnlyChannel readOnlyChannel && Equals(readOnlyChannel);
 
         public override int GetHashCode() => Name.GetHashCode(StringComparison.InvariantCulture);
 

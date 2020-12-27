@@ -1,9 +1,6 @@
 ﻿using Hive.Utilities;
 using NodaTime;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Text;
 
 namespace Hive.Permissions
 {
@@ -11,7 +8,6 @@ namespace Hive.Permissions
     /// A structure that is used to cache parsed actions and related information.
     /// </summary>
     /// <seealso cref="PermissionsManager{TContext}.CanDo(StringView, TContext, ref PermissionActionParseState)"/>
-    [SuppressMessage("", "CA1815", Justification = "This type should not ever be compared.")]
     public struct PermissionActionParseState
     {
         internal struct SearchEntry
@@ -32,7 +28,7 @@ namespace Hive.Permissions
         internal SearchEntry[]? SearchOrder;
 
         /// <summary>
-        /// Resets this cache to its default state. This will cause additional calls that use it to re-parse, 
+        /// Resets this cache to its default state. This will cause additional calls that use it to re-parse,
         /// and possibly re-compile the rules.
         /// </summary>
         public void Reset()
