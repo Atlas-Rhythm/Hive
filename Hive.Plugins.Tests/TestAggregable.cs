@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using System;
 using System.Collections;
@@ -56,7 +55,7 @@ namespace Hive.Plugins.Tests
         {
             var retTrue1 = new Mock<ITestStopIfReturns>();
             retTrue1.Setup(m => m.Test1()).Returns(true);
-            bool expected = true;
+            var expected = true;
             retTrue1.Setup(m => m.Test2(out expected));
 
             var retFalse = new Mock<ITestStopIfReturns>();
@@ -95,7 +94,7 @@ namespace Hive.Plugins.Tests
         {
             var retTrue1 = new Mock<ITestStopIfReturnsNull>();
             retTrue1.Setup(m => m.Test1()).Returns(new List<int>());
-            List<int>? expected1 = new List<int>();
+            var expected1 = new List<int>();
             retTrue1.Setup(m => m.Test2(out expected1));
 
             var retFalse = new Mock<ITestStopIfReturnsNull>();
@@ -105,7 +104,7 @@ namespace Hive.Plugins.Tests
 
             var retTrue2 = new Mock<ITestStopIfReturnsNull>();
             retTrue2.Setup(m => m.Test1()).Returns(new List<int>());
-            List<int>? expected2 = new List<int>();
+            var expected2 = new List<int>();
             retTrue2.Setup(m => m.Test2(out expected2));
 
             var created = new Aggregate<ITestStopIfReturnsNull>(new List<ITestStopIfReturnsNull>(){
@@ -128,18 +127,18 @@ namespace Hive.Plugins.Tests
         [Fact]
         public void TestStopIfReturnsEmptyGeneric()
         {
-            int numberOfElements = 3;
+            var numberOfElements = 3;
 
-            List<Mock<ITestStopIfReturnsEmptyGeneric>> plugins = new List<Mock<ITestStopIfReturnsEmptyGeneric>>();
-            List<int> numbers = new List<int>() { };
-            Dictionary<string, int> dictionary = new Dictionary<string, int>();
-            for (int i = 0; i < numberOfElements; i++)
+            var plugins = new List<Mock<ITestStopIfReturnsEmptyGeneric>>();
+            var numbers = new List<int>() { };
+            var dictionary = new Dictionary<string, int>();
+            for (var i = 0; i < numberOfElements; i++)
             {
                 numbers.Add(i);
                 dictionary.Add(i.ToString(), i);
             }
 
-            for (int i = 0; i < numberOfElements * 2; i++)
+            for (var i = 0; i < numberOfElements * 2; i++)
             {
                 var plugin = new Mock<ITestStopIfReturnsEmptyGeneric>();
                 // These plugins will each take away the last element, or throw an exception if it is empty.
@@ -167,14 +166,14 @@ namespace Hive.Plugins.Tests
 
             // Since each plugin takes away one element, we need to ensure that only the first X plugins were fired,
             // where X is the amount of elements in the initial list.
-            for (int i = 0; i < numberOfElements; i++)
+            for (var i = 0; i < numberOfElements; i++)
             {
                 plugins[i].Verify(p => p.RemoveNumber(It.IsAny<List<int>>()));
             }
 
             // Next, we ensure that any plugins after the short-circuit were not fired.
             // If any were fired, we would throw a regular Exception, and the test would fail here.
-            for (int i = numberOfElements; i < plugins.Count; i++)
+            for (var i = numberOfElements; i < plugins.Count; i++)
             {
                 plugins[i].Verify(p => p.RemoveNumber(It.IsAny<List<int>>()), Times.Never());
             }
@@ -184,16 +183,16 @@ namespace Hive.Plugins.Tests
         public void TestStopIfReturnsEmptyNonGeneric()
         {
             // This is essentially the same as the Generic version, but instead dealing with ArrayLists.
-            int numberOfElements = 3;
-            List<Mock<ITestStopIfReturnsEmptyNonGeneric>> plugins = new List<Mock<ITestStopIfReturnsEmptyNonGeneric>>();
-            ArrayList data = new ArrayList();
-            Dictionary<string, int> dictionary = new Dictionary<string, int>();
-            for (int i = 0; i < numberOfElements; i++)
+            var numberOfElements = 3;
+            var plugins = new List<Mock<ITestStopIfReturnsEmptyNonGeneric>>();
+            var data = new ArrayList();
+            var dictionary = new Dictionary<string, int>();
+            for (var i = 0; i < numberOfElements; i++)
             {
                 data.Add(i);
             }
 
-            for (int i = 0; i < numberOfElements * 2; i++)
+            for (var i = 0; i < numberOfElements * 2; i++)
             {
                 var plugin = new Mock<ITestStopIfReturnsEmptyNonGeneric>();
                 // These plugins will each take away the last element, or throw an exception if it is empty.
@@ -210,11 +209,11 @@ namespace Hive.Plugins.Tests
 
             // If StopIfReturnsEmpty fails, then an exception will be thrown here.
             Assert.Empty(created.Instance.RemoveElement(data));
-            for (int i = 0; i < numberOfElements; i++)
+            for (var i = 0; i < numberOfElements; i++)
             {
                 plugins[i].Verify(p => p.RemoveElement(It.IsAny<ArrayList>()));
             }
-            for (int i = numberOfElements; i < plugins.Count; i++)
+            for (var i = numberOfElements; i < plugins.Count; i++)
             {
                 plugins[i].Verify(p => p.RemoveElement(It.IsAny<ArrayList>()), Times.Never());
             }

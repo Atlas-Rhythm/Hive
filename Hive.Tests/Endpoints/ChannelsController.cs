@@ -2,18 +2,12 @@
 using Hive.Models;
 using Hive.Permissions;
 using Hive.Plugins;
-using Hive.Services;
-using Hive.Utilities;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using NodaTime;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -24,7 +18,7 @@ namespace Hive.Tests.Endpoints
     {
         private readonly ITestOutputHelper helper;
 
-        private static IEnumerable<Channel> defaultChannels = new List<Channel>
+        private static readonly IEnumerable<Channel> defaultChannels = new List<Channel>
         {
             new Channel { Name = "Public", AdditionalData = DIHelper.EmptyAdditionalData },
             new Channel { Name = "Beta", AdditionalData =  DIHelper.EmptyAdditionalData }

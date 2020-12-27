@@ -307,7 +307,7 @@ namespace Hive.Tests.Endpoints
                 Conflicts = conflicts ?? new List<ModReference>()
             };
 
-            LocalizedModInfo info = new LocalizedModInfo()
+            var info = new LocalizedModInfo()
             {
                 OwningMod = mod,
                 Language = CultureInfo.CurrentCulture.ToString(),
@@ -340,7 +340,7 @@ namespace Hive.Tests.Endpoints
 
             public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
             {
-                string nameString = name.ToString();
+                var nameString = name.ToString();
                 if (name == "hive.resolve_dependencies")
                 {
                     gotten = new Rule(nameString, permissionRule);
