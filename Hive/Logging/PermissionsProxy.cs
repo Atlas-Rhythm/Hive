@@ -2,10 +2,8 @@
 using Hive.Utilities;
 using Serilog;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Hive.Logging
 {

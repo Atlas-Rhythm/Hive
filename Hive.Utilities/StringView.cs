@@ -2,9 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Hive.Utilities
@@ -97,8 +95,6 @@ namespace Hive.Utilities
         /// <exception cref="IndexOutOfRangeException">
         /// Thrown if <paramref name="index"/> is out of bounds of this view.
         /// </exception>
-        [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations",
-            Justification = "This is an indexer. It can throw IndexOutOfRangeException. That makes sense.")]
         public char this[int index]
         {
             get
@@ -143,12 +139,12 @@ namespace Hive.Utilities
                 yield break;
             }
 
-            int i = 0;
-            int regionBegin = 0;
+            var i = 0;
+            var regionBegin = 0;
             for (; i < Length; i++)
             {
-                int loopStart = i;
-                int j = 0;
+                var loopStart = i;
+                var j = 0;
                 while (i < Length && j < sep.Length && this[i] == sep[j]) { i++; j++; }
                 if (j == sep.Length)
                 {
@@ -225,7 +221,7 @@ namespace Hive.Utilities
                     return true; // they can still be equal if this isn't true
             }
             if (Length != other.Length) return false;
-            for (int i = 0; i < Length; i++)
+            for (var i = 0; i < Length; i++)
             {
                 if (this[i] != other[i])
                     return false;
@@ -250,7 +246,7 @@ namespace Hive.Utilities
             var list = views.ToArray(); // evaluate the parameter exactly once
             if (list.Length == 0) return "";
 
-            int i = 0;
+            var i = 0;
             var root = list[i++];
             for (; i < list.Length; i++)
             {
@@ -318,7 +314,7 @@ namespace Hive.Utilities
             var code = Length ^ unchecked(0x0adeb890);
             code ^= code << 8;
             code ^= code << 16;
-            for (int i = 0; i < Length; i++)
+            for (var i = 0; i < Length; i++)
             {
                 code ^= BaseString[Start + i] << (8 * (i % 4));
             }

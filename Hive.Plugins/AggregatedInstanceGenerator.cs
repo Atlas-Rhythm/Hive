@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
 using Hive.Plugins;
 using Hive.Plugins.Resources;
 
@@ -158,7 +155,7 @@ namespace Hive.Plugins
 
                 _ = genMethod.DefineParameter(0, GetAttrsFor(ret), ret.Name);
 
-                for (int i = 0; i < args.Length; i++)
+                for (var i = 0; i < args.Length; i++)
                 {
                     var param = args[i];
                     _ = genMethod.DefineParameter(i + 1, GetAttrsFor(param), param.Name);
@@ -172,7 +169,7 @@ namespace Hive.Plugins
                     /* the actual delegate invocation */
                     il.Emit(OpCodes.Ldarg_0); // load this, but again
 
-                    for (int i = 1; i <= args.Length; i++)
+                    for (var i = 1; i <= args.Length; i++)
                     {
                         EmitLdarg(il, i);
                     }
@@ -193,7 +190,7 @@ namespace Hive.Plugins
                 il.Emit(OpCodes.Ldarg_2);
                 il.Emit(OpCodes.Stfld, aggregateListField);
 
-                for (int i = 0; i < fields.Count; i++)
+                for (var i = 0; i < fields.Count; i++)
                 {
                     il.Emit(OpCodes.Ldarg_0);
                     il.Emit(OpCodes.Ldarg_1);
@@ -222,7 +219,7 @@ namespace Hive.Plugins
         {
             // the first argument will always be an IAggregateList<T0>
 
-            bool hasResult = ret.ParameterType != typeof(void);
+            var hasResult = ret.ParameterType != typeof(void);
 
             var name = BuildName(args, ret);
 
@@ -239,7 +236,7 @@ namespace Hive.Plugins
             var iface = genericParams[0];
 
             var argParams = new GenericTypeParameterBuilder[args.Length];
-            for (int i = 1; i <= args.Length; i++)
+            for (var i = 1; i <= args.Length; i++)
             {
                 // all the argument types should be contravariant (if possible
                 if (!args[i - 1].ParameterType.IsByRef)
@@ -262,7 +259,7 @@ namespace Hive.Plugins
 
             var coreArgTypes = new Type[args.Length + 1];
             coreArgTypes[0] = typeof(IAggregateList<>).MakeGenericType(iface);
-            for (int i = 0; i < args.Length; i++)
+            for (var i = 0; i < args.Length; i++)
             {
                 var param = args[i];
                 Type gtype = argParams[i];
@@ -280,7 +277,7 @@ namespace Hive.Plugins
             invoke.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
             _ = invoke.DefineParameter(0, GetAttrsFor(ret), "return");
             _ = invoke.DefineParameter(1, ParameterAttributes.None, "inst");
-            for (int i = 0; i < args.Length; i++)
+            for (var i = 0; i < args.Length; i++)
             {
                 _ = invoke.DefineParameter(i + 2, GetAttrsFor(args[i]), $"arg{i}");
             }
@@ -289,7 +286,7 @@ namespace Hive.Plugins
                 typeof(IAsyncResult), coreArgTypes.Append(typeof(AsyncCallback)).Append(typeof(object)).ToArray());
             beginInvoke.SetImplementationFlags(MethodImplAttributes.Runtime | MethodImplAttributes.Managed);
             _ = beginInvoke.DefineParameter(1, ParameterAttributes.None, "inst");
-            for (int i = 0; i < args.Length; i++)
+            for (var i = 0; i < args.Length; i++)
             {
                 _ = beginInvoke.DefineParameter(i + 2, GetAttrsFor(args[i]), $"arg{i}");
             }

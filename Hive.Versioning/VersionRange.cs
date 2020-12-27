@@ -1,14 +1,9 @@
 ﻿using Hive.Utilities;
 using Hive.Versioning.Resources;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
 using static Hive.Versioning.ParseHelpers;
 
 namespace Hive.Versioning
@@ -88,6 +83,8 @@ namespace Hive.Versioning
                         }
                         break;
 
+                    case CombineResult.TwoSubranges:
+                    case CombineResult.Nothing:
                     default: throw new InvalidOperationException();
                 }
             }
@@ -112,8 +109,6 @@ namespace Hive.Versioning
         /// <param name="b">The second argument.</param>
         /// <returns>The logical disjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
         /// <seealso cref="Disjunction(VersionRange)"/>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-            Justification = "Its named alternative is Disjunction(VersionRange)")]
         public static VersionRange operator |(VersionRange a, VersionRange b)
         {
             if (a is null) throw new ArgumentNullException(nameof(a));
@@ -158,8 +153,6 @@ namespace Hive.Versioning
         /// <param name="b">The second argument.</param>
         /// <returns>The logical disjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
         /// <seealso cref="Conjunction(VersionRange)"/>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-            Justification = "Its named alternative is Conjunction(VersionRange)")]
         public static VersionRange operator &(VersionRange a, VersionRange b)
         {
             if (a is null) throw new ArgumentNullException(nameof(a));
@@ -189,14 +182,16 @@ namespace Hive.Versioning
                     if (additionalComparer != null)
                     {
                         var comparerResult = additionalComparer.Value.Invert(out var inverseComparer, out var inverseCompRange);
-                        switch (comparerResult)
+                        invComparer = comparerResult switch
                         {
-                            case CombineResult.OneComparer:
-                                invComparer = inverseComparer;
-                                break;
-
-                            default: throw new InvalidOperationException();
-                        }
+                            CombineResult.OneComparer => inverseComparer,
+                            CombineResult.OneSubrange => throw new NotImplementedException(),
+                            CombineResult.TwoSubranges => throw new NotImplementedException(),
+                            CombineResult.Unrepresentable => throw new NotImplementedException(),
+                            CombineResult.Nothing => throw new NotImplementedException(),
+                            CombineResult.Everything => throw new NotImplementedException(),
+                            _ => throw new InvalidOperationException(),
+                        };
                     }
 
                     var invertedRanges = subranges.Select(r => r.Invert());
@@ -216,6 +211,9 @@ namespace Hive.Versioning
                                     ab.Add(resRange);
                                     break;
 
+                                case CombineResult.TwoSubranges:
+                                case CombineResult.Unrepresentable:
+                                case CombineResult.Everything:
                                 case CombineResult.OneComparer:
                                 default: throw new InvalidOperationException();
                             }
@@ -236,6 +234,9 @@ namespace Hive.Versioning
                                         invComparer = null;
                                         break;
 
+                                    case CombineResult.TwoSubranges:
+                                    case CombineResult.Unrepresentable:
+                                    case CombineResult.Everything:
                                     default: throw new InvalidOperationException();
                                 }
                             }
@@ -256,6 +257,9 @@ namespace Hive.Versioning
                                 upperBound = null;
                                 break;
 
+                            case CombineResult.TwoSubranges:
+                            case CombineResult.Unrepresentable:
+                            case CombineResult.Everything:
                             default: throw new InvalidOperationException();
                         }
                         invComparer = null;
@@ -285,8 +289,6 @@ namespace Hive.Versioning
         /// <param name="r">The <see cref="VersionRange"/> to compute the compliment of.</param>
         /// <returns>The compliment of <paramref name="r"/>.</returns>
         /// <seealso cref="Invert()"/>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-            Justification = "Its named alternative is Invert()")]
         public static VersionRange operator ~(VersionRange r)
         {
             if (r is null) throw new ArgumentNullException(nameof(r));
@@ -340,7 +342,7 @@ namespace Hive.Versioning
             using var ab = new ArrayBuilder<Subrange>(ranges.Length);
 
             Subrange? nextToInsert = null;
-            for (int i = 0; i < ranges.Length; i++)
+            for (var i = 0; i < ranges.Length; i++)
             {
                 var current = ranges[i];
 
@@ -398,6 +400,9 @@ namespace Hive.Versioning
                         ab.Clear();
                         return (EverythingSubranges, null);
 
+                    case CombineResult.OneComparer:
+                    case CombineResult.Unrepresentable:
+                    case CombineResult.Nothing:
                     default: throw new InvalidOperationException();
                 }
             }
@@ -512,7 +517,7 @@ namespace Hive.Versioning
         {
             if (sb is null) throw new ArgumentNullException(nameof(sb));
 
-            for (int i = 0; i < subranges.Length; i++)
+            for (var i = 0; i < subranges.Length; i++)
             {
                 _ = subranges[i].ToString(sb);
                 if (i != subranges.Length - 1)
@@ -711,6 +716,8 @@ namespace Hive.Versioning
                                     comparer = null;
                                 break;
 
+                            case CombineResult.TwoSubranges:
+                            case CombineResult.Nothing:
                             default: throw new InvalidOperationException();
                         }
                     }

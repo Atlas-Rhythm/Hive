@@ -8,18 +8,16 @@ namespace Hive.Graphing.Types
 {
     public class HiveQuery : ObjectGraphType
     {
-        private readonly ILogger logger;
-
         public HiveQuery([DisallowNull] ILogger logger)
         {
             if (logger is null)
                 throw new ArgumentNullException(nameof(logger));
 
-            this.logger = logger.ForContext<HiveQuery>();
+            var l = logger.ForContext<HiveQuery>();
 
-            logger.Debug("Initializing");
+            l.Debug("Initializing");
 
-            Field<ListGraphType<ChannelType>>(
+            _ = Field<ListGraphType<ChannelType>>(
                 name: "channels",
                 resolve: context => Array.Empty<Channel>());
         }

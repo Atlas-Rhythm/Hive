@@ -64,11 +64,11 @@ namespace Hive.Permissions.Logging
 
         public void Warn(string message, params object[] info) => logger?.Warn(message, info, PublicApi, CurrentAction, CurrentRule, manager);
 
-        public ApiScope InApi(string api) => new ApiScope(api);
+        public ApiScope InApi(string api) => new(api);
 
-        public ActionScope WithAction(StringView action) => new ActionScope(action);
+        public ActionScope WithAction(StringView action) => new(action);
 
-        public RuleScope WithRule(Rule? rule) => new RuleScope(rule);
+        public RuleScope WithRule(Rule? rule) => new(rule);
 
         public void ReplaceRule(Rule? rule) => CurrentRule = rule;
 

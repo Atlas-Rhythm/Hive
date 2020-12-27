@@ -5,9 +5,7 @@ using MathExpr.Compiler.Compilation.Settings;
 using MathExpr.Syntax;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace Hive.Permissions
 {

@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace Hive.Services
@@ -31,7 +29,7 @@ namespace Hive.Services
                     return Task.FromResult<User?>(null);
             if (request.Headers.TryGetValue(HeaderNames.Authorization, out var authHeader))
             {
-                if (Users.TryGetValue(authHeader, out User? outp))
+                if (Users.TryGetValue(authHeader, out var outp))
                     return Task.FromResult(outp);
             }
             return Task.FromResult<User?>(null);
@@ -44,7 +42,7 @@ namespace Hive.Services
                     throw new ArgumentNullException(nameof(userId));
                 else
                     return Task.FromResult<User?>(null);
-            if (Users.TryGetValue(userId, out User? outp))
+            if (Users.TryGetValue(userId, out var outp))
                 return Task.FromResult(outp);
             return Task.FromResult<User?>(null);
         }

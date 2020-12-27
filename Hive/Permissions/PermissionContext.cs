@@ -1,8 +1,4 @@
 ﻿using Hive.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Hive.Permissions
 {
@@ -15,6 +11,7 @@ namespace Hive.Permissions
 
         // Used for moving mods between channels
         public Channel? SourceChannel { get; set; }
+
         public Channel? DestinationChannel { get; set; }
     }
 }

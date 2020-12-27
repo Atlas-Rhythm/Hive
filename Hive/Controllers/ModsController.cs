@@ -109,7 +109,7 @@ namespace Hive.Controllers
             // TODO: default to the instance default Channel
             IEnumerable<Channel>? filteredChannels = null;
             GameVersion? filteredVersion = null;
-            string filteredType = "LATEST";
+            var filteredType = "LATEST";
 
             if (channelIds != null && channelIds.Length >= 0)
             {
@@ -142,7 +142,7 @@ namespace Hive.Controllers
 
             // Because EF (or PostgreSQL or both) does not like advanced LINQ expressions (like GroupBy),
             // we convert to an enumerable and do the calculations on the client.
-            IEnumerable<Mod> filteredMods = mods.AsEnumerable();
+            var filteredMods = mods.AsEnumerable();
 
             // Filter these mods based on the query param we've retrieved (or default behavior)
             switch (filteredType)
@@ -191,7 +191,7 @@ namespace Hive.Controllers
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;
 
-            VersionRange? filteredRange = range != null ? new VersionRange(range) : null;
+            var filteredRange = range != null ? new VersionRange(range) : null;
 
             // Grab the list of mods that match our ID.
             var mods = CreateModQuery()

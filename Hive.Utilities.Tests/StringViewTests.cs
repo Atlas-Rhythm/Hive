@@ -93,7 +93,7 @@ namespace Hive.Utilities.Tests
         [MemberData(nameof(SubstringLenCases), DisableDiscoveryEnumeration = false)]
         public void Indexer(string source, int start, int len, string actual)
         {
-            StringView sv = new StringView(source, start, len);
+            var sv = new StringView(source, start, len);
             for (int i = start - 2; i <= start + len; i++)
             {
                 if (i < start || i >= start + len)

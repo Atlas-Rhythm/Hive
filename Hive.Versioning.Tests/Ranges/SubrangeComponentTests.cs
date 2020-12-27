@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 using static Hive.Versioning.VersionRange;
 
@@ -25,7 +21,7 @@ namespace Hive.Versioning.Tests.Ranges
         }
 
         private static Subrange CreateSubrange(string lower, string upper)
-            => new Subrange(ParseComparer(lower), ParseComparer(upper));
+            => new(ParseComparer(lower), ParseComparer(upper));
 
         [Theory]
         [InlineData(">1.0.0 <2.0.0", true, ">1.0.0", "<2.0.0")]

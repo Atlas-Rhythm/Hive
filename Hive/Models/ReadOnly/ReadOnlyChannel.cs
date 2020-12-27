@@ -11,7 +11,7 @@ namespace Hive.Models.ReadOnly
         public readonly string Name { get; }
 
         public readonly JsonElement? AdditionalData { get; }
-        
+
         public ReadOnlyChannel(Channel origin)
         {
             if (origin is null)

@@ -1,10 +1,8 @@
-﻿using FastExpressionCompiler;
-using Hive.Permissions.Functions;
+﻿using Hive.Permissions.Functions;
 using Hive.Permissions.Logging;
 using Hive.Permissions.Resources;
 using Hive.Utilities;
 using MathExpr.Compiler;
-using MathExpr.Compiler.Compilation.Passes;
 using MathExpr.Compiler.Compilation.Settings;
 using MathExpr.Compiler.Optimization.Settings;
 using MathExpr.Syntax;
@@ -13,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
 
 namespace Hive.Permissions
 {
@@ -150,7 +147,7 @@ namespace Hive.Permissions
                 ContinueDelegate GetContinueStartingAt(int idx)
                     => defaultValue =>
                     {
-                        for (int i = idx; i < order.Length; i++)
+                        for (var i = idx; i < order.Length; i++)
                         {
                             using (logger.WithRule(order[i].Rule))
                             {
@@ -186,7 +183,7 @@ namespace Hive.Permissions
                 var order = ParseAction(action, ref state);
 
                 var exceptions = new List<PermissionException>(order.Length);
-                for (int i = 0; i < order.Length; i++)
+                for (var i = 0; i < order.Length; i++)
                 {
                     try
                     {
@@ -237,7 +234,7 @@ namespace Hive.Permissions
                 { // build up our search order
                     var parts = action.Split(splitToken, ignoreEmpty: false).ToArray();
                     var combos = new PermissionActionParseState.SearchEntry[parts.Length];
-                    for (int i = 0; i < parts.Length; i++)
+                    for (var i = 0; i < parts.Length; i++)
                     {
                         combos[i] = new PermissionActionParseState.SearchEntry(
                             StringView.Concat(parts.Take(i + 1).InterleaveWith(Helpers.Repeat(splitToken, i))));

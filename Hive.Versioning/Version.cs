@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Linq;
 using Hive.Utilities;
-using System.Diagnostics;
 using static Hive.Versioning.ParseHelpers;
 using Hive.Versioning.Resources;
 
@@ -311,7 +310,7 @@ namespace Hive.Versioning
                 return 1;
 
             var len = Math.Min(prereleaseIds.Length, other.prereleaseIds.Length);
-            for (int i = 0; i < len; i++)
+            for (var i = 0; i < len; i++)
             {
                 var a = prereleaseIds[i];
                 ulong? anum = null;
@@ -547,7 +546,7 @@ namespace Hive.Versioning
             }
 
             char c;
-            int i = 0;
+            var i = 0;
             do
             {
                 if (text.Length <= i)
@@ -557,9 +556,9 @@ namespace Hive.Versioning
                 }
                 c = text[i++];
             }
-            while ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '-');
+            while (c is (>= '0' and <= '9') or (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or '-');
 
-            int len = i - 1;
+            var len = i - 1;
 
             id = text.Slice(0, len);
 
@@ -571,10 +570,10 @@ namespace Hive.Versioning
                 return true;
             }
 
-            bool hasNonDigit = false;
+            var hasNonDigit = false;
             foreach (var chr in id)
             {
-                if (chr < '0' || chr > '9')
+                if (chr is < '0' or > '9')
                 {
                     hasNonDigit = true;
                     text = text.Slice(len);
@@ -620,9 +619,9 @@ namespace Hive.Versioning
 
             // or any nonzero character followed by any character
             var c = text[0];
-            if (c > '0' && c <= '9')
+            if (c is > '0' and <= '9')
             { // we start with a positive number
-                int i = 1;
+                var i = 1;
                 do
                 {
                     if (text.Length <= i)
@@ -632,9 +631,9 @@ namespace Hive.Versioning
                     }
                     c = text[i++];
                 }
-                while (c >= '0' && c <= '9'); // find as many digits as we can
+                while (c is >= '0' and <= '9'); // find as many digits as we can
 
-                int len = i - 1;
+                var len = i - 1;
 
                 id = text.Slice(0, len);
                 text = text.Slice(len);

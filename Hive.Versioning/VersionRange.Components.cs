@@ -1,6 +1,5 @@
 ﻿using Hive.Versioning.Resources;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -65,6 +64,8 @@ namespace Hive.Versioning
                     ComparisonType.Less => ver < CompareTo,
                     ComparisonType.GreaterEqual => ver >= CompareTo,
                     ComparisonType.LessEqual => ver <= CompareTo,
+                    ComparisonType.None => throw new NotImplementedException(),
+                    ComparisonType._All => throw new NotImplementedException(),
                     _ => throw new InvalidOperationException(),
                 };
 
@@ -108,6 +109,12 @@ namespace Hive.Versioning
                         range = new Subrange(new VersionComparer(CompareTo, ComparisonType.Less), new VersionComparer(CompareTo, ComparisonType.Greater));
                         return CombineResult.OneSubrange;
 
+                    case ComparisonType.None:
+                    case ComparisonType.Greater:
+                    case ComparisonType.GreaterEqual:
+                    case ComparisonType.Less:
+                    case ComparisonType.LessEqual:
+                    case ComparisonType._All:
                     default:
                         range = default;
                         comparer = new VersionComparer(CompareTo,
@@ -117,6 +124,9 @@ namespace Hive.Versioning
                                 ComparisonType.GreaterEqual => ComparisonType.Less,
                                 ComparisonType.Less => ComparisonType.GreaterEqual,
                                 ComparisonType.LessEqual => ComparisonType.Greater,
+                                ComparisonType.None => throw new NotImplementedException(),
+                                ComparisonType.ExactEqual => throw new NotImplementedException(),
+                                ComparisonType._All => throw new NotImplementedException(),
                                 _ => throw new InvalidOperationException()
                             });
                         return CombineResult.OneComparer;
@@ -477,7 +487,7 @@ namespace Hive.Versioning
                     var highResult = lowerRange.UpperBound.TryConjunction(upperRange.UpperBound, out var highCompare, out _);
 
                     Assert(lowResult == CombineResult.OneComparer);
-                    Assert(midResult == CombineResult.Nothing || midResult == CombineResult.OneSubrange);
+                    Assert(midResult is CombineResult.Nothing or CombineResult.OneSubrange);
                     Assert(highResult == CombineResult.OneComparer);
 
                     result = new Subrange(lowCompare, highCompare);
@@ -664,14 +674,14 @@ namespace Hive.Versioning
                     if (meetLower)
                     {
                         retVal = b.UpperBound.TryDisjunction(a.UpperBound, out _, out result);
-                        Assert(retVal == CombineResult.OneSubrange || retVal == CombineResult.Everything);
+                        Assert(retVal is CombineResult.OneSubrange or CombineResult.Everything);
                         return true;
                     }
                     // out upper bound exactly meets its upper bound
                     if (meetUpper)
                     {
                         retVal = b.LowerBound.TryDisjunction(a.LowerBound, out _, out result);
-                        Assert(retVal == CombineResult.OneSubrange || retVal == CombineResult.Everything);
+                        Assert(retVal is CombineResult.OneSubrange or CombineResult.Everything);
                         return true;
                     }
 
@@ -709,7 +719,7 @@ namespace Hive.Versioning
             /// </summary>
             private static bool TestExactMeeting(in VersionComparer a, in VersionComparer b)
                 => a.CompareTo == b.CompareTo
-                && ((a.Type & b.Type) & ~ComparisonType.ExactEqual) == ComparisonType.None  // they have opposite directions
+                && (a.Type & b.Type & ~ComparisonType.ExactEqual) == ComparisonType.None  // they have opposite directions
                 && ((a.Type ^ b.Type) & ComparisonType.ExactEqual) != ComparisonType.None; // there is exactly one equal between them
 
             public bool Equals(Subrange other)
