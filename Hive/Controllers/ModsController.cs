@@ -91,14 +91,7 @@ namespace Hive.Controllers
 
             var queryResult = modService.GetAllMods(user, channelIds, gameVersion, filterType);
 
-            if (queryResult.Value == null)
-            {
-                return StatusCode(queryResult.StatusCode, queryResult.Message);
-            }
-
-            var serialized = queryResult.Value.Select(m => SerializedMod.Serialize(m, m.GetLocalizedInfo(GetAcceptLanguageCultures())));
-
-            return Ok(serialized);
+            return queryResult.Serialize(GetAcceptLanguageCultures());
         }
 
         [HttpGet("api/mod/{id}")]
@@ -114,15 +107,7 @@ namespace Hive.Controllers
             VersionRange? filteredRange = range != null ? new VersionRange(range) : null;
             var queryResult = modService.GetMod(user, id, filteredRange);
 
-            if (queryResult.Value == null)
-            {
-                return StatusCode(queryResult.StatusCode, queryResult.Message);
-            }
-
-            var localizedModInfo = queryResult.Value.GetLocalizedInfo(GetAcceptLanguageCultures());
-            var serializedMod = SerializedMod.Serialize(queryResult.Value, localizedModInfo);
-
-            return Ok(serializedMod);
+            return queryResult.Serialize(GetAcceptLanguageCultures());
         }
 
         [HttpGet("api/mod/{id}/latest")]
@@ -137,13 +122,8 @@ namespace Hive.Controllers
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             var queryResult = modService.GetMod(user, id);
-            if (queryResult.Value == null)
-            {
-                return StatusCode(queryResult.StatusCode, queryResult.Message);
-            }
-            var mod = queryResult.Value;
-
-            return Ok(SerializedMod.Serialize(mod, mod.GetLocalizedInfo(GetAcceptLanguageCultures())));
+            
+            return queryResult.Serialize(GetAcceptLanguageCultures());
         }
 
         [HttpPost("api/mod/move/{channelId}")]
@@ -165,13 +145,8 @@ namespace Hive.Controllers
             }
 
             var queryResult = await modService.MoveMod(user, channelId, identifier).ConfigureAwait(false);
-            if (queryResult.Value == null)
-            {
-                return StatusCode(queryResult.StatusCode, queryResult.Message);
-            }
-            var mod = queryResult.Value;
 
-            return Ok(SerializedMod.Serialize(mod, mod.GetLocalizedInfo(GetAcceptLanguageCultures())));
+            return queryResult.Serialize(GetAcceptLanguageCultures());
         }
 
         // This code was generously provided by the following StackOverflow user, with some slight tweaks.
