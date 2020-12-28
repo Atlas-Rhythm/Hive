@@ -1,4 +1,6 @@
 ﻿using Hive.Models;
+using Hive.Models.Serialized;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -62,6 +64,20 @@ namespace Hive.Extensions
             }
 
             return localizedModInfo;
+        }
+
+        public static ActionResult<SerializedMod> Serialize(this HiveObjectQuery<Mod> query, IEnumerable<string> languageCultures)
+        {
+            if (query == null)
+                throw new ArgumentNullException(nameof(query), "Object query is null");
+            return query.Convert(mod => SerializedMod.Serialize(mod, mod.GetLocalizedInfo(languageCultures)));
+        }
+
+        public static ActionResult<IEnumerable<SerializedMod>> Serialize(this HiveObjectQuery<IEnumerable<Mod>> query, IEnumerable<string> languageCultures)
+        {
+            if (query == null)
+                throw new ArgumentNullException(nameof(query), "Object query is null");
+            return query.Convert(mods => mods.Select(mod => SerializedMod.Serialize(mod, mod.GetLocalizedInfo(languageCultures))));
         }
     }
 }

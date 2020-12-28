@@ -48,7 +48,6 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(res);
             // Should forbid based off of a permission failure.
             Assert.IsType<ForbidResult>(res.Result);
-            Assert.NotNull(res.Result);
         }
 
         [Fact]
@@ -63,8 +62,8 @@ namespace Hive.Tests.Endpoints
             var res = await controller.GetChannels();
             Assert.NotNull(res);
             // Should forbid based off of a plugin failure.
-            Assert.IsType<ForbidResult>(res.Result);
             Assert.NotNull(res.Result);
+            Assert.IsType<ForbidResult>(res.Result);
         }
 
         [Fact]
@@ -150,6 +149,7 @@ namespace Hive.Tests.Endpoints
             services.AddSingleton<IChannelsControllerPlugin>(sp => new HiveChannelsControllerPlugin());
             services.AddSingleton(sp => plugin);
             services.AddAggregates();
+            services.AddScoped<Services.Common.ChannelService>();
             services.AddScoped<Controllers.ChannelsController>();
 
             return services.BuildServiceProvider().GetRequiredService<Controllers.ChannelsController>();

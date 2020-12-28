@@ -159,6 +159,7 @@ namespace Hive.Tests.Endpoints
 
             services
                 .AddTransient(sp => plugins)
+                .AddScoped<Services.Common.GameVersionService>()
                 .AddScoped<Controllers.GameVersionsController>()
                 .AddAggregates();
 
