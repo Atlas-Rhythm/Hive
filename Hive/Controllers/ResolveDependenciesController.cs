@@ -38,7 +38,7 @@ namespace Hive.Controllers
         private readonly Serilog.ILogger log;
         private readonly IProxyAuthenticationService proxyAuth;
         private readonly DependencyResolverService dependencyResolverService;
-        public ResolveDependenciesController([DisallowNull] Serilog.ILogger logger, DependencyResolverService dependencyResolverService, PermissionsManager<PermissionContext> perms, HiveContext ctx, IProxyAuthenticationService proxyAuth, IAggregate<IResolveDependenciesPlugin> plugin)
+        public ResolveDependenciesController([DisallowNull] Serilog.ILogger logger, DependencyResolverService dependencyResolverService, IProxyAuthenticationService proxyAuth)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
             log = logger.ForContext<ResolveDependenciesController>();
