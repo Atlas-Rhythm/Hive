@@ -3,8 +3,14 @@ using GraphQL.Types;
 
 namespace Hive.Graphing.Types
 {
+    /// <summary>
+    /// The GQL representation of a <see cref="GameVersion"/>.
+    /// </summary>
     public class GameVersionType : ObjectGraphType<GameVersion>
     {
+        /// <summary>
+        /// Setup a GameVersionType for GQL.
+        /// </summary>
         public GameVersionType()
         {
             Name = nameof(GameVersion);

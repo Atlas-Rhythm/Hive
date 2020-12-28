@@ -6,6 +6,9 @@ using System.Linq;
 
 namespace Hive.Extensions
 {
+    /// <summary>
+    /// Extensions for the <see cref="Mod"/>.
+    /// </summary>
     public static class ModExtensions
     {
         /// <summary>

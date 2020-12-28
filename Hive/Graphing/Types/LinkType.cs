@@ -3,8 +3,14 @@ using GraphQL.Types;
 
 namespace Hive.Graphing.Types
 {
+    /// <summary>
+    /// The GQL representation of a link on a <see cref="Models.Mod"/>. Specifically from <seealso cref="Models.Mod.Links"/>.
+    /// </summary>
     public class LinkType : ObjectGraphType<(string, Uri)>
     {
+        /// <summary>
+        /// Setup a LinkType for GQL.
+        /// </summary>
         public LinkType()
         {
             Name = "Link";

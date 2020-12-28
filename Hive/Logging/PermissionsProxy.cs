@@ -7,10 +7,17 @@ using System.Linq;
 
 namespace Hive.Logging
 {
+    /// <summary>
+    /// A proxy logger for permissions logging.
+    /// </summary>
     public class PermissionsProxy : Permissions.Logging.ILogger
     {
         private readonly ILogger logger;
 
+        /// <summary>
+        /// Construct the proxy from a <see cref="ILogger"/>
+        /// </summary>
+        /// <param name="log"></param>
         public PermissionsProxy([DisallowNull] ILogger log)
         {
             if (log is null)
@@ -18,6 +25,7 @@ namespace Hive.Logging
             logger = log.ForContext<Permissions.Logging.ILogger>();
         }
 
+        /// <inheritdoc/>
         public void Info(string message, object[] messageInfo, string api, StringView action, Rule? currentRule, object manager)
         {
             logger
@@ -27,6 +35,7 @@ namespace Hive.Logging
                 .Information("{Api}: While processing {Rule} for {Action}: {Message}", api, currentRule, action, message);
         }
 
+        /// <inheritdoc/>
         public void Warn(string message, [DisallowNull] object[] messageInfo, string api, StringView action, Rule? currentRule, object manager)
         {
             if (messageInfo is null)

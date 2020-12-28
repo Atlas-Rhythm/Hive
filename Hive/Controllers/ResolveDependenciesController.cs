@@ -17,6 +17,9 @@ using Version = Hive.Versioning.Version;
 
 namespace Hive.Controllers
 {
+    /// <summary>
+    /// A class for plugins that allow modifications of <see cref="ResolveDependenciesController"/>
+    /// </summary>
     [Aggregable]
     public interface IResolveDependenciesPlugin
     {
@@ -29,8 +32,11 @@ namespace Hive.Controllers
         bool GetAdditionalChecks(User? user) => true;
     }
 
-    public class HiveResolveDependenciesControllerPlugin : IResolveDependenciesPlugin { }
+    internal class HiveResolveDependenciesControllerPlugin : IResolveDependenciesPlugin { }
 
+    /// <summary>
+    /// A Controller for resolving dependencies.
+    /// </summary>
     [Route("api/resolve_dependencies")]
     public class ResolveDependenciesController : ControllerBase
     {
@@ -41,6 +47,14 @@ namespace Hive.Controllers
         private readonly IProxyAuthenticationService proxyAuth;
         [ThreadStatic] private static PermissionActionParseState permissionParseState;
 
+        /// <summary>
+        /// Create a ResolveDependenciesController with DI.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="perms"></param>
+        /// <param name="ctx"></param>
+        /// <param name="proxyAuth"></param>
+        /// <param name="plugin"></param>
         public ResolveDependenciesController([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IProxyAuthenticationService proxyAuth, IAggregate<IResolveDependenciesPlugin> plugin)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
@@ -53,6 +67,12 @@ namespace Hive.Controllers
 
         private const string ActionName = "hive.resolve_dependencies";
 
+        /// <summary>
+        /// Resolves the dependencies for a list of <see cref="ModIdentifier"/> objects.
+        /// This performs a permission check at: <c>hive.resolve_dependencies</c>.
+        /// </summary>
+        /// <param name="identifiers">The identifiers to resolve dependencies for.</param>
+        /// <returns>A wrapped <see cref="DependencyResolutionResult"/>, if successful.</returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

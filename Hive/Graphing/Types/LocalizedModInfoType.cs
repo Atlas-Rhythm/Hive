@@ -3,8 +3,14 @@ using GraphQL.Types;
 
 namespace Hive.Graphing.Types
 {
+    /// <summary>
+    /// The GQL representation of a <see cref="LocalizedModInfo"/>.
+    /// </summary>
     public class LocalizedModInfoType : ObjectGraphType<LocalizedModInfo>
     {
+        /// <summary>
+        /// Setup a LocalizedModInfoType for GQL.
+        /// </summary>
         public LocalizedModInfoType()
         {
             Name = nameof(LocalizedModInfo);

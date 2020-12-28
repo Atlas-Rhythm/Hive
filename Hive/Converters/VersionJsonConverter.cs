@@ -6,8 +6,12 @@ using Version = Hive.Versioning.Version;
 
 namespace Hive.Converters
 {
+    /// <summary>
+    /// A <see cref="JsonConverter{T}"/> for <see cref="Version"/>.
+    /// </summary>
     public class VersionJsonConverter : JsonConverter<Version>
     {
+        /// <inheritdoc/>
         [return: MaybeNull]
         public override Version? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
@@ -16,6 +20,7 @@ namespace Hive.Converters
                 : reader.TokenType != JsonTokenType.String ? throw new JsonException() : new Version(reader.GetString()!);
         }
 
+        /// <inheritdoc/>
         public override void Write(Utf8JsonWriter writer, Version value, JsonSerializerOptions options)
         {
             if (writer is null)

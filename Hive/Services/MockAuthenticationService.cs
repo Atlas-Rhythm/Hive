@@ -7,10 +7,16 @@ using System.Threading.Tasks;
 
 namespace Hive.Services
 {
+    /// <summary>
+    /// A mockup of how the authentication service will behave.
+    /// </summary>
     public class MockAuthenticationService : IProxyAuthenticationService
     {
-        public Dictionary<string, User?> Users { get; } = new Dictionary<string, User?>();
+        private Dictionary<string, User?> Users { get; } = new Dictionary<string, User?>();
 
+        /// <summary>
+        /// Creates and populates some dummy users
+        /// </summary>
         public MockAuthenticationService()
         {
             // Create dummy data for now
@@ -20,6 +26,7 @@ namespace Hive.Services
             Users.Add("Bearer: asdf", user2);
         }
 
+        /// <inheritdoc/>
         public Task<User?> GetUser(HttpRequest request, bool throwOnError = false)
         {
             if (request is null)
@@ -35,6 +42,7 @@ namespace Hive.Services
             return Task.FromResult<User?>(null);
         }
 
+        /// <inheritdoc/>
         public Task<User?> GetUser(string userId, bool throwOnError = false)
         {
             return string.IsNullOrEmpty(userId)
@@ -42,6 +50,7 @@ namespace Hive.Services
                 : Users.TryGetValue(userId, out var outp) ? Task.FromResult(outp) : Task.FromResult<User?>(null);
         }
 
+        /// <inheritdoc/>
         public Task<bool> IsValid(HttpRequest request) => throw new NotImplementedException();
     }
 }

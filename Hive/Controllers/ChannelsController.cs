@@ -39,6 +39,9 @@ namespace Hive.Controllers
 
     internal class HiveChannelsControllerPlugin : IChannelsControllerPlugin { }
 
+    /// <summary>
+    /// A Controller for channel related actions.
+    /// </summary>
     [Route("api/channels")]
     [ApiController]
     public class ChannelsController : ControllerBase
@@ -50,6 +53,14 @@ namespace Hive.Controllers
         private readonly IProxyAuthenticationService authService;
         private PermissionActionParseState channelsParseState;
 
+        /// <summary>
+        /// Create a ChannelsController with DI.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="perms"></param>
+        /// <param name="ctx"></param>
+        /// <param name="plugin"></param>
+        /// <param name="authService"></param>
         public ChannelsController([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IChannelsControllerPlugin> plugin, IProxyAuthenticationService authService)
         {
             if (logger is null)
@@ -63,6 +74,11 @@ namespace Hive.Controllers
 
         private const string ActionName = "hive.channel";
 
+        /// <summary>
+        /// Gets all <see cref="Channel"/> objects available.
+        /// This performs a permission check at: <c>hive.channel</c>.
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]

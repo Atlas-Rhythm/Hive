@@ -6,6 +6,9 @@ using GraphQL.Server;
 
 namespace Hive.Graphing
 {
+    /// <summary>
+    /// Extensions for GQL within Hive.
+    /// </summary>
     public static class HiveQL
     {
         private const string gqlTypesNamespace = nameof(Types);

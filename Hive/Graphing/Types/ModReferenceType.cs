@@ -3,8 +3,14 @@ using GraphQL.Types;
 
 namespace Hive.Graphing.Types
 {
+    /// <summary>
+    /// The GQL representation of a <see cref="ModReference"/>.
+    /// </summary>
     public class ModReferenceType : ObjectGraphType<ModReference>
     {
+        /// <summary>
+        /// Setup a ModReferenceType for GQL.
+        /// </summary>
         public ModReferenceType()
         {
             Name = nameof(ModReference);

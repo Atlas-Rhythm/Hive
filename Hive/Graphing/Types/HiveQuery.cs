@@ -6,8 +6,15 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Hive.Graphing.Types
 {
+    /// <summary>
+    /// A QGL Query.
+    /// </summary>
     public class HiveQuery : ObjectGraphType
     {
+        /// <summary>
+        /// Create a GQL query.
+        /// </summary>
+        /// <param name="logger"></param>
         public HiveQuery([DisallowNull] ILogger logger)
         {
             if (logger is null)

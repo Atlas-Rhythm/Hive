@@ -40,6 +40,9 @@ namespace Hive.Controllers
 
     internal class HiveGameVersionsControllerPlugin : IGameVersionsPlugin { }
 
+    /// <summary>
+    /// A Controller for game version related actions.
+    /// </summary>
     [Route("api/game/versions")]
     [ApiController]
     public class GameVersionsController : ControllerBase
@@ -51,6 +54,14 @@ namespace Hive.Controllers
         private readonly IProxyAuthenticationService proxyAuth;
         [ThreadStatic] private static PermissionActionParseState versionsParseState;
 
+        /// <summary>
+        /// Create a GameVersionsController with DI.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="perms"></param>
+        /// <param name="ctx"></param>
+        /// <param name="plugin"></param>
+        /// <param name="proxyAuth"></param>
         public GameVersionsController([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IGameVersionsPlugin> plugin, IProxyAuthenticationService proxyAuth)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
@@ -63,6 +74,11 @@ namespace Hive.Controllers
 
         private const string ActionName = "hive.game.version";
 
+        /// <summary>
+        /// Gets all available <see cref="GameVersion"/> objects.
+        /// This performs a permission check at: <c>hive.game.version</c>.
+        /// </summary>
+        /// <returns>A wrapped enumerable of <see cref="GameVersion"/> objects, if successful.</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]

@@ -8,6 +8,8 @@ using NodaTime;
 
 namespace Hive.Migrations
 {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
     public partial class CleanReset : Migration
     {
         protected override void Up([DisallowNull] MigrationBuilder migrationBuilder)
@@ -165,4 +167,6 @@ namespace Hive.Migrations
                 name: "Channels");
         }
     }
+
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 }
