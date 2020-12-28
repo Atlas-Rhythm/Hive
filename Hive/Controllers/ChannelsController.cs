@@ -7,6 +7,7 @@ using Hive.Models;
 using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
+using Hive.Services.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -46,12 +47,9 @@ namespace Hive.Controllers
     [ApiController]
     public class ChannelsController : ControllerBase
     {
-        private readonly PermissionsManager<PermissionContext> permissions;
         private readonly Serilog.ILogger log;
-        private readonly HiveContext context;
-        private readonly IAggregate<IChannelsControllerPlugin> plugin;
+        private readonly ChannelService channelService;
         private readonly IProxyAuthenticationService authService;
-        private PermissionActionParseState channelsParseState;
 
         /// <summary>
         /// Create a ChannelsController with DI.
@@ -61,18 +59,15 @@ namespace Hive.Controllers
         /// <param name="ctx"></param>
         /// <param name="plugin"></param>
         /// <param name="authService"></param>
-        public ChannelsController([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IChannelsControllerPlugin> plugin, IProxyAuthenticationService authService)
+        public ChannelsController([DisallowNull] Serilog.ILogger logger, ChannelService channelService, IProxyAuthenticationService authService)
         {
             if (logger is null)
                 throw new ArgumentNullException(nameof(logger));
             log = logger.ForContext<ChannelsController>();
-            permissions = perms;
-            context = ctx;
-            this.plugin = plugin;
+            
             this.authService = authService;
+            this.channelService = channelService;
         }
-
-        private const string ActionName = "hive.channel";
 
         /// <summary>
         /// Gets all <see cref="Channel"/> objects available.
@@ -88,33 +83,11 @@ namespace Hive.Controllers
         {
             log.Debug("Getting channels...");
             // Get the user, do not need to capture context.
-            var user = await authService.GetUser(Request).ConfigureAwait(false);
+            User? user = await authService.GetUser(Request).ConfigureAwait(false);
             // If user is null, we can simply forward it anyways
-            // TODO: Wrap with user != null, either anonymize "hive.channel" or remove entirely.
-            // hive.channel with a null channel in the context should be permissible
-            // iff a given user (or none) is allowed to view any channels. Thus, this should almost always be true
-            if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref channelsParseState))
-                return Forbid();
-            // Combine plugins
-            log.Debug("Combining plugins...");
-            var combined = plugin.Instance;
-            log.Debug("Performing additional checks for GetChannels...");
-            // May return false, which causes a Forbid.
-            // If it throws an exception, it will be handled by our MiddleWare
-            if (!combined.GetChannelsAdditionalChecks(user))
-                return Forbid();
-            // Filter channels based off of user-level permission
-            // Permission for a given channel is entirely plugin-based, channels in Hive are defaultly entirely public.
-            // For a mix of private/public channels, a plugin that maintains a user-level list of read/write channels is probably ideal.
-            var channels = context.Channels.ToList();
-            log.Debug("Filtering channels from {0} channels...", channels.Count);
-            // First, we filter over if the given channel is accessible to the given user.
-            // This allows for much more specific permissions, although chances are that roles will be used (and thus a plugin) instead.
-            var filteredChannels = channels.Where(c => permissions.CanDo(ActionName, new PermissionContext { Channel = c, User = user }, ref channelsParseState));
-            log.Debug("Remaining channels before plugin: {0}", filteredChannels.Count());
-            filteredChannels = combined.GetChannelsFilter(user, filteredChannels);
-            log.Debug("Remaining channels: {0}", filteredChannels.Count());
-            return Ok(filteredChannels.ToList());
+            var queryResult = channelService.RetrieveAllChannels(user);
+
+            return queryResult.Convert();
         }
     }
 }

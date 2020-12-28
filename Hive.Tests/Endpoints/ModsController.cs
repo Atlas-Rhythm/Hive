@@ -133,6 +133,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
 
             Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
             Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
@@ -144,7 +145,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<NotFoundResult>(res.Result); // The above endpoint must return 404.
+            Assert.IsType<NotFoundObjectResult>(res.Result);  // The above endpoint must return 404.
         }
 
         [Fact]
@@ -202,6 +203,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
 
             Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
             Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
@@ -213,7 +215,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<NotFoundResult>(res.Result); // The above endpoint must return 404.
+            Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must return 404.
         }
 
         [Fact]
@@ -316,6 +318,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.MoveModToChannel("Public", identifier);
 
             Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
             Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must fail.
         }
 
@@ -339,6 +342,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.MoveModToChannel("sc2ad check your github notifications", identifier);
 
             Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
             Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must fail.
         }
 
@@ -361,6 +365,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.MoveModToChannel("Public", identifier);
 
             Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
             Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
@@ -382,6 +387,7 @@ namespace Hive.Tests.Endpoints
 
             services
                 .AddTransient(sp => plugins)
+                .AddScoped<Services.Common.ModService>()
                 .AddScoped<Controllers.ModsController>()
                 .AddAggregates();
 

@@ -283,6 +283,7 @@ namespace Hive.Tests.Endpoints
 
             services
                 .AddTransient(sp => plugins)
+                .AddScoped<Services.Common.DependencyResolverService>()
                 .AddScoped<Controllers.ResolveDependenciesController>()
                 .AddAggregates();
 
