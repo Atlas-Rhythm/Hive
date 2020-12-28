@@ -47,6 +47,7 @@ namespace Hive.Versioning
         /// <param name="other">The other <see cref="VersionRange"/> to compute the disjunction of.</param>
         /// <returns>The logical disjunction of <see langword="this"/> and <paramref name="other"/>.</returns>
         /// <seealso cref="operator |(VersionRange, VersionRange)"/>
+        [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
         public VersionRange Disjunction(VersionRange other)
         {
             if (other is null)
@@ -83,8 +84,6 @@ namespace Hive.Versioning
                         }
                         break;
 
-                    case CombineResult.TwoSubranges:
-                    case CombineResult.Nothing:
                     default: throw new InvalidOperationException();
                 }
             }
@@ -168,6 +167,8 @@ namespace Hive.Versioning
         /// </summary>
         /// <returns>The compliement of this <see cref="VersionRange"/>.</returns>
         /// <seealso cref="operator ~(VersionRange)"/>
+        [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
+        [SuppressMessage("Style", "IDE0072:Add missing cases", Justification = "Don't need missing cases.")]
         public VersionRange Invert()
         {
             if (_inverse is null)
@@ -185,11 +186,6 @@ namespace Hive.Versioning
                         invComparer = comparerResult switch
                         {
                             CombineResult.OneComparer => inverseComparer,
-                            CombineResult.OneSubrange => throw new NotImplementedException(),
-                            CombineResult.TwoSubranges => throw new NotImplementedException(),
-                            CombineResult.Unrepresentable => throw new NotImplementedException(),
-                            CombineResult.Nothing => throw new NotImplementedException(),
-                            CombineResult.Everything => throw new NotImplementedException(),
                             _ => throw new InvalidOperationException(),
                         };
                     }
@@ -211,10 +207,6 @@ namespace Hive.Versioning
                                     ab.Add(resRange);
                                     break;
 
-                                case CombineResult.TwoSubranges:
-                                case CombineResult.Unrepresentable:
-                                case CombineResult.Everything:
-                                case CombineResult.OneComparer:
                                 default: throw new InvalidOperationException();
                             }
                         }
@@ -234,9 +226,6 @@ namespace Hive.Versioning
                                         invComparer = null;
                                         break;
 
-                                    case CombineResult.TwoSubranges:
-                                    case CombineResult.Unrepresentable:
-                                    case CombineResult.Everything:
                                     default: throw new InvalidOperationException();
                                 }
                             }
@@ -257,9 +246,6 @@ namespace Hive.Versioning
                                 upperBound = null;
                                 break;
 
-                            case CombineResult.TwoSubranges:
-                            case CombineResult.Unrepresentable:
-                            case CombineResult.Everything:
                             default: throw new InvalidOperationException();
                         }
                         invComparer = null;
@@ -332,6 +318,7 @@ namespace Hive.Versioning
             return a.LowerBound.CompareTo.CompareTo(b.LowerBound.CompareTo);
         }
 
+        [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
         private static (Subrange[] Ranges, VersionComparer? Comparer) FixupRangeList(Subrange[] ranges, VersionComparer? comparer)
         {
             if (ranges.Length == 0 && comparer == null)
@@ -400,9 +387,6 @@ namespace Hive.Versioning
                         ab.Clear();
                         return (EverythingSubranges, null);
 
-                    case CombineResult.OneComparer:
-                    case CombineResult.Unrepresentable:
-                    case CombineResult.Nothing:
                     default: throw new InvalidOperationException();
                 }
             }
@@ -669,6 +653,7 @@ namespace Hive.Versioning
 
         #region Parser
 
+        [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
         private static bool TryParse(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out Subrange[] sranges, out VersionComparer? comparer)
         {
             sranges = null;
@@ -716,8 +701,6 @@ namespace Hive.Versioning
                                     comparer = null;
                                 break;
 
-                            case CombineResult.TwoSubranges:
-                            case CombineResult.Nothing:
                             default: throw new InvalidOperationException();
                         }
                     }
