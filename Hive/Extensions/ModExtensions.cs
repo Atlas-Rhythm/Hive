@@ -66,6 +66,12 @@ namespace Hive.Extensions
                 : localizedModInfo;
         }
 
+        /// <summary>
+        /// Serialize a <see cref="HiveObjectQuery{T}"/> with a value of type <see cref="Mod"/> to a <see cref="SerializedMod"/>.
+        /// </summary>
+        /// <param name="query">The query to convert.</param>
+        /// <param name="languageCultures">The languages to use in the conversion.</param>
+        /// <returns>The wrapped <see cref="SerializedMod"/>.</returns>
         public static ActionResult<SerializedMod> Serialize(this HiveObjectQuery<Mod> query, IEnumerable<string> languageCultures)
         {
             if (query == null)
@@ -73,6 +79,12 @@ namespace Hive.Extensions
             return query.Convert(mod => SerializedMod.Serialize(mod, mod.GetLocalizedInfo(languageCultures)));
         }
 
+        /// <summary>
+        /// Serializes a <see cref="HiveObjectQuery{T}"/> of a collection of <see cref="Mod"/> objects to a collection of <see cref="SerializedMod"/> objects.
+        /// </summary>
+        /// <param name="query">The query to convert.</param>
+        /// <param name="languageCultures">The languages to use in the conversion.</param>
+        /// <returns>The wrapped collection of <see cref="SerializedMod"/> objects.</returns>
         public static ActionResult<IEnumerable<SerializedMod>> Serialize(this HiveObjectQuery<IEnumerable<Mod>> query, IEnumerable<string> languageCultures)
         {
             if (query == null)

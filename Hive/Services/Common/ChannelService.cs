@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace Hive.Services.Common
 {
+    /// <summary>
+    /// Common functionality for channel related actions.
+    /// </summary>
     public class ChannelService
     {
         private readonly Serilog.ILogger log;
@@ -18,9 +21,16 @@ namespace Hive.Services.Common
         private readonly PermissionsManager<PermissionContext> permissions;
         private PermissionActionParseState channelsParseState;
 
-        private static readonly HiveObjectQuery<IEnumerable<Channel>> forbiddenResponse = new HiveObjectQuery<IEnumerable<Channel>>(null, "Forbidden", StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<IEnumerable<Channel>> forbiddenResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
         private const string ActionName = "hive.channel";
 
+        /// <summary>
+        /// Create a ChannelService with DI.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="perms"></param>
+        /// <param name="ctx"></param>
+        /// <param name="plugin"></param>
         public ChannelService([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IChannelsControllerPlugin> plugin)
         {
             if (logger is null)
@@ -31,9 +41,14 @@ namespace Hive.Services.Common
             this.plugin = plugin;
         }
 
+        /// <summary>
+        /// Gets all <see cref="Channel"/> objects available.
+        /// This performs a permission check at: <c>hive.channel</c>.
+        /// </summary>
+        /// <param name="user">The users to associate with this request.</param>
+        /// <returns>A wrapped collection of <see cref="Channel"/>, if successful.</returns>
         public HiveObjectQuery<IEnumerable<Channel>> RetrieveAllChannels(User? user)
         {
-            // TODO: Wrap with user != null, either anonymize "hive.channel" or remove entirely.
             // hive.channel with a null channel in the context should be permissible
             // iff a given user (or none) is allowed to view any channels. Thus, this should almost always be true
             if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref channelsParseState))

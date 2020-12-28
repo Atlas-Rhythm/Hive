@@ -2,13 +2,11 @@
 using Hive.Models;
 using Hive.Models.ReadOnly;
 using Hive.Models.Serialized;
-using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
 using Hive.Versioning;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using System;
@@ -17,7 +15,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
-using Version = Hive.Versioning.Version;
 using Hive.Services.Common;
 
 namespace Hive.Controllers
@@ -64,7 +61,7 @@ namespace Hive.Controllers
     internal class HiveModsControllerPlugin : IModsPlugin { }
 
     /// <summary>
-    /// A Controller for performing mod related actions.
+    /// A REST controller for performing mod related actions.
     /// </summary>
     [Route("api/mods")]
     [ApiController]
@@ -78,9 +75,7 @@ namespace Hive.Controllers
         /// Create a ModsController with DI.
         /// </summary>
         /// <param name="logger"></param>
-        /// <param name="perms"></param>
-        /// <param name="ctx"></param>
-        /// <param name="plugin"></param>
+        /// <param name="modService"></param>
         /// <param name="proxyAuth"></param>
         public ModsController([DisallowNull] Serilog.ILogger logger, ModService modService, IProxyAuthenticationService proxyAuth)
         {
@@ -97,10 +92,10 @@ namespace Hive.Controllers
         /// <para><paramref name="filterType"/> Will default to <c>latest</c> if not provided or not one of: <c>all</c>, <c>latest</c>, or <c>recent</c>.</para>
         /// This performs a permission check at: <c>hive.mod</c>.
         /// </summary>
-        /// <param name="channelIds"></param>
-        /// <param name="gameVersion"></param>
-        /// <param name="filterType">Must be <c>all</c>, <c>latest</c>, or <c>recent</c>.</param>
-        /// <returns>A wrapped collection of <see cref="SerializedMod"/> objects, if successful.</returns>
+        /// <param name="channelIds">The channel IDs to filter the mods.</param>
+        /// <param name="gameVersion">The game version to search within.</param>
+        /// <param name="filterType">How to filter the results.</param>
+        /// <returns>A wrapped collection of <see cref="SerializedMod"/>, if successful.</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -132,7 +127,7 @@ namespace Hive.Controllers
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            VersionRange? filteredRange = range != null ? new VersionRange(range) : null;
+            var filteredRange = range != null ? new VersionRange(range) : null;
             var queryResult = modService.GetMod(user, id, filteredRange);
 
             return queryResult.Serialize(GetAcceptLanguageCultures());
@@ -156,7 +151,7 @@ namespace Hive.Controllers
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             var queryResult = modService.GetMod(user, id);
-            
+
             return queryResult.Serialize(GetAcceptLanguageCultures());
         }
 

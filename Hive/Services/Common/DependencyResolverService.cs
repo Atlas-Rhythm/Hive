@@ -16,6 +16,9 @@ using Version = Hive.Versioning.Version;
 
 namespace Hive.Services.Common
 {
+    /// <summary>
+    /// Common functionality for dependency resolution actions.
+    /// </summary>
     public class DependencyResolverService
     {
         private readonly Serilog.ILogger log;
@@ -26,8 +29,15 @@ namespace Hive.Services.Common
 
         private const string ActionName = "hive.resolve_dependencies";
 
-        private static readonly HiveObjectQuery<DependencyResolutionResult> forbiddenResponse = new HiveObjectQuery<DependencyResolutionResult>(null, "Forbidden", StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<DependencyResolutionResult> forbiddenResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
 
+        /// <summary>
+        /// Create a DependencyResolverService with DI.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="perms"></param>
+        /// <param name="ctx"></param>
+        /// <param name="plugin"></param>
         public DependencyResolverService([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IResolveDependenciesPlugin> plugin)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
@@ -37,6 +47,13 @@ namespace Hive.Services.Common
             context = ctx;
         }
 
+        /// <summary>
+        /// Resolves the dependencies for a list of <see cref="ModIdentifier"/> objects.
+        /// This performs a permission check at: <c>hive.resolve_dependencies</c>.
+        /// </summary>
+        /// <param name="user">The user to associate with this request.</param>
+        /// <param name="identifiers">The identifiers to resolve dependencies for.</param>
+        /// <returns>A wrapped <see cref="DependencyResolutionResult"/>, if successful.</returns>
         public async Task<HiveObjectQuery<DependencyResolutionResult>> ResolveAsync(User? user, IEnumerable<ModIdentifier> identifiers)
         {
             // All this stuff seems pretty standard by now. Perform a permissions check for the user, forbid if they don't have permission.
@@ -90,7 +107,7 @@ namespace Hive.Services.Common
 
             try
             {
-                // Run our obtained mods through DaNike's F# dependency resolution library. 
+                // Run our obtained mods through DaNike's F# dependency resolution library.
                 resolvedMods = await Resolver.Resolve(dependencyValueAccessor, mods).ConfigureAwait(false);
                 result.AdditionalMods.AddRange(resolvedMods);
             }
@@ -176,7 +193,7 @@ namespace Hive.Services.Common
 
             public VersionRange Range(ModReference @ref) => @ref.Versions;
 
-            public ModReference CreateRef(string id, VersionRange range) => new ModReference(id, range);
+            public ModReference CreateRef(string id, VersionRange range) => new(id, range);
 
             // Comparisons
             public bool Matches(VersionRange range, Version version) => range.Matches(version);

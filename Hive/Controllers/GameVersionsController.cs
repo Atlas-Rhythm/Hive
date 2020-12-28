@@ -1,5 +1,4 @@
 ﻿using Hive.Models;
-using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
 using Hive.Services.Common;
@@ -8,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Hive.Controllers
@@ -42,7 +40,7 @@ namespace Hive.Controllers
     internal class HiveGameVersionsControllerPlugin : IGameVersionsPlugin { }
 
     /// <summary>
-    /// A Controller for game version related actions.
+    /// A REST controller for game version related actions.
     /// </summary>
     [Route("api/game/versions")]
     [ApiController]
@@ -56,9 +54,7 @@ namespace Hive.Controllers
         /// Create a GameVersionsController with DI.
         /// </summary>
         /// <param name="logger"></param>
-        /// <param name="perms"></param>
-        /// <param name="ctx"></param>
-        /// <param name="plugin"></param>
+        /// <param name="gameVersionService"></param>
         /// <param name="proxyAuth"></param>
         public GameVersionsController([DisallowNull] Serilog.ILogger logger, GameVersionService gameVersionService, IProxyAuthenticationService proxyAuth)
         {

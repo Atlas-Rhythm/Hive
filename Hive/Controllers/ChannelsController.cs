@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Threading.Tasks;
 using Hive.Models;
-using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
 using Hive.Services.Common;
@@ -41,7 +39,7 @@ namespace Hive.Controllers
     internal class HiveChannelsControllerPlugin : IChannelsControllerPlugin { }
 
     /// <summary>
-    /// A Controller for channel related actions.
+    /// A REST controller for channel related actions.
     /// </summary>
     [Route("api/channels")]
     [ApiController]
@@ -55,16 +53,13 @@ namespace Hive.Controllers
         /// Create a ChannelsController with DI.
         /// </summary>
         /// <param name="logger"></param>
-        /// <param name="perms"></param>
-        /// <param name="ctx"></param>
-        /// <param name="plugin"></param>
+        /// <param name="channelService"></param>
         /// <param name="authService"></param>
         public ChannelsController([DisallowNull] Serilog.ILogger logger, ChannelService channelService, IProxyAuthenticationService authService)
         {
             if (logger is null)
                 throw new ArgumentNullException(nameof(logger));
             log = logger.ForContext<ChannelsController>();
-            
             this.authService = authService;
             this.channelService = channelService;
         }
@@ -73,7 +68,7 @@ namespace Hive.Controllers
         /// Gets all <see cref="Channel"/> objects available.
         /// This performs a permission check at: <c>hive.channel</c>.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A wrapped collection of <see cref="Channel"/>, if successful.</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -83,7 +78,7 @@ namespace Hive.Controllers
         {
             log.Debug("Getting channels...");
             // Get the user, do not need to capture context.
-            User? user = await authService.GetUser(Request).ConfigureAwait(false);
+            var user = await authService.GetUser(Request).ConfigureAwait(false);
             // If user is null, we can simply forward it anyways
             var queryResult = channelService.RetrieveAllChannels(user);
 

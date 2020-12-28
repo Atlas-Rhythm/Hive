@@ -53,17 +53,15 @@ namespace Hive
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
 
-            services.AddScoped<ModService>();
-            services.AddScoped<ChannelService>();
-            services.AddScoped<GameVersionService>();
-            services.AddScoped<DependencyResolverService>();
+            _ = services.AddScoped<ModService>()
+                .AddScoped<ChannelService>()
+                .AddScoped<GameVersionService>()
+                .AddScoped<DependencyResolverService>()
+                .AddAggregates()
+                .AddHiveQLTypes()
+                .AddHiveGraphQL();
 
-            services.AddAggregates();
-
-            services.AddHiveQLTypes();
-            services.AddHiveGraphQL();
-
-            services.AddControllers();
+            _ = services.AddControllers();
         }
 
         /// <summary>

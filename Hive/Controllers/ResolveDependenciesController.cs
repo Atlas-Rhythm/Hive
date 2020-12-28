@@ -1,20 +1,12 @@
-﻿using Hive.Dependencies;
-using Hive.Models;
-using Hive.Permissions;
+﻿using Hive.Models;
 using Hive.Plugins;
 using Hive.Services;
 using Hive.Services.Common;
-using Hive.Versioning;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.FSharp.Core;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Threading.Tasks;
-using Version = Hive.Versioning.Version;
 
 namespace Hive.Controllers
 {
@@ -36,7 +28,7 @@ namespace Hive.Controllers
     internal class HiveResolveDependenciesControllerPlugin : IResolveDependenciesPlugin { }
 
     /// <summary>
-    /// A Controller for resolving dependencies.
+    /// A REST controller for resolving dependencies.
     /// </summary>
     [Route("api/resolve_dependencies")]
     public class ResolveDependenciesController : ControllerBase
@@ -44,14 +36,13 @@ namespace Hive.Controllers
         private readonly Serilog.ILogger log;
         private readonly IProxyAuthenticationService proxyAuth;
         private readonly DependencyResolverService dependencyResolverService;
+
         /// <summary>
         /// Create a ResolveDependenciesController with DI.
         /// </summary>
         /// <param name="logger"></param>
-        /// <param name="perms"></param>
-        /// <param name="ctx"></param>
+        /// <param name="dependencyResolverService"></param>
         /// <param name="proxyAuth"></param>
-        /// <param name="plugin"></param>
         public ResolveDependenciesController([DisallowNull] Serilog.ILogger logger, DependencyResolverService dependencyResolverService, IProxyAuthenticationService proxyAuth)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
@@ -60,6 +51,12 @@ namespace Hive.Controllers
             this.proxyAuth = proxyAuth;
         }
 
+        /// <summary>
+        /// Resolves the dependencies for a list of <see cref="ModIdentifier"/> objects.
+        /// This performs a permission check at: <c>hive.resolve_dependencies</c>.
+        /// </summary>
+        /// <param name="identifiers">The identifiers to resolve dependencies for.</param>
+        /// <returns>A wrapped <see cref="DependencyResolutionResult"/>, if successful.</returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
