@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AspNetCoreRateLimit;
 using Hive.Controllers;
 using Hive.Converters;
 using Hive.Graphing;
@@ -59,6 +60,17 @@ namespace Hive
             services.AddHiveQLTypes();
             services.AddHiveGraphQL();
 
+            _ = services.AddOptions();
+            if (Configuration.GetValue<bool>("UseRateLimiting"))
+            {
+                _ = services.AddMemoryCache()
+                    .Configure<ClientRateLimitOptions>(Configuration.GetSection("ClientRateLimiting"))
+                    .Configure<IpRateLimitOptions>(Configuration.GetSection("IpRateLimiting"))
+                    .AddSingleton<IClientPolicyStore, MemoryCacheClientPolicyStore>()
+                    .AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+            }
+
+
             services.AddControllers();
         }
 
@@ -66,6 +78,9 @@ namespace Hive
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Configure is required for Startup.")]
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            _ = app.UseClientRateLimiting()
+                .UseIpRateLimiting();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
