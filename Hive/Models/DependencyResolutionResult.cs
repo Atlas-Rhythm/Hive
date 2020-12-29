@@ -14,12 +14,12 @@ namespace Hive.Models
         public string Message { get; set; } = null!;
 
         /// <summary>
-        /// The list of additional <see cref="Mod"/> objects necessary for a successful resolution.
+        /// The list of input mods, as well as additional <see cref="Mod"/> objects necessary for a successful resolution.
         /// </summary>
         public List<Mod> AdditionalMods { get; } = new List<Mod>();
 
         /// <summary>
-        /// The list of <see cref="ModReference"/> that are missing from a successful resolution.
+        /// The list of <see cref="ModReference"/>s that do not exist in the database.
         /// </summary>
         public List<ModReference> MissingMods { get; } = new List<ModReference>();
 
