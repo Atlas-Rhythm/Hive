@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 using static Hive.Versioning.VersionRange;
 
@@ -25,7 +21,7 @@ namespace Hive.Versioning.Tests.Ranges
         }
 
         private static Subrange CreateSubrange(string lower, string upper)
-            => new Subrange(ParseComparer(lower), ParseComparer(upper));
+            => new(ParseComparer(lower), ParseComparer(upper));
 
         [Theory]
         [InlineData(">1.0.0 <2.0.0", true, ">1.0.0", "<2.0.0")]
@@ -104,7 +100,6 @@ namespace Hive.Versioning.Tests.Ranges
             new object[] { "<1.0.0", ">=2.0.0", "2.0.0", true },
         };
 
-
         [Theory]
         [InlineData(">=1.0.0 <2.0.0", ">=1.0.1 <2.0.0-pre.1", nameof(CombineResult.OneSubrange), ">=1.0.1 <2.0.0-pre.1", null)]
         [InlineData(">=1.0.0 <2.0.0", ">=1.0.1 <2.0.0", nameof(CombineResult.OneSubrange), ">=1.0.1 <2.0.0", null)]
@@ -133,7 +128,6 @@ namespace Hive.Versioning.Tests.Ranges
                 CheckEqual(expect1.Value, result1);
             if (expect2 != null)
                 CheckEqual(expect2.Value, result2);
-
         }
 
         [Theory]
@@ -165,7 +159,6 @@ namespace Hive.Versioning.Tests.Ranges
                 CheckEqual(expect1.Value, result1);
             if (expect2 != null)
                 CheckEqual(expect2.Value, result2);
-
         }
 
         private static void CheckEqual(in Subrange expect, in Subrange result)

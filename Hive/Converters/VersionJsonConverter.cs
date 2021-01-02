@@ -1,28 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using Version = Hive.Versioning.Version;
 
 namespace Hive.Converters
 {
+    /// <summary>
+    /// A <see cref="JsonConverter{T}"/> for <see cref="Version"/>.
+    /// </summary>
     public class VersionJsonConverter : JsonConverter<Version>
     {
+        /// <inheritdoc/>
         [return: MaybeNull]
         public override Version? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            if (reader.TokenType == JsonTokenType.Null)
-                return null;
-
-            if (reader.TokenType != JsonTokenType.String)
-                throw new JsonException();
-
-            return new Version(reader.GetString()!);
+            return reader.TokenType == JsonTokenType.Null
+                ? null
+                : reader.TokenType != JsonTokenType.String ? throw new JsonException() : new Version(reader.GetString()!);
         }
 
+        /// <inheritdoc/>
         public override void Write(Utf8JsonWriter writer, Version value, JsonSerializerOptions options)
         {
             if (writer is null)

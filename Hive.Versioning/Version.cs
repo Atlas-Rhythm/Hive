@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Linq;
 using Hive.Utilities;
-using System.Diagnostics;
 using static Hive.Versioning.ParseHelpers;
 using Hive.Versioning.Resources;
 
@@ -105,11 +104,13 @@ namespace Hive.Versioning
         /// </summary>
         [CLSCompliant(false)]
         public ulong Major => major;
+
         /// <summary>
         /// Gets the minor version number.
         /// </summary>
         [CLSCompliant(false)]
         public ulong Minor => minor;
+
         /// <summary>
         /// Gets the patch number.
         /// </summary>
@@ -120,6 +121,7 @@ namespace Hive.Versioning
         /// Gets the sequence of prerelease IDs.
         /// </summary>
         public IEnumerable<string> PreReleaseIds => prereleaseIds;
+
         /// <summary>
         /// Gets the sequence of build IDs.
         /// </summary>
@@ -146,17 +148,17 @@ namespace Hive.Versioning
             if (sb is null)
                 throw new ArgumentNullException(nameof(sb));
 
-            sb.Append(Major).Append('.')
+            _ = sb.Append(Major).Append('.')
               .Append(Minor).Append('.')
               .Append(Patch);
             if (prereleaseIds.Length > 0)
             {
-                sb.Append('-')
+                _ = sb.Append('-')
                   .AppendJoin(".", prereleaseIds);
             }
             if (buildIds.Length > 0)
             {
-                sb.Append('+')
+                _ = sb.Append('+')
                   .AppendJoin(".", buildIds);
             }
             return sb;
@@ -178,6 +180,7 @@ namespace Hive.Versioning
             if (a is null || b is null) return false;
             return a.Equals(b);
         }
+
         /// <summary>
         /// Compares two versions for inequality.
         /// </summary>
@@ -214,6 +217,7 @@ namespace Hive.Versioning
 
             return a.CompareTo(b) < 0;
         }
+
         /// <summary>
         /// Checks if <paramref name="a"/> is greater than or equal to <paramref name="b"/>.
         /// </summary>
@@ -222,6 +226,7 @@ namespace Hive.Versioning
         /// <returns><see langword="true"/> if <paramref name="a"/> is greater than or equal to <paramref name="b"/>, <see langword="false"/></returns>
         public static bool operator >=(Version a, Version b)
             => !(a < b);
+
         /// <summary>
         /// Checks if <paramref name="a"/> is less than or equal to <paramref name="b"/>.
         /// </summary>
@@ -239,6 +244,7 @@ namespace Hive.Versioning
         /// <returns>The maximum of <paramref name="a"/> and <paramref name="b"/></returns>
         public static Version Max(Version a, Version b)
             => a > b ? a : b;
+
         /// <summary>
         /// Determines the minimum of two versions.
         /// </summary>
@@ -285,7 +291,7 @@ namespace Hive.Versioning
         /// Compares this version to another version according to the SemVer specification.
         /// </summary>
         /// <param name="other">The version to compare to.</param>
-        /// <returns>Less than zero if <see langword="this"/> is less than <paramref name="other"/>, zero if they are equal, and 
+        /// <returns>Less than zero if <see langword="this"/> is less than <paramref name="other"/>, zero if they are equal, and
         /// more than zero if <see langword="this"/> is greater than <paramref name="other"/></returns>
         public int CompareTo(Version other)
         {
@@ -304,7 +310,7 @@ namespace Hive.Versioning
                 return 1;
 
             var len = Math.Min(prereleaseIds.Length, other.prereleaseIds.Length);
-            for (int i = 0; i < len; i++)
+            for (var i = 0; i < len; i++)
             {
                 var a = prereleaseIds[i];
                 ulong? anum = null;
@@ -393,8 +399,9 @@ namespace Hive.Versioning
         }
 
         #region Parser
+
         private static bool TryParseInternal(
-            ref ReadOnlySpan<char> text, 
+            ref ReadOnlySpan<char> text,
             out ulong major,
             out ulong minor,
             out ulong patch,
@@ -539,7 +546,7 @@ namespace Hive.Versioning
             }
 
             char c;
-            int i = 0;
+            var i = 0;
             do
             {
                 if (text.Length <= i)
@@ -549,9 +556,9 @@ namespace Hive.Versioning
                 }
                 c = text[i++];
             }
-            while ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '-');
+            while (c is (>= '0' and <= '9') or (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or '-');
 
-            int len = i - 1;
+            var len = i - 1;
 
             id = text.Slice(0, len);
 
@@ -563,10 +570,10 @@ namespace Hive.Versioning
                 return true;
             }
 
-            bool hasNonDigit = false;
+            var hasNonDigit = false;
             foreach (var chr in id)
             {
-                if (chr < '0' || chr > '9')
+                if (chr is < '0' or > '9')
                 {
                     hasNonDigit = true;
                     text = text.Slice(len);
@@ -612,9 +619,9 @@ namespace Hive.Versioning
 
             // or any nonzero character followed by any character
             var c = text[0];
-            if (c > '0' && c <= '9')
+            if (c is > '0' and <= '9')
             { // we start with a positive number
-                int i = 1;
+                var i = 1;
                 do
                 {
                     if (text.Length <= i)
@@ -624,9 +631,9 @@ namespace Hive.Versioning
                     }
                     c = text[i++];
                 }
-                while (c >= '0' && c <= '9'); // find as many digits as we can
+                while (c is >= '0' and <= '9'); // find as many digits as we can
 
-                int len = i - 1;
+                var len = i - 1;
 
                 id = text.Slice(0, len);
                 text = text.Slice(len);
@@ -637,6 +644,7 @@ namespace Hive.Versioning
             id = default;
             return false;
         }
-        #endregion
+
+        #endregion Parser
     }
 }

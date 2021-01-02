@@ -1,8 +1,5 @@
 ﻿using Hive.Models;
 using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Hive.Services
@@ -12,10 +9,27 @@ namespace Hive.Services
     /// </summary>
     public interface IProxyAuthenticationService
     {
+        /// <summary>
+        /// Returns whether a request contains a valid user or not.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         public Task<bool> IsValid(HttpRequest request);
 
+        /// <summary>
+        /// Returns a <see cref="User"/> from a request, throwing an exception if specified.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="throwOnError"></param>
+        /// <returns></returns>
         public Task<User?> GetUser(HttpRequest request, bool throwOnError = false);
 
+        /// <summary>
+        /// Returns a <see cref="User"/> from a user ID, throwing an exception if specified.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="throwOnError"></param>
+        /// <returns></returns>
         public Task<User?> GetUser(string userId, bool throwOnError = false);
     }
 }

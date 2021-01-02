@@ -1,11 +1,9 @@
 ﻿using Hive.Plugins.Resources;
 using System;
 using System.Collections.Generic;
-using System.IO.Pipes;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace Hive.Plugins
 {
@@ -40,7 +38,7 @@ namespace Hive.Plugins
             var outParamStorage = new ParameterExpression?[targetParameters.Length];
             var outParamStorageSet = new ParameterExpression?[targetParameters.Length];
             var outParamTemps = new ParameterExpression?[targetParameters.Length];
-            for (int i = 0; i < targetParameters.Length; i++)
+            for (var i = 0; i < targetParameters.Length; i++)
             {
                 var param = targetParameters[i];
                 if (!param.IsOut) continue;
@@ -91,7 +89,7 @@ namespace Hive.Plugins
             }
 
             var callArguments = new List<Expression>();
-            for (int i = 0; i < paramInfo.Length; i++)
+            for (var i = 0; i < paramInfo.Length; i++)
             {
                 var info = paramInfo[i];
                 if (info.CopiedFromRet)
@@ -189,7 +187,7 @@ namespace Hive.Plugins
         {
             var inputSpec = attrs.Where(a => a is ISpecifiesInput).Cast<ISpecifiesInput>().SingleOrDefault();
 
-            bool copyFromRet = false;
+            var copyFromRet = false;
             int? copyFromOut = null;
             if (inputSpec != null)
             {
@@ -292,7 +290,7 @@ namespace Hive.Plugins
 
         private static bool CheckAttribute(ParameterInfo param, Attribute attr, bool isRetval = false)
         {
-            if (!(attr is IAggregatorAttribute)) return true;
+            if (attr is not IAggregatorAttribute) return true;
             if (!CheckAttributeTarget(param, attr, isRetval)) return false;
             if (attr is IRequiresType reqTy) return reqTy.CheckType(param.ParameterType.AsNonByRef());
             return true;

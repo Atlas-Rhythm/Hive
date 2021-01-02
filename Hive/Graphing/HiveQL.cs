@@ -1,18 +1,24 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Reflection;
-using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using GraphQL.Types;
 using GraphQL.Server;
 
 namespace Hive.Graphing
 {
+    /// <summary>
+    /// Extensions for GQL within Hive.
+    /// </summary>
     public static class HiveQL
     {
         private const string gqlTypesNamespace = nameof(Types);
 
-        public static void AddHiveQLTypes(this IServiceCollection services)
+        /// <summary>
+        /// Add Hive specific types
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        public static IServiceCollection AddHiveQLTypes(this IServiceCollection services)
         {
             // Map Every Field in the Types folder
             // Mainly for development purposes so we dont have to re-add a new type every time one is created.
@@ -21,18 +27,26 @@ namespace Hive.Graphing
 
             foreach (var graphType in types)
             {
-                services.AddSingleton(graphType);
+                _ = services.AddSingleton(graphType);
             }
+            return services;
         }
 
-        public static void AddHiveGraphQL(this IServiceCollection services)
+        /// <summary>
+        /// Add GraphQL
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        public static IGraphQLBuilder AddHiveGraphQL(this IServiceCollection services)
         {
-            services.AddSingleton<HiveSchema>();
-            services.AddGraphQL((options, provider) =>
-            {
-                Serilog.ILogger logger = provider.GetRequiredService<Serilog.ILogger>();
-                options.UnhandledExceptionDelegate = ctx => logger.Error("An error has occured initializing GraphQL: {Message}", ctx.OriginalException.Message);
-            }).AddSystemTextJson().AddGraphTypes(typeof(HiveSchema));
+            return services.AddSingleton<HiveSchema>()
+                .AddGraphQL((options, provider) =>
+                {
+                    var logger = provider.GetRequiredService<Serilog.ILogger>();
+                    options.UnhandledExceptionDelegate = ctx => logger.Error("An error has occured initializing GraphQL: {Message}", ctx.OriginalException.Message);
+                })
+                .AddSystemTextJson()
+                .AddGraphTypes(typeof(HiveSchema));
         }
     }
 }

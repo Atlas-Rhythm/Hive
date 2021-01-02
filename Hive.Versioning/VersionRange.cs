@@ -1,14 +1,9 @@
 ﻿using Hive.Utilities;
 using Hive.Versioning.Resources;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
 using static Hive.Versioning.ParseHelpers;
 
 namespace Hive.Versioning
@@ -22,7 +17,7 @@ namespace Hive.Versioning
         private readonly VersionComparer? additionalComparer;
 
         /// <summary>
-        /// Constructs a new <see cref="VersionRange"/> that corresponds to the text provided in <paramref name="text"/>. 
+        /// Constructs a new <see cref="VersionRange"/> that corresponds to the text provided in <paramref name="text"/>.
         /// </summary>
         /// <param name="text">The textual represenation of the <see cref="VersionRange"/> to create.</param>
         /// <seealso cref="TryParse(ref ReadOnlySpan{char}, out VersionRange)"/>
@@ -52,6 +47,7 @@ namespace Hive.Versioning
         /// <param name="other">The other <see cref="VersionRange"/> to compute the disjunction of.</param>
         /// <returns>The logical disjunction of <see langword="this"/> and <paramref name="other"/>.</returns>
         /// <seealso cref="operator |(VersionRange, VersionRange)"/>
+        [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
         public VersionRange Disjunction(VersionRange other)
         {
             if (other is null)
@@ -67,11 +63,14 @@ namespace Hive.Versioning
                     case CombineResult.OneComparer:
                         comparer = resComp;
                         break;
+
                     case CombineResult.OneSubrange:
                         subrange = resSub;
                         break;
+
                     case CombineResult.Everything:
                         return Everything;
+
                     case CombineResult.Unrepresentable:
                         if (additionalComparer.Value.Type == ComparisonType.ExactEqual)
                         {
@@ -84,6 +83,7 @@ namespace Hive.Versioning
                             comparer = additionalComparer;
                         }
                         break;
+
                     default: throw new InvalidOperationException();
                 }
             }
@@ -101,7 +101,6 @@ namespace Hive.Versioning
             return new VersionRange(allSubranges, comparer);
         }
 
-
         /// <summary>
         /// Computes the logical disjunction (or) of the two arguments.
         /// </summary>
@@ -109,8 +108,6 @@ namespace Hive.Versioning
         /// <param name="b">The second argument.</param>
         /// <returns>The logical disjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
         /// <seealso cref="Disjunction(VersionRange)"/>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-            Justification = "Its named alternative is Disjunction(VersionRange)")]
         public static VersionRange operator |(VersionRange a, VersionRange b)
         {
             if (a is null) throw new ArgumentNullException(nameof(a));
@@ -128,7 +125,7 @@ namespace Hive.Versioning
         public VersionRange Conjunction(VersionRange other)
         {
             // TODO: replace this implementation with one that doesn't allocate a load of ranges
-            
+
             // the current implementation allocates 6-12 times (2-4 VersionRanges, 4-8 arrays):
             // - (potentially) allocates the inverse of `this`
             //   - +1 array during inversion
@@ -155,8 +152,6 @@ namespace Hive.Versioning
         /// <param name="b">The second argument.</param>
         /// <returns>The logical disjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
         /// <seealso cref="Conjunction(VersionRange)"/>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-            Justification = "Its named alternative is Conjunction(VersionRange)")]
         public static VersionRange operator &(VersionRange a, VersionRange b)
         {
             if (a is null) throw new ArgumentNullException(nameof(a));
@@ -166,11 +161,14 @@ namespace Hive.Versioning
         }
 
         private VersionRange? _inverse;
+
         /// <summary>
         /// Gets the compliement of this <see cref="VersionRange"/>.
         /// </summary>
         /// <returns>The compliement of this <see cref="VersionRange"/>.</returns>
         /// <seealso cref="operator ~(VersionRange)"/>
+        [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
+        [SuppressMessage("Style", "IDE0072:Add missing cases", Justification = "Don't need missing cases.")]
         public VersionRange Invert()
         {
             if (_inverse is null)
@@ -185,13 +183,11 @@ namespace Hive.Versioning
                     if (additionalComparer != null)
                     {
                         var comparerResult = additionalComparer.Value.Invert(out var inverseComparer, out var inverseCompRange);
-                        switch (comparerResult)
+                        invComparer = comparerResult switch
                         {
-                            case CombineResult.OneComparer:
-                                invComparer = inverseComparer;
-                                break;
-                            default: throw new InvalidOperationException();
-                        }
+                            CombineResult.OneComparer => inverseComparer,
+                            _ => throw new InvalidOperationException(),
+                        };
                     }
 
                     var invertedRanges = subranges.Select(r => r.Invert());
@@ -210,7 +206,7 @@ namespace Hive.Versioning
                                 case CombineResult.OneSubrange:
                                     ab.Add(resRange);
                                     break;
-                                case CombineResult.OneComparer:
+
                                 default: throw new InvalidOperationException();
                             }
                         }
@@ -229,6 +225,7 @@ namespace Hive.Versioning
                                         lowerBound = null;
                                         invComparer = null;
                                         break;
+
                                     default: throw new InvalidOperationException();
                                 }
                             }
@@ -248,6 +245,7 @@ namespace Hive.Versioning
                                 ab.Add(resRange);
                                 upperBound = null;
                                 break;
+
                             default: throw new InvalidOperationException();
                         }
                         invComparer = null;
@@ -277,8 +275,6 @@ namespace Hive.Versioning
         /// <param name="r">The <see cref="VersionRange"/> to compute the compliment of.</param>
         /// <returns>The compliment of <paramref name="r"/>.</returns>
         /// <seealso cref="Invert()"/>
-        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
-            Justification = "Its named alternative is Invert()")]
         public static VersionRange operator ~(VersionRange r)
         {
             if (r is null) throw new ArgumentNullException(nameof(r));
@@ -309,6 +305,7 @@ namespace Hive.Versioning
         /// The <see cref="VersionRange"/> that matches all <see cref="Version"/>s.
         /// </summary>
         public static VersionRange Everything { get; } = new VersionRange(EverythingSubranges, null);
+
         /// <summary>
         /// The <see cref="VersionRange"/> that matches no <see cref="Version"/>s.
         /// </summary>
@@ -321,6 +318,7 @@ namespace Hive.Versioning
             return a.LowerBound.CompareTo.CompareTo(b.LowerBound.CompareTo);
         }
 
+        [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
         private static (Subrange[] Ranges, VersionComparer? Comparer) FixupRangeList(Subrange[] ranges, VersionComparer? comparer)
         {
             if (ranges.Length == 0 && comparer == null)
@@ -331,7 +329,7 @@ namespace Hive.Versioning
             using var ab = new ArrayBuilder<Subrange>(ranges.Length);
 
             Subrange? nextToInsert = null;
-            for (int i = 0; i < ranges.Length; i++)
+            for (var i = 0; i < ranges.Length; i++)
             {
                 var current = ranges[i];
 
@@ -343,6 +341,7 @@ namespace Hive.Versioning
                     case CombineWithComparerResult.ReturnEarly:
                         ab.Clear();
                         return returnResult;
+
                     case CombineWithComparerResult.DoNothing: break;
                     default: throw new InvalidOperationException();
                 }
@@ -359,6 +358,7 @@ namespace Hive.Versioning
                     case CombineResult.OneSubrange:
                         nextToInsert = result1;
                         break;
+
                     case CombineResult.TwoSubranges:
                         {
                             var aLowerB = result1.LowerBound.CompareTo < result2.LowerBound.CompareTo;
@@ -373,6 +373,7 @@ namespace Hive.Versioning
                                 case CombineWithComparerResult.ReturnEarly:
                                     ab.Clear();
                                     return returnResult;
+
                                 case CombineWithComparerResult.DoNothing: break;
                                 default: throw new InvalidOperationException();
                             }
@@ -380,10 +381,12 @@ namespace Hive.Versioning
                             ab.Add(addFirst);
                         }
                         break;
+
                     case CombineResult.Everything:
                         // if any combo is everything, we can skip all the ceremony and make our result everything
                         ab.Clear();
                         return (EverythingSubranges, null);
+
                     default: throw new InvalidOperationException();
                 }
             }
@@ -498,18 +501,18 @@ namespace Hive.Versioning
         {
             if (sb is null) throw new ArgumentNullException(nameof(sb));
 
-            for (int i = 0; i < subranges.Length; i++)
+            for (var i = 0; i < subranges.Length; i++)
             {
-                subranges[i].ToString(sb);
+                _ = subranges[i].ToString(sb);
                 if (i != subranges.Length - 1)
-                    sb.Append(" || ");
+                    _ = sb.Append(" || ");
             }
 
             if (additionalComparer != null)
             {
                 if (subranges.Length > 0)
-                    sb.Append(" || ");
-                additionalComparer.Value.ToString(sb);
+                    _ = sb.Append(" || ");
+                _ = additionalComparer.Value.ToString(sb);
             }
 
             return sb;
@@ -649,6 +652,8 @@ namespace Hive.Versioning
         }
 
         #region Parser
+
+        [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
         private static bool TryParse(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out Subrange[] sranges, out VersionComparer? comparer)
         {
             sranges = null;
@@ -676,11 +681,13 @@ namespace Hive.Versioning
                             case CombineResult.OneComparer:
                                 comparer = newComparer;
                                 break;
+
                             case CombineResult.Everything:
                             case CombineResult.OneSubrange:
                                 ab.Add(sr);
                                 comparer = null;
                                 break;
+
                             case CombineResult.Unrepresentable:
                                 // one of them is an ExactEqual comparer
                                 if (comparer.Value.Type == ComparisonType.ExactEqual)
@@ -693,6 +700,7 @@ namespace Hive.Versioning
                                 else if (comparer.Value.Type == compare.Value.Type)
                                     comparer = null;
                                 break;
+
                             default: throw new InvalidOperationException();
                         }
                     }
@@ -740,6 +748,7 @@ namespace Hive.Versioning
             compare = null;
             return false;
         }
-        #endregion
+
+        #endregion Parser
     }
 }

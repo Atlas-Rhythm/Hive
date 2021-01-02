@@ -3,16 +3,20 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace Hive.Services
 {
+    /// <summary>
+    /// A mockup of how the authentication service will behave.
+    /// </summary>
     public class MockAuthenticationService : IProxyAuthenticationService
     {
-        public Dictionary<string, User?> Users { get; } = new Dictionary<string, User?>();
+        private Dictionary<string, User?> Users { get; } = new Dictionary<string, User?>();
 
+        /// <summary>
+        /// Creates and populates some dummy users
+        /// </summary>
         public MockAuthenticationService()
         {
             // Create dummy data for now
@@ -22,33 +26,31 @@ namespace Hive.Services
             Users.Add("Bearer: asdf", user2);
         }
 
+        /// <inheritdoc/>
         public Task<User?> GetUser(HttpRequest request, bool throwOnError = false)
         {
             if (request is null)
-                if (throwOnError)
-                    throw new ArgumentNullException(nameof(request));
-                else
-                    return Task.FromResult<User?>(null);
+            {
+                return throwOnError ? throw new ArgumentNullException(nameof(request)) : Task.FromResult<User?>(null);
+            }
+
             if (request.Headers.TryGetValue(HeaderNames.Authorization, out var authHeader))
             {
-                if (Users.TryGetValue(authHeader, out User? outp))
+                if (Users.TryGetValue(authHeader, out var outp))
                     return Task.FromResult(outp);
             }
             return Task.FromResult<User?>(null);
         }
 
+        /// <inheritdoc/>
         public Task<User?> GetUser(string userId, bool throwOnError = false)
         {
-            if (string.IsNullOrEmpty(userId))
-                if (throwOnError)
-                    throw new ArgumentNullException(nameof(userId));
-                else
-                    return Task.FromResult<User?>(null);
-            if (Users.TryGetValue(userId, out User? outp))
-                return Task.FromResult(outp);
-            return Task.FromResult<User?>(null);
+            return string.IsNullOrEmpty(userId)
+                ? throwOnError ? throw new ArgumentNullException(nameof(userId)) : Task.FromResult<User?>(null)
+                : Users.TryGetValue(userId, out var outp) ? Task.FromResult(outp) : Task.FromResult<User?>(null);
         }
 
+        /// <inheritdoc/>
         public Task<bool> IsValid(HttpRequest request) => throw new NotImplementedException();
     }
 }

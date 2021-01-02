@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace Hive.Utilities
 {
@@ -12,7 +10,7 @@ namespace Hive.Utilities
     public static class Helpers
     {
         /// <summary>
-        /// Interleaves 2 enumerables with each other, starting with <paramref name="first"/> and alternating until 
+        /// Interleaves 2 enumerables with each other, starting with <paramref name="first"/> and alternating until
         /// both are out of items.
         /// </summary>
         /// <typeparam name="T">The element type of the enumerable.</typeparam>
@@ -45,7 +43,7 @@ namespace Hive.Utilities
         /// <returns>An enumerable that is simply <paramref name="val"/> repeated <paramref name="count"/> times.</returns>
         public static IEnumerable<T> Repeat<T>(T val, int count)
         {
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
                 yield return val;
         }
 
@@ -58,7 +56,7 @@ namespace Hive.Utilities
         public static object?[] ToArray<T>(this ref T tuple) where T : struct, ITuple
         {
             var array = new object?[tuple.Length];
-            for (int i = 0; i < tuple.Length; i++)
+            for (var i = 0; i < tuple.Length; i++)
             {
                 array[i] = tuple[i];
             }

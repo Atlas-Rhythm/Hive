@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace Hive.Services.Common
 {
+    /// <summary>
+    /// Common functionality for game version related actions.
+    /// </summary>
     public class GameVersionService
     {
         private readonly Serilog.ILogger log;
@@ -19,8 +22,15 @@ namespace Hive.Services.Common
         [ThreadStatic] private static PermissionActionParseState versionsParseState;
 
         private const string ActionName = "hive.game.version";
-        private static readonly HiveObjectQuery<IEnumerable<GameVersion>> forbiddenResponse = new HiveObjectQuery<IEnumerable<GameVersion>>(null, "Forbidden", StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<IEnumerable<GameVersion>> forbiddenResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
 
+        /// <summary>
+        /// Create a GameVersionService with DI.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="perms"></param>
+        /// <param name="ctx"></param>
+        /// <param name="plugin"></param>
         public GameVersionService([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IGameVersionsPlugin> plugin)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
@@ -30,6 +40,12 @@ namespace Hive.Services.Common
             this.plugin = plugin;
         }
 
+        /// <summary>
+        /// Gets all available <see cref="GameVersion"/> objects.
+        /// This performs a permission check at: <c>hive.game.version</c>.
+        /// </summary>
+        /// <param name="user">The user to associate with this request.</param>
+        /// <returns>A wrapped enumerable of <see cref="GameVersion"/> objects, if successful.</returns>
         public HiveObjectQuery<IEnumerable<GameVersion>> RetrieveAllVersions(User? user)
         {
             if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref versionsParseState))

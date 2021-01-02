@@ -1,15 +1,14 @@
 ﻿using Hive.Versioning.Tests;
 using SharpFuzz;
 using System;
-using System.Linq;
 
 namespace Hive.Versioning.Fuzz
 {
-    class Program
+    public sealed class Program
     {
-        static int Main(string[] args)
+        public static int Main(string[] args)
         {
-            var type = args.Length > 0 ? args[0] : "binops";
+            var type = args?.Length > 0 ? args[0] : "binops";
 
             if (type == "version")
             {

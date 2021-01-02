@@ -2,10 +2,8 @@
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 
 namespace Hive.Analyzers
 {
@@ -20,7 +18,7 @@ namespace Hive.Analyzers
                 Err_BuilderNotCleanedUp,
             });
 
-        private static readonly DiagnosticDescriptor Err_BuilderNotCleanedUp = new DiagnosticDescriptor(
+        private static readonly DiagnosticDescriptor Err_BuilderNotCleanedUp = new(
             id: "Hive0001",
             title: "ArrayBuilder not correctly cleaned up",
             messageFormat: "ArrayBuilder in variable '{0}' not declared in a using declaration",
@@ -54,12 +52,8 @@ namespace Hive.Analyzers
 
             while (true)
             {
-                if (current is null) 
+                if (current is null or IUsingDeclarationOperation)
                     break;
-
-                if (current is IUsingDeclarationOperation)
-                    break;
-
                 if (current is IBlockOperation)
                 {
                     ctx.ReportDiagnostic(Diagnostic.Create(

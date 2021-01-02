@@ -8,22 +8,10 @@ using NodaTime;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit.Abstractions;
-using Xunit.Sdk;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using System.Data.Common;
-using Npgsql;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using System.Reflection;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Operations;
-using Hive.Versioning;
 using System.Text.Json;
-using System.Threading;
 
 namespace Hive.Tests
 {

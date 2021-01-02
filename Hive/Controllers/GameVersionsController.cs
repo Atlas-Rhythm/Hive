@@ -1,5 +1,4 @@
 ﻿using Hive.Models;
-using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services;
 using Hive.Services.Common;
@@ -8,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Hive.Controllers
@@ -41,6 +39,9 @@ namespace Hive.Controllers
 
     internal class HiveGameVersionsControllerPlugin : IGameVersionsPlugin { }
 
+    /// <summary>
+    /// A REST controller for game version related actions.
+    /// </summary>
     [Route("api/game/versions")]
     [ApiController]
     public class GameVersionsController : ControllerBase
@@ -49,6 +50,12 @@ namespace Hive.Controllers
         private readonly GameVersionService gameVersionService;
         private readonly IProxyAuthenticationService proxyAuth;
 
+        /// <summary>
+        /// Create a GameVersionsController with DI.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="gameVersionService"></param>
+        /// <param name="proxyAuth"></param>
         public GameVersionsController([DisallowNull] Serilog.ILogger logger, GameVersionService gameVersionService, IProxyAuthenticationService proxyAuth)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
@@ -57,6 +64,11 @@ namespace Hive.Controllers
             this.proxyAuth = proxyAuth;
         }
 
+        /// <summary>
+        /// Gets all available <see cref="GameVersion"/> objects.
+        /// This performs a permission check at: <c>hive.game.version</c>.
+        /// </summary>
+        /// <returns>A wrapped enumerable of <see cref="GameVersion"/> objects, if successful.</returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -64,7 +76,7 @@ namespace Hive.Controllers
         {
             log.Debug("Getting game versions...");
             // Get the user, do not need to capture context.
-            User? user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             var queryResult = gameVersionService.RetrieveAllVersions(user);
 

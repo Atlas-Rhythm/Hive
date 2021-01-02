@@ -15,6 +15,9 @@ using Version = Hive.Versioning.Version;
 
 namespace Hive.Services.Common
 {
+    /// <summary>
+    /// Common functionality for mod related actions.
+    /// </summary>
     public class ModService
     {
         private readonly Serilog.ILogger log;
@@ -28,10 +31,17 @@ namespace Hive.Services.Common
         [ThreadStatic] private static PermissionActionParseState getModsParseState;
         [ThreadStatic] private static PermissionActionParseState moveModsParseState;
 
-        private static readonly HiveObjectQuery<IEnumerable<Mod>> forbiddenEnumerableResponse = new HiveObjectQuery<IEnumerable<Mod>>(null, "Forbidden", StatusCodes.Status403Forbidden);
-        private static readonly HiveObjectQuery<Mod> forbiddenModResponse = new HiveObjectQuery<Mod>(null, "Forbidden", StatusCodes.Status403Forbidden);
-        private static readonly HiveObjectQuery<Mod> notFoundModResponse = new HiveObjectQuery<Mod>(null, "Not Found", StatusCodes.Status404NotFound);
+        private static readonly HiveObjectQuery<IEnumerable<Mod>> forbiddenEnumerableResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<Mod> forbiddenModResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<Mod> notFoundModResponse = new(null, "Not Found", StatusCodes.Status404NotFound);
 
+        /// <summary>
+        /// Create a ModService with DI.
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="perms"></param>
+        /// <param name="ctx"></param>
+        /// <param name="plugin"></param>
         public ModService([DisallowNull] Serilog.ILogger logger, PermissionsManager<PermissionContext> perms, HiveContext ctx, IAggregate<IModsPlugin> plugin)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
@@ -41,6 +51,18 @@ namespace Hive.Services.Common
             context = ctx;
         }
 
+        /// <summary>
+        /// Performs a search for all mods within the provided channel IDs (if provided, otherwise defaults to the instance default channel(s)), an optional <see cref="GameVersion"/>, and a filter type.
+        /// <para><paramref name="channelIds"/> Will default to empty/the instance default if not provided. Otherwise, only obtains mods from the specified channel IDs.</para>
+        /// <para><paramref name="gameVersion"/> Will default to search all game versions if not provided. Otherwise, filters on only this game version.</para>
+        /// <para><paramref name="filterType"/> Will default to <c>latest</c> if not provided or not one of: <c>all</c>, <c>latest</c>, or <c>recent</c>.</para>
+        /// This performs a permission check at: <c>hive.mod</c>.
+        /// </summary>
+        /// <param name="user">The user associated with this request.</param>
+        /// <param name="channelIds">The channel IDs to filter the mods.</param>
+        /// <param name="gameVersion">The game version to search within.</param>
+        /// <param name="filterType">How to filter the results.</param>
+        /// <returns>A wrapped collection of <see cref="Mod"/> objects, if successful.</returns>
         public HiveObjectQuery<IEnumerable<Mod>> GetAllMods(User? user, string[]? channelIds = null, string? gameVersion = null, string? filterType = null)
         {
             // iff a given user (or none) is allowed to access any mods. This should almost always be true.
@@ -55,7 +77,7 @@ namespace Hive.Services.Common
             // TODO: default to the instance default Channel
             IEnumerable<Channel>? filteredChannels = null;
             GameVersion? filteredVersion = null;
-            string filteredType = "LATEST";
+            var filteredType = "LATEST";
 
             if (channelIds != null && channelIds.Length >= 0)
             {
@@ -86,9 +108,9 @@ namespace Hive.Services.Common
                 mods = mods.Where(m => m.SupportedVersions.Contains(filteredVersion));
             }
 
-            // Because EF (or PostgreSQL or both) does not like advanced LINQ expressions (like GroupBy), 
+            // Because EF (or PostgreSQL or both) does not like advanced LINQ expressions (like GroupBy),
             // we convert to an enumerable and do the calculations on the client.
-            IEnumerable<Mod> filteredMods = mods.AsEnumerable();
+            var filteredMods = mods.AsEnumerable();
 
             // Filter these mods based on the query param we've retrieved (or default behavior)
             switch (filteredType)
@@ -100,6 +122,7 @@ namespace Hive.Services.Common
                         .GroupBy(m => m.ReadableID)
                         .Select(g => g.OrderByDescending(m => m.UploadedAt).First());
                     break;
+
                 default: // This is "LATEST", but should probably be default behavior, just to be safe.
                     filteredMods = filteredMods // With "LATEST", we group each mod by their ID, and grab the most up-to-date version.
                         .GroupBy(m => m.ReadableID)
@@ -114,6 +137,14 @@ namespace Hive.Services.Common
             return new HiveObjectQuery<IEnumerable<Mod>>(filteredMods, null, StatusCodes.Status200OK);
         }
 
+        /// <summary>
+        /// Gets a <see cref="Mod"/> of the specific <see cref="VersionRange"/> of this particular mod's <seealso cref="Mod.ReadableID"/>.
+        /// This performs a permission check at: <c>hive.mod</c>.
+        /// </summary>
+        /// <param name="user">The user associated with this request.</param>
+        /// <param name="id">The <seealso cref="Mod.ReadableID"/> to find.</param>
+        /// <param name="range">The <see cref="VersionRange"/> to match. If null, will return the latest version of a matching mod.</param>
+        /// <returns>A wrapped <see cref="Mod"/> of the found mod, if successful.</returns>
         public HiveObjectQuery<Mod> GetMod(User? user, string id, VersionRange? range = null)
         {
             // iff a given user (or none) is allowed to access any mods. This should almost always be true.
@@ -153,6 +184,14 @@ namespace Hive.Services.Common
             return new HiveObjectQuery<Mod>(mod, null, StatusCodes.Status200OK);
         }
 
+        /// <summary>
+        /// Moves the specified <see cref="ModIdentifier"/> from whatever channel it was in to the specified channel.
+        /// This performs a permission check at: <c>hive.mod.move</c>.
+        /// </summary>
+        /// <param name="user">The user associated with this request.</param>
+        /// <param name="channelDestination">The destination channel ID to move the mod to.</param>
+        /// <param name="identifier">The <see cref="ModIdentifier"/> to move.</param>
+        /// <returns>A wrapped <see cref="Mod"/> of the moved mod, if successful.</returns>
         public async Task<HiveObjectQuery<Mod>> MoveMod(User user, string channelDestination, ModIdentifier identifier)
         {
             log.Debug("Getting database objects...");
@@ -195,7 +234,7 @@ namespace Hive.Services.Common
             // If any plugins want to modify the object further after the move operation, they can do so here.
             combined.ModifyAfterModMove(in databaseMod);
 
-            await context.SaveChangesAsync().ConfigureAwait(false);
+            _ = await context.SaveChangesAsync().ConfigureAwait(false);
 
             return new HiveObjectQuery<Mod>(databaseMod, null, StatusCodes.Status200OK);
         }

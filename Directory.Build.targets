@@ -24,6 +24,9 @@
     <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepReliableWarnings)' != 'true'">
       $(NoWarn);CA2007;CA2225
     </NoWarn>
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepDiscardWarnings)' != 'true'">
+      $(NoWarn);IDE0058;CA1002;CS1591
+    </NoWarn>
 
     <IsRoslynExtension Condition="'$(IsRoslynExtension)' == ''">false</IsRoslynExtension>
     <IsRoslynExtension Condition="'$(IsCodeGen)' == 'true' or '$(IsAnalyzer)' == 'true'">true</IsRoslynExtension>
