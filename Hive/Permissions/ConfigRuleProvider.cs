@@ -14,7 +14,7 @@ namespace Hive.Permissions
     {
         private readonly string ruleDirectory = Path.Combine(Environment.CurrentDirectory, "Rules");
         private readonly string defaultRuleDefinition = "next(true)";
-        private readonly StringView splitToken = "*";
+        private readonly StringView splitToken = ".";
 
         // Rule name to information corresponding to the particular rule.
         private readonly Dictionary<string, (FileInfo, Rule)> cachedFileInfos = new();
@@ -22,9 +22,30 @@ namespace Hive.Permissions
         /// <summary>
         /// Construct a rule provider via DI.
         /// </summary>
-        public ConfigRuleProvider()
+        /// <param name="overrideRuleDirectory">If not empty, the rule provider will treat this as the root rule directory.</param>
+        /// <param name="defaultRuleDefinition">The default definition for any newly created rule.</param>
+        /// <param name="splitToken">The token used to split rules.</param>
+        /// <remarks>
+        /// If <paramref name="defaultRuleDefinition"/> is null or empty, Hive will default to a "Rules" subfolder in the install folder.
+        /// The <paramref name="splitToken"/> parameter, and the one given to <see cref="PermissionsManager{TContext}"/>, should always be the same.
+        /// </remarks>
+        // REVIEW: Should we treat the rule directory as an override (current behavior), or combine it with the Hive directory?
+        // REVIEW: Should a default rule definition even be configurable?
+        public ConfigRuleProvider(string overrideRuleDirectory, string defaultRuleDefinition, StringView splitToken)
         {
-            // TODO: Read base directory (and default rule value) from config
+            if (!string.IsNullOrEmpty(overrideRuleDirectory))
+            {
+                ruleDirectory = overrideRuleDirectory;
+            }
+
+            if (!string.IsNullOrEmpty(defaultRuleDefinition))
+            {
+                this.defaultRuleDefinition = defaultRuleDefinition;
+            }
+
+            this.splitToken = splitToken;
+
+            _ = Directory.CreateDirectory(overrideRuleDirectory);
         }
 
         /// <inheritdoc/>
