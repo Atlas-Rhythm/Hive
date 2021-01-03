@@ -79,6 +79,11 @@ namespace Hive
             }
 
             _ = services.AddControllers();
+            _ = services.AddAuthentication(a =>
+            {
+                a.AddScheme<MockAuthenticationHandler>("Bearer", "MockAuth");
+                a.DefaultScheme = "Bearer";
+            });
         }
 
         /// <summary>
