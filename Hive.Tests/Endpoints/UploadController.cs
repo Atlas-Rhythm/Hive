@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
@@ -77,7 +78,8 @@ namespace Hive.Tests.Endpoints
         [Fact]
         public async Task ValidUploadProcess()
         {
-            var controller = CreateController(new[] { new HiveDefaultUploadPlugin() }, "next(true)");
+            var serviceProvider = CreateController(new[] { new HiveDefaultUploadPlugin() }, "next(true)");
+            var controller = serviceProvider.GetRequiredService<Controllers.UploadController>();
 
             controller.ControllerContext.HttpContext = CreateMockRequest(new MemoryStream());
 
@@ -114,10 +116,24 @@ namespace Hive.Tests.Endpoints
             Assert.Null(result2.Result);
             Assert.Equal(Controllers.UploadController.ResultType.Success, result2.Value.Type);
 
-            // TODO: sanely validate that the mod was in fact added to the DB
+            var db = serviceProvider.GetRequiredService<HiveContext>();
+
+            var allMods = db.Mods.AsEnumerable().ToImmutableList();
+            var mod = Assert.Single(allMods);
+            var localization = Assert.Single(mod.Localizations);
+            var serializedMod = SerializedMod.Serialize(mod, localization);
+
+            Assert.Equal(data.ID, serializedMod.ID);
+            Assert.Equal(data.Version, serializedMod.Version);
+            Assert.Equal(data.LocalizedModInfo, serializedMod.LocalizedModInfo);
+            Assert.Equal(data.ChannelName, serializedMod.ChannelName);
+            Assert.Equal(data.Links, serializedMod.Links);
+            Assert.Equal(data.SupportedGameVersions, serializedMod.SupportedGameVersions);
+            Assert.Equal(data.Dependencies, serializedMod.Dependencies);
+            Assert.Equal(data.ConflictsWith, serializedMod.ConflictsWith);
         }
 
-        private Controllers.UploadController CreateController(IEnumerable<IUploadPlugin> plugins, string rule)
+        private IServiceProvider CreateController(IEnumerable<IUploadPlugin> plugins, string rule)
         {
             var services = DIHelper.ConfigureServices(Options, helper, new UploadsRuleProvider(rule));
 
@@ -129,7 +145,7 @@ namespace Hive.Tests.Endpoints
                 .AddSingleton<IConfiguration>(new ConfigurationBuilder().Build())
                 .AddAggregates();
 
-            return services.BuildServiceProvider().GetRequiredService<Controllers.UploadController>();
+            return services.BuildServiceProvider();
         }
 
         private static HttpContext CreateMockRequest(Stream body)
