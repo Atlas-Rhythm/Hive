@@ -2,26 +2,32 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Hive.Services
 {
+    /// <summary>
+    /// A class for Hive authentication.
+    /// </summary>
     public class MockAuthenticationHandler : IAuthenticationHandler
     {
         private HttpContext? context;
         private static string authType = "Bearer";
         private readonly IProxyAuthenticationService proxyAuth;
 
+        /// <summary>
+        /// Construct a new mock authentication handler via DI.
+        /// </summary>
+        /// <param name="proxyAuth"></param>
         public MockAuthenticationHandler(IProxyAuthenticationService proxyAuth)
         {
             this.proxyAuth = proxyAuth;
         }
 
+        /// <inheritdoc/>
         public async Task<AuthenticateResult> AuthenticateAsync()
         {
             if (context is null)
@@ -31,10 +37,11 @@ namespace Hive.Services
                 return AuthenticateResult.Fail("Could not find user");
             user.AuthenticationType = authType;
             user.IsAuthenticated = true;
-            ClaimsPrincipal p = new ClaimsPrincipal(user);
+            var p = new ClaimsPrincipal(user);
             return AuthenticateResult.Success(new AuthenticationTicket(p, authType));
         }
 
+        /// <inheritdoc/>
         public async Task ChallengeAsync(AuthenticationProperties? properties)
         {
             if (context is null)
@@ -43,6 +50,7 @@ namespace Hive.Services
             await context.Response.WriteAsync(Resource.challenge_respose).ConfigureAwait(false);
         }
 
+        /// <inheritdoc/>
         public async Task ForbidAsync(AuthenticationProperties? properties)
         {
             if (context is null)
@@ -51,6 +59,7 @@ namespace Hive.Services
             await context.Response.WriteAsync(Resource.forbidden_respose).ConfigureAwait(false);
         }
 
+        /// <inheritdoc/>
         public Task InitializeAsync([DisallowNull] AuthenticationScheme scheme, HttpContext context)
         {
             if (scheme is null)
