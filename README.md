@@ -47,15 +47,15 @@ Configuration is done from Hive's `appsettings.json` file, located in the root o
 
 ### Rate Limiting
 
-Hive natively comes bundled with a highly configurable rate limit system, powered by the [AspNetCoreRateLimit](https://github.com/stefanprodan/AspNetCoreRateLimit/) NuGet package.
-For a complete configuration breakdown, please look at the documentation for both rate limiting by client, and rate limiting by IP.
+Hive natively comes bundled with a highly configurable rate limit system, powered by [AspNetCoreRateLimit](https://github.com/stefanprodan/AspNetCoreRateLimit/).
+For a complete configuration breakdown, please look at AspNetCoreRateLimit's documentation for rate limiting by client, and rate limiting by IP.
 
-Hive uses a combination of both Client and IP rate limiting.
+Hive uses both Client and IP rate limiting.
 You can configure each rate limit system a number of ways; from per-endpoint buckets, to various whitelists, and even the status code to return.
 
 #### `UseRateLimiting`
 
-This is a global switch for the rate limit system. This is enabled by default.
+A global switch for the rate limit system. This is enabled by default.
 It is recommended to keep rate limiting on at all times, however the option is available, should you need it.
 
 #### `ClientRateLimiting`
