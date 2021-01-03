@@ -51,22 +51,29 @@ namespace Hive.Permissions
         /// <inheritdoc/>
         public bool HasRuleChangedSince(StringView name, Instant time)
         {
-            var fileInfo = TryGetRule(name.ToString()).Data;
-
-            // Refresh access time fields for the file and its parent directory
-            fileInfo.Refresh();
-            fileInfo.Directory?.Refresh();
-
-            var lastWriteTimeUtc = fileInfo.Exists
-                ? fileInfo.LastWriteTimeUtc
-                : fileInfo.Directory?.LastWriteTimeUtc;
-
-            return lastWriteTimeUtc is not null && Instant.FromDateTimeUtc(lastWriteTimeUtc.Value) > time;
+            var rule = TryGetRule(name.ToString());
+            return HasRuleChangedSince(rule, time);
         }
 
         /// <inheritdoc/>
-        // REVIEW: I made this method call the other HasRuleChangedSince because the code was very similar. Am I going to get punched for this?
-        public bool HasRuleChangedSince(Rule rule, Instant time) => rule is null ? throw new ArgumentNullException(nameof(rule)) : HasRuleChangedSince(rule.Name, time);
+        public bool HasRuleChangedSince(Rule rule, Instant time)
+        {
+            if (rule is Rule<FileInfo> fileInfoRule)
+            {
+                var fileInfo = fileInfoRule.Data;
+
+                // Refresh access time fields for the file and its parent directory
+                fileInfo.Refresh();
+                fileInfo.Directory?.Refresh();
+
+                var lastWriteTimeUtc = fileInfo.Exists
+                    ? fileInfo.LastWriteTimeUtc
+                    : fileInfo.Directory?.LastWriteTimeUtc;
+
+                return lastWriteTimeUtc is not null && Instant.FromDateTimeUtc(lastWriteTimeUtc.Value) > time;
+            }
+            return false;
+        }
 
         /// <inheritdoc/>
         public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
