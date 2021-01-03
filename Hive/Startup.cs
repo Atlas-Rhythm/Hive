@@ -71,7 +71,9 @@ namespace Hive
 
                 _ = services.AddMemoryCache()
                     .Configure<ClientRateLimitOptions>(Configuration.GetSection("ClientRateLimiting"))
+                    .Configure<ClientRateLimitPolicies>(Configuration.GetSection("ClientRateLimitPolicies"))
                     .Configure<IpRateLimitOptions>(Configuration.GetSection("IpRateLimiting"))
+                    .Configure<IpRateLimitPolicies>(Configuration.GetSection("IpRateLimitPolicies"))
                     .AddSingleton<IClientPolicyStore, MemoryCacheClientPolicyStore>()
                     .AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>()
                     .AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>()
