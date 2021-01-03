@@ -17,7 +17,7 @@ namespace Hive.Permissions
         private readonly StringView splitToken = ".";
 
         // Rule name to information corresponding to the particular rule.
-        private readonly Dictionary<string, (FileInfo, Rule)> cachedFileInfos = new();
+        private readonly Dictionary<string, Rule<FileInfo>> cachedFileInfos = new();
 
         /// <summary>
         /// Construct a rule provider via DI.
@@ -51,7 +51,7 @@ namespace Hive.Permissions
         /// <inheritdoc/>
         public bool HasRuleChangedSince(StringView name, Instant time)
         {
-            var fileInfo = TryGetRule(name.ToString()).Item1;
+            var fileInfo = TryGetRule(name.ToString()).Data;
 
             // Refresh access time fields for the file and its parent directory
             fileInfo.Refresh();
@@ -71,15 +71,15 @@ namespace Hive.Permissions
         /// <inheritdoc/>
         public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
         {
-            var ruleInfo = TryGetRule(name.ToString());
+            var rule = TryGetRule(name.ToString());
 
-            gotten = ruleInfo.Item1.Exists ? ruleInfo.Item2 : null;
+            gotten = rule.Data.Exists ? rule : null;
 
             return gotten != null;
         }
 
         // Helper function that obtains cached information about a rule. If none exists, it goes to the file system.
-        private (FileInfo, Rule) TryGetRule(string name)
+        private Rule<FileInfo> TryGetRule(string name)
         {
             if (cachedFileInfos.TryGetValue(name, out var fileInfo))
             {
@@ -94,8 +94,7 @@ namespace Hive.Permissions
         }
 
         // Helper function that reads information about a rule from the file system.
-        // If the rule does not exist in the file system, we write a new rule with the default definition.
-        private (FileInfo, Rule) GetFromFileSystem(string ruleName, string filePath)
+        private Rule<FileInfo> GetFromFileSystem(string ruleName, string filePath)
         {
             var ruleDefinition = defaultRuleDefinition;
 
@@ -105,9 +104,9 @@ namespace Hive.Permissions
             }
 
             var fileInfo = new FileInfo(filePath);
-            var rule = new Rule(ruleName, ruleDefinition);
+            var rule = new Rule<FileInfo>(ruleName, ruleDefinition, fileInfo);
 
-            return (fileInfo, rule);
+            return rule;
         }
 
         // Helper function that returns the file system location for a rule
