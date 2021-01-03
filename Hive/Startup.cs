@@ -8,6 +8,7 @@ using Hive.Services;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -64,11 +65,17 @@ namespace Hive
 
             if (Configuration.GetValue<bool>("UseRateLimiting"))
             {
+                // AspNetCoreRateLimit requires this.
+                // A PR was merged that made this unnecessary, but that has not made it into an official release.
+                _ = services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
                 _ = services.AddMemoryCache()
                     .Configure<ClientRateLimitOptions>(Configuration.GetSection("ClientRateLimiting"))
                     .Configure<IpRateLimitOptions>(Configuration.GetSection("IpRateLimiting"))
                     .AddSingleton<IClientPolicyStore, MemoryCacheClientPolicyStore>()
-                    .AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+                    .AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>()
+                    .AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>()
+                    .AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
             }
 
             _ = services.AddControllers();
