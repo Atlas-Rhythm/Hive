@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -17,10 +15,13 @@ namespace Hive
         public string Message { get; set; }
     }
 
-    // You may need to install the Microsoft.AspNetCore.Http.Abstractions package into your project
+    /// <summary>
+    /// Middleware for wrapping exceptions.
+    /// You may need to install the Microsoft.AspNetCore.Http.Abstractions package into your project
+    /// </summary>
     public class ExceptionHandlingMiddleware
     {
-        private static readonly JsonSerializerOptions serializerOptions = new JsonSerializerOptions
+        private static readonly JsonSerializerOptions serializerOptions = new()
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
         };
@@ -28,6 +29,11 @@ namespace Hive
         private readonly RequestDelegate _next;
         private readonly Serilog.ILogger logger;
 
+        /// <summary>
+        /// Create using a given <see cref="RequestDelegate"/> and <see cref="Serilog.ILogger"/>
+        /// </summary>
+        /// <param name="next"></param>
+        /// <param name="log"></param>
         public ExceptionHandlingMiddleware([DisallowNull] RequestDelegate next, [DisallowNull] Serilog.ILogger log)
         {
             if (next is null)
@@ -38,6 +44,11 @@ namespace Hive
             logger = log.ForContext<ExceptionHandlingMiddleware>();
         }
 
+        /// <summary>
+        /// Invokes the delegate, or handles an exception on failure.
+        /// </summary>
+        /// <param name="httpContext"></param>
+        /// <returns></returns>
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We want to catch all exceptions and handle them as internal server errors.")]
         public async Task Invoke(HttpContext httpContext)
         {
@@ -70,9 +81,16 @@ namespace Hive
         }
     }
 
-    // Extension method used to add the middleware to the HTTP request pipeline.
+    /// <summary>
+    ///
+    /// </summary>
     public static class ExceptionHandlingMiddlewareExtensions
     {
+        /// <summary>
+        /// Extension method used to add the middleware to the HTTP request pipeline.
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <returns></returns>
         public static IApplicationBuilder UseExceptionHandlingMiddleware(this IApplicationBuilder builder) => builder.UseMiddleware<ExceptionHandlingMiddleware>();
     }
 }

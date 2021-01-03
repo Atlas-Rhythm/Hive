@@ -1,4 +1,6 @@
 ﻿using Hive.Models;
+using Hive.Models.Serialized;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -6,6 +8,9 @@ using System.Linq;
 
 namespace Hive.Extensions
 {
+    /// <summary>
+    /// Extensions for the <see cref="Mod"/>.
+    /// </summary>
     public static class ModExtensions
     {
         /// <summary>
@@ -39,7 +44,7 @@ namespace Hive.Extensions
             // We loop through each preferred language first, as they are what the user asked for.
             // This list is already sorted by quality values, so none should be needed.
             // We do not need to explicitly search for the System culture since it was already added to the end of this list.
-            foreach (string preferredLanguage in preferredLanguages)
+            foreach (var preferredLanguage in preferredLanguages)
             {
                 var localizedInfos = localizations.Where(x => x.Language == preferredLanguage);
                 if (localizedInfos.Any())
@@ -56,12 +61,35 @@ namespace Hive.Extensions
             }
 
             // If we still have no language, then... fuck.
-            if (localizedModInfo is null)
-            {
-                throw new ArgumentException($"Mod {mod.ReadableID} does not have any LocalizedModInfos attached to it.");
-            }
+            return localizedModInfo is null
+                ? throw new ArgumentException($"Mod {mod.ReadableID} does not have any LocalizedModInfos attached to it.")
+                : localizedModInfo;
+        }
 
-            return localizedModInfo;
+        /// <summary>
+        /// Serialize a <see cref="HiveObjectQuery{T}"/> with a value of type <see cref="Mod"/> to a <see cref="SerializedMod"/>.
+        /// </summary>
+        /// <param name="query">The query to convert.</param>
+        /// <param name="languageCultures">The languages to use in the conversion.</param>
+        /// <returns>The wrapped <see cref="SerializedMod"/>.</returns>
+        public static ActionResult<SerializedMod> Serialize(this HiveObjectQuery<Mod> query, IEnumerable<string> languageCultures)
+        {
+            if (query == null)
+                throw new ArgumentNullException(nameof(query), "Object query is null");
+            return query.Convert(mod => SerializedMod.Serialize(mod, mod.GetLocalizedInfo(languageCultures)));
+        }
+
+        /// <summary>
+        /// Serializes a <see cref="HiveObjectQuery{T}"/> of a collection of <see cref="Mod"/> objects to a collection of <see cref="SerializedMod"/> objects.
+        /// </summary>
+        /// <param name="query">The query to convert.</param>
+        /// <param name="languageCultures">The languages to use in the conversion.</param>
+        /// <returns>The wrapped collection of <see cref="SerializedMod"/> objects.</returns>
+        public static ActionResult<IEnumerable<SerializedMod>> Serialize(this HiveObjectQuery<IEnumerable<Mod>> query, IEnumerable<string> languageCultures)
+        {
+            if (query == null)
+                throw new ArgumentNullException(nameof(query), "Object query is null");
+            return query.Convert(mods => mods.Select(mod => SerializedMod.Serialize(mod, mod.GetLocalizedInfo(languageCultures))));
         }
     }
 }

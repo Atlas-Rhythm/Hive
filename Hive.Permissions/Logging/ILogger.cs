@@ -1,7 +1,4 @@
 ﻿using Hive.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Hive.Permissions.Logging
 {
@@ -20,6 +17,7 @@ namespace Hive.Permissions.Logging
         /// <param name="currentRule">The <see cref="Rule"/> that is being evaluated when the message is logged, if any.</param>
         /// <param name="manager">The <see cref="PermissionsManager{TContext}"/> instance.</param>
         void Info(string message, object[] messageInfo, string api, StringView action, Rule? currentRule, object manager);
+
         /// <summary>
         /// Logs a warning message.
         /// </summary>

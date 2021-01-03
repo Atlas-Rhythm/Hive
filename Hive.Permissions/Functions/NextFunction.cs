@@ -1,17 +1,16 @@
 ﻿using MathExpr.Compiler.Compilation;
 using MathExpr.Syntax;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace Hive.Permissions.Functions
 {
     internal class NextFunction : IBuiltinFunction<object?>
     {
         public string DelegateArgumentName { get; }
+
         public NextFunction(string delArgName) => DelegateArgumentName = delArgName;
 
         public string Name => "next";

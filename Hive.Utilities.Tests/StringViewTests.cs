@@ -1,11 +1,7 @@
 ﻿using Hive.Utilities;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
-using Xunit.Sdk;
 
 namespace Hive.Utilities.Tests
 {
@@ -93,8 +89,8 @@ namespace Hive.Utilities.Tests
         [MemberData(nameof(SubstringLenCases), DisableDiscoveryEnumeration = false)]
         public void Indexer(string source, int start, int len, string actual)
         {
-            StringView sv = new StringView(source, start, len);
-            for (int i = start - 2; i <= start + len; i++)
+            var sv = new StringView(source, start, len);
+            for (var i = start - 2; i <= start + len; i++)
             {
                 if (i < start || i >= start + len)
                     Assert.Throws<IndexOutOfRangeException>(() => sv[i - start]);

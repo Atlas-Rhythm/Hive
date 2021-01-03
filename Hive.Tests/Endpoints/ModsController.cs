@@ -6,10 +6,6 @@ using Hive.Plugins;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
@@ -21,8 +17,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
@@ -139,6 +133,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
 
             Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
             Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
@@ -150,7 +145,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<NotFoundResult>(res.Result); // The above endpoint must return 404.
+            Assert.IsType<NotFoundObjectResult>(res.Result);  // The above endpoint must return 404.
         }
 
         [Fact]
@@ -208,6 +203,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
 
             Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
             Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
@@ -219,7 +215,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<NotFoundResult>(res.Result); // The above endpoint must return 404.
+            Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must return 404.
         }
 
         [Fact]
@@ -275,7 +271,7 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(getModResult);
 
             // Serialize our request JSON data into a stream, which we will feed into our channel request.
-            ModIdentifier identifier = new ModIdentifier
+            var identifier = new ModIdentifier
             {
                 ID = "ChromaToggle",
                 Version = "1.0.0"
@@ -309,7 +305,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", defaultPlugins);
 
             // Serialize our request JSON data into a stream, which we will feed into our channel request.
-            ModIdentifier identifier = new ModIdentifier
+            var identifier = new ModIdentifier
             {
                 ID = "william gay",
                 Version = "69.420.1337"
@@ -322,6 +318,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.MoveModToChannel("Public", identifier);
 
             Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
             Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must fail.
         }
 
@@ -331,7 +328,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", defaultPlugins);
 
             // Serialize our request JSON data into a stream, which we will feed into our channel request.
-            ModIdentifier identifier = new ModIdentifier
+            var identifier = new ModIdentifier
             {
                 ID = "Counters+",
                 Version = "1.0.0"
@@ -345,6 +342,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.MoveModToChannel("sc2ad check your github notifications", identifier);
 
             Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
             Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must fail.
         }
 
@@ -354,7 +352,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(false)", defaultPlugins);
 
             // Serialize our request JSON data into a stream, which we will feed into our channel request.
-            ModIdentifier identifier = new ModIdentifier
+            var identifier = new ModIdentifier
             {
                 ID = "ChromaToggle",
                 Version = "1.0.0"
@@ -367,6 +365,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.MoveModToChannel("Public", identifier);
 
             Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
             Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
@@ -388,6 +387,7 @@ namespace Hive.Tests.Endpoints
 
             services
                 .AddTransient(sp => plugins)
+                .AddScoped<Services.Common.ModService>()
                 .AddScoped<Controllers.ModsController>()
                 .AddAggregates();
 
@@ -410,7 +410,7 @@ namespace Hive.Tests.Endpoints
                 AdditionalData = DIHelper.EmptyAdditionalData
             };
 
-            LocalizedModInfo info = new LocalizedModInfo()
+            var info = new LocalizedModInfo()
             {
                 OwningMod = mod,
                 Language = CultureInfo.CurrentCulture.TwoLetterISOLanguageName,
@@ -445,7 +445,7 @@ namespace Hive.Tests.Endpoints
 
             public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
             {
-                string nameString = name.ToString();
+                var nameString = name.ToString();
                 switch (nameString)
                 {
                     case "hive":

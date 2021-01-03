@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Hive.Versioning.Tests
@@ -43,6 +39,7 @@ namespace Hive.Versioning.Tests
     public class VersionTests : IClassFixture<VersionTestFixture>
     {
         private readonly VersionTestFixture fixture;
+
         public VersionTests(VersionTestFixture fix) => fixture = fix;
 
         [Theory]

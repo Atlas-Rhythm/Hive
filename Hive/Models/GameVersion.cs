@@ -9,36 +9,56 @@ using System.Text.Json;
 
 namespace Hive.Models
 {
-    public class GameVersion
+    /// <summary>
+    /// Represents a particular version of a game
+    /// </summary>
+    public class GameVersion : IEquatable<GameVersion>
     {
+        /// <summary>
+        /// The name of the GameVersion
+        /// </summary>
         public string Name { get; set; } = null!;
 
-        // like Mod's
+        /// <summary>
+        /// Additional data associated with the GameVersion
+        /// </summary>
         public JsonElement AdditionalData { get; set; }
 
+        /// <summary>
+        /// The <see cref="Instant"/> this GameVersion was created
+        /// </summary>
         public Instant CreationTime { get; set; }
 
+        /// <summary>
+        /// The collection of mods that are supported by this GameVersion
+        /// </summary>
         [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "EF wants a setter")]
         public virtual ICollection<Mod> SupportedMods { get; set; } = new List<Mod>();
 
         #region DB Schema stuff
 
-        // this would be the primary key for this row
+        /// <summary>
+        /// The Guid of this GameVersion, used as a primary key
+        /// </summary>
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [SuppressMessage("Naming", "CA1720:Identifier contains type name", Justification = "We use Guid as a name. Could be changed in the future.")]
         public Guid Guid { get; set; }
 
         #endregion DB Schema stuff
 
+        /// <summary>
+        /// Configure for EF
+        /// </summary>
+        /// <param name="b"></param>
         public static void Configure([DisallowNull] ModelBuilder b)
         {
             if (b is null)
                 throw new ArgumentNullException(nameof(b));
-            b.Entity<GameVersion>()
+            _ = b.Entity<GameVersion>()
                 .HasIndex(v => new { v.Name })
                 .IsUnique();
 
-            b.Entity<GameVersion>()
+            _ = b.Entity<GameVersion>()
                 .HasMany(m => m.SupportedMods)
                 .WithMany(v => v.SupportedVersions)
                 .UsingEntity(b =>
@@ -46,11 +66,17 @@ namespace Hive.Models
                 });
         }
 
-        [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "It is validated, though")]
+        /// <summary>
+        /// Equality comparison
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
         public bool Equals(GameVersion? other) => other is not null && other.Guid == Guid;
 
+        /// <inheritdoc/>
         public override bool Equals(object? obj) => Equals(obj as GameVersion);
 
+        /// <inheritdoc/>
         public override int GetHashCode() => Guid.GetHashCode();
     }
 }

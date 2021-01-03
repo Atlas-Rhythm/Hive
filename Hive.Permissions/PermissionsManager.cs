@@ -1,10 +1,8 @@
-﻿using FastExpressionCompiler;
-using Hive.Permissions.Functions;
+﻿using Hive.Permissions.Functions;
 using Hive.Permissions.Logging;
 using Hive.Permissions.Resources;
 using Hive.Utilities;
 using MathExpr.Compiler;
-using MathExpr.Compiler.Compilation.Passes;
 using MathExpr.Compiler.Compilation.Settings;
 using MathExpr.Compiler.Optimization.Settings;
 using MathExpr.Syntax;
@@ -13,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
 
 namespace Hive.Permissions
 {
@@ -124,7 +121,7 @@ namespace Hive.Permissions
         /// <returns><see langword="true"/> if the action is permitted, <see langword="false"/> otherwise.</returns>
         /// <exception cref="PermissionException">Thrown when there is an exception when executing a rule.</exception>
         /// <seealso cref="CanDo(StringView, TContext, ref PermissionActionParseState)"/>
-        [SuppressMessage("Hive.Permissions", "Hive0013:Use the CanDo(StringView, TContext) overload for runtime-specified actions", 
+        [SuppressMessage("Hive.Permissions", "Hive0013:Use the CanDo(StringView, TContext) overload for runtime-specified actions",
             Justification = "This is the implementation for that overload.")]
         public bool CanDo(StringView action, TContext context)
         {
@@ -150,7 +147,7 @@ namespace Hive.Permissions
                 ContinueDelegate GetContinueStartingAt(int idx)
                     => defaultValue =>
                     {
-                        for (int i = idx; i < order.Length; i++)
+                        for (var i = idx; i < order.Length; i++)
                         {
                             using (logger.WithRule(order[i].Rule))
                             {
@@ -175,7 +172,7 @@ namespace Hive.Permissions
         /// </remarks>
         /// <param name="action">The action to compile the rules for.</param>
         /// <exception cref="PermissionException">Thrown if there was an error while compiling one of the rules for <paramref name="action"/>.</exception>
-        /// <exception cref="AggregateException">Thrown if there were errors while compiling multiple rules for <paramref name="action"/>. 
+        /// <exception cref="AggregateException">Thrown if there were errors while compiling multiple rules for <paramref name="action"/>.
         /// <see cref="AggregateException.InnerExceptions"/> will all be <see cref="PermissionException"/>s.</exception>
         public void PreCompile(StringView action)
         {
@@ -186,7 +183,7 @@ namespace Hive.Permissions
                 var order = ParseAction(action, ref state);
 
                 var exceptions = new List<PermissionException>(order.Length);
-                for (int i = 0; i < order.Length; i++)
+                for (var i = 0; i < order.Length; i++)
                 {
                     try
                     {
@@ -237,7 +234,7 @@ namespace Hive.Permissions
                 { // build up our search order
                     var parts = action.Split(splitToken, ignoreEmpty: false).ToArray();
                     var combos = new PermissionActionParseState.SearchEntry[parts.Length];
-                    for (int i = 0; i < parts.Length; i++)
+                    for (var i = 0; i < parts.Length; i++)
                     {
                         combos[i] = new PermissionActionParseState.SearchEntry(
                             StringView.Concat(parts.Take(i + 1).InterleaveWith(Helpers.Repeat(splitToken, i))));
@@ -279,7 +276,7 @@ namespace Hive.Permissions
                             return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);
                         }
                         else
-                        { // the rule no longer exists, so we clear out 
+                        { // the rule no longer exists, so we clear out
                             logger.ReplaceRule(null);
                             entry.Rule = null;
                             del = null;

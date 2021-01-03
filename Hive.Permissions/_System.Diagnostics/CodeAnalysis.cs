@@ -1,10 +1,10 @@
-﻿using System;
+﻿#if NETSTANDARD2_0
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace System.Diagnostics.CodeAnalysis
 {
-#if NETSTANDARD2_0
     // Effectively the Microsoft implementation for when it doesn't exist for my convenience
 
     /// <summary>
@@ -56,5 +56,5 @@ namespace System.Diagnostics.CodeAnalysis
     internal sealed class MaybeNullAttribute : Attribute
     {
     }
-#endif
 }
+#endif

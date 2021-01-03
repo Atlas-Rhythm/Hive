@@ -2,20 +2,14 @@
 using Hive.Models;
 using Hive.Permissions;
 using Hive.Plugins;
-using Hive.Services;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using NodaTime;
-using Serilog;
-using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -26,14 +20,14 @@ namespace Hive.Tests.Endpoints
     {
         private readonly ITestOutputHelper helper;
 
-        private static IEnumerable<GameVersion> defaultGameVersions = new List<GameVersion>()
+        private static readonly IEnumerable<GameVersion> defaultGameVersions = new List<GameVersion>()
         {
             new GameVersion() { Name = "1.10.0", AdditionalData = DIHelper.EmptyAdditionalData },
             new GameVersion() { Name = "1.11.0", AdditionalData = DIHelper.EmptyAdditionalData },
             new GameVersion() { Name = "1.12.0-beta", AdditionalData = DIHelper.EmptyAdditionalData }
         };
 
-        private static IEnumerable<IGameVersionsPlugin> defaultPlugins = new List<IGameVersionsPlugin>()
+        private static readonly IEnumerable<IGameVersionsPlugin> defaultPlugins = new List<IGameVersionsPlugin>()
         {
             new HiveGameVersionsControllerPlugin()
         };
@@ -111,7 +105,7 @@ namespace Hive.Tests.Endpoints
             // Should only contain non-beta versions
             Assert.DoesNotContain(defaultGameVersions.Last(), value);
             // Should contain all public versions (in our case, all versions except the very last one)
-            for (int i = 0; i < defaultGameVersions.Count() - 1; i++)
+            for (var i = 0; i < defaultGameVersions.Count() - 1; i++)
             {
                 Assert.Contains(defaultGameVersions.ElementAt(i), value);
             }
@@ -139,7 +133,7 @@ namespace Hive.Tests.Endpoints
             // Should only contain non-beta versions
             Assert.DoesNotContain(defaultGameVersions.Last(), value);
             // Should contain all public versions (in our case, all versions except the very last one)
-            for (int i = 0; i < defaultGameVersions.Count() - 1; i++)
+            for (var i = 0; i < defaultGameVersions.Count() - 1; i++)
             {
                 Assert.Contains(defaultGameVersions.ElementAt(i), value);
             }
@@ -159,6 +153,7 @@ namespace Hive.Tests.Endpoints
 
             services
                 .AddTransient(sp => plugins)
+                .AddScoped<Services.Common.GameVersionService>()
                 .AddScoped<Controllers.GameVersionsController>()
                 .AddAggregates();
 
@@ -193,7 +188,7 @@ namespace Hive.Tests.Endpoints
 
             public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
             {
-                string nameString = name.ToString();
+                var nameString = name.ToString();
                 switch (nameString)
                 {
                     case "hive":

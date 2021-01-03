@@ -1,13 +1,10 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Xml.Linq;
 
@@ -16,7 +13,7 @@ namespace Hive.CodeGen
     [Generator]
     public class FormattedResXGenerator : ISourceGenerator
     {
-        private static readonly DiagnosticDescriptor DbgPrintFiles = new DiagnosticDescriptor(
+        private static readonly DiagnosticDescriptor DbgPrintFiles = new(
             id: "HCG989",
             title: "Located additional file",
             messageFormat: "File: {0}",
@@ -25,7 +22,7 @@ namespace Hive.CodeGen
             isEnabledByDefault: true
         );
 
-        private static readonly DiagnosticDescriptor DbgPrint = new DiagnosticDescriptor(
+        private static readonly DiagnosticDescriptor DbgPrint = new(
             id: "HCG988",
             title: "Debug print",
             messageFormat: "{0}",
@@ -34,7 +31,7 @@ namespace Hive.CodeGen
             isEnabledByDefault: true
         );
 
-        private static readonly DiagnosticDescriptor Err_CouldNotReadResX = new DiagnosticDescriptor(
+        private static readonly DiagnosticDescriptor Err_CouldNotReadResX = new(
             id: "HCG010",
             title: "Could not read ResX file",
             messageFormat: "Could not read file '{0}'",
@@ -47,14 +44,8 @@ namespace Hive.CodeGen
         {
             var options = context.AnalyzerConfigOptions.GetOptions(file);
 
-            if (options.TryGetValue("build_metadata.AdditionalFiles.IsResXToGenerate", out var value))
-            {
-                if (bool.TryParse(value, out var res))
-                    return res;
-                return false;
-            }
-
-            return false;
+            return options.TryGetValue("build_metadata.AdditionalFiles.IsResXToGenerate", out var value)
+                && bool.TryParse(value, out var res) && res;
         }
 
         private static (string Namespace, string Name) GetFileNameInfo(GeneratorExecutionContext context, AdditionalText file)
@@ -69,7 +60,7 @@ namespace Hive.CodeGen
                 if (!context.AnalyzerConfigOptions.GlobalOptions.TryGetValue("build_property.RootNamespace", out var rootNamespace))
                     rootNamespace = Path.GetFileNameWithoutExtension(projectDir);
 
-                bool isRelativeToProject = false;
+                var isRelativeToProject = false;
                 var path = file.Path;
                 if (options.TryGetValue("build_metadata.AdditionalFiles.Link", out var value) && !string.IsNullOrWhiteSpace(value))
                 {
@@ -155,16 +146,16 @@ namespace {@namespace}
     internal static class {name}
     {{
         private static global::System.Resources.ResourceManager? resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo? resourceCulture;
 
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager 
+        internal static global::System.Resources.ResourceManager ResourceManager
         {{
-            get 
+            get
             {{
                 if (object.ReferenceEquals(resourceMan, null))
                 {{
@@ -174,7 +165,7 @@ namespace {@namespace}
                 return resourceMan;
             }}
         }}
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -186,7 +177,7 @@ namespace {@namespace}
             {{
                 return resourceCulture ?? global::System.Globalization.CultureInfo.CurrentUICulture;
             }}
-            set 
+            set
             {{
                 resourceCulture = value;
             }}
@@ -209,40 +200,39 @@ namespace {@namespace}
 
                 var (commentMain, parsed) = ParseDescriptionComment(commentString);
 
-                sb.Append($@"
+                _ = sb.Append($@"
         /// <summary>
         /// Gets a resource string for {elName} similar to '{baseValue}'.
         /// </summary>");
                 if (commentString != null)
                 {
-                    sb.Append(@"
+                    _ = sb.Append(@"
         /// <remarks>");
-                    
                     if (commentMain != null)
                     {
-                        sb.Append($@"
+                        _ = sb.Append($@"
         /// <para>{commentMain}</para>");
                     }
 
                     if (parsed != null)
                     {
-                        sb.Append(@"
+                        _ = sb.Append(@"
         /// <para>Format arguments:
         /// <list type=""table"">");
                         foreach (var (idx, desc) in parsed)
                         {
-                            sb.Append($@"
+                            _ = sb.Append($@"
         /// <item>
         ///     <term><b>Argument {idx}</b></term>
         ///     <description>{desc}</description>
         /// </item>");
                         }
-                        sb.Append(@"
+                        _ = sb.Append(@"
         /// </list>
         /// </para>");
                     }
 
-                    sb.Append(@"
+                    _ = sb.Append(@"
         /// </remarks>");
                 }
 
@@ -309,7 +299,7 @@ namespace {@namespace}
                 if (parsed != null)
                     getResText = $"new {typeName}(Culture, {getResText})";
 
-                sb.Append($@"
+                _ = sb.Append($@"
         internal static {typeName} {elName}
         {{
             get
@@ -320,7 +310,7 @@ namespace {@namespace}
 ");
             }
 
-            sb.Append(@"
+            _ = sb.Append(@"
     }
 }
 ");
@@ -356,12 +346,12 @@ namespace {@namespace}
             {
                 var list = new List<(int, string)>();
 
-                int lastIdx = -1;
-                int lastStart = -1;
-                int lastTail = 0;
+                var lastIdx = -1;
+                var lastStart = -1;
+                var lastTail = 0;
                 while (true)
                 {
-                    int start = lastTail;
+                    var start = lastTail;
                     do start = part.IndexOf('{', start);
                     while (start != -1 && start - 1 >= 0 && part[start - 1] == '\\');
                     if (start == -1) break;
@@ -402,6 +392,8 @@ namespace {@namespace}
             }
         }
 
-        public void Initialize(GeneratorInitializationContext context) { }
+        public void Initialize(GeneratorInitializationContext context)
+        {
+        }
     }
 }

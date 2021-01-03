@@ -1,31 +1,30 @@
 ﻿using Hive.Utilities;
 using NodaTime;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Hive.Permissions
 {
+    /// <summary>
+    ///
+    /// </summary>
     public class ConfigRuleProvider : IRuleProvider
     {
         // TODO: implement
 
+        /// <summary>
+        ///
+        /// </summary>
         public ConfigRuleProvider()
         {
         }
 
-        public bool HasRuleChangedSince(StringView name, Instant time)
-        {
-            return false;
-        }
+        /// <inheritdoc/>
+        public bool HasRuleChangedSince(StringView name, Instant time) => false;
 
-        public bool HasRuleChangedSince(Rule rule, Instant time)
-        {
-            return false;
-        }
+        /// <inheritdoc/>
+        public bool HasRuleChangedSince(Rule rule, Instant time) => false;
 
+        /// <inheritdoc/>
         public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
         {
             gotten = new Rule(name.ToString(), "next(true)");

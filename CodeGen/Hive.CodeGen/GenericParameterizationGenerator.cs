@@ -3,13 +3,9 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Text;
-using System.Threading;
 
 namespace Hive.CodeGen
 {
@@ -38,7 +34,7 @@ namespace Hive.CodeGen
 
         public void Execute(GeneratorExecutionContext context)
         {
-            if (!(context.SyntaxReceiver is SyntaxReceiver receiver))
+            if (context.SyntaxReceiver is not SyntaxReceiver receiver)
                 return;
 
             var compilation = context.Compilation;
@@ -67,19 +63,19 @@ namespace Hive.CodeGen
                 classes.Add((type, synType, minValue, maxValue));
             }
 
-            int ct = 0;
+            var ct = 0;
 
             foreach (var (type, syn, min, max) in classes)
             {
                 var source = GenerateForType(type, targetingAttribute, syn, min, max, context);
-                if (source != null) 
+                if (source != null)
                 {
                     context.AddSource($"Parameterized_{type.Name}_{ct++}.cs", SourceText.From(source, Encoding.UTF8));
                 }
             }
         }
 
-        private static readonly DiagnosticDescriptor ToParameterizeType = new DiagnosticDescriptor(
+        private static readonly DiagnosticDescriptor ToParameterizeType = new(
                 id: "HCG999",
                 title: "Found type to be parameterized",
                 messageFormat: "Type to parameterize: {0} with {1} params ({2} to {3}) {4}",
@@ -87,7 +83,8 @@ namespace Hive.CodeGen
                 defaultSeverity: DiagnosticSeverity.Hidden,
                 isEnabledByDefault: true
             );
-        private static readonly DiagnosticDescriptor ToRemoveTypeArg = new DiagnosticDescriptor(
+
+        private static readonly DiagnosticDescriptor ToRemoveTypeArg = new(
                 id: "HCG998",
                 title: "Found type argument to be removed",
                 messageFormat: "To remove: {0} == {1}",
@@ -95,7 +92,8 @@ namespace Hive.CodeGen
                 defaultSeverity: DiagnosticSeverity.Hidden,
                 isEnabledByDefault: true
             );
-        private static readonly DiagnosticDescriptor Report = new DiagnosticDescriptor(
+
+        private static readonly DiagnosticDescriptor Report = new(
                 id: "HCG997",
                 title: "Report",
                 messageFormat: "{0}",
@@ -103,7 +101,8 @@ namespace Hive.CodeGen
                 defaultSeverity: DiagnosticSeverity.Hidden,
                 isEnabledByDefault: true
             );
-        private static readonly DiagnosticDescriptor Report2 = new DiagnosticDescriptor(
+
+        private static readonly DiagnosticDescriptor Report2 = new(
                 id: "HCG996",
                 title: "Report2",
                 messageFormat: "{0}",
@@ -112,7 +111,7 @@ namespace Hive.CodeGen
                 isEnabledByDefault: true
             );
 
-        private static readonly DiagnosticDescriptor Err_InvalidParameterizations = new DiagnosticDescriptor(
+        private static readonly DiagnosticDescriptor Err_InvalidParameterizations = new(
                 id: "HCG001",
                 title: "Specified parameterization range is not valid on the type",
                 messageFormat: "Type {0} has {1} generic parameters, but the attribute specified generating {2} to {3} parameter variants",
@@ -121,7 +120,7 @@ namespace Hive.CodeGen
                 isEnabledByDefault: true
             );
 
-        private static readonly DiagnosticDescriptor Err_InternalError = new DiagnosticDescriptor(
+        private static readonly DiagnosticDescriptor Err_InternalError = new(
                 id: "HCG002",
                 title: "Parameterization caused internal exception",
                 messageFormat: "Internal exception while generating parameterization {3} of type {0}: '{1}' at {2}",
@@ -130,15 +129,13 @@ namespace Hive.CodeGen
                 isEnabledByDefault: true
             );
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
-            Justification = "I don't want the excepption propagating any higher, no matter what")]
         private static string? GenerateForType(INamedTypeSymbol type, INamedTypeSymbol attribute, TypeDeclarationSyntax synType, int minParam, int maxParam, GeneratorExecutionContext context)
         {
-            context.ReportDiagnostic(Diagnostic.Create(ToParameterizeType, 
-                Location.Create(synType.SyntaxTree, synType.Identifier.Span), 
-                type.Name, 
-                type.Arity, 
-                minParam, 
+            context.ReportDiagnostic(Diagnostic.Create(ToParameterizeType,
+                Location.Create(synType.SyntaxTree, synType.Identifier.Span),
+                type.Name,
+                type.Arity,
+                minParam,
                 maxParam,
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
             ));
@@ -175,7 +172,7 @@ namespace Hive.CodeGen
 
                 var removedAttributeTrivia = new List<SyntaxTriviaList>();
 
-                for (int i = 0; i < attrLists.Count; i++)
+                for (var i = 0; i < attrLists.Count; i++)
                 {
                     var attrList = attrLists[i];
 
@@ -189,7 +186,7 @@ namespace Hive.CodeGen
                     var attrs = attrList.Attributes;
                     var attrs2 = attrs;
 
-                    for (int j = 0; j < attrs.Count; j++)
+                    for (var j = 0; j < attrs.Count; j++)
                     {
                         var attr = attrs[j];
 
@@ -255,20 +252,20 @@ namespace Hive.CodeGen
 
             foreach (var @extern in root.Externs)
             {
-                sb.Append(@extern.ToFullString());
+                _ = sb.Append(@extern.ToFullString());
             }
 
             foreach (var @using in root.Usings)
             {
-                sb.Append(@using.ToFullString());
+                _ = sb.Append(@using.ToFullString());
             }
 
-            sb.Append($@"
+            _ = sb.Append($@"
 namespace {type.ContainingNamespace.ToDisplayString()}
 {{
 ");
 
-            for (int i = minParam; i <= maxParam; i++)
+            for (var i = minParam; i <= maxParam; i++)
             {
                 try
                 {
@@ -333,7 +330,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                         str.Replace(Environment.NewLine, "\\n")
                     ));
 
-                    sb.AppendLine(str);
+                    _ = sb.AppendLine(str);
                 }
                 catch (Exception e)
                 {
@@ -347,7 +344,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                 }
             }
 
-            sb.Append(@"
+            _ = sb.Append(@"
 }
 ");
 
@@ -389,7 +386,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             public GenericClassTransformer(GeneratorExecutionContext context, SyntaxTree tree, int paramCount) : base(true)
                 => (this.context, origTree, rewriteWithParams) = (context, tree, paramCount);
 
-            public override SyntaxNode? VisitClassDeclaration(ClassDeclarationSyntax node) 
+            public override SyntaxNode? VisitClassDeclaration(ClassDeclarationSyntax node)
                 => VisitTypeDeclaration(node, node => base.VisitClassDeclaration((ClassDeclarationSyntax)node));
 
             public override SyntaxNode? VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
@@ -421,7 +418,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                     var paramsToRemove = new List<TypeParameterSyntax>();
 
                     var paramList2 = paramList;
-                    for (int i = paramList.Count - 1; i >= rewriteWithParams; i--)
+                    for (var i = paramList.Count - 1; i >= rewriteWithParams; i--)
                     {
                         var toRemove = paramList[i];
                         paramsToRemove.Add(toRemove);
@@ -462,7 +459,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                     var args = node.Arguments;
 
                     //var args2 = args;
-                    for (int i = 0; i < args.Count; i++)
+                    for (var i = 0; i < args.Count; i++)
                     {
                         var arg = args[i];
                         if (arg is IdentifierNameSyntax simple)
@@ -499,7 +496,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                     var args = node.Elements;
 
                     //var args2 = args;
-                    for (int i = 0; i < args.Count; i++)
+                    for (var i = 0; i < args.Count; i++)
                     {
                         var arg = args[i].Type;
                         if (arg is IdentifierNameSyntax simple)
@@ -535,7 +532,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                 {
                     var nodes = node.Content;
 
-                    for (int i = 0; i < nodes.Count; i++)
+                    for (var i = 0; i < nodes.Count; i++)
                     {
                         var elem = nodes[i];
 
@@ -557,12 +554,13 @@ namespace {type.ContainingNamespace.ToDisplayString()}
 
                             var targetName = attr.Identifier.Identifier.Text;
 
-                            bool needsRemoved = false;
+                            var needsRemoved = false;
                             switch (name.LocalName.Text)
                             {
                                 case "typeparam":
                                     needsRemoved = TypeParamsToRemove.Any(p => p.Identifier.Text == targetName);
                                     break;
+
                                 case "param":
                                     if (ParamsToRemove != null)
                                     {
@@ -571,6 +569,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                                            && ParamsToRemove.Any(p => p.Identifier.Text == targetName);
                                     }
                                     break;
+
                                 default:
                                     continue;
                             }
@@ -596,11 +595,13 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             // This implements rough parameter shadowing
             // Complex cases won't work, but w/e
             private IEnumerable<ParameterSyntax>? ParamsToRemove;
+
             private IEnumerable<ParameterSyntax>? ParamsToKeep;
 
-            public override SyntaxNode? VisitMethodDeclaration(MethodDeclarationSyntax node) 
+            public override SyntaxNode? VisitMethodDeclaration(MethodDeclarationSyntax node)
                 => VisitBaseMethodDecl(node, node => base.VisitMethodDeclaration((MethodDeclarationSyntax)node));
-            public override SyntaxNode? VisitConstructorDeclaration(ConstructorDeclarationSyntax node) 
+
+            public override SyntaxNode? VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
                 => VisitBaseMethodDecl(node, node => base.VisitConstructorDeclaration((ConstructorDeclarationSyntax)node));
 
             private SyntaxNode? VisitBaseMethodDecl(BaseMethodDeclarationSyntax node, Func<BaseMethodDeclarationSyntax, SyntaxNode?> orig)
@@ -612,7 +613,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
 
                     var removed = new List<ParameterSyntax>();
                     var reAdded = new List<ParameterSyntax>();
-                    for (int i = 0; i < parameters.Count; i++)
+                    for (var i = 0; i < parameters.Count; i++)
                     {
                         var param = parameters[i];
                         if (param.Type is SimpleNameSyntax simple)
@@ -631,7 +632,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                         if (ParamsToRemove?.Any(p => p?.Identifier.Text == param.Identifier.Text) ?? false)
                             reAdded.Add(param);
 
-                    @continue:;
+                        @continue:;
                     }
 
                     paramList = paramList.WithParameters(parameters);
@@ -710,7 +711,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             {
                 if (ParamsToRemove == null) return args;
 
-                for (int i = 0; i < args.Count; i++)
+                for (var i = 0; i < args.Count; i++)
                 {
                     var arg = args[i];
 
@@ -744,8 +745,13 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                 public ReferencesRemovedParamsVisitor(IEnumerable<ParameterSyntax> rem, IEnumerable<ParameterSyntax>? keep)
                     => (Removed, Kept) = (rem, keep);
 
-                public override void VisitArgumentList(ArgumentListSyntax node) { }
-                public override void VisitTupleExpression(TupleExpressionSyntax node) { }
+                public override void VisitArgumentList(ArgumentListSyntax node)
+                {
+                }
+
+                public override void VisitTupleExpression(TupleExpressionSyntax node)
+                {
+                }
 
                 public override void VisitIdentifierName(IdentifierNameSyntax node)
                 {

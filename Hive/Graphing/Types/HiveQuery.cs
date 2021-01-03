@@ -6,20 +6,25 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Hive.Graphing.Types
 {
+    /// <summary>
+    /// A QGL Query.
+    /// </summary>
     public class HiveQuery : ObjectGraphType
     {
-        private readonly ILogger logger;
-
+        /// <summary>
+        /// Create a GQL query.
+        /// </summary>
+        /// <param name="logger"></param>
         public HiveQuery([DisallowNull] ILogger logger)
         {
             if (logger is null)
                 throw new ArgumentNullException(nameof(logger));
 
-            this.logger = logger.ForContext<HiveQuery>();
+            var l = logger.ForContext<HiveQuery>();
 
-            logger.Debug("Initializing");
+            l.Debug("Initializing");
 
-            Field<ListGraphType<ChannelType>>(
+            _ = Field<ListGraphType<ChannelType>>(
                 name: "channels",
                 resolve: context => Array.Empty<Channel>());
         }

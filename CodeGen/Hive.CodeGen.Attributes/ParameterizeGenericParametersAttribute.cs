@@ -1,5 +1,4 @@
 ﻿using System;
-using System.CodeDom.Compiler;
 
 namespace Hive.CodeGen
 {
@@ -13,6 +12,7 @@ namespace Hive.CodeGen
         /// Gets the minimum number of generic parameters to generate.
         /// </summary>
         public int MinParameters { get; }
+
         /// <summary>
         /// Gets the maximum number of generic parameters to generate.
         /// </summary>
@@ -38,6 +38,7 @@ namespace Hive.CodeGen
         /// Gets the type name of the type it was parameterized from.
         /// </summary>
         public Type GeneratedFrom { get; }
+
         /// <summary>
         /// Gets the number of parameters this was instantiated with.
         /// </summary>

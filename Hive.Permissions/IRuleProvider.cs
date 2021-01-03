@@ -2,9 +2,7 @@
 using MathExpr.Syntax;
 using NodaTime;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 
 namespace Hive.Permissions
 {
@@ -62,7 +60,7 @@ namespace Hive.Permissions
         /// Gets the current time, according to the provider.
         /// </summary>
         /// <remarks>
-        /// <para>This is the source of all <see cref="DateTime"/> objects given to methods on this instance. It should be synced to 
+        /// <para>This is the source of all <see cref="DateTime"/> objects given to methods on this instance. It should be synced to
         /// whatever time source you store to keep track of changes.</para>
         /// </remarks>
         // this should pull from a time source that is synced with the underlying rule store

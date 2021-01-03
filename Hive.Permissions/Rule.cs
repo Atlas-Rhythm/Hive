@@ -1,9 +1,5 @@
-﻿using Hive.Utilities;
-using NodaTime;
+﻿using NodaTime;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Text;
 
 namespace Hive.Permissions
 {
@@ -21,6 +17,7 @@ namespace Hive.Permissions
         /// Gets the name of the rule.
         /// </summary>
         public string Name { get; }
+
         /// <summary>
         /// Gets the definition of the rule.
         /// </summary>
@@ -39,6 +36,7 @@ namespace Hive.Permissions
 
         // This is used as a cache for the PermissionsManager.
         internal Delegate? Compiled;
+
         internal Instant CompiledAt = Instant.MinValue;
     }
 

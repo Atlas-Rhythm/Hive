@@ -1,30 +1,46 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Data;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Hive.Models
 {
+    /// <summary>
+    /// Represents a collection of localized information for a <see cref="Mod"/>.
+    /// </summary>
     public class LocalizedModInfo
     {
+        /// <summary>
+        /// The language of this localized information
+        /// </summary>
         public string Language { get; set; } = null!;
 
+        /// <summary>
+        /// The localized name of the mod
+        /// </summary>
         public string Name { get; set; } = null!;
 
+        /// <summary>
+        /// The localized description of the mod
+        /// </summary>
         public string Description { get; set; } = null!;
 
+        /// <summary>
+        /// The localized changelog of the mod, if it exists
+        /// </summary>
         public string? Changelog { get; set; }
 
+        /// <summary>
+        /// The localized credits of the mod, if they exist
+        /// </summary>
         public string? Credits { get; set; }
 
         private Mod? owningMod;
 
+        /// <summary>
+        /// The <see cref="Mod"/> that this information describes
+        /// </summary>
         [BackingField(nameof(owningMod))]
         [DisallowNull]
         [NotNull]
@@ -35,7 +51,7 @@ namespace Hive.Models
             {
                 if (value is null)
                     throw new ArgumentNullException(nameof(value));
-                owningMod?.Localizations.Remove(this);
+                _ = owningMod?.Localizations.Remove(this);
                 owningMod = value;
                 if (!owningMod.Localizations.Contains(this))
                     owningMod.Localizations.Add(this);
@@ -44,7 +60,9 @@ namespace Hive.Models
 
         #region DB Schema stuff
 
-        // this would be the primary key for this row
+        /// <summary>
+        /// The Guid of this LocalizedModInfo, used as a primary key
+        /// </summary>
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [SuppressMessage("Naming", "CA1720:Identifier contains type name", Justification = "We use Guid as a name. Could be changed in the future.")]
         public Guid Guid { get; set; }

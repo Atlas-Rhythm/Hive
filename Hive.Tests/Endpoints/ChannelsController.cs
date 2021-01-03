@@ -2,18 +2,12 @@
 using Hive.Models;
 using Hive.Permissions;
 using Hive.Plugins;
-using Hive.Services;
-using Hive.Utilities;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using NodaTime;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -24,7 +18,7 @@ namespace Hive.Tests.Endpoints
     {
         private readonly ITestOutputHelper helper;
 
-        private static IEnumerable<Channel> defaultChannels = new List<Channel>
+        private static readonly IEnumerable<Channel> defaultChannels = new List<Channel>
         {
             new Channel { Name = "Public", AdditionalData = DIHelper.EmptyAdditionalData },
             new Channel { Name = "Beta", AdditionalData =  DIHelper.EmptyAdditionalData }
@@ -48,7 +42,6 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(res);
             // Should forbid based off of a permission failure.
             Assert.IsType<ForbidResult>(res.Result);
-            Assert.NotNull(res.Result);
         }
 
         [Fact]
@@ -63,8 +56,8 @@ namespace Hive.Tests.Endpoints
             var res = await controller.GetChannels();
             Assert.NotNull(res);
             // Should forbid based off of a plugin failure.
-            Assert.IsType<ForbidResult>(res.Result);
             Assert.NotNull(res.Result);
+            Assert.IsType<ForbidResult>(res.Result);
         }
 
         [Fact]
@@ -126,7 +119,7 @@ namespace Hive.Tests.Endpoints
             Assert.DoesNotContain(defaultChannels.ElementAt(1), value);
         }
 
-        private static Mock<IChannelsControllerPlugin> CreatePlugin() => new Mock<IChannelsControllerPlugin>();
+        private static Mock<IChannelsControllerPlugin> CreatePlugin() => new();
 
         private static IChannelsControllerPlugin CreateDefaultPlugin() => new HiveChannelsControllerPlugin();
 
@@ -150,6 +143,7 @@ namespace Hive.Tests.Endpoints
             services.AddSingleton<IChannelsControllerPlugin>(sp => new HiveChannelsControllerPlugin());
             services.AddSingleton(sp => plugin);
             services.AddAggregates();
+            services.AddScoped<Services.Common.ChannelService>();
             services.AddScoped<Controllers.ChannelsController>();
 
             return services.BuildServiceProvider().GetRequiredService<Controllers.ChannelsController>();

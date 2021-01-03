@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Xunit;
+﻿using Xunit;
 
 namespace Hive.Versioning.Tests.Ranges
 {
     public class RangeTests
     {
-
         [Theory]
         [InlineData(">=1.0.0", true)]
         [InlineData(">1.0.0", true)]
@@ -79,7 +73,7 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData(">992.0.8  || <2.0.83 || <2.0.8   || >9.0.0   || >2.0.8  || =2.0.83 || <2.0.0 ", true)]
         [InlineData("<1.0.0   || >1.0.0    ||<2.0.0    || >1.0.0    ||<2.0.0   || >1.0.0   || >9.0.0 ", true)]
         [InlineData("^992.0.8  || =2.0.83|| <2.0.0   || >9.0.83 || <9.0.0   || >9.0.0   || =2.0.0 ", true)]
-        [InlineData("<2.0.0---+---.8  || >2.0.0---+------.8  || >2.0.0-------.8  || <2.0.0-------.0  || >2.0.0-5<2.0.0" , true)]
+        [InlineData("<2.0.0---+---.8  || >2.0.0---+------.8  || >2.0.0-------.8  || <2.0.0-------.0  || >2.0.0-5<2.0.0", true)]
         [InlineData("^2.0.0----2.0.0-------.OW18  || >2.0.0-55<2.5.0-------.8  || <2.0.0+---P--.8  || >2.0.0---.OW18  || >2.0.0-55<2.5.0-------.8  || <2.0.0+---P--.8  || >2.0.0", true)]
         [InlineData(">2.0.83 || <2.0.8  || >2.0.8+4|| <2.0.0   || >=2.0.83 || <2.0.8  || >2.0.83 || <2.0.2-- || <2.0.2-- ", true)]
         [InlineData("<2.0.0-8  || >2.0.0-8  || >2.0.0-8  ||<2.0.0------0", true)]
@@ -407,7 +401,7 @@ namespace Hive.Versioning.Tests.Ranges
 
             _ = ~range;
         }
-        
+
         [Theory]
         [InlineData("^1.0.0", "1.0.0-pre.1", false)]
         [InlineData("^1.0.0", "1.0.0", true)]
