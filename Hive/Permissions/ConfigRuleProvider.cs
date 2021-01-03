@@ -51,37 +51,43 @@ namespace Hive.Permissions
         /// <inheritdoc/>
         public bool HasRuleChangedSince(StringView name, Instant time)
         {
-            var fileInfo = TryGetRule(name.ToString(), out var newlyCreatedRule).Item1;
-            return Instant.FromDateTimeUtc(fileInfo.LastWriteTimeUtc) > time || newlyCreatedRule;
+            var fileInfo = TryGetRule(name.ToString()).Item1;
+
+            // Refresh access time fields for the file and its parent directory
+            fileInfo.Refresh();
+            fileInfo.Directory?.Refresh();
+
+            var lastWriteTimeUtc = fileInfo.Exists
+                ? fileInfo.LastWriteTimeUtc
+                : fileInfo.Directory?.LastWriteTimeUtc;
+
+            return lastWriteTimeUtc is not null && Instant.FromDateTimeUtc(lastWriteTimeUtc.Value) > time;
         }
 
         /// <inheritdoc/>
-        public bool HasRuleChangedSince(Rule rule, Instant time)
-        {
-            if (rule is null) throw new ArgumentNullException(nameof(rule));
-
-            var fileInfo = TryGetRule(rule.Name, out var newlyCreatedRule).Item1;
-            return Instant.FromDateTimeUtc(fileInfo.LastWriteTimeUtc) > time || newlyCreatedRule;
-        }
+        // REVIEW: I made this method call the other HasRuleChangedSince because the code was very similar. Am I going to get punched for this?
+        public bool HasRuleChangedSince(Rule rule, Instant time) => rule is null ? throw new ArgumentNullException(nameof(rule)) : HasRuleChangedSince(rule.Name, time);
 
         /// <inheritdoc/>
         public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
         {
-            gotten = TryGetRule(name.ToString(), out _).Item2;
-            return true;
+            var ruleInfo = TryGetRule(name.ToString());
+
+            gotten = ruleInfo.Item1.Exists ? ruleInfo.Item2 : null;
+
+            return gotten != null;
         }
 
         // Helper function that obtains cached information about a rule. If none exists, it goes to the file system.
-        private (FileInfo, Rule) TryGetRule(string name, out bool newlyCreated)
+        private (FileInfo, Rule) TryGetRule(string name)
         {
             if (cachedFileInfos.TryGetValue(name, out var fileInfo))
             {
-                newlyCreated = false;
                 return fileInfo;
             }
             else
             {
-                var fromFileSystem = GetOrCreateFromFileSystem(name, GetRuleLocation(name), out newlyCreated);
+                var fromFileSystem = GetFromFileSystem(name, GetRuleLocation(name));
                 cachedFileInfos.Add(name, fromFileSystem);
                 return fromFileSystem;
             }
@@ -89,32 +95,13 @@ namespace Hive.Permissions
 
         // Helper function that reads information about a rule from the file system.
         // If the rule does not exist in the file system, we write a new rule with the default definition.
-        private (FileInfo, Rule) GetOrCreateFromFileSystem(string ruleName, string filePath, out bool newlyCreated)
+        private (FileInfo, Rule) GetFromFileSystem(string ruleName, string filePath)
         {
-            newlyCreated = false;
             var ruleDefinition = defaultRuleDefinition;
 
             if (File.Exists(filePath))
             {
                 ruleDefinition = File.ReadAllText(filePath);
-            }
-            else
-            {
-                newlyCreated = true;
-
-                var directoryName = Path.GetDirectoryName(filePath);
-
-                // Path.GetDirectoryName can return null/empty if the file path is invalid in some way.
-                if (string.IsNullOrEmpty(directoryName))
-                {
-                    throw new InvalidOperationException($"Failed to create directory for rule \"{ruleName}\". ");
-                }
-
-                // No Directory.Exists check is needed. This will do nothing if the directory already exists.
-                _ = Directory.CreateDirectory(directoryName);
-
-                using var writer = File.CreateText(filePath);
-                writer.WriteLine(ruleDefinition);
             }
 
             var fileInfo = new FileInfo(filePath);
