@@ -51,7 +51,7 @@ namespace Hive.Permissions
         /// <inheritdoc/>
         public bool HasRuleChangedSince(StringView name, Instant time)
         {
-            var rule = TryGetRule(name.ToString());
+            var rule = GetRuleFromCache(name.ToString());
             return HasRuleChangedSince(rule, time);
         }
 
@@ -78,7 +78,16 @@ namespace Hive.Permissions
         /// <inheritdoc/>
         public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
         {
-            var rule = TryGetRule(name.ToString());
+            var stringName = name.ToString();
+
+            // The Permission System is asking for a new rule to cache, so we will always read from the file system.
+            var rule = GetFromFileSystem(stringName, GetRuleLocation(name));
+
+            // Add/replace cached rule
+            if (!cachedFileInfos.TryAdd(stringName, rule))
+            {
+                cachedFileInfos[stringName] = rule;
+            }
 
             gotten = rule.Data.Exists ? rule : null;
 
@@ -86,7 +95,7 @@ namespace Hive.Permissions
         }
 
         // Helper function that obtains cached information about a rule. If none exists, it goes to the file system.
-        private Rule<FileInfo> TryGetRule(string name)
+        private Rule<FileInfo> GetRuleFromCache(string name)
         {
             if (cachedFileInfos.TryGetValue(name, out var fileInfo))
             {
