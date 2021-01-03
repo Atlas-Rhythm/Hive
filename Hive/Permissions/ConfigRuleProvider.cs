@@ -1,4 +1,5 @@
 ﻿using Hive.Utilities;
+using Microsoft.EntityFrameworkCore.Metadata;
 using NodaTime;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,8 @@ namespace Hive.Permissions
         private readonly StringView splitToken = ".";
 
         // Rule name to information corresponding to the particular rule.
-        private readonly Dictionary<string, (FileInfo, Rule)> cachedFileInfos = new();
+        // REVIEW: Since this is a 3-item group at this point, should I make it a record?
+        private readonly Dictionary<string, (FileInfo, Rule, Instant)> cachedFileInfos = new();
 
         /// <summary>
         /// Construct a rule provider via DI.
@@ -51,8 +53,9 @@ namespace Hive.Permissions
         /// <inheritdoc/>
         public bool HasRuleChangedSince(StringView name, Instant time)
         {
-            var fileInfo = TryGetRule(name.ToString(), out var newlyCreatedRule).Item1;
-            return fileInfo.LastWriteTimeUtc != time.ToDateTimeUtc() || newlyCreatedRule;
+            var cachedInfo = TryGetRule(name.ToString(), out var newlyCreatedRule);
+            // REVIEW: Should I convert the FileInfo write time to Instant, or the cached write time to DateTime?
+            return Instant.FromDateTimeOffset(cachedInfo.Item1.LastWriteTimeUtc) != cachedInfo.Item3 || newlyCreatedRule;
         }
 
         /// <inheritdoc/>
@@ -60,8 +63,9 @@ namespace Hive.Permissions
         {
             if (rule is null) throw new ArgumentNullException(nameof(rule));
 
-            var fileInfo = TryGetRule(rule.Name, out var newlyCreatedRule).Item1;
-            return fileInfo.LastWriteTimeUtc != time.ToDateTimeUtc() || newlyCreatedRule;
+            var cachedInfo = TryGetRule(rule.Name, out var newlyCreatedRule);
+            // REVIEW: Should I convert the FileInfo write time to Instant, or the cached write time to DateTime?
+            return Instant.FromDateTimeOffset(cachedInfo.Item1.LastWriteTimeUtc) != cachedInfo.Item3 || newlyCreatedRule;
         }
 
         /// <inheritdoc/>
@@ -72,7 +76,7 @@ namespace Hive.Permissions
         }
 
         // Helper function that obtains cached information about a rule. If none exists, it goes to the file system.
-        private (FileInfo, Rule) TryGetRule(string name, out bool newlyCreated)
+        private (FileInfo, Rule, Instant) TryGetRule(string name, out bool newlyCreated)
         {
             if (cachedFileInfos.TryGetValue(name, out var fileInfo))
             {
@@ -89,7 +93,7 @@ namespace Hive.Permissions
 
         // Helper function that reads information about a rule from the file system.
         // If the rule does not exist in the file system, we write a new rule with the default definition.
-        private (FileInfo, Rule) GetOrCreateFromFileSystem(string ruleName, string filePath, out bool newlyCreated)
+        private (FileInfo, Rule, Instant) GetOrCreateFromFileSystem(string ruleName, string filePath, out bool newlyCreated)
         {
             newlyCreated = false;
             var ruleDefinition = defaultRuleDefinition;
@@ -109,7 +113,7 @@ namespace Hive.Permissions
             var fileInfo = new FileInfo(filePath);
             var rule = new Rule(ruleName, ruleDefinition);
 
-            return (fileInfo, rule);
+            return (fileInfo, rule, Instant.FromDateTimeUtc(fileInfo.LastWriteTimeUtc));
         }
 
         // Helper function that returns the file system location for a rule
