@@ -52,7 +52,7 @@ namespace Hive.Permissions
         public bool HasRuleChangedSince(StringView name, Instant time)
         {
             var fileInfo = TryGetRule(name.ToString(), out var newlyCreatedRule).Item1;
-            return fileInfo.LastWriteTimeUtc != time.ToDateTimeUtc() || newlyCreatedRule;
+            return Instant.FromDateTimeUtc(fileInfo.LastWriteTimeUtc) > time || newlyCreatedRule;
         }
 
         /// <inheritdoc/>
@@ -61,7 +61,7 @@ namespace Hive.Permissions
             if (rule is null) throw new ArgumentNullException(nameof(rule));
 
             var fileInfo = TryGetRule(rule.Name, out var newlyCreatedRule).Item1;
-            return fileInfo.LastWriteTimeUtc != time.ToDateTimeUtc() || newlyCreatedRule;
+            return Instant.FromDateTimeUtc(fileInfo.LastWriteTimeUtc) > time || newlyCreatedRule;
         }
 
         /// <inheritdoc/>
