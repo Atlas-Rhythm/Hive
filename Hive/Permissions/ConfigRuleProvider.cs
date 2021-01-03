@@ -102,6 +102,17 @@ namespace Hive.Permissions
             {
                 newlyCreated = true;
 
+                var directoryName = Path.GetDirectoryName(filePath);
+
+                // Path.GetDirectoryName can return null/empty if the file path is invalid in some way.
+                if (string.IsNullOrEmpty(directoryName))
+                {
+                    throw new InvalidOperationException($"Failed to create directory for rule \"{ruleName}\". ");
+                }
+
+                // No Directory.Exists check is needed. This will do nothing if the directory already exists.
+                _ = Directory.CreateDirectory(directoryName);
+
                 using var writer = File.CreateText(filePath);
                 writer.WriteLine(ruleDefinition);
             }
