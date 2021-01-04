@@ -116,7 +116,7 @@ namespace Hive.Permissions
             // No default rule should exist, just return null.
             if (!File.Exists(filePath))
             {
-                logger.Warning("No rule definition for \"{RuleName}\" exists on disk. Please define the rule by creating \"{RulePath}\".",
+                logger.Debug("No rule definition for \"{RuleName}\" exists on disk. You can define the rule by creating \"{RulePath}\".",
                     ruleName, filePath);
                 return null;
             }
