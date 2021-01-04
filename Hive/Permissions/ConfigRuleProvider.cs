@@ -75,8 +75,6 @@ namespace Hive.Permissions
             // The Permission System is asking for a new rule to cache, so we will always read from the file system.
             var rule = GetFromFileSystem(stringName, GetRuleLocation(name));
 
-            gotten = rule;
-
             // If we got a rule back from the method, the file exists.
             if (rule is not null)
             {
@@ -87,7 +85,7 @@ namespace Hive.Permissions
                 }
             }
 
-            return gotten != null;
+            return (gotten = rule) is not null;
         }
 
         // Helper function that obtains cached information about a rule. If none exists, it goes to the file system.
