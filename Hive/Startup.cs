@@ -39,7 +39,7 @@ namespace Hive
         {
             _ = services
                 .AddTransient<IRuleProvider>(sp =>
-                    new ConfigRuleProvider(Configuration.GetValue<string>("OverrideRuleDirectory"), Configuration.GetValue<string>("DefaultRuleDefinition"), "."))
+                    new ConfigRuleProvider(Configuration.GetValue<string>("OverrideRuleDirectory"), "."))
                 .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
                 .AddSingleton(sp =>
                     new PermissionsManager<PermissionContext>(sp.GetRequiredService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."))

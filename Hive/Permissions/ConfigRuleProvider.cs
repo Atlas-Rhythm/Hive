@@ -12,9 +12,10 @@ namespace Hive.Permissions
     /// </summary>
     public class ConfigRuleProvider : IRuleProvider
     {
+        private const string RuleExtension = ".rule";
+
         private readonly string ruleDirectory = Path.Combine(Environment.CurrentDirectory, "Rules");
-        private readonly string defaultRuleDefinition = "next(true)";
-        private readonly StringView splitToken = ".";
+        private readonly StringView splitToken;
 
         // Rule name to information corresponding to the particular rule.
         private readonly Dictionary<string, Rule<FileInfo>> cachedFileInfos = new();
@@ -23,24 +24,17 @@ namespace Hive.Permissions
         /// Construct a rule provider via DI.
         /// </summary>
         /// <param name="overrideRuleDirectory">If not empty, the rule provider will treat this as the root rule directory.</param>
-        /// <param name="defaultRuleDefinition">The default definition for any newly created rule.</param>
         /// <param name="splitToken">The token used to split rules.</param>
         /// <remarks>
-        /// If <paramref name="defaultRuleDefinition"/> is null or empty, Hive will default to a "Rules" subfolder in the install folder.
         /// The <paramref name="splitToken"/> parameter, and the one given to <see cref="PermissionsManager{TContext}"/>, should always be the same.
         /// </remarks>
         // REVIEW: Should we treat the rule directory as an override (current behavior), or combine it with the Hive directory?
         // REVIEW: Should a default rule definition even be configurable?
-        public ConfigRuleProvider(string overrideRuleDirectory, string defaultRuleDefinition, StringView splitToken)
+        public ConfigRuleProvider(string overrideRuleDirectory, StringView splitToken)
         {
             if (!string.IsNullOrEmpty(overrideRuleDirectory))
             {
                 ruleDirectory = overrideRuleDirectory;
-            }
-
-            if (!string.IsNullOrEmpty(defaultRuleDefinition))
-            {
-                this.defaultRuleDefinition = defaultRuleDefinition;
             }
 
             this.splitToken = splitToken;
@@ -52,7 +46,7 @@ namespace Hive.Permissions
         public bool HasRuleChangedSince(StringView name, Instant time)
         {
             var rule = GetRuleFromCache(name.ToString());
-            return HasRuleChangedSince(rule, time);
+            return rule is not null && HasRuleChangedSince(rule, time);
         }
 
         /// <inheritdoc/>
@@ -83,19 +77,23 @@ namespace Hive.Permissions
             // The Permission System is asking for a new rule to cache, so we will always read from the file system.
             var rule = GetFromFileSystem(stringName, GetRuleLocation(name));
 
-            // Add/replace cached rule
-            if (!cachedFileInfos.TryAdd(stringName, rule))
-            {
-                cachedFileInfos[stringName] = rule;
-            }
+            gotten = rule;
 
-            gotten = rule.Data.Exists ? rule : null;
+            // If we got a rule back from the method, the file exists.
+            if (rule is not null)
+            {
+                // Add/replace cached rule
+                if (!cachedFileInfos.TryAdd(stringName, rule))
+                {
+                    cachedFileInfos[stringName] = rule;
+                }
+            }
 
             return gotten != null;
         }
 
         // Helper function that obtains cached information about a rule. If none exists, it goes to the file system.
-        private Rule<FileInfo> GetRuleFromCache(string name)
+        private Rule<FileInfo>? GetRuleFromCache(string name)
         {
             if (cachedFileInfos.TryGetValue(name, out var fileInfo))
             {
@@ -104,20 +102,27 @@ namespace Hive.Permissions
             else
             {
                 var fromFileSystem = GetFromFileSystem(name, GetRuleLocation(name));
-                cachedFileInfos.Add(name, fromFileSystem);
+
+                if (fromFileSystem is not null)
+                {
+                    cachedFileInfos.Add(name, fromFileSystem);
+                }
+
                 return fromFileSystem;
             }
         }
 
         // Helper function that reads information about a rule from the file system.
-        private Rule<FileInfo> GetFromFileSystem(string ruleName, string filePath)
+        private static Rule<FileInfo>? GetFromFileSystem(string ruleName, string filePath)
         {
-            var ruleDefinition = defaultRuleDefinition;
-
-            if (File.Exists(filePath))
+            // No default rule should exist, just return null.
+            if (!File.Exists(filePath))
             {
-                ruleDefinition = File.ReadAllText(filePath);
+                return null;
             }
+
+            // This cannot be made async without breaking changes to the permission manager and rule provider interface
+            var ruleDefinition = File.ReadAllText(filePath);
 
             var fileInfo = new FileInfo(filePath);
             var rule = new Rule<FileInfo>(ruleName, ruleDefinition, fileInfo);
@@ -131,7 +136,7 @@ namespace Hive.Permissions
             var parts = ruleName.Split(splitToken, ignoreEmpty: false);
             var localRuleDirectory = string.Join(@"\", parts);
 
-            return Path.Combine(ruleDirectory, localRuleDirectory, ".rule");
+            return Path.Combine(ruleDirectory, localRuleDirectory, RuleExtension);
         }
     }
 }
