@@ -1,5 +1,6 @@
 ﻿using Hive.Utilities;
 using NodaTime;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -14,8 +15,9 @@ namespace Hive.Permissions
     {
         private const string RuleExtension = ".rule";
 
-        private readonly string ruleDirectory = Path.Combine(Environment.CurrentDirectory, "Rules");
+        private readonly string ruleDirectory;
         private readonly StringView splitToken;
+        private readonly ILogger logger;
 
         // Rule name to information corresponding to the particular rule.
         private readonly Dictionary<string, Rule<FileInfo>> cachedFileInfos = new();
@@ -23,23 +25,19 @@ namespace Hive.Permissions
         /// <summary>
         /// Construct a rule provider via DI.
         /// </summary>
-        /// <param name="overrideRuleDirectory">If not empty, the rule provider will treat this as the root rule directory.</param>
+        /// <param name="logger">Logger provided with DI.</param>
+        /// <param name="ruleSubfolder">If not empty, the rule provider will treat this as the root rule directory.</param>
         /// <param name="splitToken">The token used to split rules.</param>
         /// <remarks>
         /// The <paramref name="splitToken"/> parameter, and the one given to <see cref="PermissionsManager{TContext}"/>, should always be the same.
         /// </remarks>
-        // REVIEW: Should we treat the rule directory as an override (current behavior), or combine it with the Hive directory?
-        // REVIEW: Should a default rule definition even be configurable?
-        public ConfigRuleProvider(string overrideRuleDirectory, StringView splitToken)
+        public ConfigRuleProvider(ILogger logger, StringView splitToken, string ruleSubfolder = "Rules")
         {
-            if (!string.IsNullOrEmpty(overrideRuleDirectory))
-            {
-                ruleDirectory = overrideRuleDirectory;
-            }
-
+            this.logger = logger;
             this.splitToken = splitToken;
+            ruleDirectory = Path.Combine(Environment.CurrentDirectory, ruleSubfolder);
 
-            _ = Directory.CreateDirectory(overrideRuleDirectory);
+            _ = Directory.CreateDirectory(ruleSubfolder);
         }
 
         /// <inheritdoc/>
@@ -113,11 +111,13 @@ namespace Hive.Permissions
         }
 
         // Helper function that reads information about a rule from the file system.
-        private static Rule<FileInfo>? GetFromFileSystem(string ruleName, string filePath)
+        private Rule<FileInfo>? GetFromFileSystem(string ruleName, string filePath)
         {
             // No default rule should exist, just return null.
             if (!File.Exists(filePath))
             {
+                logger.Warning("No rule definition for \"{RuleName}\" exists on disk. Please define the rule by creating \"{RulePath}\".",
+                    ruleName, filePath);
                 return null;
             }
 
