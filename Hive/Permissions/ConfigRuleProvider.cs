@@ -1,7 +1,7 @@
 ﻿using Hive.Utilities;
 using NodaTime;
 using Serilog;
-using System;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -35,7 +35,7 @@ namespace Hive.Permissions
         {
             this.logger = logger;
             this.splitToken = splitToken;
-            ruleDirectory = Path.Combine(Environment.CurrentDirectory, ruleSubfolder);
+            ruleDirectory = Path.Combine(Assembly.GetExecutingAssembly().Location, ruleSubfolder);
 
             _ = Directory.CreateDirectory(ruleSubfolder);
         }
