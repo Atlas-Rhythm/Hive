@@ -105,6 +105,12 @@ namespace Hive.Controllers
         /// <returns><see langword="true"/> if the upload is valid, <see langword="false"/> otherwise.</returns>
         [return: StopIfReturns(false)]
         bool ValidateAndFixUploadedData(Mod mod, JsonElement originalAdditionalData, [ReturnLast] out object? validationFailureInfo);
+
+        /// <summary>
+        /// A hook that is called when a mod has been fully uploaded and added to the database.
+        /// </summary>
+        /// <param name="modData">The mod that was just uploaded.</param>
+        void UploadFinished(Mod modData) { }
     }
 
     internal class HiveDefaultUploadPlugin : IUploadPlugin
@@ -479,6 +485,7 @@ namespace Hive.Controllers
             }
 
             logger.Information("Upload {ID} complete: {Name} by {Author}", cookie.Substring(0, 16), localization.Name, modObject.Uploader.Username);
+            plugins.UploadFinished(modObject);
 
             return UploadResult.Finish();
         }
