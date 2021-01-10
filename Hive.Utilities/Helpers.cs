@@ -161,6 +161,7 @@ namespace Hive.Utilities
                     .ToArray();
         }
 #endif
+
         /// <summary>
         /// Flattens an <see cref="IEnumerable{T}"/> of <see cref="Task{T}"/> into an equivalent <see cref="IAsyncEnumerable{T}"/>.
         /// </summary>
