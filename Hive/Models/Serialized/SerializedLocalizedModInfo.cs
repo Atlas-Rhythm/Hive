@@ -5,7 +5,7 @@ namespace Hive.Models.Serialized
     /// <summary>
     /// A serializer-friendly version of <see cref="LocalizedModInfo"/>.
     /// </summary>
-    public class SerializedLocalizedModInfo
+    public record SerializedLocalizedModInfo
     {
         /// <summary>
         /// The language ID of the <see cref="LocalizedModInfo"/>.

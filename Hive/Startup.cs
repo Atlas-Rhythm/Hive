@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Hive.Controllers;
 using Hive.Graphing;
 using Hive.Models;
@@ -11,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NodaTime;
 using Serilog;
 
 namespace Hive
@@ -38,6 +40,7 @@ namespace Hive
         public void ConfigureServices(IServiceCollection services)
         {
             _ = services
+                .AddSingleton<IClock>(SystemClock.Instance)
                 .AddTransient<IRuleProvider>(sp =>
                     new ConfigRuleProvider(sp.GetRequiredService<ILogger>(), ".", Configuration.GetValue<string>("RuleSubfolder")))
                 .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
@@ -47,8 +50,10 @@ namespace Hive
                 .AddSingleton<IGameVersionsPlugin, HiveGameVersionsControllerPlugin>()
                 .AddSingleton<IModsPlugin, HiveModsControllerPlugin>()
                 .AddSingleton<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>()
+                .AddSingleton<IUploadPlugin, HiveDefaultUploadPlugin>()
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
-                .AddSingleton<IProxyAuthenticationService, MockAuthenticationService>();
+                .AddSingleton<IProxyAuthenticationService, MockAuthenticationService>()
+                .AddSingleton<SymmetricAlgorithm>(sp => Rijndael.Create()); // TODO: pick an algo
 
             _ = services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
