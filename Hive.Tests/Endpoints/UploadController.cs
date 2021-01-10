@@ -274,7 +274,7 @@ namespace Hive.Tests.Endpoints
 
                 return Task.CompletedTask;
             }
-            
+
             public async Task<bool> TryDeleteObject(CdnObject link)
             {
                 if (expirationTimers.TryRemove(link.UniqueId, out var timer))

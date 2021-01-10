@@ -13,6 +13,7 @@ using NodaTime.Serialization.SystemTextJson;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -130,6 +131,9 @@ namespace Hive.Controllers
         }
     }
 
+    /// <summary>
+    /// The controller for the <c>/upload/</c> portion of the API, handling the upload flow.
+    /// </summary>
     [Route("api/upload")]
     [ApiController]
     public class UploadController : ControllerBase
@@ -144,6 +148,18 @@ namespace Hive.Controllers
         private readonly IClock nodaClock;
         private readonly long maxFileSize;
 
+        /// <summary>
+        /// Constructs the UploadController with the injected components it needs. For use with DI only.
+        /// </summary>
+        /// <param name="log"></param>
+        /// <param name="perms"></param>
+        /// <param name="plugins"></param>
+        /// <param name="auth"></param>
+        /// <param name="cdn"></param>
+        /// <param name="tokenAlgo"></param>
+        /// <param name="db"></param>
+        /// <param name="clock"></param>
+        /// <param name="config"></param>
         public UploadController(ILogger log,
             PermissionsManager<PermissionContext> perms,
             IAggregate<IUploadPlugin> plugins,
@@ -171,47 +187,80 @@ namespace Hive.Controllers
             if (maxFileSize == 0) maxFileSize = 32 * 1024 * 1024;
         }
 
+        /// <summary>
+        /// The type of the resulting <see cref="UploadResult"/> structure.
+        /// </summary>
         public enum ResultType
         {
+            /// <summary>
+            /// The structure represents a successful operation.
+            /// </summary>
             Success,
+            /// <summary>
+            /// The structure represents an operation that needs to be confirmed.
+            /// </summary>
             Confirm,
+            /// <summary>
+            /// The structure indicates that an error ocurred while processing the operation.
+            /// </summary>
             Error
         }
 
+
+        /// <summary>
+        /// The structure which is returned from the enpoints in the upload flow.
+        /// </summary>
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible",
+            Justification = "This structure has no meaning outside of this class. It needs to be public so that the signature of the methods" +
+                            "implementing the API can have a generic return type.")]
+        [SuppressMessage("Performance", "CA1815:Override equals and operator equals on value types",
+            Justification = "Because this structure is used only as an API response, it never needs to be compared, and so does not need these members.")]
         public struct UploadResult
         {
+            /// <summary>
+            /// The type of result that this structure represents.
+            /// </summary>
             [JsonPropertyName("type")]
             public ResultType Type { get; init; }
 
+            /// <summary>
+            /// An object representing the error in this result, if there is one. Null if there is no error.
+            /// </summary>
             [JsonPropertyName("error")]
             [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
             public object? ErrorContext { get; init; }
 
-
+            /// <summary>
+            /// The mod data extracted during the first stage of the upload flow.
+            /// </summary>
             [JsonPropertyName("data")]
             [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
             public SerializedMod? ExtractedData { get; init; }
 
+            /// <summary>
+            /// A cookie that is used to persist server-side information statelessly, so that a 2-stage upload is simple.
+            /// Null if not the result of the first stage.
+            /// </summary>
             [JsonPropertyName("actionCookie")]
             [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
             public string? ActionCookie { get; init; }
 
             internal static UploadResult ErrNoFile()
-                => new UploadResult
+                => new()
                 {
                     Type = ResultType.Error,
                     ErrorContext = "No file was given"
                 };
 
             internal static UploadResult ErrTooBig()
-                => new UploadResult
+                => new()
                 {
                     Type = ResultType.Error,
                     ErrorContext = "Uploaded file was too large"
                 };
 
             internal static UploadResult ErrValidationFailed(object? context)
-                => new UploadResult
+                => new()
                 {
                     Type = ResultType.Error,
                     ErrorContext = context
@@ -253,7 +302,7 @@ namespace Hive.Controllers
             }
 
             internal static UploadResult Finish()
-                => new UploadResult
+                => new()
                 {
                     Type = ResultType.Success
                 };
@@ -283,6 +332,11 @@ namespace Hive.Controllers
         private static PermissionActionParseState UploadWithDataParseState;
         private const string UploadWithDataAction = "hive.mods.upload.with_data";
 
+        /// <summary>
+        /// The first stage of the upload flow. This stage is the file upload, which is then sent to whichever CDN is being used for this instance.
+        /// </summary>
+        /// <param name="file">The file that was uploaded.</param>
+        /// <returns>An <see cref="UploadResult"/> which represents the result of the upload. May be either a failure status code or a success code.</returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadResult))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(UploadResult))]
@@ -355,6 +409,13 @@ namespace Hive.Controllers
         }
 
 
+        /// <summary>
+        /// The final stage of the upload flow. Completes an upload by providing the final metadata of the mod.
+        /// </summary>
+        /// <param name="finalMetadata">The final mod metadata to upload.</param>
+        /// <param name="cookie">The cookie returned in the response to the first stage.</param>
+        /// <returns>An <see cref="UploadResult"/> repersenting the upload operation. If it completes normally with a 
+        /// <see cref="ResultType"/> of <see cref="ResultType.Success"/>, the upload was successful.</returns>
         [HttpPost("finish")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

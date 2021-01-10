@@ -80,20 +80,45 @@ namespace Hive.Services
         /// </remarks>
         public string UniqueId { get; }
 
+        /// <summary>
+        /// Constructs a <see cref="CdnObject"/> given the specified unique ID. For use by the <see cref="ICdnProvider"/>.
+        /// </summary>
+        /// <param name="uniqueId">The unique ID representing the uploaded object.</param>
         [JsonConstructor]
         public CdnObject(string uniqueId) => UniqueId = uniqueId;
 
+        /// <inheritdoc/>
         public override bool Equals(object? obj)
             => obj is CdnObject link && Equals(link);
 
+        /// <inheritdoc/>
         public bool Equals(CdnObject other)
             => UniqueId == other.UniqueId;
 
+        /// <inheritdoc/>
         public override int GetHashCode()
             => HashCode.Combine(UniqueId);
 
+        /// <summary>
+        /// Compares two <see cref="CdnObject"/>s for equality.
+        /// </summary>
+        /// <remarks>
+        /// This checks only that the two objects refer to the same CDN object, not that two uploaded objects are equivalent.
+        /// </remarks>
+        /// <param name="left">The first object to compare.</param>
+        /// <param name="right">The second object to compare.</param>
+        /// <returns><see langword="true"/> if the parameters refer to the same object, <see langword="false"/> otherwise.</returns>
         public static bool operator ==(CdnObject left, CdnObject right) => left.Equals(right);
 
+        /// <summary>
+        /// Compares two <see cref="CdnObject"/>s for inequality.
+        /// </summary>
+        /// <remarks>
+        /// This checks only that the two objects no not  refer to the same CDN object, not that two uploaded objects are different.
+        /// </remarks>
+        /// <param name="left">The first object to compare.</param>
+        /// <param name="right">The second object to compare.</param>
+        /// <returns><see langword="true"/> if the parameters do not refer to the same object, <see langword="false"/> otherwise.</returns>
         public static bool operator !=(CdnObject left, CdnObject right) => !(left == right);
     }
 }
