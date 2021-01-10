@@ -84,7 +84,7 @@ namespace Hive.Utilities
         {
             if (pool == null) pool = ArrayPool<T>.Shared;
 
-            var newArr = pool.Rent(amount); // perhaps this should ask for a bigger scale?
+            var newArr = pool.Rent(newSize); // perhaps this should ask for a bigger scale?
             if (array != null)
             {
                 Array.Copy(array, newArr, Count);
