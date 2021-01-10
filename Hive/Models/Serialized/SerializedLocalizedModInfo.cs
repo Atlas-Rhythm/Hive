@@ -25,12 +25,12 @@ namespace Hive.Models.Serialized
         /// <summary>
         /// The changelog of the <see cref="Mod"/> described by a <see cref="LocalizedModInfo"/>.
         /// </summary>
-        public string? Changelog { get; init; };
+        public string? Changelog { get; init; }
 
         /// <summary>
         /// The credits of the <see cref="Mod"/> described by a <see cref="LocalizedModInfo"/>.
         /// </summary>
-        public string? Credits { get; init; };
+        public string? Credits { get; init; }
 
         /// <summary>
         /// Serialize a <see cref="LocalizedModInfo"/> into a <see cref="SerializedLocalizedModInfo"/>.
