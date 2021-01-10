@@ -133,6 +133,10 @@ namespace Hive.Tests.Endpoints
             Assert.Equal(data.ConflictsWith, serializedMod.ConflictsWith);
         }
 
+        // TODO: tests covering more of the upload process
+        //       Given the sheer number of variables in the flow, I feel more comfortable waiting until we have specific conditions that it 
+        //   is behaving incorrectly in to add more test cases, otherwise I'll be here for a year.
+
         private IServiceProvider CreateController(IEnumerable<IUploadPlugin> plugins, string rule)
         {
             var services = DIHelper.ConfigureServices(Options, helper, new UploadsRuleProvider(rule));
