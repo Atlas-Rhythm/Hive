@@ -189,7 +189,7 @@ namespace Hive.Utilities
             TrimStartInternal(ref start, ref length);
             TrimEndInternal(ref start, ref length);
 
-            return Substring(start, length);
+            return new(BaseString, start, length);
         }
 
         /// <summary>
@@ -203,7 +203,7 @@ namespace Hive.Utilities
 
             TrimStartInternal(ref start, ref length);
 
-            return Substring(start, length);
+            return new(BaseString, start, length);
         }
 
         /// <summary>
@@ -217,12 +217,12 @@ namespace Hive.Utilities
 
             TrimEndInternal(ref start, ref length);
 
-            return Substring(start, length);
+            return new(BaseString, start, length);
         }
 
         private void TrimStartInternal(ref int start, ref int length)
         {
-            while (char.IsWhiteSpace(BaseString[start]))
+            while (length > 0 && char.IsWhiteSpace(BaseString[start]))
             {
                 start++;
                 length--;
