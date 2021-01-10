@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 #if !NETSTANDARD2_0
 using System.Buffers;
+#else
+using System.Diagnostics.CodeAnalysis;
 #endif
 
 namespace Hive.Utilities

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -187,18 +186,55 @@ namespace Hive.Utilities
             var start = Start;
             var length = Length;
 
+            TrimStartInternal(ref start, ref length);
+            TrimEndInternal(ref start, ref length);
+
+            return Substring(start, length);
+        }
+
+        /// <summary>
+        /// Trims away the whitespace at the beginning of this <see cref="StringView"/>.
+        /// </summary>
+        /// <returns>A new <see cref="StringView"/> with the leading whitespace removed.</returns>
+        public StringView TrimStart()
+        {
+            var start = Start;
+            var length = Length;
+
+            TrimStartInternal(ref start, ref length);
+
+            return Substring(start, length);
+        }
+
+        /// <summary>
+        /// Trims away the whitespace at the end of this <see cref="StringView"/>.
+        /// </summary>
+        /// <returns>A new <see cref="StringView"/> with the trailing whitespace removed.</returns>
+        public StringView TrimEnd()
+        {
+            var start = Start;
+            var length = Length;
+
+            TrimEndInternal(ref start, ref length);
+
+            return Substring(start, length);
+        }
+
+        private void TrimStartInternal(ref int start, ref int length)
+        {
             while (char.IsWhiteSpace(BaseString[start]))
             {
                 start++;
                 length--;
             }
+        }
 
+        private void TrimEndInternal(ref int start, ref int length)
+        {
             while (char.IsWhiteSpace(BaseString[start + length - 1]))
             {
                 length--;
             }
-
-            return Substring(start, length);
         }
 
         /// <summary>
