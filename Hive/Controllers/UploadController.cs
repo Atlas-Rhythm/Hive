@@ -274,7 +274,7 @@ namespace Hive.Controllers
 
             internal static UploadResult Confirm(SymmetricAlgorithm algo, Mod data, CdnObject cdnObj)
             {
-                var serialized = SerializedMod.Serialize(data, data.Localizations.First());
+                var serialized = SerializedMod.Serialize(data, data.Localizations.FirstOrDefault());
 
                 using var mStream = new MemoryStream();
                 using (var encStream = new CryptoStream(mStream, algo.CreateEncryptor(), CryptoStreamMode.Write, true))
