@@ -46,7 +46,7 @@ namespace Hive.Permissions
             var location = GetRuleLocation(name);
             var fileInfo = new FileInfo(location);
 
-            return fileInfo.Exists && IsRuleUpdatedOnFileSystem(name.ToString(), fileInfo, time);
+            return IsRuleUpdatedOnFileSystem(name.ToString(), fileInfo, time);
         }
 
         /// <inheritdoc/>
