@@ -54,7 +54,7 @@ namespace Hive.Models.Serialized
         /// <summary>
         /// The <see cref="SerializedLocalizedModInfo"/> of the <see cref="Mod"/>.
         /// </summary>
-        public SerializedLocalizedModInfo LocalizedModInfo { get; init; } = null!;
+        public SerializedLocalizedModInfo? LocalizedModInfo { get; init; } = null!;
 
         /// <summary>
         /// The authors of the <see cref="Mod"/>.
@@ -98,10 +98,9 @@ namespace Hive.Models.Serialized
         /// <param name="toSerialize">The mod to serialize.</param>
         /// <param name="localizedModInfo">The localized information to serialize.</param>
         /// <returns>The created serialized mod.</returns>
-        public static SerializedMod Serialize([DisallowNull] Mod toSerialize, [DisallowNull] LocalizedModInfo localizedModInfo)
+        public static SerializedMod Serialize([DisallowNull] Mod toSerialize, LocalizedModInfo? localizedModInfo)
         {
             if (toSerialize is null) throw new ArgumentNullException(nameof(toSerialize));
-            if (localizedModInfo is null) throw new ArgumentNullException(nameof(localizedModInfo));
             var serialized = new SerializedMod()
             {
                 ID = toSerialize.ReadableID,
@@ -111,7 +110,7 @@ namespace Hive.Models.Serialized
                 UploaderUsername = toSerialize.Uploader?.Username!,
                 ChannelName = toSerialize.Channel?.Name!,
                 DownloadLink = toSerialize.DownloadLink?.ToString()!,
-                LocalizedModInfo = SerializedLocalizedModInfo.Serialize(localizedModInfo),
+                LocalizedModInfo = localizedModInfo is not null ? SerializedLocalizedModInfo.Serialize(localizedModInfo) : null,
                 AdditionalData = toSerialize.AdditionalData,
                 Authors = toSerialize.Authors.Select(x => x.Username).ToImmutableList(),
                 Contributors = toSerialize.Contributors.Select(x => x.Username).ToImmutableList(),
