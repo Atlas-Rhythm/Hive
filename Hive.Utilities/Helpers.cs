@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 #if NETSTANDARD2_0
 using System.Linq.Expressions;
+using Hive.Utilities.Resources;
 #else
 using System.Runtime.CompilerServices;
 #endif
@@ -70,7 +71,7 @@ namespace Hive.Utilities
             return array;
         }
 #else
-        public static object?[] ToArray<T>(this ref T tuple) where T : struct // muust be a variant of ValueTuple
+        public static object?[] ToArray<T>(this ref T tuple) where T : struct // must be a variant of ValueTuple
         {
             if (typeof(T) == typeof(ValueTuple))
                 return Array.Empty<object?>();
@@ -78,7 +79,7 @@ namespace Hive.Utilities
             var typeData = ValueTupleTypeData<T>.Instance;
 
             if (!typeData.IsValueTuple)
-                throw new ArgumentException("This ToArray implementation only operates on ValueTuples");
+                throw new ArgumentException(SR.HelpersToArray_OnlySupportsValueTuple);
 
             using var result = new ArrayBuilder<object?>(8);
 
