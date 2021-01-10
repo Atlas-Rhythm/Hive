@@ -1,8 +1,6 @@
 ﻿using NodaTime;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
@@ -53,6 +51,7 @@ namespace Hive.Services
         /// <param name="link">The object to query.</param>
         /// <returns>The URL for the object referenced by <paramref name="link"/>.</returns>
         Task<Uri> GetObjectActualUrl(CdnObject link);
+
         /// <summary>
         /// Gets the name associated with an object.
         /// </summary>
@@ -71,7 +70,7 @@ namespace Hive.Services
     public readonly struct CdnObject : IEquatable<CdnObject>
     {
         /// <summary>
-        /// A unique identifier used by an <see cref="ICdnProvider"/> to identify the object 
+        /// A unique identifier used by an <see cref="ICdnProvider"/> to identify the object
         /// represented by this link.
         /// </summary>
         /// <remarks>

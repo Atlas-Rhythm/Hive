@@ -29,12 +29,12 @@ namespace Hive.Models.Serialized
         /// <summary>
         /// The <see cref="string"/> timestamp of when this <see cref="Mod"/> was uploaded.
         /// </summary>
-        public string UploadedAt { get; init; } = null!;
+        public Instant UploadedAt { get; init; }
 
         /// <summary>
         /// The <see cref="string"/> timestamp of when this <see cref="Mod"/> was last edited.
         /// </summary>
-        public string EditedAt { get; init; } = null!;
+        public Instant? EditedAt { get; init; }
 
         /// <summary>
         /// The username of the uploader.
@@ -111,7 +111,7 @@ namespace Hive.Models.Serialized
                 UploaderUsername = toSerialize.Uploader?.Username!,
                 ChannelName = toSerialize.Channel?.Name!,
                 DownloadLink = toSerialize.DownloadLink?.ToString()!,
-                LocalizedModInfo = localizedModInfo is not null ? SerializedLocalizedModInfo.Serialize(localizedModInfo) : null,
+                LocalizedModInfo = SerializedLocalizedModInfo.Serialize(localizedModInfo),
                 AdditionalData = toSerialize.AdditionalData,
                 Authors = toSerialize.Authors.Select(x => x.Username).ToImmutableList(),
                 Contributors = toSerialize.Contributors.Select(x => x.Username).ToImmutableList(),

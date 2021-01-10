@@ -196,16 +196,17 @@ namespace Hive.Controllers
             /// The structure represents a successful operation.
             /// </summary>
             Success,
+
             /// <summary>
             /// The structure represents an operation that needs to be confirmed.
             /// </summary>
             Confirm,
+
             /// <summary>
             /// The structure indicates that an error ocurred while processing the operation.
             /// </summary>
             Error
         }
-
 
         /// <summary>
         /// The structure which is returned from the enpoints in the upload flow.
@@ -273,7 +274,7 @@ namespace Hive.Controllers
 
             internal static UploadResult Confirm(SymmetricAlgorithm algo, Mod data, CdnObject cdnObj)
             {
-                var serialized = SerializedMod.Serialize(data, data.Localizations.FirstOrDefault());
+                var serialized = SerializedMod.Serialize(data, data.Localizations.First());
 
                 using var mStream = new MemoryStream();
                 using (var encStream = new CryptoStream(mStream, algo.CreateEncryptor(), CryptoStreamMode.Write, true))
@@ -326,10 +327,12 @@ namespace Hive.Controllers
 
         [ThreadStatic]
         private static PermissionActionParseState BaseUploadParseState;
+
         private const string BaseUploadAction = "hive.mods.upload";
 
         [ThreadStatic]
         private static PermissionActionParseState UploadWithDataParseState;
+
         private const string UploadWithDataAction = "hive.mods.upload.with_data";
 
         /// <summary>
@@ -379,7 +382,7 @@ namespace Hive.Controllers
 
             // the dataContext ref param allows the plugins to pass data around to avoid re-parsing, when possible
             // For example, most mods will be ZIP files. The first plugin to get called would load it into a ZipFile,
-            //   then put that object into the dataContext variable. Later plugins can then check that context to 
+            //   then put that object into the dataContext variable. Later plugins can then check that context to
             //   see if it is a ZipFile, and avoid having to re-parse and re-create that information.
             object? dataContext = null;
             var result = plugins.ValidateAndPopulateKnownMetadata(modData, memStream, ref dataContext, out var valFailCtx);
@@ -408,13 +411,12 @@ namespace Hive.Controllers
             return uploadResult;
         }
 
-
         /// <summary>
         /// The final stage of the upload flow. Completes an upload by providing the final metadata of the mod.
         /// </summary>
         /// <param name="finalMetadata">The final mod metadata to upload.</param>
         /// <param name="cookie">The cookie returned in the response to the first stage.</param>
-        /// <returns>An <see cref="UploadResult"/> repersenting the upload operation. If it completes normally with a 
+        /// <returns>An <see cref="UploadResult"/> repersenting the upload operation. If it completes normally with a
         /// <see cref="ResultType"/> of <see cref="ResultType.Success"/>, the upload was successful.</returns>
         [HttpPost("finish")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -451,6 +453,7 @@ namespace Hive.Controllers
             var cdnObject = payload.CdnObject;
 
             #region Create modObject
+
             var modObject = new Mod
             {
                 ReadableID = finalMetadata.ID,
@@ -514,7 +517,8 @@ namespace Hive.Controllers
                 Changelog = finalMetadata.LocalizedModInfo.Changelog,
                 OwningMod = modObject // this adds the localization to the mod object
             };
-            #endregion
+
+            #endregion Create modObject
 
             var result = plugins.ValidateAndFixUploadedData(modObject, payload.ModData.AdditionalData, out var validationFailureInfo);
             if (!result)
@@ -550,6 +554,5 @@ namespace Hive.Controllers
 
             return UploadResult.Finish();
         }
-
     }
 }

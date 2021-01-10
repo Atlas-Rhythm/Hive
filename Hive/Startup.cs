@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Hive.Controllers;
 using Hive.Graphing;
 using Hive.Models;
@@ -50,10 +51,9 @@ namespace Hive
                 .AddSingleton<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>()
                 .AddSingleton<IUploadPlugin, HiveDefaultUploadPlugin>()
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
-                .AddSingleton<IProxyAuthenticationService, MockAuthenticationService>();
-
-            services
+                .AddSingleton<IProxyAuthenticationService, MockAuthenticationService>()
                 .AddSingleton<SymmetricAlgorithm>(sp => Rijndael.Create()); // TODO: pick an algo
+
             _ = services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
