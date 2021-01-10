@@ -25,6 +25,7 @@ namespace Hive.Versioning
         /// </summary>
         public static Version Zero { get; } = new Version(0, 0, 0);
 
+#if !NETSTANDARD2_0
         /// <summary>
         /// Parses and creates a version object from a sequence of characters.
         /// </summary>
@@ -34,6 +35,17 @@ namespace Hive.Versioning
         /// <param name="text">The sequence of characters to parse as a version.</param>
         /// <exception cref="ArgumentException">Thrown when the input is not a valid SemVer version.</exception>
         public Version(ReadOnlySpan<char> text)
+#else
+        /// <summary>
+        /// Parses and creates a version object from a sequence of characters.
+        /// </summary>
+        /// <remarks>
+        /// This is roughly equivalent to <see cref="Parse(StringView)"/>.
+        /// </remarks>
+        /// <param name="text">The sequence of characters to parse as a version.</param>
+        /// <exception cref="ArgumentException">Thrown when the input is not a valid SemVer version.</exception>
+        public Version(StringView text)
+#endif
         {
             text = text.Trim();
 
@@ -352,7 +364,11 @@ namespace Hive.Versioning
         /// <param name="text">The sequence of characters to parse.</param>
         /// <returns>The parsed version object.</returns>
         /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid SemVer version.</exception>
+#if !NETSTANDARD2_0
         public static Version Parse(ReadOnlySpan<char> text)
+#else
+        public static Version Parse(StringView text)
+#endif
         {
             if (!TryParse(text, out var ver))
                 throw new ArgumentException(SR.Version_InputInvalid, nameof(text));
@@ -365,7 +381,11 @@ namespace Hive.Versioning
         /// <param name="text">The sequence of characters to parse.</param>
         /// <param name="version">The parsed version, if the input is valid.</param>
         /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
+#if !NETSTANDARD2_0
         public static bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen(false)] out Version version)
+#else
+        public static bool TryParse(StringView text, [MaybeNullWhen(false)] out Version version)
+#endif
         {
             text = text.Trim();
             return TryParse(ref text, true, out version) && text.Length == 0;
@@ -382,10 +402,18 @@ namespace Hive.Versioning
         /// <param name="version">The parsed version, if the input is valid.</param>
         /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
         [CLSCompliant(false)]
+#if !NETSTANDARD2_0
         public static bool TryParse(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out Version version)
+#else
+        public static bool TryParse(ref StringView text, [MaybeNullWhen(false)] out Version version)
+#endif
             => TryParse(ref text, false, out version);
 
+#if !NETSTANDARD2_0
         private static bool TryParse(ref ReadOnlySpan<char> text, bool checkLength, [MaybeNullWhen(false)] out Version version)
+#else
+        private static bool TryParse(ref StringView text, bool checkLength, [MaybeNullWhen(false)] out Version version)
+#endif
         {
             version = null;
 
@@ -401,7 +429,11 @@ namespace Hive.Versioning
         #region Parser
 
         private static bool TryParseInternal(
+#if !NETSTANDARD2_0
             ref ReadOnlySpan<char> text,
+#else
+            ref StringView text,
+#endif
             out ulong major,
             out ulong minor,
             out ulong patch,
@@ -438,7 +470,11 @@ namespace Hive.Versioning
             return true;
         }
 
+#if !NETSTANDARD2_0
         private static bool TryParseCore(ref ReadOnlySpan<char> text, out ulong major, out ulong minor, out ulong patch)
+#else
+        private static bool TryParseCore(ref StringView text, out ulong major, out ulong minor, out ulong patch)
+#endif
         {
             minor = 0;
             patch = 0;
@@ -473,7 +509,11 @@ namespace Hive.Versioning
             return true;
         }
 
+#if !NETSTANDARD2_0
         private static bool TryParsePreRelease(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out string[] prereleaseIds)
+#else
+        private static bool TryParsePreRelease(ref StringView text, [MaybeNullWhen(false)] out string[] prereleaseIds)
+#endif
         {
             prereleaseIds = null;
 
@@ -483,7 +523,7 @@ namespace Hive.Versioning
                 using var ab = new ArrayBuilder<string>(4);
                 do
                 {
-                    ab.Add(new string(id));
+                    ab.Add(id.ToString());
                     if (!TryTake(ref text, '.'))
                     { // exit condition
                         prereleaseIds = ab.ToArray();
@@ -500,14 +540,22 @@ namespace Hive.Versioning
             return false;
         }
 
+#if !NETSTANDARD2_0
         private static bool TryReadPreReleaseId(ref ReadOnlySpan<char> text, out ReadOnlySpan<char> id)
+#else
+        private static bool TryReadPreReleaseId(ref StringView text, out StringView id)
+#endif
         {
             if (TryReadAlphaNumId(ref text, out id)) return true;
             if (TryReadNumId(ref text, out id)) return true;
             return false;
         }
 
+#if !NETSTANDARD2_0
         private static bool TryParseBuild(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out string[] buildIds)
+#else
+        private static bool TryParseBuild(ref StringView text, [MaybeNullWhen(false)] out string[] buildIds)
+#endif
         {
             buildIds = null;
 
@@ -517,7 +565,7 @@ namespace Hive.Versioning
                 using var ab = new ArrayBuilder<string>(4);
                 do
                 {
-                    ab.Add(new string(id));
+                    ab.Add(id.ToString());
                     if (!TryTake(ref text, '.'))
                     { // exit condition
                         buildIds = ab.ToArray();
@@ -534,10 +582,18 @@ namespace Hive.Versioning
             return false;
         }
 
+#if !NETSTANDARD2_0
         private static bool TryReadBuildId(ref ReadOnlySpan<char> text, out ReadOnlySpan<char> id)
-            => TryReadAlphaNumId(ref text, out id, true);
+#else
+        private static bool TryReadBuildId(ref StringView text, out StringView id)
+#endif
+        => TryReadAlphaNumId(ref text, out id, true);
 
+#if !NETSTANDARD2_0
         private static bool TryReadAlphaNumId(ref ReadOnlySpan<char> text, out ReadOnlySpan<char> id, bool skipNonDigitCheck = false)
+#else
+        private static bool TryReadAlphaNumId(ref StringView text, out StringView id, bool skipNonDigitCheck = false)
+#endif
         {
             if (text.Length == 0)
             {
@@ -584,12 +640,16 @@ namespace Hive.Versioning
             return hasNonDigit;
         }
 
+#if !NETSTANDARD2_0
         private static bool TryParseNumId(ref ReadOnlySpan<char> text, out ulong num)
+#else
+        private static bool TryParseNumId(ref StringView text, out ulong num)
+#endif
         {
             var copy = text;
             if (TryReadNumId(ref text, out var id))
             {
-                if (!ulong.TryParse(id, out num))
+                if (!ulong.TryParse(id.ToString(), out num))
                 {
                     text = copy;
                     return false;
@@ -602,7 +662,11 @@ namespace Hive.Versioning
             return false;
         }
 
+#if !NETSTANDARD2_0
         private static bool TryReadNumId(ref ReadOnlySpan<char> text, out ReadOnlySpan<char> id)
+#else
+        private static bool TryReadNumId(ref StringView text, out StringView id)
+#endif
         {
             var copy = text;
             if (TryTake(ref text, '0')) // we can take a single 0
@@ -644,7 +708,6 @@ namespace Hive.Versioning
             id = default;
             return false;
         }
-
         #endregion Parser
     }
 }

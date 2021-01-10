@@ -16,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.targets = Directory.Build.targets
 		.github\workflows\dotnet-core.yml = .github\workflows\dotnet-core.yml
 		README.md = README.md
+		System.Diagnostics.CodeAnalysis.cs = System.Diagnostics.CodeAnalysis.cs
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities", "Hive.Utilities\Hive.Utilities.csproj", "{3C265E15-AFDF-47B1-9893-7957F9A43818}"
@@ -49,9 +50,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{8D72FE69-E
 		CodeGen\docs\GenericParameterization.md = CodeGen\docs\GenericParameterization.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Analyzers", "Hive.Analyzers\Hive.Analyzers.csproj", "{19C11291-D96B-4607-BA44-CC32FA0E8641}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Analyzers", "Hive.Analyzers\Hive.Analyzers.csproj", "{19C11291-D96B-4607-BA44-CC32FA0E8641}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Plugins.Tests", "Hive.Plugins.Tests\Hive.Plugins.Tests.csproj", "{486CEBA1-EDF4-4493-B81F-A485AA00B64C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins.Tests", "Hive.Plugins.Tests\Hive.Plugins.Tests.csproj", "{486CEBA1-EDF4-4493-B81F-A485AA00B64C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

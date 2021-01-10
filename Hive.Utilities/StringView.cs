@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -106,7 +107,7 @@ namespace Hive.Utilities
         }
 
         /// <summary>
-        /// Gets a view of the substring starting at the provided index, and ending at the end of the view.0
+        /// Gets a view of the substring starting at the provided index, and ending at the end of the view.
         /// </summary>
         /// <param name="start">The starting index of the resulting view.</param>
         /// <returns>A view over the substring.</returns>
@@ -123,6 +124,25 @@ namespace Hive.Utilities
         /// <seealso cref="StringView(StringView, int, int)"/>
         public StringView Substring(int start, int length)
             => new(this, start, length);
+
+        /// <summary>
+        /// Gets a view of the substring starting at the provided index, and ending at the end of the view.
+        /// </summary>
+        /// <param name="start">The starting index of the resulting view.</param>
+        /// <returns>A view over the substring.</returns>
+        /// <seealso cref="Substring(int)"/>
+        public StringView Slice(int start)
+            => Substring(start);
+
+        /// <summary>
+        /// Gets a view of a substring of this view. Equivalent to <see cref="StringView(StringView, int, int)"/>.
+        /// </summary>
+        /// <param name="start">The starting index of the substring.</param>
+        /// <param name="length">The length of the substring.</param>
+        /// <returns>A view over the substring.</returns>
+        /// <seealso cref="StringView(StringView, int, int)"/>
+        public StringView Slice(int start, int length)
+            => Substring(start, length);
 
         /// <summary>
         /// Lazily splits this view into sub-views, using <paramref name="sep"/> as the seperator.
@@ -156,6 +176,29 @@ namespace Hive.Utilities
 
             if (!ignoreEmpty || Length - regionBegin != 0)
                 yield return new StringView(this, regionBegin, Length - regionBegin);
+        }
+
+        /// <summary>
+        /// Trims away the whitespace at the beginning and end of this <see cref="StringView"/>.
+        /// </summary>
+        /// <returns>A new <see cref="StringView"/> with the leading and trailing whitespace removed.</returns>
+        public StringView Trim()
+        {
+            var start = Start;
+            var length = Length;
+
+            while (char.IsWhiteSpace(BaseString[start]))
+            {
+                start++;
+                length--;
+            }
+
+            while (char.IsWhiteSpace(BaseString[start + length - 1]))
+            {
+                length--;
+            }
+
+            return Substring(start, length);
         }
 
         /// <summary>

@@ -5,6 +5,10 @@
     
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <Compile Include="$(MSBuildThisFileDirectory)\..\System.Diagnostics.CodeAnalysis.cs" />
+  </ItemGroup>
   
   <ItemGroup>
     <EmbeddedResource Update="Resources\SR.resx" IsResXToGenerate="true" />

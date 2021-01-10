@@ -1,8 +1,4 @@
-﻿#if NETSTANDARD2_0
-using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿#if !NETSTANDARD2_1
 namespace System.Diagnostics.CodeAnalysis
 {
     // Effectively the Microsoft implementation for when it doesn't exist for my convenience

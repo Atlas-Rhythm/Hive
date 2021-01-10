@@ -27,8 +27,10 @@ namespace Hive.Utilities
         /// </summary>
         public int Count { get; private set; }
 
+#if NETSTANDARD2_0
         [SuppressMessage("Style", "IDE0044:Add readonly modifier",
             Justification = "This is modified when using .NET Standard 2.1, and so is left as mutable for that.")]
+#endif
         private bool rented;
 
         /// <summary>
