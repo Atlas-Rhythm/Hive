@@ -86,7 +86,8 @@ namespace Hive.Permissions
         }
 
         /// <inheritdoc/>
-        public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten) => cachedFileInfos.TryGetValue(name.ToString(), out gotten);
+        public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
+            => cachedFileInfos.TryGetValue(name.ToString(), out gotten);
 
         // Helper function that reads information about a rule from the file system.
         private Rule<FileInfo>? GetFromFileSystem(string ruleName, string filePath)
