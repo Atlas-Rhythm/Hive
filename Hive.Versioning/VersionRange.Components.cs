@@ -4,10 +4,13 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-#if NETSTANDARD2_0
-using Hive.Utilities;
-#endif
 using static Hive.Versioning.ParseHelpers;
+
+#if !NETSTANDARD2_0
+using StringPart = System.ReadOnlySpan<char>;
+#else
+using StringPart = Hive.Utilities.StringView;
+#endif
 
 namespace Hive.Versioning
 {
@@ -743,11 +746,7 @@ namespace Hive.Versioning
 
         internal partial struct VersionComparer
         {
-#if !NETSTANDARD2_0
-            public static bool TryParse(ref ReadOnlySpan<char> text, out VersionComparer comparer)
-#else
-            public static bool TryParse(ref StringView text, out VersionComparer comparer)
-#endif
+            public static bool TryParse(ref StringPart text, out VersionComparer comparer)
             {
                 var copy = text;
                 if (!TryReadCompareType(ref text, out var compareType))
@@ -768,11 +767,7 @@ namespace Hive.Versioning
                 return true;
             }
 
-#if !NETSTANDARD2_0
-            private static bool TryReadCompareType(ref ReadOnlySpan<char> text, out ComparisonType type)
-#else
-            private static bool TryReadCompareType(ref StringView text, out ComparisonType type)
-#endif
+            private static bool TryReadCompareType(ref StringPart text, out ComparisonType type)
             {
                 type = ComparisonType.None;
 
@@ -815,11 +810,7 @@ namespace Hive.Versioning
 
         internal partial struct Subrange
         {
-#if !NETSTANDARD2_0
-            public static bool TryParse(ref ReadOnlySpan<char> text, bool allowOutward, out Subrange subrange)
-#else
-            public static bool TryParse(ref StringView text, bool allowOutward, out Subrange subrange)
-#endif
+            public static bool TryParse(ref StringPart text, bool allowOutward, out Subrange subrange)
             {
                 var copy = text;
 
@@ -868,11 +859,7 @@ namespace Hive.Versioning
                 return true;
             }
 
-#if !NETSTANDARD2_0
-            private static bool TryReadCaretRange(ref ReadOnlySpan<char> text, out Subrange range)
-#else
-            private static bool TryReadCaretRange(ref StringView text, out Subrange range)
-#endif
+            private static bool TryReadCaretRange(ref StringPart text, out Subrange range)
             {
                 var copy = text;
                 if (!TryTake(ref text, '^'))

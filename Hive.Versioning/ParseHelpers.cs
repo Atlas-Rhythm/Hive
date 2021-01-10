@@ -1,20 +1,17 @@
-﻿#if !NETSTANDARD2_0
-using System;
+﻿using System.Runtime.CompilerServices;
+
+#if !NETSTANDARD2_0
+using StringPart = System.ReadOnlySpan<char>;
 #else
-using Hive.Utilities;
+using StringPart = Hive.Utilities.StringView;
 #endif
-using System.Runtime.CompilerServices;
 
 namespace Hive.Versioning
 {
     internal static class ParseHelpers
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#if !NETSTANDARD2_0
-        public static bool TryTake(ref ReadOnlySpan<char> input, char next)
-#else
-        public static bool TryTake(ref StringView input, char next)
-#endif
+        public static bool TryTake(ref StringPart input, char next)
         {
             if (input.Length == 0) return false;
             if (input[0] != next) return false;

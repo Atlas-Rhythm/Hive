@@ -1,9 +1,13 @@
 ﻿using System;
 using Xunit;
-#if NETCOREAPP3_1
-using Hive.Utilities;
-#endif
 using static Hive.Versioning.VersionRange;
+
+#if !NETCOREAPP3_1
+using StringPart = System.ReadOnlySpan<char>;
+#else
+using StringPart = Hive.Utilities.StringView;
+#endif
+
 
 namespace Hive.Versioning.Tests.Ranges
 {
@@ -11,22 +15,14 @@ namespace Hive.Versioning.Tests.Ranges
     {
         private static VersionComparer ParseComparer(string input)
         {
-#if !NETCOREAPP3_1
-            ReadOnlySpan<char> text = input;
-#else
-            StringView text = input;
-#endif
+            StringPart text = input;
             Assert.True(VersionComparer.TryParse(ref text, out var comparer));
             return comparer;
         }
 
         private static Subrange ParseSubrange(string input, bool valid = true)
         {
-#if !NETCOREAPP3_1
-            ReadOnlySpan<char> text = input;
-#else
-            StringView text = input;
-#endif
+            StringPart text = input;
             Assert.Equal(valid, Subrange.TryParse(ref text, true, out var range));
             return range;
         }

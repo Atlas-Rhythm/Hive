@@ -1,9 +1,12 @@
 ﻿using System;
 using Xunit;
-#if NETCOREAPP3_1
-using Hive.Utilities;
-#endif
 using static Hive.Versioning.VersionRange;
+
+#if !NETCOREAPP3_1
+using StringPart = System.ReadOnlySpan<char>;
+#else
+using StringPart = Hive.Utilities.StringView;
+#endif
 
 namespace Hive.Versioning.Tests.Ranges
 {
@@ -144,11 +147,7 @@ namespace Hive.Versioning.Tests.Ranges
         {
             var expect = valid ? CreateComparer(verS, typeS) : default;
 
-#if !NETCOREAPP3_1
-            ReadOnlySpan<char> text = input;
-#else
-            StringView text = input;
-#endif
+            StringPart text = input;
             Assert.Equal(valid, VersionComparer.TryParse(ref text, out var comparer));
             if (valid)
             {
