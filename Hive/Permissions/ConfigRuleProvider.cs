@@ -77,13 +77,7 @@ namespace Hive.Permissions
             {
                 var newRule = GetFromFileSystem(ruleName, fileInfo.FullName);
 
-                if (newRule is not null)
-                {
-                    if (!cachedFileInfos.TryAdd(ruleName, newRule))
-                    {
-                        cachedFileInfos[ruleName] = newRule;
-                    }
-                }
+                UpdateCachedRule(ruleName, newRule);
 
                 return true;
             }
@@ -96,18 +90,7 @@ namespace Hive.Permissions
         {
             var stringName = name.ToString();
 
-            // The Permission System is asking for a new rule to cache, so we will always read from the file system.
-            var rule = GetFromFileSystem(stringName, GetRuleLocation(name));
-
-            // If we got a rule back from the method, the file exists.
-            if (rule is not null)
-            {
-                // Add/replace cached rule
-                if (!cachedFileInfos.TryAdd(stringName, rule))
-                {
-                    cachedFileInfos[stringName] = rule;
-                }
-            }
+            _ = cachedFileInfos.TryGetValue(stringName, out var rule);
 
             return (gotten = rule) is not null;
         }
@@ -139,6 +122,19 @@ namespace Hive.Permissions
             var localRuleDirectory = string.Join(@"\", parts);
 
             return Path.Combine(ruleDirectory, localRuleDirectory, RuleExtension);
+        }
+
+        private void UpdateCachedRule(string ruleName, Rule<FileInfo>? newRule)
+        {
+            if (newRule is not null)
+            {
+                // We want to always update the cache with our new rule.
+                _ = cachedFileInfos.AddOrUpdate(ruleName, (_) => newRule, (_, _) => newRule);
+            }
+            else
+            {
+                _ = cachedFileInfos.TryRemove(ruleName, out _);
+            }
         }
     }
 }
