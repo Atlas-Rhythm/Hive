@@ -88,11 +88,11 @@ namespace Hive.Permissions
         /// <inheritdoc/>
         public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
         {
-            var stringName = name.ToString();
+            var exists = cachedFileInfos.TryGetValue(name.ToString(), out var rule);
 
-            _ = cachedFileInfos.TryGetValue(stringName, out var rule);
+            gotten = rule;
 
-            return (gotten = rule) is not null;
+            return exists;
         }
 
         // Helper function that reads information about a rule from the file system.
