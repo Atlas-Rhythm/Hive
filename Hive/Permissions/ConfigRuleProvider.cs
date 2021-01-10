@@ -2,7 +2,7 @@
 using NodaTime;
 using Serilog;
 using System.Reflection;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
@@ -20,7 +20,7 @@ namespace Hive.Permissions
         private readonly ILogger logger;
 
         // Rule name to information corresponding to the particular rule.
-        private readonly Dictionary<string, Rule<FileInfo>> cachedFileInfos = new();
+        private readonly ConcurrentDictionary<string, Rule<FileInfo>> cachedFileInfos = new();
 
         /// <summary>
         /// Construct a rule provider via DI.
@@ -43,8 +43,10 @@ namespace Hive.Permissions
         /// <inheritdoc/>
         public bool HasRuleChangedSince(StringView name, Instant time)
         {
-            var rule = GetRuleFromCache(name.ToString());
-            return rule is not null && HasRuleChangedSince(rule, time);
+            var location = GetRuleLocation(name);
+            var fileInfo = new FileInfo(location);
+
+            return fileInfo.Exists && IsRuleUpdatedOnFileSystem(name.ToString(), fileInfo, time);
         }
 
         /// <inheritdoc/>
@@ -54,16 +56,38 @@ namespace Hive.Permissions
             {
                 var fileInfo = fileInfoRule.Data;
 
-                // Refresh access time fields for the file and its parent directory
-                fileInfo.Refresh();
-                fileInfo.Directory?.Refresh();
-
-                var lastWriteTimeUtc = fileInfo.Exists
-                    ? fileInfo.LastWriteTimeUtc
-                    : fileInfo.Directory?.LastWriteTimeUtc;
-
-                return lastWriteTimeUtc is not null && Instant.FromDateTimeUtc(lastWriteTimeUtc.Value) > time;
+                return IsRuleUpdatedOnFileSystem(rule.Name, fileInfo, time);
             }
+
+            return false;
+        }
+
+        private bool IsRuleUpdatedOnFileSystem(string ruleName, FileInfo fileInfo, Instant time)
+        {
+            // Refresh access time fields for the file and its parent directory
+            fileInfo.Refresh();
+            fileInfo.Directory?.Refresh();
+
+            var lastWriteTimeUtc = fileInfo.Exists
+                ? fileInfo.LastWriteTimeUtc
+                : fileInfo.Directory?.LastWriteTimeUtc;
+
+            // If our rule was updated in some way, grab and cache the new data
+            if (lastWriteTimeUtc is not null && Instant.FromDateTimeUtc(lastWriteTimeUtc.Value) > time)
+            {
+                var newRule = GetFromFileSystem(ruleName, fileInfo.FullName);
+
+                if (newRule is not null)
+                {
+                    if (!cachedFileInfos.TryAdd(ruleName, newRule))
+                    {
+                        cachedFileInfos[ruleName] = newRule;
+                    }
+                }
+
+                return true;
+            }
+
             return false;
         }
 
@@ -86,26 +110,6 @@ namespace Hive.Permissions
             }
 
             return (gotten = rule) is not null;
-        }
-
-        // Helper function that obtains cached information about a rule. If none exists, it goes to the file system.
-        private Rule<FileInfo>? GetRuleFromCache(string name)
-        {
-            if (cachedFileInfos.TryGetValue(name, out var fileInfo))
-            {
-                return fileInfo;
-            }
-            else
-            {
-                var fromFileSystem = GetFromFileSystem(name, GetRuleLocation(name));
-
-                if (fromFileSystem is not null)
-                {
-                    cachedFileInfos.Add(name, fromFileSystem);
-                }
-
-                return fromFileSystem;
-            }
         }
 
         // Helper function that reads information about a rule from the file system.
