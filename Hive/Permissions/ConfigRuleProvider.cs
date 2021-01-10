@@ -20,7 +20,7 @@ namespace Hive.Permissions
         private readonly ILogger logger;
 
         // Rule name to information corresponding to the particular rule.
-        private readonly ConcurrentDictionary<string, Rule<FileInfo>> cachedFileInfos = new();
+        private readonly ConcurrentDictionary<string, Rule> cachedFileInfos = new();
 
         /// <summary>
         /// Construct a rule provider via DI.
@@ -86,14 +86,7 @@ namespace Hive.Permissions
         }
 
         /// <inheritdoc/>
-        public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
-        {
-            var exists = cachedFileInfos.TryGetValue(name.ToString(), out var rule);
-
-            gotten = rule;
-
-            return exists;
-        }
+        public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten) => cachedFileInfos.TryGetValue(name.ToString(), out gotten);
 
         // Helper function that reads information about a rule from the file system.
         private Rule<FileInfo>? GetFromFileSystem(string ruleName, string filePath)
