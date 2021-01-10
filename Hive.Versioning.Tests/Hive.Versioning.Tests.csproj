@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFrameworks>net5.0;netcoreapp3.1</TargetFrameworks>
 
     <Tests>true</Tests>
     <IsPackable>false</IsPackable>
@@ -13,6 +13,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Hive.Versioning\Hive.Versioning.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+    <ProjectReference Update="..\Hive.Utilities\Hive.Utilities.csproj" Properties="TargetFramework=netstandard2.0" />
+    <ProjectReference Update="..\Hive.Versioning\Hive.Versioning.csproj" Properties="TargetFramework=netstandard2.0" />
   </ItemGroup>
 
 </Project>

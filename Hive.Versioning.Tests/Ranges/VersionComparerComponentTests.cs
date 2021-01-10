@@ -1,10 +1,8 @@
-﻿using Hive.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 using Xunit;
+#if NETCOREAPP3_1
+using Hive.Utilities;
+#endif
 using static Hive.Versioning.VersionRange;
 
 namespace Hive.Versioning.Tests.Ranges
@@ -44,7 +42,7 @@ namespace Hive.Versioning.Tests.Ranges
                 : CombineResult.OneComparer,
                 inversionResult);
 
-            if (inversionResult == VersionRange.CombineResult.OneComparer)
+            if (inversionResult == CombineResult.OneComparer)
                 Assert.Equal(!matches, newComparer.Matches(compareTo));
             else
                 Assert.Equal(!matches, newRange.Matches(compareTo));
@@ -146,7 +144,11 @@ namespace Hive.Versioning.Tests.Ranges
         {
             var expect = valid ? CreateComparer(verS, typeS) : default;
 
-            var text = (ReadOnlySpan<char>)input;
+#if !NETCOREAPP3_1
+            ReadOnlySpan<char> text = input;
+#else
+            StringView text = input;
+#endif
             Assert.Equal(valid, VersionComparer.TryParse(ref text, out var comparer));
             if (valid)
             {
