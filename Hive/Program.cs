@@ -37,11 +37,11 @@ namespace Hive
                 var services = scope.ServiceProvider;
                 var log = services.GetRequiredService<ILogger>();
 
-                var ipPolicyStore = services.GetRequiredService<IIpPolicyStore>();
-                await ipPolicyStore.SeedAsync().ConfigureAwait(false);
+                var ipPolicyStore = services.GetService<IIpPolicyStore>();
+                if (ipPolicyStore != null) await ipPolicyStore.SeedAsync().ConfigureAwait(false);
 
-                var clientPolicyStore = services.GetRequiredService<IClientPolicyStore>();
-                await clientPolicyStore.SeedAsync().ConfigureAwait(false);
+                var clientPolicyStore = services.GetService<IClientPolicyStore>();
+                if (clientPolicyStore != null) await clientPolicyStore.SeedAsync().ConfigureAwait(false);
 
                 try
                 {
