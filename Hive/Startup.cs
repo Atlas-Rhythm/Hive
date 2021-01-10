@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NodaTime;
 using Serilog;
 
 namespace Hive
@@ -38,6 +39,7 @@ namespace Hive
         public void ConfigureServices(IServiceCollection services)
         {
             _ = services
+                .AddSingleton<IClock>(SystemClock.Instance)
                 .AddTransient<IRuleProvider, ConfigRuleProvider>()
                 .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
                 .AddSingleton(sp =>
@@ -46,9 +48,12 @@ namespace Hive
                 .AddSingleton<IGameVersionsPlugin, HiveGameVersionsControllerPlugin>()
                 .AddSingleton<IModsPlugin, HiveModsControllerPlugin>()
                 .AddSingleton<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>()
+                .AddSingleton<IUploadPlugin, HiveDefaultUploadPlugin>()
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
                 .AddSingleton<IProxyAuthenticationService, MockAuthenticationService>();
 
+            services
+                .AddSingleton<SymmetricAlgorithm>(sp => Rijndael.Create()); // TODO: pick an algo
             _ = services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));

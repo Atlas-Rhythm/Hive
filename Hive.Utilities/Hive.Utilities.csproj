@@ -7,4 +7,8 @@
     <IsUtilities>true</IsUtilities>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.Linq.Async" Version="5.0.0" />
+  </ItemGroup>
+
 </Project>

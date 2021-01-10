@@ -1,4 +1,5 @@
 ﻿using Hive.Converters;
+using NodaTime;
 using System;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
@@ -12,7 +13,7 @@ namespace Hive.Models.Serialized
     /// <summary>
     /// A serializer-friendly version of a <see cref="Mod"/>.
     /// </summary>
-    public class SerializedMod
+    public record SerializedMod
     {
         /// <summary>
         /// The ID of the <see cref="Mod"/>.
@@ -105,12 +106,12 @@ namespace Hive.Models.Serialized
             {
                 ID = toSerialize.ReadableID,
                 Version = toSerialize.Version,
-                UploadedAt = toSerialize.UploadedAt.ToString(),
-                EditedAt = toSerialize.EditedAt?.ToString()!,
-                UploaderUsername = toSerialize.Uploader.Username,
-                ChannelName = toSerialize.Channel.Name,
-                DownloadLink = toSerialize.DownloadLink.ToString(),
-                LocalizedModInfo = SerializedLocalizedModInfo.Serialize(localizedModInfo),
+                UploadedAt = toSerialize.UploadedAt,
+                EditedAt = toSerialize.EditedAt,
+                UploaderUsername = toSerialize.Uploader?.Username!,
+                ChannelName = toSerialize.Channel?.Name!,
+                DownloadLink = toSerialize.DownloadLink?.ToString()!,
+                LocalizedModInfo = localizedModInfo is not null ? SerializedLocalizedModInfo.Serialize(localizedModInfo) : null,
                 AdditionalData = toSerialize.AdditionalData,
                 Authors = toSerialize.Authors.Select(x => x.Username).ToImmutableList(),
                 Contributors = toSerialize.Contributors.Select(x => x.Username).ToImmutableList(),

@@ -40,7 +40,8 @@ namespace Hive.Tests
             var services = new ServiceCollection();
             // Initial services
             services.AddSingleton<ILogger>(sp => new LoggerConfiguration().WriteTo.Debug().CreateLogger())
-                .AddSingleton<IProxyAuthenticationService>(sp => new MockAuthenticationService());
+                .AddSingleton<IProxyAuthenticationService>(sp => new MockAuthenticationService())
+                .AddSingleton<IClock>(SystemClock.Instance);
             if (outputHelper != null)
                 services.AddSingleton<Permissions.Logging.ILogger>(sp => new TestOutputWrapper(outputHelper));
 
