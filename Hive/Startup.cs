@@ -41,7 +41,8 @@ namespace Hive
         {
             _ = services
                 .AddSingleton<IClock>(SystemClock.Instance)
-                .AddTransient<IRuleProvider, ConfigRuleProvider>()
+                .AddTransient<IRuleProvider>(sp =>
+                    new ConfigRuleProvider(sp.GetRequiredService<ILogger>(), ".", Configuration.GetValue<string>("RuleSubfolder")))
                 .AddTransient<Permissions.Logging.ILogger, Logging.PermissionsProxy>()
                 .AddSingleton(sp =>
                     new PermissionsManager<PermissionContext>(sp.GetRequiredService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), "."))
