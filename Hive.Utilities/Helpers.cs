@@ -102,6 +102,7 @@ namespace Hive.Utilities
                 {
                     tupleObj = lastValue!;
                     typeData = typeData.LastArgTypeData;
+                    lastValueSet = false; // we now want to ignore the value in lastValue
                     continue;
                 }
                 break;
