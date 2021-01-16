@@ -34,6 +34,20 @@ namespace Hive.Controllers
         /// <param name="channels">Input channels to filter</param>
         /// <returns>Filtered channels</returns>
         public IEnumerable<Channel> GetChannelsFilter(User? user, [TakesReturnValue] IEnumerable<Channel> channels) => channels;
+
+        /// <summary>
+        /// Returns true if the specified user has access to view a particular channel, false otherwise.
+        /// This method is called for each channel the user wants to access.
+        /// <para>Hive default is to return true for each channel.</para>
+        /// </summary>
+        /// <remarks>
+        /// This method is called in a LINQ expression that is not tracked by EntityFramework,
+        /// so modifications done to the <see cref="Channel"/> object will not be reflected in the database.
+        /// </remarks>
+        /// <param name="user">User in context</param>
+        /// <param name="contextChannel">Mod in context</param>
+        [return: StopIfReturns(false)]
+        public bool GetSpecificChannelAdditionalChecks(User? user, Channel? contextChannel) => true;
     }
 
     internal class HiveChannelsControllerPlugin : IChannelsControllerPlugin { }

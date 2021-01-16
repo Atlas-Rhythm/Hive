@@ -7,6 +7,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
 
 namespace Hive.Services.Common
 {
@@ -22,6 +23,8 @@ namespace Hive.Services.Common
         private PermissionActionParseState channelsParseState;
 
         private static readonly HiveObjectQuery<IEnumerable<Channel>> forbiddenResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<Channel?> forbiddenResponseSingle = new(null, "Forbidden", StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<Channel?> notFoundResponseSingle = new(null, "Not Found", StatusCodes.Status404NotFound);
         private const string ActionName = "hive.channel";
 
         /// <summary>
@@ -42,10 +45,38 @@ namespace Hive.Services.Common
         }
 
         /// <summary>
+        /// Gets a <see cref="Channel"/> from this instance.
+        /// </summary>
+        /// <param name="id">The name/id of the channel.</param>
+        /// <param name="user">The user for authenticating the query.</param>
+        /// <returns></returns>
+        public async Task<HiveObjectQuery<Channel?>> GetChannel(string id, User? user)
+        {
+            if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref channelsParseState))
+                return forbiddenResponseSingle;
+
+            log.Debug("Combining plugins...");
+            var combined = plugin.Instance;
+
+            if (!combined.GetChannelsAdditionalChecks(user))
+                return forbiddenResponseSingle;
+
+            var channel = await context.Channels.FindAsync(id).ConfigureAwait(false);
+
+            if (channel is null)
+                return notFoundResponseSingle;
+
+            var hasPermission = permissions.CanDo(ActionName, new PermissionContext { Channel = channel, User = user }, ref channelsParseState)
+                && combined.GetSpecificChannelAdditionalChecks(user, channel);
+
+            return !hasPermission ? forbiddenResponseSingle : new HiveObjectQuery<Channel?>(channel, null, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
         /// Gets all <see cref="Channel"/> objects available.
         /// This performs a permission check at: <c>hive.channel</c>.
         /// </summary>
-        /// <param name="user">The users to associate with this request.</param>
+        /// <param name="user">The user to associate with this request.</param>
         /// <returns>A wrapped collection of <see cref="Channel"/>, if successful.</returns>
         public HiveObjectQuery<IEnumerable<Channel>> RetrieveAllChannels(User? user)
         {
