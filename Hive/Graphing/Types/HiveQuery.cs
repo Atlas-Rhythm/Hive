@@ -1,8 +1,14 @@
 ﻿using System;
-using Serilog;
-using Hive.Models;
-using GraphQL.Types;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
+using GraphQL;
+using GraphQL.Types;
+using Hive.Models;
+using Hive.Services;
+using Hive.Services.Common;
+using Microsoft.AspNetCore.Http;
+using Serilog;
 
 namespace Hive.Graphing.Types
 {
@@ -24,9 +30,19 @@ namespace Hive.Graphing.Types
 
             l.Debug("Initializing");
 
-            _ = Field<ListGraphType<ChannelType>>(
-                name: "channels",
-                resolve: context => Array.Empty<Channel>());
+            _ = Field<ListGraphType<ChannelType>, IEnumerable<Channel>>().Name("channels").ResolveAsync(GetAllChannels);
+        }
+
+        private async Task<IEnumerable<Channel>> GetAllChannels(IResolveFieldContext<object> ctx)
+        {
+            (var channelService, var http, var authService)
+                = ctx.RequestServices.GetRequiredServices<ChannelService, IHttpContextAccessor, IProxyAuthenticationService>();
+
+            var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
+            var queryResult = channelService.RetrieveAllChannels(user);
+            if (!queryResult.Successful)
+                ctx.Errors.Add(new ExecutionError(queryResult.Message!));
+            return queryResult.Value ?? Array.Empty<Channel>();
         }
     }
 }
