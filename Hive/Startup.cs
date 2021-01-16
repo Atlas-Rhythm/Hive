@@ -59,6 +59,7 @@ namespace Hive
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
 
+            _ = services.AddHttpContextAccessor();
             _ = services.AddScoped<ModService>()
                 .AddScoped<ChannelService>()
                 .AddScoped<GameVersionService>()
