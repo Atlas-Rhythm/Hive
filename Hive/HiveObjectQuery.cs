@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using System;
 
 namespace Hive
 {
@@ -13,6 +13,11 @@ namespace Hive
     /// <typeparam name="T">The type of the value to wrap.</typeparam>
     public record HiveObjectQuery<T>(T? Value, string? Message, int StatusCode)
     {
+        /// <summary>
+        /// Was this query successful?
+        /// </summary>
+        public bool Successful => StatusCode is >= StatusCodes.Status200OK and <= 299;
+
         private ActionResult<TImpl> ConvertInternal<TImpl>(Func<T, TImpl> conversionFunc)
         {
             return StatusCode switch
@@ -42,9 +47,9 @@ namespace Hive
         /// <returns>The created <see cref="ActionResult{TValue}"/>.</returns>
         public ActionResult<TCast> Convert<TCast>(Func<T, TCast> conversionFunc)
         {
-            if (conversionFunc == null)
-                throw new ArgumentNullException(nameof(conversionFunc), "No conversion function specified");
-            return ConvertInternal(conversionFunc);
+            return conversionFunc == null
+                ? throw new ArgumentNullException(nameof(conversionFunc), "No conversion function specified")
+                : ConvertInternal(conversionFunc);
         }
     }
 }
