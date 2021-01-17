@@ -30,8 +30,10 @@ namespace Hive.Graphing.Types
 
             l.Debug("Initializing");
 
-            _ = Field<ChannelType, Channel?>().Name("channel").Argument<StringGraphType>("id", Resources.GraphQL.Channel_Name).ResolveAsync(GetChannel);
+            _ = Field<ChannelType, Channel?>().Name("channel").Argument<IdGraphType>("id", Resources.GraphQL.Channel_Name).ResolveAsync(GetChannel);
             _ = Field<ListGraphType<ChannelType>, IEnumerable<Channel>>().Name("channels").ResolveAsync(GetAllChannels);
+
+            _ = Field<ModType, Mod?>().Name("mod").Argument<IdGraphType>("id", Resources.GraphQL.Mod_ID).ResolveAsync(GetMod);
         }
 
         private async Task<Channel?> GetChannel(IResolveFieldContext<object> ctx)
@@ -58,6 +60,19 @@ namespace Hive.Graphing.Types
             if (!queryResult.Successful)
                 ctx.Errors.Add(new ExecutionError(queryResult.Message!));
             return queryResult.Value ?? Array.Empty<Channel>();
+        }
+
+        private async Task<Mod?> GetMod(IResolveFieldContext<object> ctx)
+        {
+            (var modService, var http, var authService)
+                = ctx.RequestServices.GetRequiredServices<ModService, IHttpContextAccessor, IProxyAuthenticationService>();
+
+            var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
+            var queryResult = modService.GetMod(user, ctx.GetArgument<string>("id"));
+
+            if (!queryResult.Successful)
+                ctx.Errors.Add(new ExecutionError(queryResult.Message!));
+            return queryResult.Value;
         }
     }
 }
