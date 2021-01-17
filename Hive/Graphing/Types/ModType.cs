@@ -83,5 +83,26 @@ namespace Hive.Graphing.Types
                 resolve: context => context.Source.DownloadLink.ToString()
             );
         }
+
+        /// <summary>
+        /// The different order filters for querying mods.
+        /// </summary>
+        public enum Filter
+        {
+            /// <summary>
+            /// Get all versions of a mod.
+            /// </summary>
+            All,
+
+            /// <summary>
+            /// Get the most recent version of a mod.
+            /// </summary>
+            Recent,
+
+            /// <summary>
+            /// Get the latest version of a mod.
+            /// </summary>
+            Latest
+        }
     }
 }

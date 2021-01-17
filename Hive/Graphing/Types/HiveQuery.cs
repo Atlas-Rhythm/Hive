@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Types;
@@ -34,6 +35,12 @@ namespace Hive.Graphing.Types
             _ = Field<ListGraphType<ChannelType>, IEnumerable<Channel>>().Name("channels").ResolveAsync(GetAllChannels);
 
             _ = Field<ModType, Mod?>().Name("mod").Argument<IdGraphType>("id", Resources.GraphQL.Mod_ID).ResolveAsync(GetMod);
+            _ = Field<ListGraphType<ModType>, IEnumerable<Mod>>()
+                .Name("mods")
+                .Argument<EnumerationGraphType<ModType.Filter>, ModType.Filter>("filter", description: "The filter", defaultValue: ModType.Filter.Latest)
+                .Argument<ListGraphType<IdGraphType>, IEnumerable<string>?>("channelIds", description: "The ids for channels to look through", defaultValue: null)
+                .Argument<StringGraphType, string?>("gameVersion", description: "The game version of mods to look for.", defaultValue: null)
+                .ResolveAsync(GetAllMods);
         }
 
         private async Task<Channel?> GetChannel(IResolveFieldContext<object> ctx)
@@ -70,6 +77,22 @@ namespace Hive.Graphing.Types
 
             ctx.Anaylze(queryResult);
             return queryResult.Value;
+        }
+
+        private async Task<IEnumerable<Mod>> GetAllMods(IResolveFieldContext<object> ctx)
+        {
+            (var modService, var http, var authService)
+                = ctx.RequestServices.GetRequiredServices<ModService, IHttpContextAccessor, IProxyAuthenticationService>();
+
+            var filterType = ctx.GetArgument("filter", ModType.Filter.Latest).ToString();
+            var channels = ctx.GetArgument<IEnumerable<string>?>("channelIds");
+            var gameVersion = ctx.GetArgument<string?>("gameVersion");
+
+            var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
+            var queryResult = modService.GetAllMods(user, channels?.ToArray(), gameVersion, filterType);
+
+            ctx.Anaylze(queryResult);
+            return queryResult.Value ?? Array.Empty<Mod>();
         }
     }
 }
