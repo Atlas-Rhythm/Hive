@@ -1,8 +1,10 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
-using GraphQL.Types;
+using GraphQL;
 using GraphQL.Server;
+using GraphQL.Types;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Hive.Graphing
 {
@@ -47,6 +49,24 @@ namespace Hive.Graphing
                 })
                 .AddSystemTextJson()
                 .AddGraphTypes(typeof(HiveSchema));
+        }
+
+        /// <summary>
+        /// Analyzes and fills out any errors in an object query.
+        /// </summary>
+        /// <typeparam name="T">The type of the object query.</typeparam>
+        /// <param name="ctx">The resolver context.</param>
+        /// <param name="queryResult">The query.</param>
+        public static void Anaylze<T>(this IResolveFieldContext ctx, HiveObjectQuery<T> queryResult)
+        {
+            if (ctx is null)
+                throw new ArgumentNullException(nameof(ctx));
+
+            if (queryResult is null)
+                throw new ArgumentNullException(nameof(queryResult));
+
+            if (!queryResult.Successful)
+                ctx.Errors.Add(new ExecutionError(queryResult.Message!));
         }
     }
 }

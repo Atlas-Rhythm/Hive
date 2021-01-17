@@ -44,8 +44,7 @@ namespace Hive.Graphing.Types
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
             var queryResult = await channelService.GetChannel(ctx.GetArgument<string>("id"), user).ConfigureAwait(false);
 
-            if (!queryResult.Successful)
-                ctx.Errors.Add(new ExecutionError(queryResult.Message!));
+            ctx.Anaylze(queryResult);
             return queryResult.Value;
         }
 
@@ -57,8 +56,7 @@ namespace Hive.Graphing.Types
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
             var queryResult = channelService.RetrieveAllChannels(user);
 
-            if (!queryResult.Successful)
-                ctx.Errors.Add(new ExecutionError(queryResult.Message!));
+            ctx.Anaylze(queryResult);
             return queryResult.Value ?? Array.Empty<Channel>();
         }
 
@@ -70,8 +68,7 @@ namespace Hive.Graphing.Types
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
             var queryResult = modService.GetMod(user, ctx.GetArgument<string>("id"));
 
-            if (!queryResult.Successful)
-                ctx.Errors.Add(new ExecutionError(queryResult.Message!));
+            ctx.Anaylze(queryResult);
             return queryResult.Value;
         }
     }
