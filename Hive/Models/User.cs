@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Security.Principal;
 using System.Text.Json;
 
 namespace Hive.Models
@@ -7,7 +8,7 @@ namespace Hive.Models
     /// <summary>
     /// A moderately thin proxy to the auth server, holds some information that will probably be useful.
     /// </summary>
-    public class User
+    public class User : IIdentity
     {
         // TODO: this should be from the authentication client library
 
@@ -30,5 +31,14 @@ namespace Hive.Models
         /// The additional data attached to the user object.
         /// </summary>
         public JsonElement AdditionalData { get; set; }
+
+        /// <inheritdoc/>
+        public string? AuthenticationType { get; set; }
+
+        /// <inheritdoc/>
+        public bool IsAuthenticated { get; set; }
+
+        /// <inheritdoc/>
+        public string? Name => Username;
     }
 }

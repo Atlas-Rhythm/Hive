@@ -67,6 +67,12 @@ namespace Hive
                 .AddHiveQLTypes()
                 .AddHiveGraphQL();
 
+            _ = services.AddAuthentication(a =>
+            {
+                a.AddScheme<MockAuthenticationHandler>("Bearer", "MockAuth");
+                a.DefaultScheme = "Bearer";
+            });
+
             _ = services.AddControllers();
         }
 
@@ -86,7 +92,7 @@ namespace Hive
                 .UseSerilogRequestLogging()
                 .UseHttpsRedirection()
                 .UseRouting()
-                .UseAuthorization()
+                .UseAuthentication()
                 .UseGraphQL<HiveSchema>("/graphql")
                 .UseGraphQLAltair()
                 .UseEndpoints(endpoints => endpoints.MapControllers());
