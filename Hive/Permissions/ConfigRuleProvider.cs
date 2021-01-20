@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System;
 
 namespace Hive.Permissions
 {
@@ -35,7 +36,16 @@ namespace Hive.Permissions
         {
             this.logger = logger;
             this.splitToken = splitToken;
-            ruleDirectory = Path.Combine(Assembly.GetExecutingAssembly().Location, ruleSubfolder);
+
+            var assemblyLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+            if (assemblyLocation is null)
+            {
+                // what the fuck? this should not happen
+                throw new InvalidOperationException("The directory containing the executing Hive.dll file was somehow null.");
+            }
+
+            ruleDirectory = Path.Combine(assemblyLocation, ruleSubfolder);
 
             _ = Directory.CreateDirectory(ruleSubfolder);
         }
@@ -115,7 +125,7 @@ namespace Hive.Permissions
             var parts = ruleName.Split(splitToken, ignoreEmpty: false);
             var localRuleDirectory = string.Join(@"\", parts);
 
-            return Path.Combine(ruleDirectory, localRuleDirectory, RuleExtension);
+            return Path.Combine(ruleDirectory, localRuleDirectory + RuleExtension);
         }
 
         private void UpdateCachedRule(string ruleName, Rule<FileInfo>? newRule)

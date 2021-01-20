@@ -117,7 +117,7 @@ namespace Hive
                 .UseSerilogRequestLogging()
                 .UseHttpsRedirection()
                 .UseRouting()
-                .UseAuthorization()
+                .UseAuthentication()
                 .UseGraphQL<HiveSchema>("/graphql")
                 .UseGraphQLAltair()
                 .UseEndpoints(endpoints => endpoints.MapControllers());
