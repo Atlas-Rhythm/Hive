@@ -63,7 +63,7 @@ namespace Hive.Controllers
     /// <summary>
     /// A REST controller for performing mod related actions.
     /// </summary>
-    [Route("api/mods")]
+    [Route("api/")]
     [ApiController]
     public class ModsController : ControllerBase
     {
@@ -96,7 +96,7 @@ namespace Hive.Controllers
         /// <param name="gameVersion">The game version to search within.</param>
         /// <param name="filterType">How to filter the results.</param>
         /// <returns>A wrapped collection of <see cref="SerializedMod"/>, if successful.</returns>
-        [HttpGet]
+        [HttpGet("mods")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<IEnumerable<SerializedMod>>> GetAllMods([FromQuery] string[]? channelIds = null, [FromQuery] string? gameVersion = null, [FromQuery] string? filterType = null)
@@ -117,7 +117,7 @@ namespace Hive.Controllers
         /// <param name="id">The <seealso cref="Mod.ReadableID"/> to find.</param>
         /// <param name="range">The <see cref="VersionRange"/> to match.</param>
         /// <returns>A wrapped <see cref="SerializedMod"/> of the found mod, if successful.</returns>
-        [HttpGet("api/mod/{id}")]
+        [HttpGet("mod/{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -139,7 +139,7 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="id">The <seealso cref="Mod.ReadableID"/> to find the latest version of.</param>
         /// <returns>A wrapped <see cref="SerializedMod"/> that is the latest version available, if successful.</returns>
-        [HttpGet("api/mod/{id}/latest")]
+        [HttpGet("mod/{id}/latest")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -162,7 +162,7 @@ namespace Hive.Controllers
         /// <param name="channelId">The destination channel ID to move the mod to.</param>
         /// <param name="identifier">The <see cref="ModIdentifier"/> to move.</param>
         /// <returns>A wrapped <see cref="SerializedMod"/> of the moved mod, if successful.</returns>
-        [HttpPost("api/mod/move/{channelId}")]
+        [HttpPost("mod/move/{channelId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
