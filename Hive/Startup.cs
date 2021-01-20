@@ -1,3 +1,4 @@
+using AspNetCoreRateLimit;
 using System.Security.Cryptography;
 using Hive.Controllers;
 using Hive.Graphing;
@@ -8,6 +9,7 @@ using Hive.Services;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -67,6 +69,23 @@ namespace Hive
                 .AddHiveQLTypes()
                 .AddHiveGraphQL();
 
+            if (Configuration.GetValue<bool>("UseRateLimiting"))
+            {
+                // AspNetCoreRateLimit requires this.
+                // A PR was merged that made this unnecessary, but that has not made it into an official release.
+                _ = services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+                _ = services.AddMemoryCache()
+                    .Configure<ClientRateLimitOptions>(Configuration.GetSection("ClientRateLimiting"))
+                    .Configure<ClientRateLimitPolicies>(Configuration.GetSection("ClientRateLimitPolicies"))
+                    .Configure<IpRateLimitOptions>(Configuration.GetSection("IpRateLimiting"))
+                    .Configure<IpRateLimitPolicies>(Configuration.GetSection("IpRateLimitPolicies"))
+                    .AddSingleton<IClientPolicyStore, MemoryCacheClientPolicyStore>()
+                    .AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>()
+                    .AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>()
+                    .AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+            }
+
             _ = services.AddAuthentication(a =>
             {
                 a.AddScheme<MockAuthenticationHandler>("Bearer", "MockAuth");
@@ -83,6 +102,12 @@ namespace Hive
         /// <param name="env"></param>
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            if (Configuration.GetValue<bool>("UseRateLimiting"))
+            {
+                _ = app.UseClientRateLimiting()
+                    .UseIpRateLimiting();
+            }
+
             if (env.IsDevelopment())
             {
                 _ = app.UseDeveloperExceptionPage();

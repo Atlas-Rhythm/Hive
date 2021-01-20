@@ -1,8 +1,6 @@
-using System;
-using System.Diagnostics;
-using System.Linq;
-using System.Text.Json;
+using AspNetCoreRateLimit;
 using Hive.Models;
+using Hive.Versioning;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -12,7 +10,11 @@ using Serilog.Configuration;
 using Serilog.Exceptions;
 using Serilog.Exceptions.Core;
 using Serilog.Exceptions.EntityFrameworkCore.Destructurers;
-using Hive.Versioning;
+using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Version = Hive.Versioning.Version;
 
 namespace Hive
@@ -26,7 +28,7 @@ namespace Hive
         ///
         /// </summary>
         /// <param name="args"></param>
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
 
@@ -34,6 +36,13 @@ namespace Hive
             {
                 var services = scope.ServiceProvider;
                 var log = services.GetRequiredService<ILogger>();
+
+                var ipPolicyStore = services.GetService<IIpPolicyStore>();
+                if (ipPolicyStore != null) await ipPolicyStore.SeedAsync().ConfigureAwait(false);
+
+                var clientPolicyStore = services.GetService<IClientPolicyStore>();
+                if (clientPolicyStore != null) await clientPolicyStore.SeedAsync().ConfigureAwait(false);
+
                 try
                 {
                     log.Debug("Configuring database");
@@ -53,7 +62,7 @@ namespace Hive
                 }
             }
 
-            host.Run();
+            await host.RunAsync().ConfigureAwait(false);
         }
 
         /// <summary>
