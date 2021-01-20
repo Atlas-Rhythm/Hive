@@ -9,14 +9,19 @@ paths:
     get:
       summary: Get the URI location to the Auth Server linked to this Hive Instance
       tags: []
+      operationId: get-auth_server
+      description: |-
+        Returns the URI of the authentication server used for authentication requests.
+
+        Plugin permission check at: hive.auth_server
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: string
-      operationId: get-auth_server
+                type: object
+                properties: {}
   /mods:
     parameters:
       - name: page
@@ -36,12 +41,6 @@ paths:
     get:
       summary: 'Gets all of the mods in the specified channel(s), or a default if none is specified.'
       parameters:
-        - name: channelId
-          description: The ID of the channel to look up mods in
-          in: query
-          required: false
-          schema:
-            type: string
         - name: channelIds
           description: The IDs of the channels to look up mods in
           in: query
@@ -74,12 +73,34 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Mod'
+              examples:
+                Default Response:
+                  value:
+                    - id: test-mod
+                      version: 0.1.0
+                      uploadedAt: '2021-01-19T23:42:11.415979Z'
+                      editedAt: null
+                      uploaderUsername: me
+                      channelName: default
+                      downloadLink: 'file:///'
+                      localizedModInfo:
+                        language: en-US
+                        name: Test Mod
+                        description: A mod in the DB for testing
+                        changelog: null
+                        credits: null
+                      authors: []
+                      contributors: []
+                      supportedGameVersions:
+                        - 1.0.0
+                      links: []
+                      dependencies:
+                        - modID: dep-id
+                          versions: ^1.0.0
+                      conflictsWith: []
+                      additionalData: {}
         '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
+          $ref: '#/components/responses/ForbiddenResponse'
       operationId: get-mods
       description: |-
         Gets all mods for a given channelId and channelIds to look within.
@@ -92,6 +113,8 @@ paths:
         Options for filterType are:
         all: Returns all versions for each mod listed in the channel(s).
         latest: Returns only the latest versions for each mod listed in the channel(s).
+
+        Plugin permission check at: hive.mod
   '/mod/{modId}':
     parameters:
       - schema:
@@ -115,17 +138,9 @@ paths:
                 type: object
                 properties: {}
         '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
+          $ref: '#/components/responses/ForbiddenResponse'
         '404':
           description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
       operationId: get-mod-modId
       parameters:
         - schema:
@@ -140,84 +155,11 @@ paths:
           description: The languages to return the localized mod for
       description: |-
         Gets a mod from a given mod ID and version range. If range is not specified, assumes range=*.
-        If a list of languages are provided via Accept-Language, will try to return the best LocalizedModData that matches.
+        If a list of languages are provided via Accept-Language, will try to return the best LocalizedModInfo that matches.
         If no languages are provided, or a previous match was not found, defaults to the system culture.
-        If the system culture does not exist, uses the first LocalizedModData of the matching mod.
-      security:
-        - vaulthAuth: []
-    patch:
-      summary: Updates a mod with the specified ID
-      tags: []
-      responses:
-        '204':
-          description: No Content
-        '400':
-          description: Bad Request. Invalid JSON was posted.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-        '401':
-          description: Unauthorized. The user is not logged in.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-        '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-      operationId: patch-mod
-      description: Patches a given mod ID using the body provided.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Mod'
-        description: The mod object to patch the existing one with.
-      security:
-        - vaulthAuth: []
-    delete:
-      summary: Deletes a mod with the specified ID
-      tags: []
-      responses:
-        '204':
-          description: No Content
-        '401':
-          description: Unauthorized. The user is not logged in.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-        '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-      operationId: delete-mod
-      description: Deletes a given mod ID with the provided version.
-      parameters:
-        - schema:
-            type: string
-          in: query
-          name: version
-          description: Version of the mod to delete
-          required: true
+        If the system culture does not exist, uses the first LocalizedModInfo of the matching mod.
+
+        Plugin permission check at: hive.mod
       security:
         - vaulthAuth: []
   '/mod/upload/{modId}':
@@ -240,8 +182,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Mod'
         '401':
-          $ref: '#/components/responses/UnauthorizedError'
-      description: Posts a mod
+          $ref: '#/components/responses/ForbiddenResponse'
+      description: |-
+        Upload or update a new or existing mod.
+
+        Plugin permission check at: hive.mod.upload
       requestBody:
         content:
           application/json:
@@ -268,13 +213,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/GameVersion'
         '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
+          $ref: '#/components/responses/ForbiddenResponse'
       operationId: get-game-versions
-      description: Returns a list of all game versions stored in the instance.
+      description: |-
+        Returns a list of all game versions stored in the instance.
+
+        Plugin permission check at: hive.game.version
       security:
         - vaulthAuth: []
   /resolve_dependencies:
@@ -297,8 +241,14 @@ paths:
                 required:
                   - message
                   - additionalMods
-        '418':
-          description: "I'm a teapot (RFC 2324)"
+        '400':
+          description: 'Bad Request, invalid data was provided.'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          description: Not Found
+        '424':
+          description: Failed Dependency (WebDAV)
           content:
             application/json:
               schema:
@@ -307,37 +257,43 @@ paths:
                 properties:
                   message:
                     type: string
+                  additionalMods:
+                    $ref: '#/components/schemas/Mod'
                   missing:
                     type: array
                     minItems: 0
                     items:
-                      $ref: '#/components/schemas/Mod'
+                      $ref: '#/components/schemas/ModIdentifier'
                   conflicts:
                     type: array
                     minItems: 0
                     items:
-                      $ref: '#/components/schemas/Mod'
+                      type: string
                   versionMismatching:
                     type: array
                     minItems: 0
                     items:
-                      $ref: '#/components/schemas/Mod'
+                      $ref: '#/components/schemas/ModIdentifier'
                 required:
                   - message
                   - missing
                   - conflicts
                   - versionMismatching
+                  - additionalMods
       description: |-
         Returns a list of mods that should be installed to resolve all dependencies.
         If the dependencies cannot be resolved, returns a non-200 status code and an empty array.
+
+        Plugin permission check at: hive.resolve_dependencies
       parameters: []
       requestBody:
         content:
           application/json:
             schema:
               type: array
+              minItems: 1
               items:
-                $ref: '#/components/schemas/ModIdentifierRange'
+                $ref: '#/components/schemas/ModIdentifier'
         description: Mods to resolve
   '/mod/move/{channelId}':
     parameters:
@@ -355,30 +311,13 @@ paths:
         '200':
           description: OK
         '400':
-          description: Bad Request. Invalid JSON was posted.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
+          description: Bad Request
         '401':
-          description: Unauthorized. The user is not logged in.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
-              examples: {}
+          $ref: '#/components/responses/UnauthorizedResponse'
         '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
+          $ref: '#/components/responses/ForbiddenResponse'
         '404':
           description: Not Found. There was no mod found with the given ID and version.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
       requestBody:
         content:
           application/json:
@@ -390,7 +329,10 @@ paths:
               type: object
               properties: {}
         description: The specific mod identifier to move. A mod ID and specific version.
-      description: Moves a specific ModIdentifier to the provided channelId.
+      description: |-
+        Moves a specific ModIdentifier to the provided channelId.
+
+        Plugins permission check at: hive.mod.move
   /channels:
     get:
       summary: 'Gets all publicly viewable channels, or all channels viewable by the given user'
@@ -412,15 +354,13 @@ paths:
                 type: object
                 properties: {}
         '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
+          $ref: '#/components/responses/ForbiddenResponse'
       operationId: get-channels
       description: |-
         Gets all channels that are publicly viewable.
         When passed with an auth header, then it will return all channels viewable to the authorized user.
+
+        Plugin permission check at: hive.channels
   /instance:
     get:
       summary: Get basic information about this Hive instance.
@@ -432,11 +372,14 @@ paths:
             application/json:
               schema:
                 type: object
-                properties: {}
+                minProperties: 0
+              examples: {}
       operationId: get-instance
       description: |-
         Get basic information about this Hive instance.
         Information can be exposed and hidden on a per-instance basis.
+
+        Plugin permission check at: hive.instance
   '/mod/{modId}/latest':
     parameters:
       - schema:
@@ -456,17 +399,9 @@ paths:
                 $ref: '#/components/schemas/Mod'
               examples: {}
         '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
+          $ref: '#/components/responses/ForbiddenResponse'
         '404':
           description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Exception'
       operationId: get-mod-modId-latest
       description: 'Returns the latest mod with the provided ID. This is equivalent to calling: /mod/{modId}?range=*'
       parameters: []
@@ -478,44 +413,88 @@ components:
       type: object
       title: Channel
       additionalProperties: false
-      description: A channel object
+      description: 'A channel object. Note that additionalData is public, and should not store private information.'
+      x-examples:
+        Default Channel:
+          name: default
+          additionalData: {}
       properties:
         name:
           type: string
           minLength: 1
-        isPublic:
-          type: boolean
         additionalData:
           type: object
       required:
         - name
-        - isPublic
         - additionalData
     Mod:
       type: object
       title: Mod
-      description: A mod.
+      description: |-
+        A mod structure.
+        Note that additionalData is publicly read-only and should not store any sensitive information.
       additionalProperties: false
+      x-examples:
+        Test Mod:
+          id: test-mod
+          version: 0.1.0
+          uploadedAt: '2021-01-19T23:42:11.415979Z'
+          editedAt: null
+          uploaderUsername: me
+          channelName: default
+          downloadLink: 'file:///'
+          localizedModInfo:
+            language: en-US
+            name: Test Mod
+            description: A mod in the DB for testing
+            changelog: null
+            credits: null
+          authors: []
+          contributors: []
+          supportedGameVersions:
+            - 1.0.0
+          links: []
+          dependencies:
+            - modID: dep-id
+              versions: ^1.0.0
+          conflictsWith: []
+          additionalData: {}
       properties:
         id:
           type: string
         version:
           type: string
-        uploaderId:
+        uploadedAt:
           type: string
-        authorIds:
+          format: date-time
+        editedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        uploaderUsername:
+          type: string
+        channelName:
+          type: string
+        downloadLink:
+          type: string
+          format: uri
+        localizedModInfo:
+          $ref: '#/components/schemas/LocalizedModInfo'
+        authors:
           type: array
           items:
             type: string
-        contributorIds:
+        contributors:
           type: array
           items:
             type: string
-        channelId:
-          type: string
+        supportedGameVersions:
+          type: array
+          items:
+            type: string
         links:
           type: array
-          minItems: 0
           items:
             type: object
             additionalProperties: false
@@ -524,46 +503,48 @@ components:
                 type: string
               url:
                 type: string
+                format: uri
             required:
               - name
               - url
-        downloadLink:
-          type: string
-        additionalData:
-          type: object
-        localizedData:
-          $ref: '#/components/schemas/LocalizedModData'
         dependencies:
           type: array
           items:
             $ref: '#/components/schemas/ModIdentifierRange'
-        conflicts:
+        conflictsWith:
           type: array
           items:
             $ref: '#/components/schemas/ModIdentifierRange'
-        gameVersions:
-          type: array
-          items:
-            type: string
+        additionalData:
+          type: object
       required:
         - id
         - version
-        - uploaderId
-        - authorIds
-        - contributorIds
-        - channelId
-        - links
+        - uploadedAt
+        - editedAt
+        - uploaderUsername
+        - channelName
         - downloadLink
-        - additionalData
-        - localizedData
+        - localizedModInfo
+        - authors
+        - contributors
+        - supportedGameVersions
+        - links
         - dependencies
-        - conflicts
-        - gameVersions
-    LocalizedModData:
+        - conflictsWith
+        - additionalData
+    LocalizedModInfo:
       type: object
-      title: LocalizedModData
+      title: LocalizedModInfo
       description: Localized data of a mod.
       additionalProperties: false
+      x-examples:
+        Test Mod:
+          language: en-US
+          name: Test Mod
+          description: A mod in the DB for testing
+          changelog: null
+          credits: null
       properties:
         language:
           type: string
@@ -572,24 +553,45 @@ components:
         description:
           type: string
         changelog:
-          type: string
+          type:
+            - string
+            - 'null'
         credits:
-          type: string
+          type:
+            - string
+            - 'null'
       required:
         - language
         - name
         - description
+        - changelog
+        - credits
     GameVersion:
       type: object
       title: GameVersion
       additionalProperties: false
+      description: |-
+        Represents a version of a game.
+        Additional data is publicly read only. Avoid placing sensitive information in additionalData.
+      x-examples:
+        Version v1.13.0:
+          name: v1.13.0
+          additionalData: {}
+          creationTime: '2019-08-24T14:15:22Z'
       properties:
         name:
           type: string
+          description: The game version itself
+        creationTime:
+          type: string
+          format: date-time
+          description: The time this game version was created.
         additionalData:
           type: object
+          description: Additional data for this game version
       required:
         - name
+        - creationTime
         - additionalData
     ModIdentifierRange:
       type: object
@@ -597,28 +599,36 @@ components:
       description: A mod ID paired with a version range.
       additionalProperties: false
       properties:
-        name:
+        modID:
           type: string
-        versionRange:
+        versions:
           type: string
       required:
-        - name
-        - versionRange
+        - modID
+        - versions
+      x-examples:
+        Simple Test:
+          modID: test-id
+          versions: ^1.0.0
     Exception:
       title: Exception
       type: object
       description: |-
         When an exception occurs, or a non-200 status code is returned, this model is returned.
-        This model MAY have more or less fields than what is listed, but will always contain at least a statusCode.
+        This model MAY have more or less fields than what is listed, but will always contain at least a statusCode, which will match the status code returned by the response.
       properties:
-        statusCode:
+        StatusCode:
           type: integer
           description: Status code of the response
-        message:
+        Message:
           type: string
           description: Message of the problem that ocurred
       required:
-        - statusCode
+        - StatusCode
+      x-examples:
+        example-1:
+          StatusCode: 500
+          Message: Uh oh!
     ModIdentifier:
       type: object
       title: ModIdentifier
@@ -632,15 +642,31 @@ components:
         - id
         - version
       description: A mod ID paired with a specific version.
+      x-examples:
+        Identifier:
+          id: test-id
+          version: 1.0.0
   securitySchemes:
     vaulthAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: 'Authentication using the OAuth wrapper service, Vaulth.'
   responses:
-    UnauthorizedError:
-      description: Authentication information is invalid.
-      headers:
-        WWW_Authenticate:
+    ForbiddenResponse:
+      description: The response provided when an action is forbidden.
+      content:
+        application/json:
           schema:
             type: string
+            enum:
+              - forbidden
+          examples:
+            Forbidden Response:
+              value: forbidden
+    UnauthorizedResponse:
+      description: Not authorized.
+      content:
+        application/json:
+          schema:
+            type: object
