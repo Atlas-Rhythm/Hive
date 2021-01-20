@@ -29,11 +29,13 @@ namespace Hive.Models.Serialized
         /// <summary>
         /// The <see cref="string"/> timestamp of when this <see cref="Mod"/> was uploaded.
         /// </summary>
+        [JsonConverter(typeof(NodaInstantWrapper))]
         public Instant UploadedAt { get; init; }
 
         /// <summary>
         /// The <see cref="string"/> timestamp of when this <see cref="Mod"/> was last edited.
         /// </summary>
+        [JsonConverter(typeof(NodaInstantWrapper))]
         public Instant? EditedAt { get; init; }
 
         /// <summary>
