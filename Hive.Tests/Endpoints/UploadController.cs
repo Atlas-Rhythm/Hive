@@ -134,7 +134,7 @@ namespace Hive.Tests.Endpoints
         }
 
         // TODO: tests covering more of the upload process
-        //       Given the sheer number of variables in the flow, I feel more comfortable waiting until we have specific conditions that it 
+        //       Given the sheer number of variables in the flow, I feel more comfortable waiting until we have specific conditions that it
         //   is behaving incorrectly in to add more test cases, otherwise I'll be here for a year.
 
         private IServiceProvider CreateController(IEnumerable<IUploadPlugin> plugins, string rule)
@@ -187,9 +187,10 @@ namespace Hive.Tests.Endpoints
                 var nameString = name.ToString();
                 switch (nameString)
                 {
-                    case "hive.mods.upload":
+                    case "hive.mod.upload":
                         gotten = new Rule(nameString, permissionRule);
                         return true;
+
                     default:
                         gotten = null;
                         return false;
