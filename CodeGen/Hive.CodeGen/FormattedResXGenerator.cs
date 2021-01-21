@@ -394,6 +394,7 @@ namespace {@namespace}
 
         public void Initialize(GeneratorInitializationContext context)
         {
+            DebugHelper.Attach();
         }
     }
 }
