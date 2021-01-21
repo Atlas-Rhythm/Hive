@@ -1,6 +1,9 @@
 openapi: 3.0.0
 info:
   title: Hive
+  description: Hive API Specification
+  contact:
+    name: BSMG
   version: '1.0'
 servers:
   - url: 'https://localhost:5001'
@@ -39,7 +42,7 @@ paths:
         schema:
           type: string
     get:
-      summary: 'Gets all of the mods in the specified channel(s), or a default if none is specified.'
+      summary: 'Gets all of the mods in the specified channel(s), or a default if none is specified'
       parameters:
         - name: channelIds
           description: The IDs of the channels to look up mods in
@@ -170,7 +173,7 @@ paths:
         in: path
         required: true
     post:
-      summary: ''
+      summary: Upload a mod
       operationId: post-mod-upload-modId
       security:
         - vaulthAuth: []
@@ -201,7 +204,7 @@ paths:
           required: true
   /game/versions:
     get:
-      summary: Returns all game versions.
+      summary: Returns all game versions
       tags: []
       responses:
         '200':
@@ -223,7 +226,7 @@ paths:
         - vaulthAuth: []
   /resolve_dependencies:
     post:
-      summary: ''
+      summary: Resolve dependencies
       operationId: post-resolve_dependencies
       responses:
         '200':
@@ -303,7 +306,7 @@ paths:
         in: path
         required: true
     post:
-      summary: ''
+      summary: Move a mod
       operationId: post-mod-move-channelId
       security:
         - vaulthAuth: []
@@ -363,7 +366,7 @@ paths:
         Plugin permission check at: hive.channels
   /instance:
     get:
-      summary: Get basic information about this Hive instance.
+      summary: Get basic information about this Hive instance
       tags: []
       responses:
         '200':
@@ -388,7 +391,7 @@ paths:
         in: path
         required: true
     get:
-      summary: Your GET endpoint
+      summary: Get a mod's latest version
       tags: []
       responses:
         '200':
@@ -468,9 +471,8 @@ components:
           type: string
           format: date-time
         editedAt:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
           format: date-time
         uploaderUsername:
           type: string
@@ -610,25 +612,6 @@ components:
         Simple Test:
           modID: test-id
           versions: ^1.0.0
-    Exception:
-      title: Exception
-      type: object
-      description: |-
-        When an exception occurs, or a non-200 status code is returned, this model is returned.
-        This model MAY have more or less fields than what is listed, but will always contain at least a statusCode, which will match the status code returned by the response.
-      properties:
-        StatusCode:
-          type: integer
-          description: Status code of the response
-        Message:
-          type: string
-          description: Message of the problem that ocurred
-      required:
-        - StatusCode
-      x-examples:
-        example-1:
-          StatusCode: 500
-          Message: Uh oh!
     ModIdentifier:
       type: object
       title: ModIdentifier
