@@ -388,13 +388,17 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             var qualifiedSyntax = (MethodDeclarationSyntax)CloneWithoutAttributes(attribute, methodSyntax, context, semModel);
 
             // I need to do this to get a semantic model for the right method
+            var origCu = methodSyntax.SyntaxTree.GetCompilationUnitRoot();
             var qualCu = SyntaxFactory.CompilationUnit()
                 .WithMembers(SyntaxFactory.List(
                     new MemberDeclarationSyntax[] {
                         SyntaxFactory.ClassDeclaration("z")
                             .WithMembers(SyntaxFactory.List(new MemberDeclarationSyntax[] { qualifiedSyntax }))
                     }
-                ));
+                ))
+                .WithUsings(origCu.Usings
+                    .Add(SyntaxFactory.UsingDirective(SyntaxFactory.Token(SyntaxKind.StaticKeyword), null, SyntaxFactory.ParseName(methSym.ContainingType.Name))))
+                .WithExterns(origCu.Externs);
             var qualCuComp = context.Compilation.AddSyntaxTrees(qualCu.SyntaxTree);
             semModel = qualCuComp.GetSemanticModel(qualCu.SyntaxTree);
             qualifiedSyntax = (MethodDeclarationSyntax)((ClassDeclarationSyntax)qualCu.Members.First()).Members.First();
@@ -601,8 +605,12 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             private SyntaxNode GetQualifiedName(ISymbol? symbol, NameSyntax orig)
                 => symbol switch
                 {
-                    var s when s is ITypeSymbol and not ITypeParameterSymbol => SyntaxFactory.ParseName(s.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)),
-                    IMethodSymbol m when !m.IsExtensionMethod => GetQualifiedName(m.ContainingType, orig), // this should only be triggered for attribute constructors
+                    var s when s is ITypeSymbol and not ITypeParameterSymbol
+                        => SyntaxFactory.ParseName(s.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+                            .WithLeadingTrivia(SyntaxFactory.SyntaxTrivia(SyntaxKind.WhitespaceTrivia, " "))
+                            .WithTrailingTrivia(SyntaxFactory.SyntaxTrivia(SyntaxKind.WhitespaceTrivia, " ")),
+                    IMethodSymbol m when !m.IsExtensionMethod
+                        => GetQualifiedName(m.ContainingType, orig), // this should only be triggered for attribute constructors
                     _ => orig
                 };
         }

@@ -352,7 +352,14 @@ namespace Hive.CodeGen
                 node = node.WithArguments(FilterArguments(node.Arguments));
             }
 
-            return base.VisitTupleExpression(node);
+            var result = (TupleExpressionSyntax)base.VisitTupleExpression(node)!;
+
+            if (TypeParamsToRemove != null)
+            {
+                result = result.WithArguments(FilterEmptyTypeArgumentLists(result.Arguments));
+            }
+
+            return result;
         }
 
         public override SyntaxNode? VisitInvocationExpression(InvocationExpressionSyntax node)
@@ -364,7 +371,16 @@ namespace Hive.CodeGen
                 node = node.WithArgumentList(list);
             }
 
-            return base.VisitInvocationExpression(node);
+            var result = (InvocationExpressionSyntax)base.VisitInvocationExpression(node)!;
+
+            if (TypeParamsToRemove != null)
+            {
+                var list = result.ArgumentList;
+                list = list.WithArguments(FilterEmptyTypeArgumentLists(list.Arguments));
+                result = result.WithArgumentList(list);
+            }
+
+            return result;
         }
 
         public override SyntaxNode? VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
@@ -379,13 +395,26 @@ namespace Hive.CodeGen
                 }
             }
 
-            return base.VisitObjectCreationExpression(node);
+            var result = (ObjectCreationExpressionSyntax)base.VisitObjectCreationExpression(node)!;
+
+            if (TypeParamsToRemove != null)
+            {
+                var list = result.ArgumentList;
+                if (list != null)
+                {
+                    list = list.WithArguments(FilterEmptyTypeArgumentLists(list.Arguments));
+                    result = result.WithArgumentList(list);
+                }
+            }
+
+            return result;
         }
 
         private SeparatedSyntaxList<ArgumentSyntax> FilterArguments(SeparatedSyntaxList<ArgumentSyntax> args)
         {
             if (ParamsToRemove == null) return args;
 
+            // first try filter the arguments based only on their parameter refs
             for (var i = 0; i < args.Count; i++)
             {
                 var arg = args[i];
@@ -396,7 +425,7 @@ namespace Hive.CodeGen
                 ));
 
                 var visitor = new ReferencesRemovedParamsVisitor(ParamsToRemove, ParamsToKeep);
-                visitor.Visit(arg.Expression);
+                _ = visitor.Visit(arg.Expression);
 
                 context.ReportDiagnostic(Diagnostic.Create(GenericParameterizationGenerator.Report,
                     null,
@@ -410,7 +439,37 @@ namespace Hive.CodeGen
             return args;
         }
 
-        private sealed class ReferencesRemovedParamsVisitor : CSharpSyntaxVisitor
+        private SeparatedSyntaxList<ArgumentSyntax> FilterEmptyTypeArgumentLists(SeparatedSyntaxList<ArgumentSyntax> args)
+        {
+            if (TypeParamsToRemove == null) return args;
+
+            // then filter the arguments based only on their type refs
+            for (var i = 0; i < args.Count; i++)
+            {
+                var arg = args[i];
+
+                context.ReportDiagnostic(Diagnostic.Create(GenericParameterizationGenerator.Report,
+                    null,
+                    $"Arg: ({arg.Expression.ToFullString()}) {arg.Expression.GetType()}"
+                ));
+
+                var visitor = new HasEmptyTypeArgListVisitor();
+                _ = visitor.Visit(arg.Expression);
+
+                context.ReportDiagnostic(Diagnostic.Create(GenericParameterizationGenerator.Report,
+                    null,
+                    $"Needs removal: {visitor.HasEmptyTypeArgList}"
+                ));
+
+                if (visitor.HasEmptyTypeArgList)
+                    args = args.RemoveAt(i--);
+            }
+
+            return args;
+        }
+
+        // It seems like CSharpSyntaxVisitor does not behave very well
+        private sealed class ReferencesRemovedParamsVisitor : CSharpSyntaxRewriter
         {
             public bool ReferencesParams { get; private set; }
 
@@ -420,22 +479,45 @@ namespace Hive.CodeGen
             public ReferencesRemovedParamsVisitor(IEnumerable<ParameterSyntax> rem, IEnumerable<ParameterSyntax>? keep)
                 => (Removed, Kept) = (rem, keep);
 
-            public override void VisitArgumentList(ArgumentListSyntax node)
+            public override SyntaxNode? Visit(SyntaxNode? node)
             {
+                if (ReferencesParams)
+                    return node; // no need to do additional processing
+                return base.Visit(node);
             }
 
-            public override void VisitTupleExpression(TupleExpressionSyntax node)
-            {
-            }
+            public override SyntaxNode? VisitArgumentList(ArgumentListSyntax node) => node;
+            public override SyntaxNode? VisitTupleExpression(TupleExpressionSyntax node) => node;
 
-            public override void VisitIdentifierName(IdentifierNameSyntax node)
+            public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
             {
                 var name = node.Identifier.Text;
                 if (Kept != null && Kept.Any(p => p.Identifier.Text == name))
-                    return;
+                    return node; // always return original node
 
                 if (Removed.Any(p => p.Identifier.Text.Equals(name, StringComparison.Ordinal)))
                     ReferencesParams = true;
+
+                return node;
+            }
+        }
+        private sealed class HasEmptyTypeArgListVisitor : CSharpSyntaxRewriter
+        {
+            public bool HasEmptyTypeArgList { get; private set; }
+
+            public override SyntaxNode? Visit(SyntaxNode? node)
+            {
+                if (HasEmptyTypeArgList)
+                    return node; // no need to do additional processing
+                return base.Visit(node);
+            }
+
+            public override SyntaxNode? VisitTypeArgumentList(TypeArgumentListSyntax node)
+            {
+                if (node.Arguments.Count <= 0)
+                    HasEmptyTypeArgList = true;
+
+                return base.VisitTypeArgumentList(node);
             }
         }
     }
