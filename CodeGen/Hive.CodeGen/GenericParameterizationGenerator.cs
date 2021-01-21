@@ -38,13 +38,7 @@ namespace Hive.CodeGen
 
         public void Initialize(GeneratorInitializationContext context)
         {
-#if DEBUG
-            if (!Debugger.IsAttached)
-            {
-                Debugger.Launch();
-            }
-#endif 
-
+            DebugHelper.Attach();
             context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
         }
 
@@ -600,12 +594,17 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             {
                 var symInfo = semModel.GetSymbolInfo(name);
                 var symbol = symInfo.Symbol;
-                if (symbol is not ITypeSymbol)
-                    return name; // can't resolve a type, so we return what we got
 
-                var typename = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                return SyntaxFactory.ParseName(typename);
+                return GetQualifiedName(symbol, name);
             }
+
+            private SyntaxNode GetQualifiedName(ISymbol? symbol, NameSyntax orig)
+                => symbol switch
+                {
+                    var s when s is ITypeSymbol and not ITypeParameterSymbol => SyntaxFactory.ParseName(s.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)),
+                    IMethodSymbol m when !m.IsExtensionMethod => GetQualifiedName(m.ContainingType, orig), // this should only be triggered for attribute constructors
+                    _ => orig
+                };
         }
 
         private static SyntaxNode GenerateInstantiation(SyntaxTree tree, SyntaxNode orig, int paramCount, GeneratorExecutionContext context)
