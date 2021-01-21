@@ -6,6 +6,13 @@ using System.Linq;
 using System.Text;
 using static Hive.Versioning.ParseHelpers;
 
+#if !NETSTANDARD2_0
+using StringPart = System.ReadOnlySpan<char>;
+#else
+using StringPart = Hive.Utilities.StringView;
+#endif
+
+
 namespace Hive.Versioning
 {
     /// <summary>
@@ -20,9 +27,9 @@ namespace Hive.Versioning
         /// Constructs a new <see cref="VersionRange"/> that corresponds to the text provided in <paramref name="text"/>.
         /// </summary>
         /// <param name="text">The textual represenation of the <see cref="VersionRange"/> to create.</param>
-        /// <seealso cref="TryParse(ref ReadOnlySpan{char}, out VersionRange)"/>
+        /// <seealso cref="TryParse(ref StringPart, out VersionRange)"/>
         /// <exception cref="ArgumentException">Thrown when<paramref name="text"/> is not a valid <see cref="VersionRange"/>.</exception>
-        public VersionRange(ReadOnlySpan<char> text)
+        public VersionRange(StringPart text)
         {
             text = text.Trim();
 
@@ -48,6 +55,10 @@ namespace Hive.Versioning
         /// <returns>The logical disjunction of <see langword="this"/> and <paramref name="other"/>.</returns>
         /// <seealso cref="operator |(VersionRange, VersionRange)"/>
         [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
+#if !NETSTANDARD2_0
+        [SuppressMessage("Style", "IDE0056:Use index operator",
+            Justification = "Standard 2.0 doesn't have System.Index")]
+#endif
         public VersionRange Disjunction(VersionRange other)
         {
             if (other is null)
@@ -96,7 +107,7 @@ namespace Hive.Versioning
             Array.Copy(subranges, allSubranges, subranges.Length);
             Array.Copy(other.subranges, 0, allSubranges, subranges.Length, other.subranges.Length);
             if (subrange != null)
-                allSubranges[^1] = subrange.Value;
+                allSubranges[allSubranges.Length - 1] = subrange.Value;
 
             return new VersionRange(allSubranges, comparer);
         }
@@ -594,9 +605,9 @@ namespace Hive.Versioning
         /// </remarks>
         /// <param name="text">The stirng to parse.</param>
         /// <returns>The parsed <see cref="VersionRange"/>.</returns>
-        /// <seealso cref="TryParse(ReadOnlySpan{char}, out VersionRange)"/>
+        /// <seealso cref="TryParse(StringPart, out VersionRange)"/>
         /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid <see cref="VersionRange"/>.</exception>
-        public static VersionRange Parse(ReadOnlySpan<char> text)
+        public static VersionRange Parse(StringPart text)
         {
             if (!TryParse(text, out var range))
                 throw new ArgumentException(SR.Range_InputInvalid, nameof(text));
@@ -612,8 +623,8 @@ namespace Hive.Versioning
         /// <param name="text">The string to try to parse.</param>
         /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
         /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
-        /// <seealso cref="TryParse(ref ReadOnlySpan{char}, out VersionRange)"/>
-        public static bool TryParse(ReadOnlySpan<char> text, [MaybeNullWhen(false)] out VersionRange range)
+        /// <seealso cref="TryParse(ref StringPart, out VersionRange)"/>
+        public static bool TryParse(StringPart text, [MaybeNullWhen(false)] out VersionRange range)
         {
             text = text.Trim();
             return TryParse(ref text, true, out range) && text.Length == 0;
@@ -631,10 +642,10 @@ namespace Hive.Versioning
         /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
         /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
         [CLSCompliant(false)]
-        public static bool TryParse(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out VersionRange range)
+        public static bool TryParse(ref StringPart text, [MaybeNullWhen(false)] out VersionRange range)
             => TryParse(ref text, false, out range);
 
-        private static bool TryParse(ref ReadOnlySpan<char> text, bool checkLength, [MaybeNullWhen(false)] out VersionRange range)
+        private static bool TryParse(ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out VersionRange range)
         {
             if (!TryParse(ref text, out var srs, out var compare))
             {
@@ -654,7 +665,7 @@ namespace Hive.Versioning
         #region Parser
 
         [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
-        private static bool TryParse(ref ReadOnlySpan<char> text, [MaybeNullWhen(false)] out Subrange[] sranges, out VersionComparer? comparer)
+        private static bool TryParse(ref StringPart text, [MaybeNullWhen(false)] out Subrange[] sranges, out VersionComparer? comparer)
         {
             sranges = null;
             comparer = null;
@@ -664,7 +675,7 @@ namespace Hive.Versioning
 
             using var ab = new ArrayBuilder<Subrange>();
 
-            ReadOnlySpan<char> restoreTo;
+            StringPart restoreTo;
             do
             {
                 restoreTo = text;
@@ -728,7 +739,7 @@ namespace Hive.Versioning
             return true;
         }
 
-        private static bool TryReadComponent(ref ReadOnlySpan<char> text, out Subrange? range, out VersionComparer? compare)
+        private static bool TryReadComponent(ref StringPart text, out Subrange? range, out VersionComparer? compare)
         {
             if (Subrange.TryParse(ref text, false, out var sr))
             {

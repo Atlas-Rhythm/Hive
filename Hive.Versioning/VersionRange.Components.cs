@@ -6,6 +6,12 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using static Hive.Versioning.ParseHelpers;
 
+#if !NETSTANDARD2_0
+using StringPart = System.ReadOnlySpan<char>;
+#else
+using StringPart = Hive.Utilities.StringView;
+#endif
+
 namespace Hive.Versioning
 {
     // This file has only the internal components of a VersionRange.
@@ -740,7 +746,7 @@ namespace Hive.Versioning
 
         internal partial struct VersionComparer
         {
-            public static bool TryParse(ref ReadOnlySpan<char> text, out VersionComparer comparer)
+            public static bool TryParse(ref StringPart text, out VersionComparer comparer)
             {
                 var copy = text;
                 if (!TryReadCompareType(ref text, out var compareType))
@@ -761,7 +767,7 @@ namespace Hive.Versioning
                 return true;
             }
 
-            private static bool TryReadCompareType(ref ReadOnlySpan<char> text, out ComparisonType type)
+            private static bool TryReadCompareType(ref StringPart text, out ComparisonType type)
             {
                 type = ComparisonType.None;
 
@@ -804,7 +810,7 @@ namespace Hive.Versioning
 
         internal partial struct Subrange
         {
-            public static bool TryParse(ref ReadOnlySpan<char> text, bool allowOutward, out Subrange subrange)
+            public static bool TryParse(ref StringPart text, bool allowOutward, out Subrange subrange)
             {
                 var copy = text;
 
@@ -853,7 +859,7 @@ namespace Hive.Versioning
                 return true;
             }
 
-            private static bool TryReadCaretRange(ref ReadOnlySpan<char> text, out Subrange range)
+            private static bool TryReadCaretRange(ref StringPart text, out Subrange range)
             {
                 var copy = text;
                 if (!TryTake(ref text, '^'))
