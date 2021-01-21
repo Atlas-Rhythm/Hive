@@ -62,12 +62,9 @@ namespace Hive.CodeGen
             return orig(node);
         }
 
-        private SyntaxNode? VisitFirstNodeMethodDecl(BaseMethodDeclarationSyntax bnode, Func<BaseMethodDeclarationSyntax, SyntaxNode?> orig)
+        private SyntaxNode? VisitFirstNodeMethodDecl(MethodDeclarationSyntax node, Func<BaseMethodDeclarationSyntax, SyntaxNode?> orig)
         {
             // this is called if the topmost node we find is a method decl (ie not currently rewriting anything)
-
-            if (bnode is not MethodDeclarationSyntax node)
-                return orig(bnode);
 
             if (node.Arity == 0 || node.TypeParameterList == null)
                 throw new InvalidOperationException("First method decl the transformer finds must be generic");
@@ -279,9 +276,9 @@ namespace Hive.CodeGen
 
         private SyntaxNode? VisitBaseMethodDecl(BaseMethodDeclarationSyntax node, Func<BaseMethodDeclarationSyntax, SyntaxNode?> orig)
         {
-            if (CurrentlyRewriting == null)
+            if (CurrentlyRewriting == null && node is MethodDeclarationSyntax meth)
             {
-                return VisitFirstNodeMethodDecl(node, s => VisitBaseMethodDecl(s, orig));
+                return VisitFirstNodeMethodDecl(meth, s => VisitBaseMethodDecl(s, orig));
             }
 
             if (CurrentlyRewriting != null)
