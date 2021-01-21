@@ -9,8 +9,10 @@ namespace Hive.Utilities.Tests
         [Fact]
         public void TestGenericMethod()
         {
-            _ = ValueTupleOf(1, 2, 3, 4, 5);
-            _ = ValueTupleOf(1, 2, 3, 4, 5, 6, 7, 8);
+            var _1 = ValueTupleOf(1, 2, 3, 4, 5);
+            var _2 = ValueTupleOf(1, 2, 3, 4, 5, 6, 7, 8);
+            _ = _1;
+            _ = _2;
         }
 
         public static ValueTuple<T> ValueTupleOf<T>(T val)
