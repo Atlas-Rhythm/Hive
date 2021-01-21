@@ -165,13 +165,8 @@ paths:
         Plugin permission check at: hive.mod
       security:
         - vaulthAuth: []
-  '/mod/upload/{modId}':
-    parameters:
-      - schema:
-          type: string
-        name: modId
-        in: path
-        required: true
+  /mod/upload:
+    parameters: []
     post:
       summary: Upload a mod
       operationId: post-mod-upload-modId
@@ -183,25 +178,64 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Mod'
+                type: object
+                additionalProperties: false
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - Confirm
+                    default: Confirm
+                  data:
+                    $ref: '#/components/schemas/Mod'
+                  actionCookie:
+                    type: string
+                required:
+                  - type
+                  - data
+                  - actionCookie
+        '400':
+          description: 'Bad Request. Returned if the file is too big or if there is no file uploaded, or if a plugin denied the upload.'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - Error
+                    default: Error
+                  error:
+                    type:
+                      - object
+                      - string
+                required:
+                  - type
+                  - error
         '401':
           $ref: '#/components/responses/ForbiddenResponse'
+        '403':
+          $ref: '#/components/responses/UnauthorizedResponse'
       description: |-
-        Upload or update a new or existing mod.
+        Performs the first step of an upload. This performs the following steps:
 
-        Plugin permission check at: hive.mod.upload
+        1. Performs standard permission checks on the file being uploaded.
+        2. Ensures the uploaded file is not too big.
+        3. Performs additional plugin validity checks.
+        4. Uploads the uploaded file to the CDN.
+        5. Returns the data necessary for the next step of uploading. See: /mod/upload/finish
+
+        Plugin permission check at: hive.mod.upload and at: hive.mod.upload.with_data
+      parameters: []
       requestBody:
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Mod'
-      parameters:
-        - schema:
-            type: string
-          in: query
-          name: modId
-          description: Mod ID to upload to
-          required: true
+              type: object
+              properties: {}
+        description: The mod file to upload. Valid files are dictated by plugins.
   /game/versions:
     get:
       summary: Returns all game versions
@@ -408,6 +442,58 @@ paths:
       operationId: get-mod-modId-latest
       description: 'Returns the latest mod with the provided ID. This is equivalent to calling: /mod/{modId}?range=*'
       parameters: []
+      security:
+        - vaulthAuth: []
+  /mod/upload/finish:
+    post:
+      summary: ''
+      operationId: post-mod-upload-finish
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - Success
+                required:
+                  - type
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '410':
+          description: 'Gone, you performed the second stage of the upload too long after the first stage.'
+      description: |-
+        The final stage of an upload. Completes an upload by providing the final metadata of the mod.
+
+        Plugin permission check at: hive.mod.upload.with_data
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                finalMetadata:
+                  $ref: '#/components/schemas/Mod'
+                cookie:
+                  type: string
+              required:
+                - finalMetadata
+                - cookie
+        description: The final mod metadata to upload and the cookie returned in response to a successful completion of the first upload step.
       security:
         - vaulthAuth: []
 components:
