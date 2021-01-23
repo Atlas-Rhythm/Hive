@@ -153,6 +153,8 @@ paths:
           description: The version range of the mod to obtain
         - schema:
             type: array
+            items:
+              type: string
           in: header
           name: Accept-Language
           description: The languages to return the localized mod for
