@@ -126,10 +126,14 @@ namespace Hive.Tests.Endpoints
         private Controllers.ChannelsController CreateController(string permissionRule, IChannelsControllerPlugin plugin)
         {
             var ruleProvider = DIHelper.CreateRuleProvider();
+
             var hiveRule = new Rule("hive", "next(false)");
-            var r = new Rule("hive.channel", permissionRule);
+            var listChannels = new Rule("hive.channels.list", permissionRule);
+            var filterChannels = new Rule("hive.channels.filter", permissionRule);
+
             ruleProvider.Setup(m => m.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
-            ruleProvider.Setup(m => m.TryGetRule(r.Name, out r)).Returns(true);
+            ruleProvider.Setup(m => m.TryGetRule(listChannels.Name, out listChannels)).Returns(true);
+            ruleProvider.Setup(m => m.TryGetRule(filterChannels.Name, out filterChannels)).Returns(true);
 
             var services = DIHelper.ConfigureServices(
                 Options,

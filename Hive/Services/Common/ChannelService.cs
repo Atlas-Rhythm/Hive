@@ -22,7 +22,9 @@ namespace Hive.Services.Common
         private PermissionActionParseState channelsParseState;
 
         private static readonly HiveObjectQuery<IEnumerable<Channel>> forbiddenResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
-        private const string ActionName = "hive.channel";
+
+        private const string ListActionName = "hive.channels.list";
+        private const string FilterActionName = "hive.channels.filter";
 
         /// <summary>
         /// Create a ChannelService with DI.
@@ -51,24 +53,29 @@ namespace Hive.Services.Common
         {
             // hive.channel with a null channel in the context should be permissible
             // iff a given user (or none) is allowed to view any channels. Thus, this should almost always be true
-            if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref channelsParseState))
+            if (!permissions.CanDo(ListActionName, new PermissionContext { User = user }, ref channelsParseState))
                 return forbiddenResponse;
+
             // Combine plugins
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;
-            log.Debug("Performing additional checks for GetChannels...");
+
             // May return false, which causes a Forbid.
             // If it throws an exception, it will be handled by our MiddleWare
+            log.Debug("Performing additional checks for GetChannels...");
             if (!combined.GetChannelsAdditionalChecks(user))
                 return forbiddenResponse;
+
             // Filter channels based off of user-level permission
             // Permission for a given channel is entirely plugin-based, channels in Hive are defaultly entirely public.
             // For a mix of private/public channels, a plugin that maintains a user-level list of read/write channels is probably ideal.
             var channels = context.Channels.ToList();
             log.Debug("Filtering channels from {0} channels...", channels.Count);
+
             // First, we filter over if the given channel is accessible to the given user.
             // This allows for much more specific permissions, although chances are that roles will be used (and thus a plugin) instead.
-            var filteredChannels = channels.Where(c => permissions.CanDo(ActionName, new PermissionContext { Channel = c, User = user }, ref channelsParseState));
+            var filteredChannels = channels.Where(c => permissions.CanDo(FilterActionName, new PermissionContext { Channel = c, User = user }, ref channelsParseState));
+
             log.Debug("Remaining channels before plugin: {0}", filteredChannels.Count());
             filteredChannels = combined.GetChannelsFilter(user, filteredChannels);
             log.Debug("Remaining channels: {0}", filteredChannels.Count());

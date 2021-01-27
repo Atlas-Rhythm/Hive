@@ -21,7 +21,9 @@ namespace Hive.Services.Common
         private readonly PermissionsManager<PermissionContext> permissions;
         [ThreadStatic] private static PermissionActionParseState versionsParseState;
 
-        private const string ActionName = "hive.game.version";
+        private const string ListActionName = "hive.game.version.list";
+        private const string FilterActionName = "hive.game.version.filter";
+
         private static readonly HiveObjectQuery<IEnumerable<GameVersion>> forbiddenResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
 
         /// <summary>
@@ -48,13 +50,14 @@ namespace Hive.Services.Common
         /// <returns>A wrapped enumerable of <see cref="GameVersion"/> objects, if successful.</returns>
         public HiveObjectQuery<IEnumerable<GameVersion>> RetrieveAllVersions(User? user)
         {
-            if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref versionsParseState))
+            if (!permissions.CanDo(ListActionName, new PermissionContext { User = user }, ref versionsParseState))
                 return forbiddenResponse;
 
             // Combine plugins
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;
             log.Debug("Perform additional checks for GetGameVersions...");
+
             // If the plugins say the user cannot access the list of game versions, then we forbid.
             if (!combined.GetGameVersionsAdditionalChecks(user))
                 return forbiddenResponse;
@@ -62,9 +65,11 @@ namespace Hive.Services.Common
             // Grab our list of game versions
             var versions = context.GameVersions.ToList();
             log.Debug("Filtering versions from all {0} versions...", versions.Count);
+
             // First, we perform a permission check on each game version, in case we need to filter any specific ones
             // (Use additionalData to flag beta game versions, perhaps? Could be a plugin.)
-            var filteredVersions = versions.Where(v => permissions.CanDo(ActionName, new PermissionContext { GameVersion = v, User = user }, ref versionsParseState));
+            var filteredVersions = versions.Where(v => permissions.CanDo(FilterActionName, new PermissionContext { GameVersion = v, User = user }, ref versionsParseState));
+
             log.Debug("Remaining versions after permissions check: {0}", filteredVersions.Count());
             // Then we filter this even further by passing it through all of our Hive plugins.
             filteredVersions = combined.GetGameVersionsFilter(user, filteredVersions);

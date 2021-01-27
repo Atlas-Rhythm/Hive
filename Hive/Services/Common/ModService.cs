@@ -25,7 +25,13 @@ namespace Hive.Services.Common
         private readonly IAggregate<IModsPlugin> plugin;
         private readonly PermissionsManager<PermissionContext> permissions;
 
-        private const string GetModsActionName = "hive.mod";
+        // Actions done on a list of mods
+        private const string GetModsActionName = "hive.mods.list";
+        private const string FilterModsActionName = "hive.mods.filter";
+
+        // Actions done on a singular mod
+        private const string GetModActionName = "hive.mod.get";
+        private const string FilterModActionName = "hive.mod.filter";
         private const string MoveModActionName = "hive.mod.move";
 
         [ThreadStatic] private static PermissionActionParseState getModsParseState;
@@ -131,7 +137,7 @@ namespace Hive.Services.Common
             }
 
             filteredMods = filteredMods.Where(m =>
-                permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState)
+                permissions.CanDo(FilterModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState)
                         && combined.GetSpecificModAdditionalChecks(user, m));
 
             return new HiveObjectQuery<IEnumerable<Mod>>(filteredMods, null, StatusCodes.Status200OK);
@@ -148,7 +154,7 @@ namespace Hive.Services.Common
         public HiveObjectQuery<Mod> GetMod(User? user, string id, VersionRange? range = null)
         {
             // iff a given user (or none) is allowed to access any mods. This should almost always be true.
-            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user }, ref getModsParseState))
+            if (!permissions.CanDo(GetModActionName, new PermissionContext { User = user }, ref getModsParseState))
                 return forbiddenModResponse;
 
             // Combine plugins
@@ -177,7 +183,7 @@ namespace Hive.Services.Common
             }
 
             // Forbid if a permissions check or plugins check prevents the user from accessing this mod.
-            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState)
+            if (!permissions.CanDo(FilterModActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState)
                 || !combined.GetSpecificModAdditionalChecks(user, mod))
                 return forbiddenModResponse;
 

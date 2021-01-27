@@ -196,13 +196,9 @@ namespace Hive.Tests.Endpoints
                         gotten = new Rule(nameString, "next(false)");
                         return true;
 
-                    case "hive.game.version":
+                    default:
                         gotten = new Rule(nameString, permissionRule);
                         return true;
-
-                    default:
-                        gotten = null;
-                        return false;
                 }
             }
         }
