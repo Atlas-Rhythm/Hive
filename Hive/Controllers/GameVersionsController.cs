@@ -27,7 +27,16 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="user">User in context</param>
         [return: StopIfReturns(false)]
-        bool GetGameVersionsAdditionalChecks(User? user) => true;
+        bool ListGameVersionsAdditionalChecks(User? user) => true;
+
+        /// <summary>
+        /// Returns true if the sepcified user has access to create a new game version. False otherwise.
+        /// A false return will cause the endpoint to return a Forbid before executing the rest of the endpoint.
+        /// <para>Hive default is to return true.</para>
+        /// </summary>
+        /// <param name="user">User in context</param>
+        [return: StopIfReturns(false)]
+        bool CreateGameVersionsAdditionalChecks(User? user) => true;
 
         /// <summary>
         /// Returns a filtered enumerable of <see cref="GameVersion"/>.
@@ -68,7 +77,8 @@ namespace Hive.Controllers
 
         /// <summary>
         /// Gets all available <see cref="GameVersion"/> objects.
-        /// This performs a permission check at: <c>hive.game.version</c>.
+        /// This performs a permission check at: <c>hive.game.version.list</c>.
+        /// Furthermore, game versions are further filtered by a permission check at: <c>hive.game.version.filter</c>.
         /// </summary>
         /// <returns>A wrapped enumerable of <see cref="GameVersion"/> objects, if successful.</returns>
         [HttpGet]
@@ -83,6 +93,27 @@ namespace Hive.Controllers
             var queryResult = gameVersionService.RetrieveAllVersions(user);
 
             return queryResult.Convert(coll => coll.Select(gv => SerializedGameVersion.Serialize(gv)));
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="GameVersion"/>, and adds it to the database.
+        /// This performs a permission check at: <c>hive.game.version.create</c>
+        /// </summary>
+        /// <param name="name">The name of the new version</param>
+        /// <returns>A wrapped <see cref="GameVersion"/> object, if successful.</returns>
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<SerializedGameVersion>> CreateGameVersion([FromBody] string name)
+        {
+            log.Debug("Creating a new game version...");
+
+            // Get the user, do not need to capture context.
+            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+
+            var queryResult = gameVersionService.CreateNewGameVersion(user, name);
+
+            return queryResult.Convert(version => SerializedGameVersion.Serialize(version));
         }
     }
 }

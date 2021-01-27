@@ -140,6 +140,23 @@ namespace Hive.Tests.Endpoints
             }
         }
 
+        [Fact]
+        public async Task CreateNewVersion()
+        {
+            // Yeah we're just going to simply make a new game version and call it a day.
+            var controller = CreateController("next(true)", defaultPlugins);
+            var res = await controller.CreateGameVersion("1.13.2");
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed.
+            var result = res.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var value = result!.Value as SerializedGameVersion;
+            Assert.NotNull(value); // We must be given one GameVersion back whose name matches our input
+            Assert.True(value!.Name == "1.13.2");
+        }
+
         private Controllers.GameVersionsController CreateController(string permissionRule, IEnumerable<IGameVersionsPlugin> plugins)
         {
             var services = DIHelper.ConfigureServices(
@@ -163,7 +180,7 @@ namespace Hive.Tests.Endpoints
 
         private class DenyUserAccessPlugin : IGameVersionsPlugin
         {
-            public bool GetGameVersionsAdditionalChecks(User? _) => false; // If it is active, restrict access.
+            public bool ListGameVersionsAdditionalChecks(User? _) => false; // If it is active, restrict access.
         }
 
         private class FilterBetaVersionsPlugin : IGameVersionsPlugin
