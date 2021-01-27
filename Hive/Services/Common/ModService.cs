@@ -99,7 +99,7 @@ namespace Hive.Services.Common
             var mods = CreateModQuery()
                 .AsNoTracking();
 
-            if (filteredChannels != null)
+            if (filteredChannels is not null && filteredChannels.Any())
             {
                 mods = mods.Where(m => filteredChannels.Contains(m.Channel));
             }

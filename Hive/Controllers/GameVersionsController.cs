@@ -1,4 +1,5 @@
 ﻿using Hive.Models;
+using Hive.Models.Serialized;
 using Hive.Plugins;
 using Hive.Services;
 using Hive.Services.Common;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Hive.Controllers
@@ -72,7 +74,7 @@ namespace Hive.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<IEnumerable<GameVersion>>> GetGameVersions()
+        public async Task<ActionResult<IEnumerable<SerializedGameVersion>>> GetGameVersions()
         {
             log.Debug("Getting game versions...");
             // Get the user, do not need to capture context.
@@ -80,7 +82,7 @@ namespace Hive.Controllers
 
             var queryResult = gameVersionService.RetrieveAllVersions(user);
 
-            return queryResult.Convert();
+            return queryResult.Convert(coll => coll.Select(gv => SerializedGameVersion.Serialize(gv)));
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Hive.Controllers;
 using Hive.Models;
+using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Utilities;
@@ -78,12 +79,12 @@ namespace Hive.Tests.Endpoints
             Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed.
             var result = res.Result as OkObjectResult;
             Assert.NotNull(result);
-            var value = result!.Value as IEnumerable<GameVersion>;
+            var value = result!.Value as IEnumerable<SerializedGameVersion>;
             Assert.NotNull(value); // We must be given a list of versions back.
 
             // Check if the result given back contains all of the versions we put into it.
             foreach (var version in defaultGameVersions)
-                Assert.Contains(version, value);
+                Assert.Contains(value, item => item.Name == version.Name);
         }
 
         [Fact]
@@ -99,15 +100,15 @@ namespace Hive.Tests.Endpoints
             Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed, and the permission rule gives us all public versions.
             var result = res.Result as OkObjectResult;
             Assert.NotNull(result);
-            var value = result!.Value as IEnumerable<GameVersion>;
+            var value = result!.Value as IEnumerable<SerializedGameVersion>;
             Assert.NotNull(value); // We must be given a list of versions back.
 
             // Should only contain non-beta versions
-            Assert.DoesNotContain(defaultGameVersions.Last(), value);
+            Assert.DoesNotContain(value, item => item.Name == defaultGameVersions.Last().Name);
             // Should contain all public versions (in our case, all versions except the very last one)
             for (var i = 0; i < defaultGameVersions.Count() - 1; i++)
             {
-                Assert.Contains(defaultGameVersions.ElementAt(i), value);
+                Assert.Contains(value, item => item.Name == defaultGameVersions.ElementAt(i).Name);
             }
         }
 
@@ -127,15 +128,15 @@ namespace Hive.Tests.Endpoints
             Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed, and the plugin will gives us all public versions.
             var result = res.Result as OkObjectResult;
             Assert.NotNull(result);
-            var value = result!.Value as IEnumerable<GameVersion>;
+            var value = result!.Value as IEnumerable<SerializedGameVersion>;
             Assert.NotNull(value); // We must be given a list of versions back.
 
             // Should only contain non-beta versions
-            Assert.DoesNotContain(defaultGameVersions.Last(), value);
+            Assert.DoesNotContain(value, item => item.Name == defaultGameVersions.Last().Name);
             // Should contain all public versions (in our case, all versions except the very last one)
             for (var i = 0; i < defaultGameVersions.Count() - 1; i++)
             {
-                Assert.Contains(defaultGameVersions.ElementAt(i), value);
+                Assert.Contains(value, item => item.Name == defaultGameVersions.ElementAt(i).Name);
             }
         }
 
