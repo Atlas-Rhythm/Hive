@@ -45,7 +45,7 @@ namespace Hive.Services.Common
         /// <param name="destination">New channel that the Mod will reside in.</param>
         /// <returns></returns>
         [return: StopIfReturns(false)]
-        bool GetMoveModAdditionalChecks(User user, Mod contextMod, ReadOnlyChannel origin, ReadOnlyChannel destination) => true;
+        bool GetMoveModAdditionalChecks(User? user, Mod contextMod, ReadOnlyChannel origin, ReadOnlyChannel destination) => true;
 
         /// <summary>
         /// Allows modification of a <see cref="Mod"/> object after a move operation has been performed.
@@ -190,7 +190,7 @@ namespace Hive.Services.Common
         /// <param name="channelDestination">The destination channel ID to move the mod to.</param>
         /// <param name="identifier">The <see cref="ModIdentifier"/> to move.</param>
         /// <returns>A wrapped <see cref="Mod"/> of the moved mod, if successful.</returns>
-        public async Task<HiveObjectQuery<Mod>> MoveMod(User user, string channelDestination, ModIdentifier identifier)
+        public async Task<HiveObjectQuery<Mod>> MoveMod(User? user, string channelDestination, ModIdentifier identifier)
         {
             log.Debug("Getting database objects...");
 
