@@ -140,12 +140,6 @@ namespace Hive.Controllers
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
-            if (user is null)
-            {
-                return Unauthorized();
-            }
-
             var queryResult = await modService.MoveMod(user, channelId, identifier).ConfigureAwait(false);
 
             return queryResult.Serialize(GetAcceptLanguageCultures());
