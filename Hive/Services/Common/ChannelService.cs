@@ -11,6 +11,41 @@ using Microsoft.AspNetCore.Http;
 namespace Hive.Services.Common
 {
     /// <summary>
+    /// A class for plugins that allow modifications of <see cref="ChannelsController"/>
+    /// </summary>
+    [Aggregable]
+    public interface IChannelsControllerPlugin
+    {
+        /// <summary>
+        /// Returns true if the specified user has access to ANY of the channels. False otherwise.
+        /// A false return will cause the endpoint in question to return a Forbid before executing the rest of the endpoint.
+        /// <para>It is recommended to use <see cref="GetChannelsFilter(User?, IEnumerable{Channel})"/> for filtering user specific channels.</para>
+        /// <para>Hive default is to return true.</para>
+        /// </summary>
+        /// <param name="user">User in context</param>
+        public bool GetChannelsAdditionalChecks(User? user) => true;
+
+        /// <summary>
+        /// Returns true if the specified user has access to creating new channels. False otherwise.
+        /// A false return will cause the endpoint in question to return a Forbid before executing the rest of the endpoint.
+        /// <para>Hive default is to return true.</para>
+        /// </summary>
+        /// <param name="user">User in context</param>
+        public bool CreateChannelAdditionalChecks(User? user) => true;
+
+        /// <summary>
+        /// Returns a filtered enumerable of <see cref="Channel"/>
+        /// <para>Hive default is to return input channels.</para>
+        /// </summary>
+        /// <param name="user">User to filter on</param>
+        /// <param name="channels">Input channels to filter</param>
+        /// <returns>Filtered channels</returns>
+        public IEnumerable<Channel> GetChannelsFilter(User? user, [TakesReturnValue] IEnumerable<Channel> channels) => channels;
+    }
+
+    internal class HiveChannelsControllerPlugin : IChannelsControllerPlugin { }
+
+    /// <summary>
     /// Common functionality for channel related actions.
     /// </summary>
     public class ChannelService

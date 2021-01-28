@@ -1,8 +1,8 @@
-﻿using Hive.Controllers;
-using Hive.Models;
+﻿using Hive.Models;
 using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
+using Hive.Services.Common;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -171,7 +171,7 @@ namespace Hive.Tests.Endpoints
 
             services
                 .AddTransient(sp => plugins)
-                .AddScoped<Services.Common.GameVersionService>()
+                .AddScoped<GameVersionService>()
                 .AddScoped<Controllers.GameVersionsController>()
                 .AddAggregates();
 

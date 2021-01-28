@@ -1,8 +1,8 @@
-﻿using Hive.Controllers;
-using Hive.Models;
+﻿using Hive.Models;
 using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
+using Hive.Services.Common;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -387,7 +387,7 @@ namespace Hive.Tests.Endpoints
 
             services
                 .AddTransient(sp => plugins)
-                .AddScoped<Services.Common.ModService>()
+                .AddScoped<ModService>()
                 .AddScoped<Controllers.ModsController>()
                 .AddAggregates();
 

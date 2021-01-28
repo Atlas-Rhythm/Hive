@@ -1,7 +1,7 @@
-﻿using Hive.Controllers;
-using Hive.Models;
+﻿using Hive.Models;
 using Hive.Permissions;
 using Hive.Plugins;
+using Hive.Services.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -164,7 +164,7 @@ namespace Hive.Tests.Endpoints
             services.AddSingleton<IChannelsControllerPlugin>(sp => new HiveChannelsControllerPlugin());
             services.AddSingleton(sp => plugin);
             services.AddAggregates();
-            services.AddScoped<Services.Common.ChannelService>();
+            services.AddScoped<ChannelService>();
             services.AddScoped<Controllers.ChannelsController>();
 
             return services.BuildServiceProvider().GetRequiredService<Controllers.ChannelsController>();

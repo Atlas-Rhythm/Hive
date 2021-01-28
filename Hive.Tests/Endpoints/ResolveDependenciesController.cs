@@ -1,7 +1,7 @@
-﻿using Hive.Controllers;
-using Hive.Models;
+﻿using Hive.Models;
 using Hive.Permissions;
 using Hive.Plugins;
+using Hive.Services.Common;
 using Hive.Utilities;
 using Hive.Versioning;
 using Microsoft.AspNetCore.Http;
@@ -283,7 +283,7 @@ namespace Hive.Tests.Endpoints
 
             services
                 .AddTransient(sp => plugins)
-                .AddScoped<Services.Common.DependencyResolverService>()
+                .AddScoped<DependencyResolverService>()
                 .AddScoped<Controllers.ResolveDependenciesController>()
                 .AddAggregates();
 

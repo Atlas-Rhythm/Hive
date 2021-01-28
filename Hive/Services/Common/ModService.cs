@@ -16,6 +16,47 @@ using Version = Hive.Versioning.Version;
 namespace Hive.Services.Common
 {
     /// <summary>
+    /// A class for plugins that allow modifications of <see cref="ModsController"/>
+    /// </summary>
+    [Aggregable]
+    public interface IModsPlugin
+    {
+        /// <summary>
+        /// Returns true if the specified user has access to view a particular mod, false otherwise.
+        /// This method is called for each mod the user wants to access.
+        /// <para>Hive default is to return true for each mod.</para>
+        /// </summary>
+        /// <remarks>
+        /// This method is called in a LINQ expression that is not tracked by EntityFramework,
+        /// so modifications done to the <see cref="Mod"/> object will not be reflected in the database.
+        /// </remarks>
+        /// <param name="user">User in context</param>
+        /// <param name="contextMod">Mod in context</param>
+        [return: StopIfReturns(false)]
+        bool GetSpecificModAdditionalChecks(User? user, Mod contextMod) => true;
+
+        /// <summary>
+        /// Returns true if the specified user has access to move a particular mod from <paramref name="origin"/> to <paramref name="destination"/>. False otherwise.
+        /// <para>Hive default is to return true.</para>
+        /// </summary>
+        /// <param name="user">User in context</param>
+        /// <param name="contextMod">Mod that is attempting to be moved</param>
+        /// <param name="origin">Channel that the Mod was located in before the move.</param>
+        /// <param name="destination">New channel that the Mod will reside in.</param>
+        /// <returns></returns>
+        [return: StopIfReturns(false)]
+        bool GetMoveModAdditionalChecks(User user, Mod contextMod, ReadOnlyChannel origin, ReadOnlyChannel destination) => true;
+
+        /// <summary>
+        /// Allows modification of a <see cref="Mod"/> object after a move operation has been performed.
+        /// </summary>
+        /// <param name="input">The mod in which the move operation was performed on.</param>
+        void ModifyAfterModMove(in Mod input) { }
+    }
+
+    internal class HiveModsControllerPlugin : IModsPlugin { }
+
+    /// <summary>
     /// Common functionality for mod related actions.
     /// </summary>
     public class ModService
