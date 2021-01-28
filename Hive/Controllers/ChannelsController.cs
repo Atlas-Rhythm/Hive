@@ -27,6 +27,14 @@ namespace Hive.Controllers
         public bool GetChannelsAdditionalChecks(User? user) => true;
 
         /// <summary>
+        /// Returns true if the specified user has access to creating new channels. False otherwise.
+        /// A false return will cause the endpoint in question to return a Forbid before executing the rest of the endpoint.
+        /// <para>Hive default is to return true.</para>
+        /// </summary>
+        /// <param name="user">User in context</param>
+        public bool CreateChannelAdditionalChecks(User? user) => true;
+
+        /// <summary>
         /// Returns a filtered enumerable of <see cref="Channel"/>
         /// <para>Hive default is to return input channels.</para>
         /// </summary>
@@ -81,6 +89,23 @@ namespace Hive.Controllers
             var user = await authService.GetUser(Request).ConfigureAwait(false);
             // If user is null, we can simply forward it anyways
             var queryResult = channelService.RetrieveAllChannels(user);
+
+            return queryResult.Convert();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public async Task<ActionResult<Channel>> CreateNewChannel([FromBody] string channelName)
+        {
+            log.Debug("Creating new channel...");
+
+            // Get the user, do not need to capture context.
+            var user = await authService.GetUser(Request).ConfigureAwait(false);
+
+            // If user is null, we can simply forward it anyways
+            var queryResult = channelService.CreateNewChannel(user, channelName);
 
             return queryResult.Convert();
         }

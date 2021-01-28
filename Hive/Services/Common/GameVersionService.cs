@@ -110,6 +110,7 @@ namespace Hive.Services.Common
 
             log.Debug("Creating a new Game Version...");
 
+            // REVIEW: Do I need to fill any other fields here?
             var version = new GameVersion()
             {
                 Name = versionName,

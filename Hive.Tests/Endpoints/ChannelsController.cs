@@ -119,6 +119,21 @@ namespace Hive.Tests.Endpoints
             Assert.DoesNotContain(defaultChannels.ElementAt(1), value);
         }
 
+        [Fact]
+        public async Task CreateNewChannel()
+        {
+            var controller = CreateController("next(true)", CreateDefaultPlugin());
+            var res = await controller.CreateNewChannel("archival");
+            Assert.NotNull(res);
+            // Should succeed, with only Public listed.
+            Assert.IsType<OkObjectResult>(res.Result);
+            var result = res.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var value = result!.Value as Channel;
+            Assert.NotNull(value);
+            Assert.True(value!.Name == "archival");
+        }
+
         private static Mock<IChannelsControllerPlugin> CreatePlugin() => new();
 
         private static IChannelsControllerPlugin CreateDefaultPlugin() => new HiveChannelsControllerPlugin();
@@ -130,10 +145,12 @@ namespace Hive.Tests.Endpoints
             var hiveRule = new Rule("hive", "next(false)");
             var listChannels = new Rule("hive.channels.list", permissionRule);
             var filterChannels = new Rule("hive.channels.filter", permissionRule);
+            var createChannel = new Rule("hive.channel.create", permissionRule);
 
             ruleProvider.Setup(m => m.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
             ruleProvider.Setup(m => m.TryGetRule(listChannels.Name, out listChannels)).Returns(true);
             ruleProvider.Setup(m => m.TryGetRule(filterChannels.Name, out filterChannels)).Returns(true);
+            ruleProvider.Setup(m => m.TryGetRule(createChannel.Name, out createChannel)).Returns(true);
 
             var services = DIHelper.ConfigureServices(
                 Options,
