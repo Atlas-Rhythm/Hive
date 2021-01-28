@@ -69,24 +69,32 @@ namespace Hive.Controllers
         }
 
         /// <summary>
-        /// Gets a <see cref="SerializedMod"/> that matches the given ID and an optional <see cref="VersionRange"/>.
+        /// Gets a <see cref="SerializedMod"/> that matches the given ID, with some optional filtering.
+        /// <para><paramref name="range"/> Will default to all mod versions if not provided. Otherwise, only obtain mods that match the specified version range.</para>
+        /// <para><paramref name="channelId"/> Will default to empty/the instance default if not provided. Otherwise, only obtains mods from the specified channel IDs.</para>
+        /// <para><paramref name="gameVersion"/> Will default to search all game versions if not provided. Otherwise, filters on only this game version.</para>
+        /// <para><paramref name="filterType"/> Will default to <c>latest</c> if not provided or not one of: <c>all</c>, <c>latest</c>, or <c>recent</c>.</para>
         /// This performs a permission check at <c>hive.mod.get</c>, and at <c>hive.mod.filter</c> once the <see cref="Mod"/> object was retrieved.
         /// </summary>
         /// <param name="id">The <seealso cref="Mod.ReadableID"/> to find.</param>
         /// <param name="range">The <see cref="VersionRange"/> to match.</param>
+        /// <param name="channelId">The channel IDs to filter the mods.</param>
+        /// <param name="gameVersion">The game version to search within.</param>
+        /// <param name="filterType">How to filter the results.</param>
         /// <returns>A wrapped <see cref="SerializedMod"/> of the found mod, if successful.</returns>
         [HttpGet("mod/{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<SerializedMod>> GetSpecificMod([FromRoute] string id, [FromQuery] string? range = null)
+        public async Task<ActionResult<SerializedMod>> GetSpecificMod([FromRoute] string id, [FromQuery] string? range = null, [FromQuery] string? channelId = null, [FromQuery] string? gameVersion = null, [FromQuery] string? filterType = null)
         {
             log.Debug("Getting a specific mod...");
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             var filteredRange = range != null ? new VersionRange(range) : null;
-            var queryResult = modService.GetMod(user, id, filteredRange);
+
+            var queryResult = modService.GetMod(user, id, filteredRange, channelId, gameVersion, filterType);
 
             return queryResult.Serialize(GetAcceptLanguageCultures());
         }
