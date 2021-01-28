@@ -125,7 +125,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", CreateDefaultPlugin());
             var res = await controller.CreateNewChannel("archival");
             Assert.NotNull(res);
-            // Should succeed, with only Public listed.
+            // Should succeed and give us our new channel back
             Assert.IsType<OkObjectResult>(res.Result);
             var result = res.Result as OkObjectResult;
             Assert.NotNull(result);

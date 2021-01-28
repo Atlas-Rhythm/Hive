@@ -103,7 +103,8 @@ namespace Hive.Services.Common
         /// <para><paramref name="channelIds"/> Will default to empty/the instance default if not provided. Otherwise, only obtains mods from the specified channel IDs.</para>
         /// <para><paramref name="gameVersion"/> Will default to search all game versions if not provided. Otherwise, filters on only this game version.</para>
         /// <para><paramref name="filterType"/> Will default to <c>latest</c> if not provided or not one of: <c>all</c>, <c>latest</c>, or <c>recent</c>.</para>
-        /// This performs a permission check at: <c>hive.mod</c>.
+        /// This performs a permission check at: <c>hive.mods.list</c>.
+        /// Furthermore, mods are further filtered by a permission check at: <c>hive.mods.filter</c>.
         /// </summary>
         /// <param name="user">The user associated with this request.</param>
         /// <param name="channelIds">The channel IDs to filter the mods.</param>
@@ -185,8 +186,8 @@ namespace Hive.Services.Common
         }
 
         /// <summary>
-        /// Gets a <see cref="Mod"/> of the specific <see cref="VersionRange"/> of this particular mod's <seealso cref="Mod.ReadableID"/>.
-        /// This performs a permission check at: <c>hive.mod</c>.
+        /// Gets a <see cref="Mod"/> that matches the given ID and an optional <see cref="VersionRange"/>.
+        /// This performs a permission check at <c>hive.mod.get</c>, and at <c>hive.mod.filter</c> once the <see cref="Mod"/> object was retrieved.
         /// </summary>
         /// <param name="user">The user associated with this request.</param>
         /// <param name="id">The <seealso cref="Mod.ReadableID"/> to find.</param>
@@ -232,7 +233,7 @@ namespace Hive.Services.Common
         }
 
         /// <summary>
-        /// Moves the specified <see cref="ModIdentifier"/> from whatever channel it was in to the specified channel.
+        /// Moves the specified <see cref="ModIdentifier"/> to the specified channel.
         /// This performs a permission check at: <c>hive.mod.move</c>.
         /// </summary>
         /// <param name="user">The user associated with this request.</param>

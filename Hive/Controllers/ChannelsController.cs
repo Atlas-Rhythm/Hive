@@ -38,7 +38,8 @@ namespace Hive.Controllers
 
         /// <summary>
         /// Gets all <see cref="Channel"/> objects available.
-        /// This performs a permission check at: <c>hive.channel</c>.
+        /// This performs a permission check at: <c>hive.channels.list</c>.
+        /// Furthermore, channels are further filtered by a permission check at: <c>hive.channels.filter</c>.
         /// </summary>
         /// <returns>A wrapped collection of <see cref="Channel"/>, if successful.</returns>
         [HttpGet]
@@ -58,9 +59,11 @@ namespace Hive.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Creates a new <see cref="Channel"/> object with the specified name.
+        /// This performs a permission check at: <c>hive.channel.create</c>.
         /// </summary>
-        /// <returns></returns>
+        /// <param name="channelName">The name of the new channel</param>
+        /// <returns>The wrapped <see cref="Channel"/> that was created, if successful.</returns>
         public async Task<ActionResult<Channel>> CreateNewChannel([FromBody] string channelName)
         {
             log.Debug("Creating new channel...");
