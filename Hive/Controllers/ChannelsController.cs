@@ -64,6 +64,9 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="channelName">The name of the new channel</param>
         /// <returns>The wrapped <see cref="Channel"/> that was created, if successful.</returns>
+        [HttpPost("/new")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<Channel>> CreateNewChannel([FromBody] string channelName)
         {
             log.Debug("Creating new channel...");

@@ -63,7 +63,7 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="name">The name of the new version</param>
         /// <returns>A wrapped <see cref="GameVersion"/> object, if successful.</returns>
-        [HttpPost]
+        [HttpPost("/new")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<SerializedGameVersion>> CreateGameVersion([FromBody] string name)
