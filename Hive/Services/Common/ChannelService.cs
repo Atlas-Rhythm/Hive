@@ -23,7 +23,7 @@ namespace Hive.Services.Common
         /// <para>Hive default is to return true.</para>
         /// </summary>
         /// <param name="user">User in context</param>
-        public bool GetChannelsAdditionalChecks(User? user) => true;
+        bool GetChannelsAdditionalChecks(User? user) => true;
 
         /// <summary>
         /// Returns true if the specified user has access to creating new channels. False otherwise.
@@ -31,7 +31,7 @@ namespace Hive.Services.Common
         /// <para>Hive default is to return true.</para>
         /// </summary>
         /// <param name="user">User in context</param>
-        public bool CreateChannelAdditionalChecks(User? user) => true;
+        bool CreateChannelAdditionalChecks(User? user) => true;
 
         /// <summary>
         /// Returns a filtered enumerable of <see cref="Channel"/>
@@ -40,7 +40,7 @@ namespace Hive.Services.Common
         /// <param name="user">User to filter on</param>
         /// <param name="channels">Input channels to filter</param>
         /// <returns>Filtered channels</returns>
-        public IEnumerable<Channel> GetChannelsFilter(User? user, [TakesReturnValue] IEnumerable<Channel> channels) => channels;
+        IEnumerable<Channel> GetChannelsFilter(User? user, [TakesReturnValue] IEnumerable<Channel> channels) => channels;
     }
 
     internal class HiveChannelsControllerPlugin : IChannelsControllerPlugin { }
