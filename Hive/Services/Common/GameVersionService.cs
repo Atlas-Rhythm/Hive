@@ -60,9 +60,9 @@ namespace Hive.Services.Common
         private readonly IClock clock;
         [ThreadStatic] private static PermissionActionParseState versionsParseState;
 
-        private const string ListActionName = "hive.game.version.list";
-        private const string FilterActionName = "hive.game.version.filter";
-        private const string CreateActionName = "hive.game.version.create";
+        private const string ListActionName = "hive.game.versions.list";
+        private const string FilterActionName = "hive.game.versions.filter";
+        private const string CreateActionName = "hive.game.versions.create";
 
         private static readonly HiveObjectQuery<IEnumerable<GameVersion>> forbiddenEnumerableResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
         private static readonly HiveObjectQuery<GameVersion> forbiddenSingularResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
