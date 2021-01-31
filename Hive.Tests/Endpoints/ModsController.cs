@@ -1,5 +1,4 @@
 ﻿using Hive.Models;
-using Hive.Models.ReadOnly;
 using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
@@ -373,21 +372,13 @@ namespace Hive.Tests.Endpoints
         [Fact]
         public async Task MoveModUnauthorized()
         {
-            // Our additional plugin will prevent access if the user is null.
-            var controller = CreateController("next(true)", defaultPlugins.Append(new UnauthorizedUserPlugin()));
-
-            // Still need to specify a request or else it'll return a bad request
-            var identifier = new ModIdentifier
-            {
-                ID = "ChromaToggle",
-                Version = "1.0.0"
-            };
+            var controller = CreateController("next(true)", defaultPlugins);
 
             // Try to request without specifying a user
-            var res = await controller.MoveModToChannel("Public", identifier);
+            var res = await controller.MoveModToChannel("Public", null!);
 
             Assert.NotNull(res); // Result must not be null.
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail since a user is not logged in
+            Assert.IsType<UnauthorizedResult>(res.Result); // The above endpoint must fail since a user is not logged in/
         }
 
         private Controllers.ModsController CreateController(string permissionRule, IEnumerable<IModsPlugin> plugins)
@@ -436,12 +427,6 @@ namespace Hive.Tests.Endpoints
         private class BetaModsFilterPlugin : IModsPlugin
         {
             public bool GetSpecificModAdditionalChecks(User? user, Mod contextMod) => contextMod.Channel.Name != "Beta";
-        }
-
-        private class UnauthorizedUserPlugin : IModsPlugin
-        {
-            public bool GetMoveModAdditionalChecks(User? user, Mod contextMod, ReadOnlyChannel origin, ReadOnlyChannel destination)
-                => user != null;
         }
 
         // This is taken from GameVersionsController to have a configurable permission rule.
