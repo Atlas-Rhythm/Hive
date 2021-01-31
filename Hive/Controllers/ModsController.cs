@@ -131,6 +131,7 @@ namespace Hive.Controllers
         [HttpPost("mod/move/{channelId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<SerializedMod>> MoveModToChannel([FromRoute] string channelId, [FromBody] ModIdentifier identifier)
@@ -140,10 +141,7 @@ namespace Hive.Controllers
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
-            if (user is null)
-            {
-                return Unauthorized();
-            }
+            if (user is null) return Unauthorized();
 
             var queryResult = await modService.MoveMod(user, channelId, identifier).ConfigureAwait(false);
 

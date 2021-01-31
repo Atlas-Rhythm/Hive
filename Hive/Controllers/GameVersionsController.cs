@@ -65,6 +65,7 @@ namespace Hive.Controllers
         /// <returns>A wrapped <see cref="GameVersion"/> object, if successful.</returns>
         [HttpPost("/new")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<SerializedGameVersion>> CreateGameVersion([FromBody] string name)
         {
@@ -72,6 +73,9 @@ namespace Hive.Controllers
 
             // Get the user, do not need to capture context.
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+
+            // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
+            if (user is null) return Unauthorized();
 
             var queryResult = gameVersionService.CreateNewGameVersion(user, name);
 

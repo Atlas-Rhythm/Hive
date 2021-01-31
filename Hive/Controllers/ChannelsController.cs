@@ -66,6 +66,7 @@ namespace Hive.Controllers
         /// <returns>The wrapped <see cref="Channel"/> that was created, if successful.</returns>
         [HttpPost("/new")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<Channel>> CreateNewChannel([FromBody] string channelName)
         {
@@ -73,6 +74,9 @@ namespace Hive.Controllers
 
             // Get the user, do not need to capture context.
             var user = await authService.GetUser(Request).ConfigureAwait(false);
+
+            // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
+            if (user is null) return Unauthorized();
 
             // If user is null, we can simply forward it anyways
             var queryResult = channelService.CreateNewChannel(user, channelName);
