@@ -161,7 +161,7 @@ namespace Hive.Tests.Endpoints
         }
 
         [Fact]
-        public async Task CreateNewChannelUnauthorized()
+        public async Task CreateNewVersionUnauthorized()
         {
             var controller = CreateController("next(true)", defaultPlugins);
 
