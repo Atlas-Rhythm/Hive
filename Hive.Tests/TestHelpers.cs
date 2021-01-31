@@ -1,9 +1,15 @@
-﻿using Hive.Models;
+﻿using System.Collections.Generic;
+using System.IO;
+using Hive.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
+using Microsoft.Net.Http.Headers;
+using Moq;
 
 namespace Hive.Tests
 {
-    internal static class DbHelper
+    internal static class TestHelpers
     {
         /// <summary>
         /// Copies data from <see cref="PartialContext"/> to <see cref="HiveContext"/>
@@ -37,6 +43,33 @@ namespace Hive.Tests
                 CopyData(initialData, dbContext);
                 dbContext.SaveChanges();
             }
+        }
+
+        internal static Stream GenerateStreamFromString(string s)
+        {
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(s);
+            writer.Flush();
+            stream.Position = 0;
+            return stream;
+        }
+
+        internal static HttpContext CreateMockRequest(Stream body)
+        {
+            var requestMoq = new Mock<HttpRequest>();
+            requestMoq.SetupGet(r => r.Body).Returns(body);
+            requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
+                new Dictionary<string, StringValues>()
+                {
+                    { HeaderNames.Authorization, new StringValues("Bearer: test") }
+                })
+            );
+
+            var contextMoq = new Mock<HttpContext>();
+            contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
+
+            return contextMoq.Object;
         }
     }
 }

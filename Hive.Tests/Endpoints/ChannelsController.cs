@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using static Hive.Tests.TestHelpers;
 
 namespace Hive.Tests.Endpoints
 {
@@ -123,7 +124,10 @@ namespace Hive.Tests.Endpoints
         public async Task CreateNewChannel()
         {
             var controller = CreateController("next(true)", CreateDefaultPlugin());
+            controller.ControllerContext.HttpContext = CreateMockRequest(GenerateStreamFromString("archival"));
+
             var res = await controller.CreateNewChannel("archival");
+
             Assert.NotNull(res);
             // Should succeed and give us our new channel back
             Assert.IsType<OkObjectResult>(res.Result);
@@ -132,6 +136,19 @@ namespace Hive.Tests.Endpoints
             var value = result!.Value as Channel;
             Assert.NotNull(value);
             Assert.True(value!.Name == "archival");
+        }
+
+        [Fact]
+        public async Task CreateNewChannelUnauthorized()
+        {
+            var controller = CreateController("next(true)", CreateDefaultPlugin());
+
+            // Whoops, we "forgot" to assign a user.
+            var res = await controller.CreateNewChannel("archival");
+
+            Assert.NotNull(res);
+            // Should fail.
+            Assert.IsType<UnauthorizedResult>(res.Result);
         }
 
         private static Mock<IChannelsControllerPlugin> CreatePlugin() => new();

@@ -14,6 +14,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using static Hive.Tests.TestHelpers;
 
 namespace Hive.Tests.Endpoints
 {
@@ -145,6 +146,8 @@ namespace Hive.Tests.Endpoints
         {
             // Yeah we're just going to simply make a new game version and call it a day.
             var controller = CreateController("next(true)", defaultPlugins);
+            controller.ControllerContext.HttpContext = CreateMockRequest(GenerateStreamFromString("1.13.2"));
+
             var res = await controller.CreateGameVersion("1.13.2");
 
             Assert.NotNull(res); // Result must not be null.
@@ -155,6 +158,19 @@ namespace Hive.Tests.Endpoints
             var value = result!.Value as SerializedGameVersion;
             Assert.NotNull(value); // We must be given one GameVersion back whose name matches our input
             Assert.True(value!.Name == "1.13.2");
+        }
+
+        [Fact]
+        public async Task CreateNewChannelUnauthorized()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+
+            // Whoops, we "forgot" to assign a user.
+            var res = await controller.CreateGameVersion("1.13.3");
+
+            Assert.NotNull(res);
+            // Should fail.
+            Assert.IsType<UnauthorizedResult>(res.Result);
         }
 
         private Controllers.GameVersionsController CreateController(string permissionRule, IEnumerable<IGameVersionsPlugin> plugins)
