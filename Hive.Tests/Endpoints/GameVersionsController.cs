@@ -1,8 +1,8 @@
-﻿using Hive.Controllers;
-using Hive.Models;
+﻿using Hive.Models;
 using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
+using Hive.Services.Common;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +14,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using static Hive.Tests.TestHelpers;
 
 namespace Hive.Tests.Endpoints
 {
@@ -140,6 +141,38 @@ namespace Hive.Tests.Endpoints
             }
         }
 
+        [Fact]
+        public async Task CreateNewVersion()
+        {
+            // Yeah we're just going to simply make a new game version and call it a day.
+            var controller = CreateController("next(true)", defaultPlugins);
+            controller.ControllerContext.HttpContext = CreateMockRequest(GenerateStreamFromString("1.13.2"));
+
+            var res = await controller.CreateGameVersion("1.13.2");
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed.
+            var result = res.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var value = result!.Value as SerializedGameVersion;
+            Assert.NotNull(value); // We must be given one GameVersion back whose name matches our input
+            Assert.True(value!.Name == "1.13.2");
+        }
+
+        [Fact]
+        public async Task CreateNewVersionUnauthorized()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+
+            // Whoops, we "forgot" to assign a user.
+            var res = await controller.CreateGameVersion("1.13.3");
+
+            Assert.NotNull(res);
+            // Should fail.
+            Assert.IsType<UnauthorizedResult>(res.Result);
+        }
+
         private Controllers.GameVersionsController CreateController(string permissionRule, IEnumerable<IGameVersionsPlugin> plugins)
         {
             var services = DIHelper.ConfigureServices(
@@ -154,7 +187,7 @@ namespace Hive.Tests.Endpoints
 
             services
                 .AddTransient(sp => plugins)
-                .AddScoped<Services.Common.GameVersionService>()
+                .AddScoped<GameVersionService>()
                 .AddScoped<Controllers.GameVersionsController>()
                 .AddAggregates();
 
@@ -163,7 +196,7 @@ namespace Hive.Tests.Endpoints
 
         private class DenyUserAccessPlugin : IGameVersionsPlugin
         {
-            public bool GetGameVersionsAdditionalChecks(User? _) => false; // If it is active, restrict access.
+            public bool ListGameVersionsAdditionalChecks(User? _) => false; // If it is active, restrict access.
         }
 
         private class FilterBetaVersionsPlugin : IGameVersionsPlugin
@@ -196,13 +229,9 @@ namespace Hive.Tests.Endpoints
                         gotten = new Rule(nameString, "next(false)");
                         return true;
 
-                    case "hive.game.version":
+                    default:
                         gotten = new Rule(nameString, permissionRule);
                         return true;
-
-                    default:
-                        gotten = null;
-                        return false;
                 }
             }
         }

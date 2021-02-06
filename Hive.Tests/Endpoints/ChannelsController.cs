@@ -1,7 +1,7 @@
-﻿using Hive.Controllers;
-using Hive.Models;
+﻿using Hive.Models;
 using Hive.Permissions;
 using Hive.Plugins;
+using Hive.Services.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using static Hive.Tests.TestHelpers;
 
 namespace Hive.Tests.Endpoints
 {
@@ -119,6 +120,37 @@ namespace Hive.Tests.Endpoints
             Assert.DoesNotContain(defaultChannels.ElementAt(1), value);
         }
 
+        [Fact]
+        public async Task CreateNewChannel()
+        {
+            var controller = CreateController("next(true)", CreateDefaultPlugin());
+            controller.ControllerContext.HttpContext = CreateMockRequest(GenerateStreamFromString("archival"));
+
+            var res = await controller.CreateNewChannel("archival");
+
+            Assert.NotNull(res);
+            // Should succeed and give us our new channel back
+            Assert.IsType<OkObjectResult>(res.Result);
+            var result = res.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var value = result!.Value as Channel;
+            Assert.NotNull(value);
+            Assert.True(value!.Name == "archival");
+        }
+
+        [Fact]
+        public async Task CreateNewChannelUnauthorized()
+        {
+            var controller = CreateController("next(true)", CreateDefaultPlugin());
+
+            // Whoops, we "forgot" to assign a user.
+            var res = await controller.CreateNewChannel("archival");
+
+            Assert.NotNull(res);
+            // Should fail.
+            Assert.IsType<UnauthorizedResult>(res.Result);
+        }
+
         private static Mock<IChannelsControllerPlugin> CreatePlugin() => new();
 
         private static IChannelsControllerPlugin CreateDefaultPlugin() => new HiveChannelsControllerPlugin();
@@ -126,10 +158,16 @@ namespace Hive.Tests.Endpoints
         private Controllers.ChannelsController CreateController(string permissionRule, IChannelsControllerPlugin plugin)
         {
             var ruleProvider = DIHelper.CreateRuleProvider();
+
             var hiveRule = new Rule("hive", "next(false)");
-            var r = new Rule("hive.channel", permissionRule);
+            var listChannels = new Rule("hive.channels.list", permissionRule);
+            var filterChannels = new Rule("hive.channels.filter", permissionRule);
+            var createChannel = new Rule("hive.channel.create", permissionRule);
+
             ruleProvider.Setup(m => m.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
-            ruleProvider.Setup(m => m.TryGetRule(r.Name, out r)).Returns(true);
+            ruleProvider.Setup(m => m.TryGetRule(listChannels.Name, out listChannels)).Returns(true);
+            ruleProvider.Setup(m => m.TryGetRule(filterChannels.Name, out filterChannels)).Returns(true);
+            ruleProvider.Setup(m => m.TryGetRule(createChannel.Name, out createChannel)).Returns(true);
 
             var services = DIHelper.ConfigureServices(
                 Options,
@@ -143,7 +181,7 @@ namespace Hive.Tests.Endpoints
             services.AddSingleton<IChannelsControllerPlugin>(sp => new HiveChannelsControllerPlugin());
             services.AddSingleton(sp => plugin);
             services.AddAggregates();
-            services.AddScoped<Services.Common.ChannelService>();
+            services.AddScoped<ChannelService>();
             services.AddScoped<Controllers.ChannelsController>();
 
             return services.BuildServiceProvider().GetRequiredService<Controllers.ChannelsController>();
