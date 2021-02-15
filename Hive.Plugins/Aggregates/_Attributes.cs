@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
+// NOTE: The contents of this folder are intentionally left in the root namespace.
 namespace Hive.Plugins
 {
     internal interface IAggregatorAttribute { }
