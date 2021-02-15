@@ -186,6 +186,13 @@
     <value>Unknown input specifying attribute {0}</value>
     <comment>{0} is the attribute</comment>
   </data>
+  <data name="PluginLoadException_DefaultMessage" xml:space="preserve">
+    <value>An error ocurred while loading plugin {0}</value>
+    <comment>{0} is the name of the plugin that failed to load</comment>
+  </data>
+  <data name="PluginLoad_ErrorsWhenLoadingPlugins" xml:space="preserve">
+    <value>One or more errors ocurred while loading plugins.</value>
+  </data>
   <data name="PluginLoad_NoPluginFileInPluginDir" xml:space="preserve">
     <value>There is no file '{0}' in the plugin directory '{1}'; could not load the plugin.</value>
     <comment>{0} is the expected name of the plugin file, {1} is the path of the plugin directory</comment>

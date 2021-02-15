@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Hive.Plugins.Resources;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -30,21 +30,42 @@ namespace Hive.Plugins.Loading
         public PluginLoader(IConfigurationSection config)
             => this.config = config.Get<LoaderConfig>() ?? new();
 
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "Caught exceptions are rethrown, just later on.")]
         public void LoadPlugins(IServiceCollection services)
         {
             var pluginDir = new DirectoryInfo(config.PluginPath);
 
             var pluginsToLoad = FindPluginsToLoad(pluginDir);
 
+            var exceptions = new List<(Exception Exception, string PluginName)>();
             foreach (var plugin in pluginsToLoad)
             {
-                var plc = new PluginLoadContext(plugin);
-                var instance = new PluginInstance(plc);
-
-                if (TryInitPlugin(instance, services))
+                try
                 {
-                    // the initialization didn't fail horribly
+                    var plc = new PluginLoadContext(plugin);
+                    var instance = new PluginInstance(plc);
+
+                    InitPlugin(instance, services);
                     _ = services.AddSingleton(instance);
+                }
+                catch (Exception e)
+                {
+                    exceptions.Add((e, plugin.Name));
+                }
+            }
+
+            if (exceptions.Count > 0)
+            {
+                if (exceptions.Count == 1)
+                {
+                    var (exception, name) = exceptions.First();
+                    throw new PluginLoadException(name, exception);
+                }
+                else
+                {
+                    throw new AggregateException(SR.PluginLoad_ErrorsWhenLoadingPlugins,
+                        exceptions.Select(t => new PluginLoadException(t.PluginName, t.Exception)));
                 }
             }
         }
@@ -66,11 +87,10 @@ namespace Hive.Plugins.Loading
             }
         }
 
-        private bool TryInitPlugin(PluginInstance plugin, IServiceCollection services)
+        private void InitPlugin(PluginInstance plugin, IServiceCollection services)
         {
             // ConfigureServices will be called here, so we need services
             // TODO: implement
-            return false;
         }
     }
 }
