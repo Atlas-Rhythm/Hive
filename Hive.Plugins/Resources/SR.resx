@@ -186,4 +186,12 @@
     <value>Unknown input specifying attribute {0}</value>
     <comment>{0} is the attribute</comment>
   </data>
+  <data name="Utils_Inject_CouldNotResolveService" xml:space="preserve">
+    <value>Could not resolve a service of type '{0}' for the parameter '{1}' of method '{2}' on type '{3}'.</value>
+    <comment>{0} is the service type, {1} is the parameter name, {2} is the method being injected, {3} is the type the method is on</comment>
+  </data>
+  <data name="Utils_Inject_TooManyArguments" xml:space="preserve">
+    <value>Too many arguments were provided during the injection of '{0}' on type '{1}'</value>
+    <comment>{0} is the method being injected, {1} is the type the method is on</comment>
+  </data>
 </root>
