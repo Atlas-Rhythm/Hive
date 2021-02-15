@@ -2,6 +2,7 @@
 using Hive.Models;
 using Hive.Permissions;
 using Hive.Plugins;
+using Hive.Plugins.Aggregates;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace Hive.Plugins
+namespace Hive.Plugins.Aggregates
 {
     internal static class AggregatedMethodGenerator
     {

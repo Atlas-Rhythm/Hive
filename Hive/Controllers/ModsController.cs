@@ -2,7 +2,7 @@
 using Hive.Models;
 using Hive.Models.ReadOnly;
 using Hive.Models.Serialized;
-using Hive.Plugins;
+using Hive.Plugins.Aggregates;
 using Hive.Services;
 using Hive.Versioning;
 using Microsoft.AspNetCore.Http;

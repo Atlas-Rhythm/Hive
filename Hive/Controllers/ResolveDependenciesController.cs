@@ -1,5 +1,5 @@
 ﻿using Hive.Models;
-using Hive.Plugins;
+using Hive.Plugins.Aggregates;
 using Hive.Services;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Http;

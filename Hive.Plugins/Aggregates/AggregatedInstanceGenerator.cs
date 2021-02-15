@@ -6,12 +6,12 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Hive.Plugins;
+using Hive.Plugins.Aggregates;
 using Hive.Plugins.Resources;
 
 [assembly: InternalsVisibleTo(AggregatedInstanceGenerator.AssemblyName)]
 
-namespace Hive.Plugins
+namespace Hive.Plugins.Aggregates
 {
     internal static class AggregatedInstanceGenerator<T> where T : class
     {

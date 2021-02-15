@@ -1,6 +1,6 @@
 ﻿using Hive.Controllers;
 using Hive.Permissions;
-using Hive.Plugins;
+using Hive.Plugins.Aggregates;
 using Hive.Models;
 using System;
 using System.Linq;

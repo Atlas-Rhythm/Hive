@@ -1,7 +1,7 @@
 ﻿using Hive.Models;
 using Hive.Models.Serialized;
 using Hive.Permissions;
-using Hive.Plugins;
+using Hive.Plugins.Aggregates;
 using Hive.Services;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Http;
