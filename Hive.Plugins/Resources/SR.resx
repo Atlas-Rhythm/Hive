@@ -186,6 +186,10 @@
     <value>Unknown input specifying attribute {0}</value>
     <comment>{0} is the attribute</comment>
   </data>
+  <data name="PluginLoad_NoPluginFileInPluginDir" xml:space="preserve">
+    <value>There is no file '{0}' in the plugin directory '{1}'; could not load the plugin.</value>
+    <comment>{0} is the expected name of the plugin file, {1} is the path of the plugin directory</comment>
+  </data>
   <data name="Utils_Inject_CouldNotResolveService" xml:space="preserve">
     <value>Could not resolve a service of type '{0}' for the parameter '{1}' of method '{2}' on type '{3}'.</value>
     <comment>{0} is the service type, {1} is the parameter name, {2} is the method being injected, {3} is the type the method is on</comment>
