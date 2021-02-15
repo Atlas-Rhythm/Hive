@@ -1,5 +1,6 @@
 using AspNetCoreRateLimit;
 using Hive.Models;
+using Hive.Plugins.Loading;
 using Hive.Versioning;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -81,7 +82,8 @@ namespace Hive
                         .WithDefaultDestructurers()
                         .WithDestructurers(new[] { new DbUpdateExceptionDestructurer() }))
                     .WriteTo.Console())
-                .ConfigureWebHostDefaults(webBuilder => _ = webBuilder.UseStartup<Startup>());
+                .ConfigureWebHostDefaults(webBuilder => _ = webBuilder.UseStartup<Startup>())
+                .UseWebHostPlugins();
 
         private static LoggerConfiguration LibraryTypes(this LoggerDestructuringConfiguration conf)
             => conf.AsScalar<Version>()

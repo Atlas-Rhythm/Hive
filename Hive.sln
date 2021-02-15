@@ -54,6 +54,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Analyzers", "Hive.Anal
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins.Tests", "Hive.Plugins.Tests\Hive.Plugins.Tests.csproj", "{486CEBA1-EDF4-4493-B81F-A485AA00B64C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Plugins.Tests.TestPlugin", "Hive.Plugins.Tests.TestPlugin\Hive.Plugins.Tests.TestPlugin.csproj", "{35D283E6-B9A8-4EF7-99A0-555DBB741FEA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -124,6 +126,10 @@ Global
 		{486CEBA1-EDF4-4493-B81F-A485AA00B64C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{486CEBA1-EDF4-4493-B81F-A485AA00B64C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{486CEBA1-EDF4-4493-B81F-A485AA00B64C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35D283E6-B9A8-4EF7-99A0-555DBB741FEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35D283E6-B9A8-4EF7-99A0-555DBB741FEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35D283E6-B9A8-4EF7-99A0-555DBB741FEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35D283E6-B9A8-4EF7-99A0-555DBB741FEA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

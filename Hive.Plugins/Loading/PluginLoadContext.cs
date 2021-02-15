@@ -16,7 +16,8 @@ namespace Hive.Plugins.Loading
         {
             PluginDirectory = directory;
             var dirname = directory.Name;
-            var mainfile = directory.EnumerateFiles().FirstOrDefault(f => f.Extension == ".dll" && f.Name == dirname);
+            var mainfile = directory.EnumerateFiles()
+                .FirstOrDefault(f => f.Extension == ".dll" && Path.GetFileNameWithoutExtension(f.Name) == dirname);
             if (mainfile is null)
                 throw new ArgumentException(SR.PluginLoad_NoPluginFileInPluginDir.Format($"{dirname}.dll", dirname), nameof(directory));
 

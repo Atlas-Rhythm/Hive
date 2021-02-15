@@ -18,11 +18,11 @@ namespace Hive.Plugins.Loading
             /// <summary>
             /// LoadPlugins specifies the names of the plugins to load when ImplicitlyLoadPlugins is false.
             /// </summary>
-            public IEnumerable<string> LoadPlugins { get; set; } = Enumerable.Empty<string>();
+            public string[] LoadPlugins { get; set; } = Array.Empty<string>();
             /// <summary>
             /// ExcludePlugins specifies the names of the plugins to not load when it would otherwise load them.
             /// </summary>
-            public IEnumerable<string> ExcludePlugins { get; set; } = Enumerable.Empty<string>();
+            public string[] ExcludePlugins { get; set; } = Array.Empty<string>();
         }
 
         private readonly LoaderConfig config;
@@ -76,6 +76,9 @@ namespace Hive.Plugins.Loading
 
         private IEnumerable<DirectoryInfo> FindPotentialPluginsToLoad(DirectoryInfo pluginDir)
         {
+            if (!pluginDir.Exists)
+                return Enumerable.Empty<DirectoryInfo>();
+
             if (config.ImplicitlyLoadPlugins)
             {
                 return pluginDir.EnumerateDirectories();
@@ -89,8 +92,10 @@ namespace Hive.Plugins.Loading
 
         private void InitPlugin(PluginInstance plugin, IServiceCollection services)
         {
-            // ConfigureServices will be called here, so we need services
             // TODO: implement
+
+            // this will 1. locate the plugins' startup types, 2. construct them, and 3. call ConfigureServices on them.
+            // it will *also* register an IStartupFilter instance which calls through to the Configure method.
         }
     }
 }
