@@ -1,4 +1,6 @@
-﻿#if NETSTANDARD2_0
+﻿using System.Collections.Generic;
+using System.Linq;
+#if NETSTANDARD2_0
 using System.Text;
 #endif
 
@@ -30,5 +32,8 @@ namespace Hive.Utilities
             return sb;
         }
 #endif
+
+        public static IEnumerable<T> WhereNonNull<T>(this IEnumerable<T?> sequence) where T : class
+            => sequence.Where(v => v is not null)!;
     }
 }

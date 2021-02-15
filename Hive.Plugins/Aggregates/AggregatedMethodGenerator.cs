@@ -1,4 +1,5 @@
 ﻿using Hive.Plugins.Resources;
+using Hive.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,14 +44,14 @@ namespace Hive.Plugins.Aggregates
                 var param = targetParameters[i];
                 if (!param.IsOut) continue;
                 // because we will always be seeing an out param, it will always be a ByRef, so we need to GetElementType() to get the variable type.
-                var varType = param.ParameterType.GetElementType();
+                var varType = param.ParameterType.GetElementType()!;
                 outParamStorage[i] = lambdaParams[i]; // because this is an out param, our storage is the out param itself //Expression.Variable(varType, $"s_{param.Name}");
                 outParamStorageSet[i] = Expression.Variable(typeof(bool), $"is_{param.Name}");
                 outParamTemps[i] = Expression.Variable(varType, $"t_{param.Name}");
             }
 
             var initializers = outParamStorageSet
-                .Where(p => p != null)
+                .WhereNonNull()
                 .Select(p => Expression.Assign(p!, DefaultForType(p!.Type)));
             if (returnStorage != null)
             {
@@ -68,13 +69,13 @@ namespace Hive.Plugins.Aggregates
                 loopBody.Add(Expression.Assign(
                             returnStorage,
                             Expression.Condition( // if its not been set, then we always set it
-                                returnStorageSet,
+                                returnStorageSet!,
                                 returnOutInfo.ExpressionAggregator.Aggregate(returnStorage, returnTemp!),
-                                returnTemp
+                                returnTemp!
                             )
                         ));
                 loopBody.Add(Expression.Assign(
-                            returnStorageSet,
+                            returnStorageSet!,
                             Expression.Constant(true)
                         ));
 
@@ -96,8 +97,8 @@ namespace Hive.Plugins.Aggregates
                 {
                     callArguments.Add(
                         Expression.Condition(
-                            returnStorageSet,
-                            returnStorage,
+                            returnStorageSet!,
+                            returnStorage!,
                             lambdaParams[i]
                         )
                     );
@@ -106,8 +107,8 @@ namespace Hive.Plugins.Aggregates
                 {
                     callArguments.Add(
                         Expression.Condition(
-                            outParamStorageSet[info.CopiedFromOut.Value],
-                            outParamStorage[info.CopiedFromOut.Value],
+                            outParamStorageSet[info.CopiedFromOut.Value]!,
+                            outParamStorage[info.CopiedFromOut.Value]!,
                             lambdaParams[i]
                         )
                     );
@@ -116,15 +117,15 @@ namespace Hive.Plugins.Aggregates
                 {
                     callArguments.Add(outParamTemps[i]!);
                     loopBody.Add(Expression.Assign(
-                                outParamStorage[i],
+                                outParamStorage[i]!,
                                 Expression.Condition( // if its not been set, then we always set it
-                                    outParamStorageSet[i],
+                                    outParamStorageSet[i]!,
                                     info.OutInfo.Value.ExpressionAggregator.Aggregate(outParamStorage[i]!, outParamTemps[i]!),
-                                    outParamTemps[i]
+                                    outParamTemps[i]!
                                 )
                             ));
                     loopBody.Add(Expression.Assign(
-                                outParamStorageSet[i],
+                                outParamStorageSet[i]!,
                                 Expression.Constant(true)
                             ));
 
@@ -150,11 +151,11 @@ namespace Hive.Plugins.Aggregates
                 callExpr = Expression.Assign(returnTemp, callExpr);
             var loopBodyFinal = loopBody.Prepend(callExpr).Concat(loopBodyEnd);
 
-            var stores = outParamStorageSet.Where(e => e != null);
+            var stores = outParamStorageSet.WhereNonNull();
             if (returnStorage != null)
-                stores = stores.Append(returnStorage).Append(returnStorageSet);
+                stores = stores.Append(returnStorage).Append(returnStorageSet!);
 
-            var temps = outParamTemps.Where(e => e != null);
+            var temps = outParamTemps.WhereNonNull();
             if (returnTemp != null)
                 temps = temps.Append(returnTemp);
 
@@ -162,7 +163,7 @@ namespace Hive.Plugins.Aggregates
                 delegateType,
                 Expression.Block(
                     toAggregate.ReturnType,
-                    stores,
+                    stores!,
                     initializers.Concat(new[] {
                         new ForeachExpression(
                             Expression.Property(listParam, nameof(IAggregateList<int>.List)),
@@ -269,7 +270,7 @@ namespace Hive.Plugins.Aggregates
         //       So, I have a small type and wrapper function to do it for me.
         private static Expression DefaultForType(Type type)
             => type.IsByRef
-            ? Expression.Call(Expression.New(typeof(DefaultByRef<>).MakeGenericType(type.GetElementType())), nameof(DefaultByRef<object>.ByRefDefault), null)
+            ? Expression.Call(Expression.New(typeof(DefaultByRef<>).MakeGenericType(type.GetElementType()!)), nameof(DefaultByRef<object>.ByRefDefault), null)
             : (Expression)Expression.Default(type);
 
         private class DefaultByRef<T>
