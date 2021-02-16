@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using Microsoft.Extensions.Hosting;
 
 namespace Hive.Plugins.Loading
@@ -20,7 +19,7 @@ namespace Hive.Plugins.Loading
                     configureOptions(builder);
 
                     var config = ctx.Configuration.GetSection(builder.ConfigurationKey);
-                    var loader = new PluginLoader(config, builder.RegisterStartupFilter, builder.ConfigurePluginConfigCb);
+                    var loader = new PluginLoader(config, builder);
                     loader.LoadPlugins(services, ctx.HostingEnvironment);
                 });
         }

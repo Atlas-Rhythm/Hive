@@ -33,14 +33,10 @@ namespace Hive.Plugins.Loading
         }
 
         private readonly LoaderConfig config;
-        private readonly Action<IServiceCollection, object, MethodInfo> registerStartupFilter;
-        private readonly Action<IConfigurationBuilder, PluginInstance> configurePluginConfig;
+        private readonly PluginLoaderOptionsBuilder options;
 
-        public PluginLoader(IConfigurationSection config, Action<IServiceCollection, object, MethodInfo> registerStartupFilter, Action<IConfigurationBuilder, PluginInstance> pluginConfigConfigure)
-        {
-            (this.config, this.registerStartupFilter) = (config.Get<LoaderConfig>() ?? new(), registerStartupFilter);
-            configurePluginConfig = pluginConfigConfigure;
-        }
+        public PluginLoader(IConfigurationSection config, PluginLoaderOptionsBuilder options)
+            => (this.config, this.options) = (config.Get<LoaderConfig>() ?? new(), options);
 
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "Caught exceptions are rethrown, just later on.")]
@@ -115,7 +111,7 @@ namespace Hive.Plugins.Loading
             if (config.UsePluginSpecificConfig)
             {
                 var builder = new ConfigurationBuilder();
-                configurePluginConfig(builder, plugin);
+                options.ConfigurePluginConfigCb(builder, plugin);
                 pluginConfig = builder.Build();
             }
             else
