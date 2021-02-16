@@ -16,7 +16,7 @@ namespace Hive.Plugins.Loading
         private class LoaderConfig
         {
             public bool ImplicitlyLoadPlugins { get; set; } = true;
-            public bool UsePluginSpecificConfig { get; set; } = false;
+            public bool UsePluginSpecificConfig { get; set; }
             public string PluginPath { get; set; } = "plugins";
             /// <summary>
             /// LoadPlugins specifies the names of the plugins to load when ImplicitlyLoadPlugins is false.
@@ -102,6 +102,8 @@ namespace Hive.Plugins.Loading
             }
         }
 
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "Caught exceptions are rethrown, just later on.")]
         private void InitPlugin(PluginInstance plugin, IServiceCollection services, IHostEnvironment hostEnv)
         {
             // this will 1. locate the plugins' startup types, 2. construct them, and 3. call ConfigureServices on them.
@@ -129,15 +131,74 @@ namespace Hive.Plugins.Loading
 
             var constructServices = new PluginServiceProvider(pluginConfig, plugin, hostEnv);
 
+            var exceptions = new List<(Exception Exception, Type Type)>();
             foreach (var type in pluginTypes)
             {
-                CreatePlugin(services, constructServices, type);
+                try
+                {
+                    var instance = ActivatorUtilities.CreateInstance(constructServices, type);
+
+                    var configureServices = FindMethod(type, "ConfigureServices");
+                    ConfigureWith(services, configureServices, instance);
+
+                    var configure = FindMethod(type, "Configure");
+                    if (configure is not null)
+                    {
+                        options.RegisterStartupFilter(services, instance, configure);
+                    }
+
+                    // finally, register the instance to the service collection so that it can be injected
+                    _ = services.AddSingleton(type, instance);
+                }
+                catch (Exception e)
+                {
+                    exceptions.Add((e, type));
+                }
+            }
+
+            if (exceptions.Count > 0)
+            {
+                if (exceptions.Count == 1)
+                {
+                    var (exception, type) = exceptions.First();
+                    throw new PluginStartupException(type, exception);
+                }
+                else
+                {
+                    throw new AggregateException(exceptions.Select(t => new PluginStartupException(t.Type, t.Exception)));
+                }
             }
         }
 
-        private void CreatePlugin(IServiceCollection services, IServiceProvider constructServices, Type pluginType)
+        private static MethodInfo? FindMethod(Type targetType, string methodName)
         {
-            var instance = ActivatorUtilities.CreateInstance(constructServices, pluginType);
+            var methods = targetType.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public)
+                .Where(m => m.Name == methodName).ToList();
+            if (methods.Count > 1)
+            {
+                throw new InvalidOperationException(SR.PluginLoad_MultipleOverloadsNotSupported.Format(methodName));
+            }
+            return methods.FirstOrDefault();
+        }
+
+        private static void ConfigureWith(IServiceCollection services, MethodInfo? configureServices, object instance)
+        {
+            if (configureServices is null)
+                return;
+
+            var parameters = configureServices.GetParameters();
+            if (parameters.Length > 1 || parameters.Any(p => p.ParameterType != typeof(IServiceCollection)))
+            {
+                throw new InvalidOperationException(SR.PluginLoad_ConfigureServicesCanOnlyTakeServiceCollection);
+            }
+
+            var args = new object[parameters.Length];
+            if (parameters.Length != 0)
+            {
+                args[0] = services;
+            }
+            _ = configureServices.InvokeWithoutWrappingExceptions(instance, args);
+            return;
         }
 
         private sealed class PluginServiceProvider : IServiceProvider
