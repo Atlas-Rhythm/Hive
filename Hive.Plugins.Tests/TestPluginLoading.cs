@@ -159,6 +159,7 @@ namespace Hive.Plugins.Tests
             Assert.Empty(pluginRegistrations);
         }
 
+        // TODO: test the different configuration codepaths
         // TODO: test that exceptions are propagated correctly
     }
 }
