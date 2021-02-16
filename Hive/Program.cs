@@ -112,8 +112,8 @@ namespace Hive
             public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
                 => app =>
                 {
-                    services.InjectVoidMethod(method, t => t == typeof(IApplicationBuilder) ? (object)app : null, null)(target);
                     next(app);
+                    services.InjectVoidMethod(method, t => t == typeof(IApplicationBuilder) ? (object)app : null, null)(target);
                 };
         }
 
