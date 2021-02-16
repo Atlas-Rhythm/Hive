@@ -88,7 +88,9 @@ namespace Hive
                     .WriteTo.Console())
                 .ConfigureWebHostDefaults(webBuilder => _ = webBuilder.UseStartup<Startup>())
                 .UseWebHostPlugins(builder
-                    => builder.WithApplicationConfigureRegistrar((sc, target, method)
+                    => builder
+                        .WithConfigurationKey("Plugins")
+                        .WithApplicationConfigureRegistrar((sc, target, method)
                             => sc.AddSingleton<IStartupFilter>(sp => new CustomStartupFilter(sp, target, method)))
                         .ConfigurePluginConfig((builder, plugin) =>
                         {
