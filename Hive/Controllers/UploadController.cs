@@ -328,12 +328,12 @@ namespace Hive.Controllers
         [ThreadStatic]
         private static PermissionActionParseState BaseUploadParseState;
 
-        private const string BaseUploadAction = "hive.mods.upload";
+        private const string BaseUploadAction = "hive.mod.upload";
 
         [ThreadStatic]
         private static PermissionActionParseState UploadWithDataParseState;
 
-        private const string UploadWithDataAction = "hive.mods.upload.with_data";
+        private const string UploadWithDataAction = "hive.mod.upload.with_data";
 
         /// <summary>
         /// The first stage of the upload flow. This stage is the file upload, which is then sent to whichever CDN is being used for this instance.
