@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Hive.Plugins.Loading
 {
-    public static class Utilities
+    public static class LoaderUtils
     {
         public static object? InvokeWithoutWrappingExceptions(this MethodInfo method, object? obj, object?[] arguments)
             => (method ?? throw new ArgumentNullException(nameof(method))).Invoke(obj, BindingFlags.DoNotWrapExceptions, null, arguments, null);
