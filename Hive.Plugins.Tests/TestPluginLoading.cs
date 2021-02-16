@@ -75,7 +75,7 @@ namespace Hive.Plugins.Tests
             {
                 { "Plugins:PluginPath", "plugins" },
                 { "Plugins:ImplicitlyLoadPlugins", "true" },
-                { "Plugins:ExcludePlugins:0", "Hive.Plugins.Test.TestPlugin" }
+                { "Plugins:ExcludePlugins:0", "Hive.Plugins.Tests.TestPlugin" }
             })
                 .Build();
 
@@ -96,7 +96,7 @@ namespace Hive.Plugins.Tests
             {
                 { "Plugins:PluginPath", "plugins" },
                 { "Plugins:ImplicitlyLoadPlugins", "false" },
-                { "Plugins:LoadPlugins:0", "Hive.Plugins.Test.TestPlugin" }
+                { "Plugins:LoadPlugins:0", "Hive.Plugins.Tests.TestPlugin" }
             })
                 .Build();
 
@@ -123,8 +123,8 @@ namespace Hive.Plugins.Tests
             {
                 { "Plugins:PluginPath", "plugins" },
                 { "Plugins:ImplicitlyLoadPlugins", "false" },
-                { "Plugins:LoadPlugins:0", "Hive.Plugins.Test.TestPlugin" },
-                { "Plugins:ExcludePlugins:0", "Hive.Plugins.Test.TestPlugin" }
+                { "Plugins:LoadPlugins:0", "Hive.Plugins.Tests.TestPlugin" },
+                { "Plugins:ExcludePlugins:0", "Hive.Plugins.Tests.TestPlugin" }
             })
                 .Build();
 
@@ -158,7 +158,7 @@ namespace Hive.Plugins.Tests
             Assert.Empty(pluginInstances);
             Assert.Empty(pluginRegistrations);
         }
-        
+
         // TODO: test that exceptions are propagated correctly
     }
 }
