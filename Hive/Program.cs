@@ -4,6 +4,7 @@ using Hive.Plugins.Loading;
 using Hive.Versioning;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NodaTime;
@@ -14,6 +15,7 @@ using Serilog.Exceptions.Core;
 using Serilog.Exceptions.EntityFrameworkCore.Destructurers;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -85,8 +87,16 @@ namespace Hive
                         .WithDestructurers(new[] { new DbUpdateExceptionDestructurer() }))
                     .WriteTo.Console())
                 .ConfigureWebHostDefaults(webBuilder => _ = webBuilder.UseStartup<Startup>())
-                .UseWebHostPlugins((sc, target, method)
-                    => sc.AddSingleton<IStartupFilter>(sp => new CustomStartupFilter(sp, target, method)));
+                .UseWebHostPlugins(builder
+                    => builder.WithApplicationConfigureRegistrar((sc, target, method)
+                            => sc.AddSingleton<IStartupFilter>(sp => new CustomStartupFilter(sp, target, method)))
+                        .ConfigurePluginConfig((builder, plugin) =>
+                        {
+                            _ = builder
+                                .AddJsonFile(Path.Combine(plugin.PluginDirectory.FullName, "pluginsettings.json"))
+                                .AddEnvironmentVariables("PLUGIN_" + plugin.Name.Replace(".", "_", StringComparison.Ordinal) + "__");
+                        })
+                );
 
         private class CustomStartupFilter : IStartupFilter
         {

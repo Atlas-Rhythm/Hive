@@ -12,32 +12,15 @@ namespace Hive.Plugins.Tests
 {
     public class TestPluginLoading
     {
-        private class StaticConfigurationSource : IConfigurationSource
-        {
-            public Dictionary<string, string> Values { get; set; } = new();
-
-            public IConfigurationProvider Build(IConfigurationBuilder builder)
-                => new StaticConfigurationProvider(Values);
-        }
-
-        private class StaticConfigurationProvider : ConfigurationProvider
-        {
-            public StaticConfigurationProvider(Dictionary<string, string> values)
-                => Data = values;
-        }
-
         private static IHostBuilder BuildLoadingHost(string cfgKey, Dictionary<string, string> cfgValues)
             => new HostBuilder()
                 .ConfigureAppConfiguration(cfg
-                    => cfg.Add(new StaticConfigurationSource
-                    {
-                        Values = cfgValues
-                    }))
+                    => cfg.AddInMemoryCollection(cfgValues))
                 .UseDefaultServiceProvider((ctx, spo) =>
                 {
 
                 })
-                .UseWebHostPlugins((sc, target, method) => { }, cfgKey);
+                .UseWebHostPlugins(builder => builder.WithConfigurationKey(cfgKey));
 
         [Fact]
         public void TestImplicitLoadPlugin()

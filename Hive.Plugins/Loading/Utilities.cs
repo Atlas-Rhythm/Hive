@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using Hive.Plugins.Resources;
+using Hive.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Hive.Plugins.Loading
@@ -45,6 +47,21 @@ namespace Hive.Plugins.Loading
                 args[i] = serviceOverride(param.ParameterType) ?? InjectParameter(services, method, param, arguments, i);
             }
             return thisobj => method.InvokeWithoutWrappingExceptions(thisobj, args);
+        }
+
+        public static IEnumerable<Type> SafeGetTypes(this Assembly assembly)
+        {
+            if (assembly is null)
+                throw new ArgumentNullException(nameof(assembly));
+
+            try
+            {
+                return assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException e)
+            {
+                return e.Types.WhereNotNull();
+            }
         }
 
         private static object? InjectParameter(IServiceProvider services, MethodInfo method, ParameterInfo param, object?[] givenArguments, int i)
