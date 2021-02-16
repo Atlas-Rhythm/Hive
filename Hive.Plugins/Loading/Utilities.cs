@@ -5,10 +5,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Hive.Plugins.Loading
 {
-    internal static class Utilities
+    public static class Utilities
     {
         public static object? InvokeWithoutWrappingExceptions(this MethodInfo method, object? obj, object?[] arguments)
-            => method.Invoke(obj, BindingFlags.DoNotWrapExceptions, null, arguments, null);
+            => (method ?? throw new ArgumentNullException(nameof(method))).Invoke(obj, BindingFlags.DoNotWrapExceptions, null, arguments, null);
 
         public static Action<object?> InjectVoidMethod(this IServiceProvider services, MethodInfo method, object?[]? arguments)
         {
@@ -27,6 +27,13 @@ namespace Hive.Plugins.Loading
 
         public static Func<object?, object?> InjectMethod(this IServiceProvider services, MethodInfo method, Func<Type, object?> serviceOverride, object?[]? arguments)
         {
+            if (services is null)
+                throw new ArgumentNullException(nameof(services));
+            if (method is null)
+                throw new ArgumentNullException(nameof(method));
+            if (serviceOverride is null)
+                throw new ArgumentNullException(nameof(serviceOverride));
+
             arguments ??= Array.Empty<object?>();
             var parameters = method.GetParameters();
             if (arguments.Length > parameters.Length)

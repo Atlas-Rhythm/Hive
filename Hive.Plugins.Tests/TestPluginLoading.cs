@@ -37,7 +37,7 @@ namespace Hive.Plugins.Tests
                 {
 
                 })
-                .UseWebHostPlugins(cfgKey);
+                .UseWebHostPlugins((sc, target, method) => { }, cfgKey);
 
         [Fact]
         public void TestImplicitLoadPlugin()

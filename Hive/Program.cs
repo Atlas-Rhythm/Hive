@@ -2,6 +2,7 @@ using AspNetCoreRateLimit;
 using Hive.Models;
 using Hive.Plugins.Loading;
 using Hive.Versioning;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -14,6 +15,7 @@ using Serilog.Exceptions.EntityFrameworkCore.Destructurers;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Version = Hive.Versioning.Version;
@@ -83,7 +85,25 @@ namespace Hive
                         .WithDestructurers(new[] { new DbUpdateExceptionDestructurer() }))
                     .WriteTo.Console())
                 .ConfigureWebHostDefaults(webBuilder => _ = webBuilder.UseStartup<Startup>())
-                .UseWebHostPlugins();
+                .UseWebHostPlugins((sc, target, method)
+                    => sc.AddSingleton<IStartupFilter>(sp => new CustomStartupFilter(sp, target, method)));
+
+        private class CustomStartupFilter : IStartupFilter
+        {
+            private readonly IServiceProvider services;
+            private readonly object target;
+            private readonly MethodInfo method;
+
+            public CustomStartupFilter(IServiceProvider services, object target, MethodInfo method)
+                => (this.services, this.target, this.method) = (services, target, method);
+
+            public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+                => app =>
+                {
+                    services.InjectVoidMethod(method, t => t == typeof(IApplicationBuilder) ? (object)app : null, null)(target);
+                    next(app);
+                };
+        }
 
         private static LoggerConfiguration LibraryTypes(this LoggerDestructuringConfiguration conf)
             => conf.AsScalar<Version>()

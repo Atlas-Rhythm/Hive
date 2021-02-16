@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Hive.Plugins.Resources;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,9 +27,10 @@ namespace Hive.Plugins.Loading
         }
 
         private readonly LoaderConfig config;
+        private readonly Action<IServiceCollection, object, MethodInfo> registerStartupFilter;
 
-        public PluginLoader(IConfigurationSection config)
-            => this.config = config.Get<LoaderConfig>() ?? new();
+        public PluginLoader(IConfigurationSection config, Action<IServiceCollection, object, MethodInfo> registerStartupFilter)
+            => (this.config, this.registerStartupFilter) = (config.Get<LoaderConfig>() ?? new(), registerStartupFilter);
 
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "Caught exceptions are rethrown, just later on.")]
