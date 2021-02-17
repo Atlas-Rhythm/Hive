@@ -208,6 +208,9 @@
     <value>An error ocurred while initializing the plugin startup type '{0}'</value>
     <comment>{0} is the full type name that failed</comment>
   </data>
+  <data name="ServiceResolutionException_DefaultMessage" xml:space="preserve">
+    <value>The requested service could not be resolved.</value>
+  </data>
   <data name="Utils_Inject_CouldNotResolveService" xml:space="preserve">
     <value>Could not resolve a service of type '{0}' for the parameter '{1}' of method '{2}' on type '{3}'.</value>
     <comment>{0} is the service type, {1} is the parameter name, {2} is the method being injected, {3} is the type the method is on</comment>
