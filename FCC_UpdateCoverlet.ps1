@@ -24,14 +24,21 @@ if ($Response.Length -lt 1 -or $Response[0] -ne "y") {
 Set-Location $PSScriptRoot # we need to be in the solution root, otherwise we won't be able to get the version we want.
 
 $ToolPath = "$($env:LOCALAPPDATA)\FineCodeCoverage\coverlet"
-$ToolVersion = "3.0.3-preview.4"
+$ToolName = "coverlet.console"
+$ToolSimpleVersion = "3.0.3"
+$ToolVersion = "$ToolSimpleVersion-preview.4"
 
 if (Test-Path -Path "$ToolPath\coverlet.exe" -PathType Leaf) {
-	# its already been installed, so we'll use update
-	dotnet tool update coverlet.console --version $ToolVersion --tool-path "$ToolPath"
-} else {
-	# otherwise, we need to install it
-	dotnet tool install coverlet.console --version $ToolVersion --tool-path "$ToolPath"
+	# its already been installed, so we purge the installation because of our fuckery
+	Remove-Item "$ToolPath\*" -Recurse
 }
+
+# then, we need to install it again
+dotnet tool install $ToolName --version $ToolVersion --tool-path "$ToolPath"
+
+# This is a hack to make dotnet tool list show a version that is parsable by System.Version.
+$CoverletStore = "$ToolPath\.store\$ToolName"
+# move the only file in that directory to ne new name
+Copy-Item ((Get-ChildItem $CoverletStore)[0].FullName) "$CoverletStore\$ToolSimpleVersion" -Recurse
 
 Write-Output "Coverlet has been sucessfully installed to '$ToolPath'!"
