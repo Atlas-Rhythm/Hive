@@ -18,7 +18,7 @@ namespace Hive.Plugins.Tests.TestPlugin
             _ = services;
         }
 
-        // this doesn't need IApplicationBuilder because the tests don't provide it, giving notihg other than that which is injected
+        // this doesn't need IApplicationBuilder because the tests don't provide it, giving nothing other than that which is injected
         public void Configure(IHost host)
         {
             _ = Configuration;
