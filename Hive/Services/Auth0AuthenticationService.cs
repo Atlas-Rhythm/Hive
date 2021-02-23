@@ -158,26 +158,10 @@ namespace Hive.Services
             }
         }
 
-        /// <inheritdoc/>
-        public Task<bool> IsValid(HttpRequest request)
-        {
-            // Check the header of the request for a token
-            // If the token exists, verify it with a check
-            // If the token matches, we should be good to say that the token is valid and that the user is logged in
-            // TODO: Implement
-            return Task.FromResult(false);
-        }
-
-        /// <summary>
-        /// Helper method to refresh Hive's management API token.
-        /// </summary>
-        /// <remarks>
-        /// It's main purpose is for getting a user by their ID, since that endpoint requires this special kind of token.
-        /// 
-        /// This token expires every 24 hours, so each day at least 1 request might be a little bit slower.
-        /// </remarks>
-        /// <returns></returns>
-        // For more info, see https://auth0.com/docs/tokens/management-api-access-tokens/get-management-api-access-tokens-for-production
+        // Helper method to refresh Hive's management API token.
+        // It's main purpose is for getting a user by their ID, since that endpoint requires this special kind of token.
+        // This token expires every 24 hours, so each day at least 1 request might be a little bit slower.
+        // For more info, see https://auth0.com/docs/tokens/management-api-access-tokens
         private async Task RefreshManagementAPIToken()
         {
             logger.Information("Refreshing Auth0 Management API Token...");
@@ -204,6 +188,7 @@ namespace Hive.Services
             managementExpireInstant = clock.GetCurrentInstant() + Duration.FromSeconds(body!.Expires_In);
         }
 
+        // REVIEW: Should these be moved to Hive.Models?
         private record ManagementAPIResponse(string Access_Token, int Expires_In, string Scope, string Token_Type);
 
         private record Auth0User(string Username, JsonElement User_Metadata);

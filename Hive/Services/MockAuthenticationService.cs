@@ -49,8 +49,5 @@ namespace Hive.Services
                 ? throwOnError ? throw new ArgumentNullException(nameof(userId)) : Task.FromResult<User?>(null)
                 : Users.TryGetValue(userId, out var outp) ? Task.FromResult(outp) : Task.FromResult<User?>(null);
         }
-
-        /// <inheritdoc/>
-        public Task<bool> IsValid(HttpRequest request) => throw new NotImplementedException();
     }
 }
