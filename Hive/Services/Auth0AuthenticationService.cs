@@ -1,4 +1,4 @@
-using Hive.Models;
+﻿using Hive.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using NodaTime;
@@ -76,11 +76,20 @@ namespace Hive.Services
         public async Task<User?> GetUser(HttpRequest request, bool throwOnError = false)
         {
             if (request is null)
-                throw new ArgumentNullException(nameof(request));
+                return throwOnError ? throw new ArgumentNullException(nameof(request)) : null;
 
-            if (managementToken is null || clock.GetCurrentInstant() > managementExpireInstant)
-                await RefreshManagementAPIToken().ConfigureAwait(false);
-
+            try
+            {
+                if (managementToken is null || clock.GetCurrentInstant() > managementExpireInstant)
+                    await RefreshManagementAPIToken().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "An exception ocurred when trying to refresh the management token!");
+                if (throwOnError)
+                    throw;
+                return null;
+            }
             using var message = new HttpRequestMessage(HttpMethod.Get, authenticationAPIUserEndpoint);
 
             if (request.Headers.TryGetValue("Authorization", out var auth))
@@ -90,6 +99,10 @@ namespace Hive.Services
             {
                 var response = await client.SendAsync(message).ConfigureAwait(false);
 
+                if (!response.IsSuccessStatusCode)
+                {
+                    return null;
+                }
                 var auth0User = await response.Content.ReadFromJsonAsync<Auth0User>(jsonSerializerOptions).ConfigureAwait(false);
 
                 // REVIEW: is this dumb
@@ -172,7 +185,6 @@ namespace Hive.Services
             logger.Information("Refreshing Auth0 Management API Token...");
 
             using var message = new HttpRequestMessage(HttpMethod.Post, managementAPIGetManagementToken);
-            message.Headers.Add("content-type", "application/x-www-form-urlencoded");
 
             var data = new Dictionary<string, string>()
             {
@@ -182,10 +194,16 @@ namespace Hive.Services
                 { "audience", audience },
             };
 
-            message.Content = new FormUrlEncodedContent(data!);
+            message.Content = JsonContent.Create(data);
 
-            // REVIEW: should i include proper error handling or just let it bubble to the method that uses this
+            // Any exception here will bubble to caller.
             var response = await client.SendAsync(message).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.Error("Failed to retrieve new auth0 token! Failed status code: {StatusCode}", response.StatusCode);
+                // Short circuit exit without fixing management token on failure to retreive one later.
+                return;
+            }
 
             var body = await response.Content.ReadFromJsonAsync<ManagementAPIResponse>(jsonSerializerOptions).ConfigureAwait(false);
 
