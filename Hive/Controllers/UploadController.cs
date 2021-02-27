@@ -347,9 +347,7 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<UploadResult>> Upload(IFormFile file)
         {
-            var user = await authService.GetUser(Request).ConfigureAwait(false);
-
-            if (user is null)
+            if (User.Identity is not User user)
                 return Unauthorized();
 
             if (file is null)
@@ -430,9 +428,7 @@ namespace Hive.Controllers
             if (finalMetadata is null || cookie is null)
                 return BadRequest();
 
-            var user = await authService.GetUser(Request).ConfigureAwait(false);
-
-            if (user is null)
+            if (User.Identity is not User user)
                 return Unauthorized();
 
             if (finalMetadata.ID is null

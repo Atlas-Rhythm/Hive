@@ -1,7 +1,6 @@
 ﻿using Hive.Extensions;
 using Hive.Models;
 using Hive.Models.Serialized;
-using Hive.Services;
 using Hive.Versioning;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -26,20 +25,17 @@ namespace Hive.Controllers
     {
         private readonly Serilog.ILogger log;
         private readonly ModService modService;
-        private readonly IProxyAuthenticationService proxyAuth;
 
         /// <summary>
         /// Create a ModsController with DI.
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="modService"></param>
-        /// <param name="proxyAuth"></param>
-        public ModsController([DisallowNull] Serilog.ILogger logger, ModService modService, IProxyAuthenticationService proxyAuth)
+        public ModsController([DisallowNull] Serilog.ILogger logger, ModService modService)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
             log = logger.ForContext<ModsController>();
             this.modService = modService;
-            this.proxyAuth = proxyAuth;
         }
 
         /// <summary>
@@ -60,10 +56,8 @@ namespace Hive.Controllers
         public async Task<ActionResult<IEnumerable<SerializedMod>>> GetAllMods([FromQuery] string[]? channelIds = null, [FromQuery] string? gameVersion = null, [FromQuery] string? filterType = null)
         {
             log.Debug("Getting all mods...");
-            // Get the user, do not need to capture context
-            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            var queryResult = modService.GetAllMods(user, channelIds, gameVersion, filterType);
+            var queryResult = await modService.GetAllMods(User.Identity as User, channelIds, gameVersion, filterType).ConfigureAwait(false);
 
             return queryResult.Serialize(GetAcceptLanguageCultures());
         }
@@ -89,12 +83,10 @@ namespace Hive.Controllers
         public async Task<ActionResult<SerializedMod>> GetSpecificMod([FromRoute] string id, [FromQuery] string? range = null, [FromQuery] string? channelId = null, [FromQuery] string? gameVersion = null, [FromQuery] string? filterType = null)
         {
             log.Debug("Getting a specific mod...");
-            // Get the user, do not need to capture context
-            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             var filteredRange = range != null ? new VersionRange(range) : null;
 
-            var queryResult = modService.GetMod(user, id, filteredRange, channelId, gameVersion, filterType);
+            var queryResult = await modService.GetMod(User.Identity as User, id, filteredRange, channelId, gameVersion, filterType).ConfigureAwait(false);
 
             return queryResult.Serialize(GetAcceptLanguageCultures());
         }
@@ -113,10 +105,8 @@ namespace Hive.Controllers
         public async Task<ActionResult<SerializedMod>> GetSpecificModLatestVersion([FromRoute] string id)
         {
             log.Debug("Getting the latest version of a specific mod...");
-            // Get the user, do not need to capture context
-            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            var queryResult = modService.GetMod(user, id);
+            var queryResult = await modService.GetMod(User.Identity as User, id).ConfigureAwait(false);
 
             return queryResult.Serialize(GetAcceptLanguageCultures());
         }
@@ -137,11 +127,9 @@ namespace Hive.Controllers
         public async Task<ActionResult<SerializedMod>> MoveModToChannel([FromRoute] string channelId, [FromBody] ModIdentifier identifier)
         {
             log.Debug("Attempting to move a mod to a new channel...");
-            // Get the user, do not need to capture context
-            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
-            if (user is null) return Unauthorized();
+            if (User.Identity is not User user) return Unauthorized();
 
             var queryResult = await modService.MoveMod(user, channelId, identifier).ConfigureAwait(false);
 
@@ -154,9 +142,8 @@ namespace Hive.Controllers
         {
             // We start with an empty list
             var preferredCultures = Enumerable.Empty<string>();
-            if (Request != null)
+            if (Request != null && Request.Headers != null && Request.Headers.TryGetValue("Accept-Languages", out var requestedLanguages))
             {
-                var requestedLanguages = Request.Headers["Accept-Language"];
                 if (!StringValues.IsNullOrEmpty(requestedLanguages) && requestedLanguages.Count > 0)
                 {
                     preferredCultures = requestedLanguages.ToString().Split(',')
