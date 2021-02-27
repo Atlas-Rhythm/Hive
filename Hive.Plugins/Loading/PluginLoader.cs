@@ -26,17 +26,25 @@ namespace Hive.Plugins.Loading
             /// ExcludePlugins specifies the names of the plugins to not load when it would otherwise load them.
             /// </summary>
             public string[] ExcludePlugins { get; set; } = Array.Empty<string>();
+            // Unfortunately, we can't deserialize to a dictionary of sections, because that would make too much sense
+            /*
             /// <summary>
             /// This specifies the configuration objects to expose to each plugin, keyed on the name, for when UsePluginSpecificConfig is false.
             /// </summary>
-            public Dictionary<string, IConfiguration> PluginConfigurations { get; set; } = new();
+            public Dictionary<string, ConfigurationSection> PluginConfigurations { get; set; } = new();
+            */
         }
 
         private readonly LoaderConfig config;
+        private readonly IConfigurationSection sharedConfigSection;
         private readonly PluginLoaderOptionsBuilder options;
 
         public PluginLoader(IConfigurationSection config, PluginLoaderOptionsBuilder options)
-            => (this.config, this.options) = (config.Get<LoaderConfig>() ?? new(), options);
+        {
+            this.config = config.Get<LoaderConfig>() ?? new();
+            sharedConfigSection = config.GetSection("PluginConfigurations");
+            this.options = options;
+        }
 
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "Caught exceptions are rethrown, just later on.")]
@@ -118,12 +126,7 @@ namespace Hive.Plugins.Loading
             }
             else
             {
-                if (!config.PluginConfigurations.TryGetValue(plugin.Name, out var config2))
-                {
-                    config2 = new ConfigurationBuilder().Build();
-                }
-
-                pluginConfig = config2;
+                pluginConfig = sharedConfigSection.GetSection(plugin.Name);
             }
 
             var types = plugin.PluginAssembly.SafeGetTypes();

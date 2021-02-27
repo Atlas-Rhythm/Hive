@@ -29,7 +29,7 @@ In the app configuration, the configuration key `Plugins` contains the configura
     //   A map of plugin name to plugin configuration objects. Defaults
     // to an empty map. This is only used when UsePluginSpecificConfig is
     // false.
-    "PluginConfiguration": Map<string, object>
+    "PluginConfigurations": Map<string, object>
 }
 ```
 
