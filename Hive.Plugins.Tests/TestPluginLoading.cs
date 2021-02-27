@@ -12,8 +12,10 @@ namespace Hive.Plugins.Tests
 {
     public class TestPluginLoading
     {
-        private static IHostBuilder BuildLoadingHost(string cfgKey, Dictionary<string, string> cfgValues)
-            => new HostBuilder()
+        private static IHostBuilder BuildLoadingHost(string cfgKey, Dictionary<string, string> cfgValues, Action<PluginLoaderOptionsBuilder>? optBuilder = null)
+        {
+            optBuilder ??= _ => { };
+            return new HostBuilder()
                 .ConfigureAppConfiguration(cfg
                     => cfg.AddInMemoryCollection(cfgValues))
                 .UseDefaultServiceProvider((ctx, spo) =>
@@ -21,10 +23,11 @@ namespace Hive.Plugins.Tests
 
                 })
                 .UseWebHostPlugins(builder
-                    => builder
+                    => optBuilder(builder
                         .WithConfigurationKey(cfgKey)
                         .WithApplicationConfigureRegistrar((services, target, method)
-                            => services.AddSingleton(new PluginRegistration(target, method))));
+                            => services.AddSingleton(new PluginRegistration(target, method)))));
+        }
 
         private record PluginRegistration(object Target, MethodInfo Method)
         {
