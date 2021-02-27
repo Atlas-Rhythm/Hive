@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
 using NodaTime;
+using System.Threading.Tasks;
 
 namespace Hive.Services.Common
 {
@@ -92,7 +93,7 @@ namespace Hive.Services.Common
         /// </summary>
         /// <param name="user">The user to associate with this request.</param>
         /// <returns>A wrapped enumerable of <see cref="GameVersion"/> objects, if successful.</returns>
-        public HiveObjectQuery<IEnumerable<GameVersion>> RetrieveAllVersions(User? user)
+        public async Task<HiveObjectQuery<IEnumerable<GameVersion>>> RetrieveAllVersions(User? user)
         {
             if (!permissions.CanDo(ListActionName, new PermissionContext { User = user }, ref versionsParseState))
                 return forbiddenEnumerableResponse;
@@ -107,7 +108,7 @@ namespace Hive.Services.Common
                 return forbiddenEnumerableResponse;
 
             // Grab our list of game versions
-            var versions = context.GameVersions.ToList();
+            var versions = await context.GameVersions.ToListAsync().ConfigureAwait(false);
             log.Debug("Filtering versions from all {0} versions...", versions.Count);
 
             // First, we perform a permission check on each game version, in case we need to filter any specific ones
@@ -130,7 +131,7 @@ namespace Hive.Services.Common
         /// <param name="user">The user to associate with this request.</param>
         /// <param name="versionName">The name of the new version</param>
         /// <returns>A wrapped <see cref="GameVersion"/> object, if successful.</returns>
-        public HiveObjectQuery<GameVersion> CreateNewGameVersion(User? user, string versionName)
+        public async Task<HiveObjectQuery<GameVersion>> CreateNewGameVersion(User? user, string versionName)
         {
             // If permission system says the user cannot create a new game version, forbid.
             if (!permissions.CanDo(CreateActionName, new PermissionContext { User = user }, ref versionsParseState))
@@ -154,7 +155,7 @@ namespace Hive.Services.Common
                 CreationTime = clock.GetCurrentInstant()
             };
 
-            _ = context.GameVersions.Add(version);
+            _ = await context.GameVersions.AddAsync(version).ConfigureAwait(false);
 
             return new HiveObjectQuery<GameVersion>(version, null, StatusCodes.Status200OK);
         }
