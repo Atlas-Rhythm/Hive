@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Security.Claims;
 using Hive.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -55,19 +56,30 @@ namespace Hive.Tests
             return stream;
         }
 
-        internal static HttpContext CreateMockRequest(Stream body)
+        internal static HttpContext CreateMockRequest(Stream body, bool loggedIn = true)
         {
             var requestMoq = new Mock<HttpRequest>();
+            var claimsMoq = new Mock<ClaimsPrincipal>();
+
             requestMoq.SetupGet(r => r.Body).Returns(body);
-            requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
-                new Dictionary<string, StringValues>()
-                {
-                    { HeaderNames.Authorization, new StringValues("Bearer: test") }
-                })
-            );
+
+            if (loggedIn)
+            {
+                // Setup headers to return the bearer token to our test user
+                requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
+                    new Dictionary<string, StringValues>()
+                    {
+                        { HeaderNames.Authorization, new StringValues("Bearer: test") }
+                    })
+                );
+
+                // Setup claims principal to return our logged-in user
+                claimsMoq.SetupGet(m => m.Identity).Returns(new User { Username = "test" });
+            }
 
             var contextMoq = new Mock<HttpContext>();
             contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
+            contextMoq.SetupGet(c => c.User).Returns(claimsMoq.Object);
 
             return contextMoq.Object;
         }

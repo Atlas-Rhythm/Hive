@@ -16,6 +16,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using static Hive.Tests.TestHelpers;
 
 namespace Hive.Tests.Endpoints
 {
@@ -287,7 +288,11 @@ namespace Hive.Tests.Endpoints
                 .AddScoped<Controllers.ResolveDependenciesController>()
                 .AddAggregates();
 
-            return services.BuildServiceProvider().GetRequiredService<Controllers.ResolveDependenciesController>();
+            var controller = services.BuildServiceProvider().GetRequiredService<Controllers.ResolveDependenciesController>();
+
+            controller.ControllerContext.HttpContext = CreateMockRequest(null!, false);
+
+            return controller;
         }
 
         // I need to set up a "proper" Mod object so that the controller won't throw a fit

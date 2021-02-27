@@ -191,7 +191,11 @@ namespace Hive.Tests.Endpoints
                 .AddScoped<Controllers.GameVersionsController>()
                 .AddAggregates();
 
-            return services.BuildServiceProvider().GetRequiredService<Controllers.GameVersionsController>();
+            var controller = services.BuildServiceProvider().GetRequiredService<Controllers.GameVersionsController>();
+
+            controller.ControllerContext.HttpContext = CreateMockRequest(null!, false);
+
+            return controller;
         }
 
         private class DenyUserAccessPlugin : IGameVersionsPlugin

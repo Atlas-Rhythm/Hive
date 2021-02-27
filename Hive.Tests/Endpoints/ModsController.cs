@@ -387,7 +387,11 @@ namespace Hive.Tests.Endpoints
                 .AddScoped<Controllers.ModsController>()
                 .AddAggregates();
 
-            return services.BuildServiceProvider().GetRequiredService<Controllers.ModsController>();
+            var controller = services.BuildServiceProvider().GetRequiredService<Controllers.ModsController>();
+
+            controller.ControllerContext.HttpContext = CreateMockRequest(null!, false);
+
+            return controller;
         }
 
         // I need to set up a "proper" Mod object so that the controller won't throw a fit

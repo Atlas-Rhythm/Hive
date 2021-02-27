@@ -184,7 +184,11 @@ namespace Hive.Tests.Endpoints
             services.AddScoped<ChannelService>();
             services.AddScoped<Controllers.ChannelsController>();
 
-            return services.BuildServiceProvider().GetRequiredService<Controllers.ChannelsController>();
+            var controller = services.BuildServiceProvider().GetRequiredService<Controllers.ChannelsController>();
+
+            controller.ControllerContext.HttpContext = CreateMockRequest(null!, false);
+
+            return controller;
         }
     }
 }
