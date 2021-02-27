@@ -53,10 +53,18 @@ namespace Hive
                 .AddSingleton<IModsPlugin, HiveModsControllerPlugin>()
                 .AddSingleton<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>()
                 .AddSingleton<IUploadPlugin, HiveDefaultUploadPlugin>()
-                //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
-                //.AddSingleton<IProxyAuthenticationService, MockAuthenticationService>()
-                .AddSingleton<IProxyAuthenticationService, Auth0AuthenticationService>()
                 .AddSingleton<SymmetricAlgorithm>(sp => Rijndael.Create()); // TODO: pick an algo
+
+            // If the config file doesn't have an Auth0 section, we'll assume that the auth service is provided by a plugin.
+            if (Configuration.GetSection("Auth0").Exists())
+            {
+                _ = services.AddSingleton<IProxyAuthenticationService, Auth0AuthenticationService>();
+            }
+            // Uncomment the following code if you need mock authentication for HOPEFULLY DEVELOPMENT reasons
+            //else
+            //{
+            //    _ = services.AddSingleton<IProxyAuthenticationService, MockAuthenticationService>();
+            //}
 
             _ = services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
