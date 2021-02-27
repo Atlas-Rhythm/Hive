@@ -18,10 +18,7 @@ namespace Hive.Plugins.Tests
             return new HostBuilder()
                 .ConfigureAppConfiguration(cfg
                     => cfg.AddInMemoryCollection(cfgValues))
-                .UseDefaultServiceProvider((ctx, spo) =>
-                {
-
-                })
+                .UseDefaultServiceProvider((ctx, spo) => { })
                 .UseWebHostPlugins(builder
                     => optBuilder(builder
                         .WithConfigurationKey(cfgKey)
@@ -101,7 +98,6 @@ namespace Hive.Plugins.Tests
             })
                 .Build();
 
-
             var pluginInstances = host.Services.GetRequiredService<IEnumerable<PluginInstance>>();
             var pluginRegistrations = host.Services.GetRequiredService<IEnumerable<PluginRegistration>>();
 
@@ -149,7 +145,6 @@ namespace Hive.Plugins.Tests
             })
                 .Build();
 
-
             var pluginInstances = host.Services.GetRequiredService<IEnumerable<PluginInstance>>();
             var pluginRegistrations = host.Services.GetRequiredService<IEnumerable<PluginRegistration>>();
 
@@ -160,7 +155,87 @@ namespace Hive.Plugins.Tests
             Assert.Empty(pluginRegistrations);
         }
 
-        // TODO: test the different configuration codepaths
+        [Fact]
+        public void TestPluginSharedConfigurations()
+        {
+            var host = BuildLoadingHost("Plugins", new()
+            {
+                { "Plugins:PluginPath", "plugins" },
+                { "Plugins:ImplicitlyLoadPlugins", "false" },
+                { "Plugins:LoadPlugins:0", "Hive.Plugins.Tests.TestPlugin" },
+                { "Plugins:UsePluginSpecificConfig", "false" },
+                // actual config values
+                { "Plugins:PluginConfigurations:Hive.Plugins.Tests.TestPlugin:val1", "hello" },
+                { "Plugins:PluginConfigurations:Hive.Plugins.Tests.TestPlugin:val2", "17" },
+            })
+                .ConfigureServices(sc => sc.AddSingleton<Action<IConfiguration>>(OnGetConfiguration))
+                .Build();
+
+            static void OnGetConfiguration(IConfiguration config)
+            {
+                Assert.Equal("hello", config.GetValue<string>("val1"));
+                Assert.Equal(17, config.GetValue<int>("val2"));
+            }
+
+            // TODO: is this repetition bad enough to warrant helpers?
+
+            var pluginInstances = host.Services.GetRequiredService<IEnumerable<PluginInstance>>();
+            var pluginRegistrations = host.Services.GetRequiredService<IEnumerable<PluginRegistration>>();
+
+            InitRegistrations(host.Services, pluginRegistrations);
+
+            // we only have one test plugin that we are loading
+            Assert.Single(pluginInstances);
+            // that test plugin has only one startup class
+            Assert.Single(pluginRegistrations);
+
+            var firstRegistration = pluginRegistrations.First();
+            // the registration target is itself registered
+            Assert.Same(firstRegistration, host.Services.GetRequiredService(firstRegistration.GetType()));
+        }
+
+        [Fact]
+        public void TestPluginSpecificConfigurations()
+        {
+            var host = BuildLoadingHost("Plugins", new()
+            {
+                { "Plugins:PluginPath", "plugins" },
+                { "Plugins:ImplicitlyLoadPlugins", "false" },
+                { "Plugins:LoadPlugins:0", "Hive.Plugins.Tests.TestPlugin" },
+                { "Plugins:UsePluginSpecificConfig", "true" },
+            }, b => b.ConfigurePluginConfig((c, i)
+                => c.AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    // actual config values
+                    { "val1", "hello" },
+                    { "val2", "17" },
+                })))
+                .ConfigureServices(sc => sc.AddSingleton<Action<IConfiguration>>(OnGetConfiguration))
+                .Build();
+
+            static void OnGetConfiguration(IConfiguration config)
+            {
+                Assert.Equal("hello", config.GetValue<string>("val1"));
+                Assert.Equal(17, config.GetValue<int>("val2"));
+            }
+
+            // TODO: is this repetition bad enough to warrant helpers?
+
+            var pluginInstances = host.Services.GetRequiredService<IEnumerable<PluginInstance>>();
+            var pluginRegistrations = host.Services.GetRequiredService<IEnumerable<PluginRegistration>>();
+
+            InitRegistrations(host.Services, pluginRegistrations);
+
+            // we only have one test plugin that we are loading
+            Assert.Single(pluginInstances);
+            // that test plugin has only one startup class
+            Assert.Single(pluginRegistrations);
+
+            var firstRegistration = pluginRegistrations.First();
+            // the registration target is itself registered
+            Assert.Same(firstRegistration, host.Services.GetRequiredService(firstRegistration.GetType()));
+        }
+
         // TODO: test that exceptions are propagated correctly
     }
 }
