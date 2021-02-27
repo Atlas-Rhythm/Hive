@@ -96,7 +96,7 @@ namespace Hive.Services
             using var message = new HttpRequestMessage(HttpMethod.Get, authenticationAPIUserEndpoint);
 
             if (request.Headers.TryGetValue("Authorization", out var auth))
-                message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", auth);
+                message.Headers.Add("Authorization", new List<string> { auth });
 
             try
             {
