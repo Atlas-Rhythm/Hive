@@ -1,4 +1,4 @@
-﻿using Hive.Models;
+using Hive.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using NodaTime;
@@ -60,7 +60,7 @@ namespace Hive.Services
             clientID = section.GetValue<string>("ClientID");
             clientSecret = section.GetValue<string>("ClientSecret");
 
-            var timeout = new TimeSpan(0, 0, 0, 0, section.GetValue<int>("TimeoutMS"));
+            var timeout = new TimeSpan(0, 0, 0, 0, section.GetValue("TimeoutMS", 10000));
             client = new HttpClient
             {
                 BaseAddress = domain,
