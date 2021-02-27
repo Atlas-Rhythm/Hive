@@ -48,16 +48,6 @@ namespace Hive.Services
         }
 
         /// <inheritdoc/>
-        public Task<bool> IsValid(HttpRequest request)
-        {
-            // Check the header of the request for a token
-            // If the token exists, verify it with a check
-            // If the token matches, we should be good to say that the token is valid and that the user is logged in
-            // TODO: Implement
-            return Task.FromResult(false);
-        }
-
-        /// <inheritdoc/>
         public async Task<User?> GetUser(string userId, bool throwOnError = false)
         {
             if (string.IsNullOrEmpty(userId))
