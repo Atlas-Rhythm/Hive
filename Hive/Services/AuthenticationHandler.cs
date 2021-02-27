@@ -12,7 +12,7 @@ namespace Hive.Services
     /// <summary>
     /// A class for Hive authentication.
     /// </summary>
-    public class MockAuthenticationHandler : IAuthenticationHandler
+    public class AuthenticationHandler : IAuthenticationHandler
     {
         private HttpContext? context;
         private static string authType = "Bearer";
@@ -22,7 +22,7 @@ namespace Hive.Services
         /// Construct a new mock authentication handler via DI.
         /// </summary>
         /// <param name="proxyAuth"></param>
-        public MockAuthenticationHandler(IProxyAuthenticationService proxyAuth)
+        public AuthenticationHandler(IProxyAuthenticationService proxyAuth)
         {
             this.proxyAuth = proxyAuth;
         }

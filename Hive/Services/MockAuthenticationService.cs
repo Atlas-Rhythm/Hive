@@ -10,9 +10,12 @@ namespace Hive.Services
     /// <summary>
     /// A mockup of how the authentication service will behave.
     /// </summary>
-    public class MockAuthenticationService : IProxyAuthenticationService
+    public class MockAuthenticationService : IProxyAuthenticationService, IAuth0Service
     {
         private Dictionary<string, User?> Users { get; } = new Dictionary<string, User?>();
+
+        /// <inheritdoc/>
+        public Auth0ReturnData? Data => null;
 
         /// <summary>
         /// Creates and populates some dummy users
@@ -49,5 +52,8 @@ namespace Hive.Services
                 ? throwOnError ? throw new ArgumentNullException(nameof(userId)) : Task.FromResult<User?>(null)
                 : Users.TryGetValue(userId, out var outp) ? Task.FromResult(outp) : Task.FromResult<User?>(null);
         }
+
+        /// <inheritdoc/>
+        public Task<Auth0TokenResponse?> RequestToken(Uri sourceUri, string code, string? state) => Task.FromResult<Auth0TokenResponse?>(null);
     }
 }

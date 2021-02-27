@@ -59,11 +59,14 @@ namespace Hive
             if (Configuration.GetSection("Auth0").Exists())
             {
                 _ = services.AddSingleton<IProxyAuthenticationService, Auth0AuthenticationService>();
+                // Yes, this really seems like the best way to do this...
+                _ = services.AddSingleton<IAuth0Service>(sp => (sp.GetRequiredService<IProxyAuthenticationService>() as Auth0AuthenticationService)!);
             }
             // Uncomment the following code if you need mock authentication for HOPEFULLY DEVELOPMENT reasons
             //else
             //{
             //    _ = services.AddSingleton<IProxyAuthenticationService, MockAuthenticationService>();
+            //    _ = services.AddSingleton<IAuth0Service>(sp => (sp.GetRequiredService<IProxyAuthenticationService>() as MockAuthenticationService)!);
             //}
 
             _ = services.AddDbContext<HiveContext>(options =>
@@ -97,7 +100,7 @@ namespace Hive
 
             _ = services.AddAuthentication(a =>
             {
-                a.AddScheme<MockAuthenticationHandler>("Bearer", "MockAuth");
+                a.AddScheme<AuthenticationHandler>("Bearer", "OAuth");
                 a.DefaultScheme = "Bearer";
             });
 

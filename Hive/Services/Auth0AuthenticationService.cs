@@ -18,24 +18,26 @@ namespace Hive.Services
     /// <summary>
     /// An authentication service for linking with Auth0.
     /// </summary>
-    public sealed class Auth0AuthenticationService : IProxyAuthenticationService, IDisposable
+    public sealed class Auth0AuthenticationService : IProxyAuthenticationService, IAuth0Service, IDisposable
     {
         private const string authenticationAPIUserEndpoint = "userinfo";
-        private const string managementAPIGetManagementToken = "oauth/token";
+        private const string authenticationAPIGetToken = "oauth/token";
         private const string managementAPIUserEndpoint = "api/v2/users";
 
         private readonly JsonSerializerOptions jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
-
-        private readonly Uri domain;
         private readonly HttpClient client;
-        private readonly string audience;
-        private readonly string clientID;
         private readonly string clientSecret;
         private readonly ILogger logger;
         private readonly IClock clock;
 
         private string? managementToken;
         private Instant? managementExpireInstant;
+
+        /// <inheritdoc/>
+        public bool Enabled => true;
+
+        /// <inheritdoc/>
+        public Auth0ReturnData Data { get; }
 
         /// <summary>
         /// Construct a <see cref="Auth0AuthenticationService"/> with DI.
@@ -53,11 +55,12 @@ namespace Hive.Services
 
             var section = configuration.GetSection("Auth0");
 
-            domain = section.GetValue<Uri>("Domain");
-            audience = section.GetValue<string>("Audience");
+            var domain = section.GetValue<Uri>("Domain");
+            var audience = section.GetValue<string>("Audience");
             // Hive needs to use a Machine-to-Machine Application to grab a Management API v2 token
             // in order to retrieve users by their IDs.
-            clientID = section.GetValue<string>("ClientID");
+            var clientID = section.GetValue<string>("ClientID");
+            Data = new Auth0ReturnData(domain.ToString(), clientID, audience);
             clientSecret = section.GetValue<string>("ClientSecret");
 
             var timeout = new TimeSpan(0, 0, 0, 0, section.GetValue("TimeoutMS", 10000));
@@ -184,14 +187,14 @@ namespace Hive.Services
         {
             logger.Information("Refreshing Auth0 Management API Token...");
 
-            using var message = new HttpRequestMessage(HttpMethod.Post, managementAPIGetManagementToken);
+            using var message = new HttpRequestMessage(HttpMethod.Post, authenticationAPIGetToken);
 
             var data = new Dictionary<string, string>()
             {
                 { "grant_type", "client_credentials" },
-                { "client_id", clientID },
+                { "client_id", Data.ClientId },
                 { "client_secret", clientSecret },
-                { "audience", audience },
+                { "audience", Data.Audience },
             };
 
             message.Content = JsonContent.Create(data);
@@ -209,6 +212,42 @@ namespace Hive.Services
 
             managementToken = body!.Access_Token;
             managementExpireInstant = clock.GetCurrentInstant() + Duration.FromSeconds(body!.Expires_In);
+        }
+
+        /// <inheritdoc/>
+        public async Task<Auth0TokenResponse?> RequestToken(Uri sourceUri, string code, string? state)
+        {
+            logger.Debug("Requesting auth token for user...");
+            var data = new Dictionary<string, string>()
+            {
+                { "grant_type", "authorization_code" },
+                { "code", code },
+                { "client_id", Data.ClientId },
+                { "client_secret", clientSecret },
+                { "redirect_uri", sourceUri.GetComponents(UriComponents.Scheme | UriComponents.HostAndPort | UriComponents.Path, UriFormat.UriEscaped) }
+            };
+
+            using var message = new HttpRequestMessage(HttpMethod.Post, authenticationAPIGetToken)
+            {
+                Content = JsonContent.Create(data)
+            };
+            // We want to catch exceptions here
+            try
+            {
+                var response = await client.SendAsync(message).ConfigureAwait(false);
+                if (!response.IsSuccessStatusCode)
+                {
+                    logger.Error("Failed to retrieve client auth0 token! Failed status code: {StatusCode}", response.StatusCode);
+                    // Short circuit exit without fixing management token on failure to retreive one later.
+                    return null;
+                }
+                return await response.Content.ReadFromJsonAsync<Auth0TokenResponse>(jsonSerializerOptions).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Failed to get a client auth0 token!");
+            }
+            return null;
         }
 
         // REVIEW: Should these be moved to Hive.Models?
