@@ -54,7 +54,8 @@ namespace Hive
                 .AddSingleton<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>()
                 .AddSingleton<IUploadPlugin, HiveDefaultUploadPlugin>()
                 //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
-                .AddSingleton<IProxyAuthenticationService, MockAuthenticationService>()
+                //.AddSingleton<IProxyAuthenticationService, MockAuthenticationService>()
+                .AddSingleton<IProxyAuthenticationService, Auth0AuthenticationService>()
                 .AddSingleton<SymmetricAlgorithm>(sp => Rijndael.Create()); // TODO: pick an algo
 
             _ = services.AddDbContext<HiveContext>(options =>
