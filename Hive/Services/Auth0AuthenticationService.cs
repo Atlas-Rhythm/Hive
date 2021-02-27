@@ -1,6 +1,7 @@
 ﻿using Hive.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using NodaTime;
 using Serilog;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -8,7 +9,6 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Collections.Generic;
-using NodaTime;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Linq;
@@ -45,17 +45,22 @@ namespace Hive.Services
             if (log is null)
                 throw new ArgumentNullException(nameof(log));
 
+            if (configuration is null)
+                throw new ArgumentNullException(nameof(configuration));
+
             this.clock = clock;
             logger = log.ForContext<Auth0AuthenticationService>();
-            domain = configuration.GetValue<Uri>("Domain");
-            audience = configuration.GetValue<string>("Audience");
 
+            var section = configuration.GetSection("Auth0");
+
+            domain = section.GetValue<Uri>("Domain");
+            audience = section.GetValue<string>("Audience");
             // Hive needs to use a Machine-to-Machine Application to grab a Management API v2 token
             // in order to retrieve users by their IDs.
-            clientID = configuration.GetValue<string>("ClientID");
-            clientSecret = configuration.GetValue<string>("ClientSecret");
+            clientID = section.GetValue<string>("ClientID");
+            clientSecret = section.GetValue<string>("ClientSecret");
 
-            var timeout = new TimeSpan(0, 0, 0, 0, configuration.GetValue<int>("TimeoutMS"));
+            var timeout = new TimeSpan(0, 0, 0, 0, section.GetValue<int>("TimeoutMS"));
             client = new HttpClient
             {
                 BaseAddress = domain,
