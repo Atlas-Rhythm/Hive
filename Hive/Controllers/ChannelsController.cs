@@ -19,17 +19,20 @@ namespace Hive.Controllers
     {
         private readonly Serilog.ILogger log;
         private readonly ChannelService channelService;
+        private readonly IProxyAuthenticationService authService;
 
         /// <summary>
         /// Create a ChannelsController with DI.
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="channelService"></param>
-        public ChannelsController([DisallowNull] Serilog.ILogger logger, ChannelService channelService)
+        /// <param name="authService"></param>
+        public ChannelsController([DisallowNull] Serilog.ILogger logger, ChannelService channelService, IProxyAuthenticationService authService)
         {
             if (logger is null)
                 throw new ArgumentNullException(nameof(logger));
             log = logger.ForContext<ChannelsController>();
+            this.authService = authService;
             this.channelService = channelService;
         }
 
@@ -42,11 +45,15 @@ namespace Hive.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        // TODO: Perhaps return a subset of Channel, instead only containing information desired as opposed to the whole model?
+        // This is probably applicable via a GraphQL endpoint, however.
         public async Task<ActionResult<IEnumerable<Channel>>> GetChannels()
         {
             log.Debug("Getting channels...");
+            // Get the user, do not need to capture context.
+            var user = await authService.GetUser(Request).ConfigureAwait(false);
             // If user is null, we can simply forward it anyways
-            var queryResult = await channelService.RetrieveAllChannels(User.Identity as User).ConfigureAwait(false);
+            var queryResult = channelService.RetrieveAllChannels(user);
 
             return queryResult.Convert();
         }
@@ -65,11 +72,14 @@ namespace Hive.Controllers
         {
             log.Debug("Creating new channel...");
 
+            // Get the user, do not need to capture context.
+            var user = await authService.GetUser(Request).ConfigureAwait(false);
+
             // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
-            if (User.Identity is not User user) return Unauthorized();
+            if (user is null) return Unauthorized();
 
             // If user is null, we can simply forward it anyways
-            var queryResult = await channelService.CreateNewChannel(user, channelName).ConfigureAwait(false);
+            var queryResult = channelService.CreateNewChannel(user, channelName);
 
             return queryResult.Convert();
         }

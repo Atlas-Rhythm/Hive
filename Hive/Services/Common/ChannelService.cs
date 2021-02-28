@@ -7,7 +7,6 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
-using System.Threading.Tasks;
 
 namespace Hive.Services.Common
 {
@@ -89,7 +88,7 @@ namespace Hive.Services.Common
         /// </summary>
         /// <param name="user">The users to associate with this request.</param>
         /// <returns>A wrapped collection of <see cref="Channel"/>, if successful.</returns>
-        public async Task<HiveObjectQuery<IEnumerable<Channel>>> RetrieveAllChannels(User? user)
+        public HiveObjectQuery<IEnumerable<Channel>> RetrieveAllChannels(User? user)
         {
             // hive.channel with a null channel in the context should be permissible
             // iff a given user (or none) is allowed to view any channels. Thus, this should almost always be true
@@ -109,7 +108,7 @@ namespace Hive.Services.Common
             // Filter channels based off of user-level permission
             // Permission for a given channel is entirely plugin-based, channels in Hive are defaultly entirely public.
             // For a mix of private/public channels, a plugin that maintains a user-level list of read/write channels is probably ideal.
-            var channels = await context.Channels.ToListAsync().ConfigureAwait(false);
+            var channels = context.Channels.ToList();
             log.Debug("Filtering channels from {0} channels...", channels.Count);
 
             // First, we filter over if the given channel is accessible to the given user.
@@ -130,7 +129,7 @@ namespace Hive.Services.Common
         /// <param name="user">The user to associate with the request.</param>
         /// <param name="channelName">The name of the new channel</param>
         /// <returns>The wrapped <see cref="Channel"/> that was created, if successful.</returns>
-        public async Task<HiveObjectQuery<Channel>> CreateNewChannel(User? user, string channelName)
+        public HiveObjectQuery<Channel> CreateNewChannel(User? user, string channelName)
         {
             // hive.channel with a null channel in the context should be permissible
             // iff a given user (or none) is allowed to view any channels. Thus, this should almost always be true
@@ -154,7 +153,7 @@ namespace Hive.Services.Common
                 Name = channelName
             };
 
-            _ = await context.Channels.AddAsync(newChannel).ConfigureAwait(false);
+            _ = context.Channels.Add(newChannel);
 
             return new HiveObjectQuery<Channel>(newChannel, null, StatusCodes.Status200OK);
         }
