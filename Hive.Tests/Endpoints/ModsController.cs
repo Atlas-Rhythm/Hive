@@ -1,9 +1,14 @@
-﻿using Hive.Controllers;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Hive.Controllers;
 using Hive.Models;
 using Hive.Models.Serialized;
-using Hive.Permissions;
 using Hive.Plugins;
-using Hive.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,14 +16,6 @@ using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using Moq;
 using NodaTime;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -92,7 +89,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", new List<IModsPlugin>()
             {
                 new HiveModsControllerPlugin(),
-                new BetaModsFilterPlugin() // Filters all mods on Beta channel
+                new ModTestHelper.BetaModsFilterPlugin() // Filters all mods on Beta channel
             });
             var res = await controller.GetAllMods();
 
@@ -154,7 +151,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", new List<IModsPlugin>()
             {
                 new HiveModsControllerPlugin(),
-                new BetaModsFilterPlugin() // Filters all mods on Beta channel
+                new ModTestHelper.BetaModsFilterPlugin() // Filters all mods on Beta channel
             });
             var res = await controller.GetSpecificMod("Counters+"); // We will look for Counters+, which is in Beta.
 
@@ -224,7 +221,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", new List<IModsPlugin>()
             {
                 new HiveModsControllerPlugin(),
-                new BetaModsFilterPlugin() // Filters all mods on Beta channel
+                new ModTestHelper.BetaModsFilterPlugin() // Filters all mods on Beta channel
             });
             var res = await controller.GetSpecificMod("Counters+"); // We will look for Counters+, which is in Beta.
 
@@ -383,7 +380,7 @@ namespace Hive.Tests.Endpoints
 
         private Controllers.ModsController CreateController(string permissionRule, IEnumerable<IModsPlugin> plugins)
         {
-            var services = DIHelper.ConfigureServices(Options, helper, new ModsRuleProvider(permissionRule));
+            var services = DIHelper.ConfigureServices(Options, helper, new ModTestHelper.ModsRuleProvider(permissionRule));
 
             services
                 .AddTransient(sp => plugins)
@@ -421,46 +418,6 @@ namespace Hive.Tests.Endpoints
             mod.Localizations.Add(info);
 
             return mod;
-        }
-
-        // This plugin will filter out a mod if it's in the beta channel. Super super basic but works.
-        private class BetaModsFilterPlugin : IModsPlugin
-        {
-            public bool GetSpecificModAdditionalChecks(User? user, Mod contextMod) => contextMod.Channel.Name != "Beta";
-        }
-
-        // This is taken from GameVersionsController to have a configurable permission rule.
-        private class ModsRuleProvider : IRuleProvider
-        {
-            private readonly string permissionRule;
-
-            public ModsRuleProvider(string permissionRule)
-            {
-                this.permissionRule = permissionRule;
-            }
-
-            public bool HasRuleChangedSince(StringView name, Instant time) => true;
-
-            public bool HasRuleChangedSince(Rule rule, Instant time) => true;
-
-            public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
-            {
-                var nameString = name.ToString();
-                switch (nameString)
-                {
-                    case "hive":
-                        gotten = new Rule(nameString, "next(false)");
-                        return true;
-
-                    case "hive.mod":
-                        gotten = new Rule(nameString, permissionRule);
-                        return true;
-
-                    default:
-                        gotten = null;
-                        return false;
-                }
-            }
         }
 
         private static Stream GenerateStreamFromString(string s)
