@@ -53,7 +53,7 @@ namespace Hive.Controllers
             // Get the user, do not need to capture context.
             var user = await authService.GetUser(Request).ConfigureAwait(false);
             // If user is null, we can simply forward it anyways
-            var queryResult = channelService.RetrieveAllChannels(user);
+            var queryResult = await channelService.RetrieveAllChannels(user).ConfigureAwait(false);
 
             return queryResult.Convert();
         }
@@ -79,7 +79,7 @@ namespace Hive.Controllers
             if (user is null) return Unauthorized();
 
             // If user is null, we can simply forward it anyways
-            var queryResult = channelService.CreateNewChannel(user, channelName);
+            var queryResult = await channelService.CreateNewChannel(user, channelName).ConfigureAwait(false);
 
             return queryResult.Convert();
         }

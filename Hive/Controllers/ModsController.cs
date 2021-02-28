@@ -63,7 +63,7 @@ namespace Hive.Controllers
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            var queryResult = modService.GetAllMods(user, channelIds, gameVersion, filterType);
+            var queryResult = await modService.GetAllMods(user, channelIds, gameVersion, filterType).ConfigureAwait(false);
 
             return queryResult.Serialize(GetAcceptLanguageCultures());
         }
@@ -94,7 +94,7 @@ namespace Hive.Controllers
 
             var filteredRange = range != null ? new VersionRange(range) : null;
 
-            var queryResult = modService.GetMod(user, id, filteredRange, channelId, gameVersion, filterType);
+            var queryResult = await modService.GetMod(user, id, filteredRange, channelId, gameVersion, filterType).ConfigureAwait(false);
 
             return queryResult.Serialize(GetAcceptLanguageCultures());
         }
@@ -116,7 +116,7 @@ namespace Hive.Controllers
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            var queryResult = modService.GetMod(user, id);
+            var queryResult = await modService.GetMod(user, id).ConfigureAwait(false);
 
             return queryResult.Serialize(GetAcceptLanguageCultures());
         }
@@ -154,9 +154,8 @@ namespace Hive.Controllers
         {
             // We start with an empty list
             var preferredCultures = Enumerable.Empty<string>();
-            if (Request != null)
+            if (Request != null && Request.Headers != null && Request.Headers.TryGetValue("Accept-Languages", out var requestedLanguages))
             {
-                var requestedLanguages = Request.Headers["Accept-Language"];
                 if (!StringValues.IsNullOrEmpty(requestedLanguages) && requestedLanguages.Count > 0)
                 {
                     preferredCultures = requestedLanguages.ToString().Split(',')

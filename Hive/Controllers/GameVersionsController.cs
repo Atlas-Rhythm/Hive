@@ -52,7 +52,7 @@ namespace Hive.Controllers
             // Get the user, do not need to capture context.
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            var queryResult = gameVersionService.RetrieveAllVersions(user);
+            var queryResult = await gameVersionService.RetrieveAllVersions(user).ConfigureAwait(false);
 
             return queryResult.Convert(coll => coll.Select(gv => SerializedGameVersion.Serialize(gv)));
         }
@@ -77,7 +77,7 @@ namespace Hive.Controllers
             // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
             if (user is null) return Unauthorized();
 
-            var queryResult = gameVersionService.CreateNewGameVersion(user, name);
+            var queryResult = await gameVersionService.CreateNewGameVersion(user, name).ConfigureAwait(false);
 
             return queryResult.Convert(version => SerializedGameVersion.Serialize(version));
         }
