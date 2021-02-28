@@ -1,4 +1,5 @@
 ﻿using Hive.Models;
+using Hive.Services;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,7 @@ namespace Hive.Controllers
     public class ResolveDependenciesController : ControllerBase
     {
         private readonly Serilog.ILogger log;
+        private readonly IProxyAuthenticationService proxyAuth;
         private readonly DependencyResolverService dependencyResolverService;
 
         /// <summary>
@@ -22,11 +24,13 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="dependencyResolverService"></param>
-        public ResolveDependenciesController([DisallowNull] Serilog.ILogger logger, DependencyResolverService dependencyResolverService)
+        /// <param name="proxyAuth"></param>
+        public ResolveDependenciesController([DisallowNull] Serilog.ILogger logger, DependencyResolverService dependencyResolverService, IProxyAuthenticationService proxyAuth)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
             log = logger.ForContext<ResolveDependenciesController>();
             this.dependencyResolverService = dependencyResolverService;
+            this.proxyAuth = proxyAuth;
         }
 
         /// <summary>
@@ -44,8 +48,10 @@ namespace Hive.Controllers
         public async Task<ActionResult<DependencyResolutionResult>> ResolveDependencies([FromBody] ModIdentifier[] identifiers)
         {
             log.Debug("Performing dependency resolution...");
+            // Get the user, do not need to capture context
+            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            var queryResult = await dependencyResolverService.ResolveAsync(User.Identity as User, identifiers).ConfigureAwait(false);
+            var queryResult = await dependencyResolverService.ResolveAsync(user, identifiers).ConfigureAwait(false);
 
             return queryResult.Convert();
         }

@@ -1,5 +1,6 @@
 ﻿using Hive.Models;
 using Hive.Models.Serialized;
+using Hive.Services;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,17 +21,20 @@ namespace Hive.Controllers
     {
         private readonly Serilog.ILogger log;
         private readonly GameVersionService gameVersionService;
+        private readonly IProxyAuthenticationService proxyAuth;
 
         /// <summary>
         /// Create a GameVersionsController with DI.
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="gameVersionService"></param>
-        public GameVersionsController([DisallowNull] Serilog.ILogger logger, GameVersionService gameVersionService)
+        /// <param name="proxyAuth"></param>
+        public GameVersionsController([DisallowNull] Serilog.ILogger logger, GameVersionService gameVersionService, IProxyAuthenticationService proxyAuth)
         {
             if (logger is null) throw new ArgumentNullException(nameof(logger));
             log = logger.ForContext<GameVersionsController>();
             this.gameVersionService = gameVersionService;
+            this.proxyAuth = proxyAuth;
         }
 
         /// <summary>
@@ -45,8 +49,10 @@ namespace Hive.Controllers
         public async Task<ActionResult<IEnumerable<SerializedGameVersion>>> GetGameVersions()
         {
             log.Debug("Getting game versions...");
+            // Get the user, do not need to capture context.
+            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            var queryResult = await gameVersionService.RetrieveAllVersions(User.Identity as User).ConfigureAwait(false);
+            var queryResult = gameVersionService.RetrieveAllVersions(user);
 
             return queryResult.Convert(coll => coll.Select(gv => SerializedGameVersion.Serialize(gv)));
         }
@@ -65,10 +71,13 @@ namespace Hive.Controllers
         {
             log.Debug("Creating a new game version...");
 
-            // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
-            if (User.Identity is not User user) return Unauthorized();
+            // Get the user, do not need to capture context.
+            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
-            var queryResult = await gameVersionService.CreateNewGameVersion(user, name).ConfigureAwait(false);
+            // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
+            if (user is null) return Unauthorized();
+
+            var queryResult = gameVersionService.CreateNewGameVersion(user, name);
 
             return queryResult.Convert(version => SerializedGameVersion.Serialize(version));
         }
