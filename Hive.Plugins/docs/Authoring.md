@@ -63,4 +63,4 @@ dependencies it ships with it, should have a `.deps.json` file along side the ma
 should not cause problems between plugins. 
 
 It is important to note that the plugin directory must have the same name as the plugin assembly (except for the extension), and the `.deps.json`
-file must similarly have the ame name.
+file must similarly have the same name.
