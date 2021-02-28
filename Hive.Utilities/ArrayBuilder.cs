@@ -1,5 +1,9 @@
 ﻿using System;
+#if !NETSTANDARD2_0
 using System.Buffers;
+#else
+using System.Diagnostics.CodeAnalysis;
+#endif
 
 namespace Hive.Utilities
 {
@@ -7,28 +11,45 @@ namespace Hive.Utilities
     /// A type that can be used to (fairly) efficiently create arrays with minimal allocation.
     /// </summary>
     /// <remarks>
-    /// Before going out of scope, each instance <b>must</b> have either <see cref="ToArray"/> or <see cref="Clear"/> called
-    /// to ensure that the underlying array is returned to the <see cref="ArrayPool{T}"/> it was rented from.
+    /// Before going out of scope, each instance <b>must</b> have either <see cref="ToArray"/> or <see cref="Clear"/> called.
+    /// If used in a <see langword="using"/> scope, <see cref="Clear"/> is called automatically.
     /// </remarks>
     /// <typeparam name="T">The type of the array elements.</typeparam>
     public ref struct ArrayBuilder<T>
     {
-        private ArrayPool<T> pool;
         private T[] array;
+
+#if !NETSTANDARD2_0
+        private ArrayPool<T> pool;
+#endif
 
         /// <summary>
         /// The number of items currently in the <see cref="ArrayBuilder{T}"/>.
         /// </summary>
         public int Count { get; private set; }
 
+#if NETSTANDARD2_0
+        [SuppressMessage("Style", "IDE0044:Add readonly modifier",
+            Justification = "This is modified when using .NET Standard 2.1, and so is left as mutable for that.")]
+#endif
         private bool rented;
 
         /// <summary>
         /// Constructs a new <see cref="ArrayBuilder{T}"/> with the specified minimum capacity.
         /// </summary>
         /// <param name="capacity">The minimum capacity to initialize with.</param>
-        public ArrayBuilder(int capacity = 4) : this(ArrayPool<T>.Shared, capacity) { }
+        public ArrayBuilder(int capacity = 4)
+#if !NETSTANDARD2_0
+            : this(ArrayPool<T>.Shared, capacity) { }
+#else
+        {
+            Count = 0;
+            array = new T[capacity];
+            rented = false;
+        }
+#endif
 
+#if !NETSTANDARD2_0
         /// <summary>
         /// Constructs a new <see cref="ArrayBuilder{T}"/> with the specified <see cref="ArrayPool{T}"/>
         /// and minimumm capcacity.
@@ -45,6 +66,7 @@ namespace Hive.Utilities
             array = pool.Rent(capacity);
             rented = true;
         }
+#endif
 
         /// <summary>
         /// Ensures the specified amount in the internal array.
@@ -53,9 +75,19 @@ namespace Hive.Utilities
         public void Reserve(int amount)
         {
             if (array != null && amount <= array.Length) return;
+
+            Resize(amount);
+        }
+
+#if NETSTANDARD2_0
+        private void Resize(int newSize)
+            => Array.Resize(ref array, newSize);
+#else
+        private void Resize(int newSize)
+        {
             if (pool == null) pool = ArrayPool<T>.Shared;
 
-            var newArr = pool.Rent(amount); // perhaps this should ask for a bigger scale?
+            var newArr = pool.Rent(newSize); // perhaps this should ask for a bigger scale?
             if (array != null)
             {
                 Array.Copy(array, newArr, Count);
@@ -64,6 +96,7 @@ namespace Hive.Utilities
             array = newArr;
             rented = true;
         }
+#endif
 
         /// <summary>
         /// Clears the underlying array and frees it.
@@ -71,10 +104,22 @@ namespace Hive.Utilities
         public void Clear()
         {
             Count = 0;
-            if (rented) pool.Return(array, true);
+            ClearInternal();
             array = Array.Empty<T>();
+        }
+
+#if NETSTANDARD2_0
+        private void ClearInternal()
+        {
+            // intentionally left empty
+        }
+#else
+        private void ClearInternal()
+        {
+            if (rented) pool.Return(array, true);
             rented = false;
         }
+#endif
 
         /// <summary>
         /// Disposes of this <see cref="ArrayBuilder{T}"/>, releasing the underlying array if possible.
@@ -102,9 +147,8 @@ namespace Hive.Utilities
             {
                 var newArr = Count == 0 ? Array.Empty<T>() : new T[Count];
                 Array.Copy(array, newArr, Count);
-                if (rented) pool.Return(array, true);
+                ClearInternal();
                 array = newArr;
-                rented = false;
             }
             return array;
         }

@@ -9,9 +9,6 @@ using Hive.Versioning;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Primitives;
-using Microsoft.Net.Http.Headers;
-using Moq;
 using NodaTime;
 using System;
 using System.Buffers;
@@ -27,6 +24,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 using Version = Hive.Versioning.Version;
+using static Hive.Tests.TestHelpers;
 
 namespace Hive.Tests.Endpoints
 {
@@ -134,7 +132,7 @@ namespace Hive.Tests.Endpoints
         }
 
         // TODO: tests covering more of the upload process
-        //       Given the sheer number of variables in the flow, I feel more comfortable waiting until we have specific conditions that it 
+        //       Given the sheer number of variables in the flow, I feel more comfortable waiting until we have specific conditions that it
         //   is behaving incorrectly in to add more test cases, otherwise I'll be here for a year.
 
         private IServiceProvider CreateController(IEnumerable<IUploadPlugin> plugins, string rule)
@@ -150,23 +148,6 @@ namespace Hive.Tests.Endpoints
                 .AddAggregates();
 
             return services.BuildServiceProvider();
-        }
-
-        private static HttpContext CreateMockRequest(Stream body)
-        {
-            var requestMoq = new Mock<HttpRequest>();
-            _ = requestMoq.SetupGet(r => r.Body).Returns(body);
-            _ = requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
-                new Dictionary<string, StringValues>()
-                {
-                    { HeaderNames.Authorization, new StringValues("Bearer: test") }
-                })
-            );
-
-            var contextMoq = new Mock<HttpContext>();
-            _ = contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
-
-            return contextMoq.Object;
         }
 
         private class UploadsRuleProvider : IRuleProvider
@@ -187,9 +168,10 @@ namespace Hive.Tests.Endpoints
                 var nameString = name.ToString();
                 switch (nameString)
                 {
-                    case "hive.mods.upload":
+                    case "hive.mod.upload":
                         gotten = new Rule(nameString, permissionRule);
                         return true;
+
                     default:
                         gotten = null;
                         return false;

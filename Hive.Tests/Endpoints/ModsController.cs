@@ -1,26 +1,22 @@
-﻿using Hive.Controllers;
-using Hive.Models;
+﻿using Hive.Models;
 using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
+using Hive.Services.Common;
 using Hive.Utilities;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Primitives;
-using Microsoft.Net.Http.Headers;
-using Moq;
 using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using static Hive.Tests.TestHelpers;
 
 namespace Hive.Tests.Endpoints
 {
@@ -387,7 +383,7 @@ namespace Hive.Tests.Endpoints
 
             services
                 .AddTransient(sp => plugins)
-                .AddScoped<Services.Common.ModService>()
+                .AddScoped<ModService>()
                 .AddScoped<Controllers.ModsController>()
                 .AddAggregates();
 
@@ -452,42 +448,11 @@ namespace Hive.Tests.Endpoints
                         gotten = new Rule(nameString, "next(false)");
                         return true;
 
-                    case "hive.mod":
+                    default:
                         gotten = new Rule(nameString, permissionRule);
                         return true;
-
-                    default:
-                        gotten = null;
-                        return false;
                 }
             }
-        }
-
-        private static Stream GenerateStreamFromString(string s)
-        {
-            var stream = new MemoryStream();
-            var writer = new StreamWriter(stream);
-            writer.Write(s);
-            writer.Flush();
-            stream.Position = 0;
-            return stream;
-        }
-
-        private static HttpContext CreateMockRequest(Stream body)
-        {
-            var requestMoq = new Mock<HttpRequest>();
-            requestMoq.SetupGet(r => r.Body).Returns(body);
-            requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
-                new Dictionary<string, StringValues>()
-                {
-                    { HeaderNames.Authorization, new StringValues("Bearer: test") }
-                })
-            );
-
-            var contextMoq = new Mock<HttpContext>();
-            contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
-
-            return contextMoq.Object;
         }
     }
 }

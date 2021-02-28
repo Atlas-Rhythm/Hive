@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Hive.Services
 {
     /// <summary>
-    /// Mock Authentication Handler as stopgap.
+    /// A class for Hive authentication.
     /// </summary>
     public class MockAuthenticationHandler : IAuthenticationHandler
     {
@@ -19,7 +19,7 @@ namespace Hive.Services
         private readonly IProxyAuthenticationService proxyAuth;
 
         /// <summary>
-        /// Create it with DI
+        /// Construct a new mock authentication handler via DI.
         /// </summary>
         /// <param name="proxyAuth"></param>
         public MockAuthenticationHandler(IProxyAuthenticationService proxyAuth)

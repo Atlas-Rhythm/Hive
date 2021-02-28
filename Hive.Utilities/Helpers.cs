@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+#if NETSTANDARD2_0
+using System.Linq.Expressions;
+using Hive.Utilities.Resources;
+#else
 using System.Runtime.CompilerServices;
+#endif
 using System.Threading.Tasks;
 
 namespace Hive.Utilities
@@ -50,11 +55,12 @@ namespace Hive.Utilities
         }
 
         /// <summary>
-        /// Converts a tuple type to an array of the tuple elements.
+        /// Converts a value tuple type to an array of the tuple elements.
         /// </summary>
         /// <typeparam name="T">The type of the tuple.</typeparam>
         /// <param name="tuple">The tuple to convert to an array.</param>
         /// <returns>The values in the tuple in an array.</returns>
+#if !NETSTANDARD2_0
         public static object?[] ToArray<T>(this ref T tuple) where T : struct, ITuple
         {
             var array = new object?[tuple.Length];
@@ -64,6 +70,99 @@ namespace Hive.Utilities
             }
             return array;
         }
+#else
+        public static object?[] ToArray<T>(this ref T tuple) where T : struct // must be a variant of ValueTuple
+        {
+            if (typeof(T) == typeof(ValueTuple))
+                return Array.Empty<object?>();
+
+            var typeData = ValueTupleTypeData<T>.Instance;
+
+            if (!typeData.IsValueTuple)
+                throw new ArgumentException(SR.HelpersToArray_OnlySupportsValueTuple);
+
+            using var result = new ArrayBuilder<object?>(8);
+
+            object tupleObj = tuple;
+
+            var lastValueSet = false;
+            object? lastValue = null;
+            do
+            {
+                foreach (var getter in typeData.ValueGetters)
+                {
+                    if (lastValueSet)
+                        result.Add(lastValue);
+
+                    lastValue = getter(tupleObj);
+                    lastValueSet = true;
+                }
+
+                if (typeData.HasLastArgTuple)
+                {
+                    tupleObj = lastValue!;
+                    typeData = typeData.LastArgTypeData;
+                    lastValueSet = false; // we now want to ignore the value in lastValue
+                    continue;
+                }
+                break;
+            }
+            while (true);
+
+            if (lastValueSet)
+                result.Add(lastValue);
+
+            return result.ToArray();
+        }
+
+        private interface IValueTupleTypeData
+        {
+            Type Type { get; }
+            bool IsValueTuple { get; }
+            IReadOnlyList<Type> TypeArguments { get; }
+            IReadOnlyList<Func<object, object?>> ValueGetters { get; }
+            bool HasLastArgTuple { get; }
+            IValueTupleTypeData LastArgTypeData { get; }
+        }
+
+        private class ValueTupleTypeData<T> : IValueTupleTypeData where T : struct
+        {
+            public static readonly IValueTupleTypeData Instance = new ValueTupleTypeData<T>();
+
+            public Type Type { get; } = typeof(T);
+            public bool IsValueTuple { get; }
+
+            // we don't need to support just base ValueTuple
+            private Type[]? typeArgs;
+            public IReadOnlyList<Type> TypeArguments
+                => typeArgs ??= Type.GetGenericArguments();
+
+            private Func<object, object?>[]? valueGetters;
+            public IReadOnlyList<Func<object, object?>> ValueGetters
+                => valueGetters ??= MakeValueGetters(Type);
+
+            private bool? hasLastArgTuple;
+            public bool HasLastArgTuple
+                => hasLastArgTuple ??= TypeArguments.Count > 7 && TypeIsValueTuple(TypeArguments[7]);
+
+            private IValueTupleTypeData? lastArgData;
+            public IValueTupleTypeData LastArgTypeData
+                => lastArgData ??= (IValueTupleTypeData)typeof(ValueTupleTypeData<>).MakeGenericType(TypeArguments[7]).GetField(nameof(Instance)).GetValue(null);
+
+            private ValueTupleTypeData()
+                => IsValueTuple = TypeIsValueTuple(Type);
+
+            private static bool TypeIsValueTuple(Type type)
+                => type.FullName.StartsWith("System.ValueTuple`");
+
+            private static Func<object, object?>[] MakeValueGetters(Type type)
+                => type.GetFields()
+                    .Select(f => (f, p: Expression.Parameter(typeof(object))))
+                    .Select(t => (t.p, e: Expression.Convert(Expression.Field(Expression.Convert(t.p, type), t.f), typeof(object))))
+                    .Select(t => Expression.Lambda<Func<object, object?>>(t.e, t.p).Compile())
+                    .ToArray();
+        }
+#endif
 
         /// <summary>
         /// Flattens an <see cref="IEnumerable{T}"/> of <see cref="Task{T}"/> into an equivalent <see cref="IAsyncEnumerable{T}"/>.

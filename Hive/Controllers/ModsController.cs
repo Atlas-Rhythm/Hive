@@ -1,8 +1,6 @@
 ﻿using Hive.Extensions;
 using Hive.Models;
-using Hive.Models.ReadOnly;
 using Hive.Models.Serialized;
-using Hive.Plugins;
 using Hive.Services;
 using Hive.Versioning;
 using Microsoft.AspNetCore.Http;
@@ -20,50 +18,9 @@ using Hive.Services.Common;
 namespace Hive.Controllers
 {
     /// <summary>
-    /// A class for plugins that allow modifications of <see cref="ModsController"/>
-    /// </summary>
-    [Aggregable]
-    public interface IModsPlugin
-    {
-        /// <summary>
-        /// Returns true if the specified user has access to view a particular mod, false otherwise.
-        /// This method is called for each mod the user wants to access.
-        /// <para>Hive default is to return true for each mod.</para>
-        /// </summary>
-        /// <remarks>
-        /// This method is called in a LINQ expression that is not tracked by EntityFramework,
-        /// so modifications done to the <see cref="Mod"/> object will not be reflected in the database.
-        /// </remarks>
-        /// <param name="user">User in context</param>
-        /// <param name="contextMod">Mod in context</param>
-        [return: StopIfReturns(false)]
-        bool GetSpecificModAdditionalChecks(User? user, Mod contextMod) => true;
-
-        /// <summary>
-        /// Returns true if the specified user has access to move a particular mod from <paramref name="origin"/> to <paramref name="destination"/>. False otherwise.
-        /// <para>Hive default is to return true.</para>
-        /// </summary>
-        /// <param name="user">User in context</param>
-        /// <param name="contextMod">Mod that is attempting to be moved</param>
-        /// <param name="origin">Channel that the Mod was located in before the move.</param>
-        /// <param name="destination">New channel that the Mod will reside in.</param>
-        /// <returns></returns>
-        [return: StopIfReturns(false)]
-        bool GetMoveModAdditionalChecks(User user, Mod contextMod, ReadOnlyChannel origin, ReadOnlyChannel destination) => true;
-
-        /// <summary>
-        /// Allows modification of a <see cref="Mod"/> object after a move operation has been performed.
-        /// </summary>
-        /// <param name="input">The mod in which the move operation was performed on.</param>
-        void ModifyAfterModMove(in Mod input) { }
-    }
-
-    internal class HiveModsControllerPlugin : IModsPlugin { }
-
-    /// <summary>
     /// A REST controller for performing mod related actions.
     /// </summary>
-    [Route("api/mods")]
+    [Route("api/")]
     [ApiController]
     public class ModsController : ControllerBase
     {
@@ -90,13 +47,14 @@ namespace Hive.Controllers
         /// <para><paramref name="channelIds"/> Will default to empty/the instance default if not provided. Otherwise, only obtains mods from the specified channel IDs.</para>
         /// <para><paramref name="gameVersion"/> Will default to search all game versions if not provided. Otherwise, filters on only this game version.</para>
         /// <para><paramref name="filterType"/> Will default to <c>latest</c> if not provided or not one of: <c>all</c>, <c>latest</c>, or <c>recent</c>.</para>
-        /// This performs a permission check at: <c>hive.mod</c>.
+        /// This performs a permission check at: <c>hive.mods.list</c>.
+        /// Furthermore, mods are further filtered by a permission check at: <c>hive.mods.filter</c>.
         /// </summary>
         /// <param name="channelIds">The channel IDs to filter the mods.</param>
         /// <param name="gameVersion">The game version to search within.</param>
         /// <param name="filterType">How to filter the results.</param>
         /// <returns>A wrapped collection of <see cref="SerializedMod"/>, if successful.</returns>
-        [HttpGet]
+        [HttpGet("mods")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<IEnumerable<SerializedMod>>> GetAllMods([FromQuery] string[]? channelIds = null, [FromQuery] string? gameVersion = null, [FromQuery] string? filterType = null)
@@ -111,35 +69,43 @@ namespace Hive.Controllers
         }
 
         /// <summary>
-        /// Gets a <see cref="SerializedMod"/> of the specific <see cref="VersionRange"/> of this particular mod's <seealso cref="Mod.ReadableID"/>.
-        /// This performs a permission check at: <c>hive.mod</c>.
+        /// Gets a <see cref="SerializedMod"/> that matches the given ID, with some optional filtering.
+        /// <para><paramref name="range"/> Will default to all mod versions if not provided. Otherwise, only obtain mods that match the specified version range.</para>
+        /// <para><paramref name="channelId"/> Will default to empty/the instance default if not provided. Otherwise, only obtains mods from the specified channel IDs.</para>
+        /// <para><paramref name="gameVersion"/> Will default to search all game versions if not provided. Otherwise, filters on only this game version.</para>
+        /// <para><paramref name="filterType"/> Will default to <c>latest</c> if not provided or not one of: <c>all</c>, <c>latest</c>, or <c>recent</c>.</para>
+        /// This performs a permission check at <c>hive.mod.get</c>, and at <c>hive.mod.filter</c> once the <see cref="Mod"/> object was retrieved.
         /// </summary>
         /// <param name="id">The <seealso cref="Mod.ReadableID"/> to find.</param>
         /// <param name="range">The <see cref="VersionRange"/> to match.</param>
+        /// <param name="channelId">The channel IDs to filter the mods.</param>
+        /// <param name="gameVersion">The game version to search within.</param>
+        /// <param name="filterType">How to filter the results.</param>
         /// <returns>A wrapped <see cref="SerializedMod"/> of the found mod, if successful.</returns>
-        [HttpGet("api/mod/{id}")]
+        [HttpGet("mod/{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<SerializedMod>> GetSpecificMod([FromRoute] string id, [FromQuery] string? range = null)
+        public async Task<ActionResult<SerializedMod>> GetSpecificMod([FromRoute] string id, [FromQuery] string? range = null, [FromQuery] string? channelId = null, [FromQuery] string? gameVersion = null, [FromQuery] string? filterType = null)
         {
             log.Debug("Getting a specific mod...");
             // Get the user, do not need to capture context
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             var filteredRange = range != null ? new VersionRange(range) : null;
-            var queryResult = modService.GetMod(user, id, filteredRange);
+
+            var queryResult = modService.GetMod(user, id, filteredRange, channelId, gameVersion, filterType);
 
             return queryResult.Serialize(GetAcceptLanguageCultures());
         }
 
         /// <summary>
-        /// Gets a <see cref="SerializedMod"/> of the latest version of this particular mod's <seealso cref="Mod.ReadableID"/>.
-        /// This performs a permission check at: <c>hive.mod</c>.
+        /// Gets the latest version of the <see cref="Mod"/> that matches the given ID.
+        /// This performs a permission check at <c>hive.mod.get</c>, and at <c>hive.mod.filter</c> once the <see cref="Mod"/> object was retrieved.
         /// </summary>
         /// <param name="id">The <seealso cref="Mod.ReadableID"/> to find the latest version of.</param>
         /// <returns>A wrapped <see cref="SerializedMod"/> that is the latest version available, if successful.</returns>
-        [HttpGet("api/mod/{id}/latest")]
+        [HttpGet("mod/{id}/latest")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -156,13 +122,13 @@ namespace Hive.Controllers
         }
 
         /// <summary>
-        /// Moves the specified <see cref="ModIdentifier"/> from whatever channel it was in to the specified channel.
+        /// Moves the specified <see cref="ModIdentifier"/> to the specified channel.
         /// This performs a permission check at: <c>hive.mod.move</c>.
         /// </summary>
         /// <param name="channelId">The destination channel ID to move the mod to.</param>
         /// <param name="identifier">The <see cref="ModIdentifier"/> to move.</param>
         /// <returns>A wrapped <see cref="SerializedMod"/> of the moved mod, if successful.</returns>
-        [HttpPost("api/mod/move/{channelId}")]
+        [HttpPost("mod/move/{channelId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -175,10 +141,7 @@ namespace Hive.Controllers
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
-            if (user is null)
-            {
-                return Unauthorized();
-            }
+            if (user is null) return Unauthorized();
 
             var queryResult = await modService.MoveMod(user, channelId, identifier).ConfigureAwait(false);
 
