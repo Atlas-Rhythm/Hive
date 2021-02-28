@@ -1,14 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Security.Principal;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
 namespace Hive.Models
 {
-    // User would ideally come from the auth server, and be a thin proxy to the appropriate RPC calls
     /// <summary>
     /// A moderately thin proxy to the auth server, holds some information that will probably be useful.
     /// </summary>
-    public class User : IIdentity
+    public class User
     {
         // TODO: this should be from the authentication client library
 
@@ -30,15 +29,6 @@ namespace Hive.Models
         /// <summary>
         /// The additional data attached to the user object.
         /// </summary>
-        public JsonElement AdditionalData { get; set; }
-
-        /// <inheritdoc/>
-        public string? AuthenticationType { get; set; }
-
-        /// <inheritdoc/>
-        public bool IsAuthenticated { get; set; }
-
-        /// <inheritdoc/>
-        public string? Name => Username;
+        public Dictionary<string, JsonElement> AdditionalData { get; set; } = new Dictionary<string, JsonElement>();
     }
 }

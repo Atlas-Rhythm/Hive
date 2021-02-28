@@ -97,13 +97,6 @@ namespace Hive
                     .AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>()
                     .AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
             }
-
-            _ = services.AddAuthentication(a =>
-            {
-                a.AddScheme<AuthenticationHandler>("Bearer", "OAuth");
-                a.DefaultScheme = "Bearer";
-            });
-
             _ = services.AddControllers();
         }
 

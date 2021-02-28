@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace Hive.Services
 {
@@ -109,14 +110,12 @@ namespace Hive.Services
                 var auth0User = await response.Content.ReadFromJsonAsync<Auth0User>(jsonSerializerOptions).ConfigureAwait(false);
 
                 // REVIEW: is this dumb
-                return auth0User is null
+                return auth0User is null || string.IsNullOrEmpty(auth0User.Nickname)
                     ? null
                     : new User
                     {
-                        Username = auth0User.Username,
-                        AdditionalData = auth0User.User_Metadata,
-                        AuthenticationType = "Bearer",
-                        IsAuthenticated = true
+                        Username = auth0User.Nickname,
+                        AdditionalData = auth0User.User_Metadata
                     };
             }
             catch (Exception e)
@@ -145,7 +144,7 @@ namespace Hive.Services
 
             // TODO: Test this query string, possible other fields to search: "nickname" and "name"
             // We don't need the whole kitchen sink here, so let's reduce fields to what we need
-            var query = $"q=username:\"{userId}\"&search_engine=v3&include_fields=true&fields=username,user_metadata";
+            var query = $"q=username:\"{userId}\"&search_engine=v3&include_fields=true&fields=nickname,user_metadata";
 
             using var message = new HttpRequestMessage(HttpMethod.Get,
                 Uri.EscapeDataString($"{managementAPIUserEndpoint}?{query}"));
@@ -161,13 +160,12 @@ namespace Hive.Services
                 var auth0User = auth0Users?.FirstOrDefault();
 
                 // REVIEW: is this dumb
-                return auth0User is null
+                return auth0User is null || string.IsNullOrEmpty(auth0User.Nickname)
                     ? null
                     : new User
                     {
-                        Username = auth0User.Username,
+                        Username = auth0User.Nickname,
                         AdditionalData = auth0User.User_Metadata,
-                        IsAuthenticated = false
                     };
             }
             catch (Exception e)
@@ -253,6 +251,17 @@ namespace Hive.Services
         // REVIEW: Should these be moved to Hive.Models?
         private record ManagementAPIResponse(string Access_Token, int Expires_In, string Scope, string Token_Type);
 
-        private record Auth0User(string Username, JsonElement User_Metadata);
+        private record Auth0User
+        {
+            public string Nickname { get; set; }
+
+            [JsonExtensionData]
+            public Dictionary<string, JsonElement> User_Metadata { get; set; } = new Dictionary<string, JsonElement>();
+
+            public Auth0User(string nickname)
+            {
+                Nickname = nickname;
+            }
+        }
     }
 }

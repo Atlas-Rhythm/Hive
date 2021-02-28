@@ -15,7 +15,7 @@ namespace Hive.Controllers
     /// <summary>
     /// A REST controller for game version related actions.
     /// </summary>
-    [Route("api/game/versions")]
+    [Route("api/")]
     [ApiController]
     public class GameVersionsController : ControllerBase
     {
@@ -43,7 +43,7 @@ namespace Hive.Controllers
         /// Furthermore, game versions are further filtered by a permission check at: <c>hive.game.version.filter</c>.
         /// </summary>
         /// <returns>A wrapped enumerable of <see cref="GameVersion"/> objects, if successful.</returns>
-        [HttpGet]
+        [HttpGet("game/versions")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<IEnumerable<SerializedGameVersion>>> GetGameVersions()
@@ -61,13 +61,13 @@ namespace Hive.Controllers
         /// Creates a new <see cref="GameVersion"/>, and adds it to the database.
         /// This performs a permission check at: <c>hive.game.version.create</c>
         /// </summary>
-        /// <param name="name">The name of the new version</param>
+        /// <param name="ver">The new game version to create.</param>
         /// <returns>A wrapped <see cref="GameVersion"/> object, if successful.</returns>
-        [HttpPost("/new")]
+        [HttpPost("game/versions/new")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<SerializedGameVersion>> CreateGameVersion([FromBody] string name)
+        public async Task<ActionResult<SerializedGameVersion>> CreateGameVersion([FromBody] InputGameVersion ver)
         {
             log.Debug("Creating a new game version...");
 
@@ -75,9 +75,9 @@ namespace Hive.Controllers
             var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
 
             // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
-            if (user is null) return Unauthorized();
+            if (user is null) return new UnauthorizedResult();
 
-            var queryResult = await gameVersionService.CreateNewGameVersion(user, name).ConfigureAwait(false);
+            var queryResult = await gameVersionService.CreateNewGameVersion(user, ver).ConfigureAwait(false);
 
             return queryResult.Convert(version => SerializedGameVersion.Serialize(version));
         }

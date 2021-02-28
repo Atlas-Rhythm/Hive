@@ -9,6 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
 using NodaTime;
 using System.Threading.Tasks;
+using Hive.Models.Serialized;
 
 namespace Hive.Services.Common
 {
@@ -129,9 +130,9 @@ namespace Hive.Services.Common
         /// This performs a permission check at: <c>hive.game.version.create</c>
         /// </summary>
         /// <param name="user">The user to associate with this request.</param>
-        /// <param name="versionName">The name of the new version</param>
+        /// <param name="gameVersion">The new game version to create.</param>
         /// <returns>A wrapped <see cref="GameVersion"/> object, if successful.</returns>
-        public async Task<HiveObjectQuery<GameVersion>> CreateNewGameVersion(User? user, string versionName)
+        public async Task<HiveObjectQuery<GameVersion>> CreateNewGameVersion(User? user, InputGameVersion gameVersion)
         {
             // If permission system says the user cannot create a new game version, forbid.
             if (!permissions.CanDo(CreateActionName, new PermissionContext { User = user }, ref versionsParseState))
@@ -148,14 +149,17 @@ namespace Hive.Services.Common
 
             log.Debug("Creating a new Game Version...");
 
-            // REVIEW: Do I need to fill any other fields here?
+            // TODO: Pass this instance into plugins before making it
             var version = new GameVersion()
             {
-                Name = versionName,
-                CreationTime = clock.GetCurrentInstant()
+                Name = gameVersion.Name,
+                CreationTime = clock.GetCurrentInstant(),
+                AdditionalData = gameVersion.AdditionalData
             };
 
+            // TODO: If an instance of the same ID already exists, ret 409
             _ = await context.GameVersions.AddAsync(version).ConfigureAwait(false);
+            _ = await context.SaveChangesAsync().ConfigureAwait(false);
 
             return new HiveObjectQuery<GameVersion>(version, null, StatusCodes.Status200OK);
         }

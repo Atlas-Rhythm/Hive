@@ -128,9 +128,9 @@ namespace Hive.Services.Common
         /// This performs a permission check at: <c>hive.channel.create</c>.
         /// </summary>
         /// <param name="user">The user to associate with the request.</param>
-        /// <param name="channelName">The name of the new channel</param>
+        /// <param name="newChannel">The new channel to add.</param>
         /// <returns>The wrapped <see cref="Channel"/> that was created, if successful.</returns>
-        public async Task<HiveObjectQuery<Channel>> CreateNewChannel(User? user, string channelName)
+        public async Task<HiveObjectQuery<Channel>> CreateNewChannel(User? user, Channel newChannel)
         {
             // hive.channel with a null channel in the context should be permissible
             // iff a given user (or none) is allowed to view any channels. Thus, this should almost always be true
@@ -147,14 +147,14 @@ namespace Hive.Services.Common
             if (!combined.CreateChannelAdditionalChecks(user))
                 return forbiddenSingularResponse;
 
-            log.Debug("Creating a new channel...");
+            // TODO: Plugin for additional channel checks and exit
 
-            var newChannel = new Channel
-            {
-                Name = channelName
-            };
+            log.Debug("Adding the new channel...");
+
+            // TODO: If an instance of the same ID already exists, ret 409
 
             _ = await context.Channels.AddAsync(newChannel).ConfigureAwait(false);
+            _ = await context.SaveChangesAsync().ConfigureAwait(false);
 
             return new HiveObjectQuery<Channel>(newChannel, null, StatusCodes.Status200OK);
         }
