@@ -134,6 +134,8 @@ namespace Hive.Services.Common
         /// <returns>A wrapped <see cref="GameVersion"/> object, if successful.</returns>
         public async Task<HiveObjectQuery<GameVersion>> CreateNewGameVersion(User? user, InputGameVersion gameVersion)
         {
+            if (gameVersion is null)
+                throw new ArgumentNullException(nameof(gameVersion));
             // If permission system says the user cannot create a new game version, forbid.
             if (!permissions.CanDo(CreateActionName, new PermissionContext { User = user }, ref versionsParseState))
                 return forbiddenSingularResponse;

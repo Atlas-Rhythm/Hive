@@ -126,7 +126,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", CreateDefaultPlugin());
             controller.ControllerContext.HttpContext = CreateMockRequest(GenerateStreamFromString("archival"));
 
-            var res = await controller.CreateNewChannel("archival");
+            var res = await controller.CreateNewChannel(new Channel { Name = "archival" });
 
             Assert.NotNull(res);
             // Should succeed and give us our new channel back
@@ -144,7 +144,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", CreateDefaultPlugin());
 
             // Whoops, we "forgot" to assign a user.
-            var res = await controller.CreateNewChannel("archival");
+            var res = await controller.CreateNewChannel(new Channel { Name = "archival" });
 
             Assert.NotNull(res);
             // Should fail.

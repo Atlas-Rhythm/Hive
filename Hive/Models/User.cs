@@ -29,6 +29,7 @@ namespace Hive.Models
         /// <summary>
         /// The additional data attached to the user object.
         /// </summary>
-        public Dictionary<string, JsonElement> AdditionalData { get; set; } = new Dictionary<string, JsonElement>();
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "We want to set it explicitly to our data from our Auth0 instance, and also allow plugins to do the same.")]
+        public Dictionary<string, JsonElement> AdditionalData { get; set; } = new();
     }
 }

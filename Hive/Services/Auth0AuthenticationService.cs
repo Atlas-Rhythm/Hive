@@ -7,7 +7,6 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -215,6 +214,8 @@ namespace Hive.Services
         /// <inheritdoc/>
         public async Task<Auth0TokenResponse?> RequestToken(Uri sourceUri, string code, string? state)
         {
+            if (sourceUri is null)
+                throw new ArgumentNullException(nameof(sourceUri));
             logger.Debug("Requesting auth token for user...");
             var data = new Dictionary<string, string>()
             {
@@ -229,23 +230,14 @@ namespace Hive.Services
             {
                 Content = JsonContent.Create(data)
             };
-            // We want to catch exceptions here
-            try
+            var response = await client.SendAsync(message).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
             {
-                var response = await client.SendAsync(message).ConfigureAwait(false);
-                if (!response.IsSuccessStatusCode)
-                {
-                    logger.Error("Failed to retrieve client auth0 token! Failed status code: {StatusCode}", response.StatusCode);
-                    // Short circuit exit without fixing management token on failure to retreive one later.
-                    return null;
-                }
-                return await response.Content.ReadFromJsonAsync<Auth0TokenResponse>(jsonSerializerOptions).ConfigureAwait(false);
+                logger.Error("Failed to retrieve client auth0 token! Failed status code: {StatusCode}", response.StatusCode);
+                // Short circuit exit without fixing management token on failure to retreive one later.
+                return null;
             }
-            catch (Exception ex)
-            {
-                logger.Error(ex, "Failed to get a client auth0 token!");
-            }
-            return null;
+            return await response.Content.ReadFromJsonAsync<Auth0TokenResponse>(jsonSerializerOptions).ConfigureAwait(false);
         }
 
         // REVIEW: Should these be moved to Hive.Models?
