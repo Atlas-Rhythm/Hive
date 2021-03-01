@@ -146,6 +146,13 @@ paths:
           $ref: '#/components/responses/ForbiddenResponse'
         '404':
           description: Not Found
+          headers:
+            x-rate-limit-limit:
+              $ref: '#/components/parameters/x-rate-limit-limit'
+            x-rate-limit-remaining:
+              $ref: '#/components/parameters/x-rate-limit-remaining'
+            x-rate-limit-reset:
+              $ref: '#/components/parameters/x-rate-limit-reset'
         '429':
           $ref: '#/components/responses/RateLimitResponse'
       operationId: get-mod-modId
@@ -173,14 +180,14 @@ paths:
         Plugin permission check at rule: hive.mod.get
         Plugin filter check at rule: hive.mod.filter
       security:
-        - Auth0 Auth Token: []
+        - Auth0AuthToken: []
   /mod/upload:
     parameters: []
     post:
       summary: Upload a mod
       operationId: post-mod-upload-modId
       security:
-        - Auth0 Auth Token: []
+        - Auth0AuthToken: []
       responses:
         '200':
           description: OK
@@ -301,7 +308,7 @@ paths:
         Plugin permission check at rule: hive.game.versions.list
         Plugin filter call at rule: hive.game.versions.filter
       security:
-        - Auth0 Auth Token: []
+        - Auth0AuthToken: []
   /resolve_dependencies:
     post:
       summary: Resolve dependencies
@@ -318,7 +325,9 @@ paths:
                   message:
                     type: string
                   additionalMods:
-                    $ref: '#/components/schemas/Mod'
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Mod'
                 required:
                   - message
                   - additionalMods
@@ -342,6 +351,13 @@ paths:
           $ref: '#/components/responses/ForbiddenResponse'
         '404':
           description: Not Found
+          headers:
+            x-rate-limit-limit:
+              $ref: '#/components/parameters/x-rate-limit-limit'
+            x-rate-limit-remaining:
+              $ref: '#/components/parameters/x-rate-limit-remaining'
+            x-rate-limit-reset:
+              $ref: '#/components/parameters/x-rate-limit-reset'
         '424':
           description: Failed Dependency (WebDAV)
           content:
@@ -400,7 +416,7 @@ paths:
                 $ref: '#/components/schemas/ModIdentifier'
         description: Mods to resolve
       security:
-        - Auth0 Auth Token: []
+        - Auth0AuthToken: []
   '/mod/move/{channelId}':
     parameters:
       - schema:
@@ -413,7 +429,7 @@ paths:
       summary: Move a mod
       operationId: post-mod-move-channelId
       security:
-        - Auth0 Auth Token: []
+        - Auth0AuthToken: []
       responses:
         '200':
           description: OK
@@ -472,7 +488,7 @@ paths:
       summary: 'Gets all publicly viewable channels, or all channels viewable by the given user'
       tags: []
       security:
-        - Auth0 Auth Token: []
+        - Auth0AuthToken: []
       responses:
         '200':
           description: OK
@@ -542,13 +558,20 @@ paths:
           $ref: '#/components/responses/ForbiddenResponse'
         '404':
           description: Not Found
+          headers:
+            x-rate-limit-limit:
+              $ref: '#/components/parameters/x-rate-limit-limit'
+            x-rate-limit-remaining:
+              $ref: '#/components/parameters/x-rate-limit-remaining'
+            x-rate-limit-reset:
+              $ref: '#/components/parameters/x-rate-limit-reset'
         '429':
           $ref: '#/components/responses/RateLimitResponse'
       operationId: get-mod-modId-latest
       description: 'Returns the latest mod with the provided ID. This is equivalent to calling: /mod/{modId}?range=*'
       parameters: []
       security:
-        - Auth0 Auth Token: []
+        - Auth0AuthToken: []
   /mod/upload/finish:
     post:
       summary: ''
@@ -623,7 +646,7 @@ paths:
                 - cookie
         description: The final mod metadata to upload and the cookie returned in response to a successful completion of the first upload step.
       security:
-        - Auth0 Auth Token: []
+        - Auth0AuthToken: []
   /channels/new:
     post:
       summary: ''
@@ -660,7 +683,7 @@ paths:
 
         Plugin permission check at rule: hive.channels.create
       security:
-        - Auth0 Auth Token: []
+        - Auth0AuthToken: []
       requestBody:
         content:
           application/json:
@@ -720,7 +743,7 @@ paths:
                   additionalData: {}
         description: The input game version to provide.
       security:
-        - Auth0 Auth Token: []
+        - Auth0AuthToken: []
   /auth0/get_data:
     get:
       summary: Your GET endpoint
@@ -940,13 +963,11 @@ components:
         description:
           type: string
         changelog:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
         credits:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
       required:
         - language
         - name
@@ -1078,7 +1099,7 @@ components:
         - id_Token
         - token_Type
   securitySchemes:
-    Auth0 Auth Token:
+    Auth0AuthToken:
       type: http
       scheme: bearer
       bearerFormat: JWT
