@@ -172,7 +172,7 @@ namespace Hive.Services.Common
                 return new HiveObjectQuery<Channel>(null, "A channel with this name already exists.", StatusCodes.Status409Conflict);
 
             // Call our hooks
-            plugin.Instance.NewChannelCreated(newChannel);
+            combined.NewChannelCreated(newChannel);
 
             _ = await context.Channels.AddAsync(newChannel).ConfigureAwait(false);
             _ = await context.SaveChangesAsync().ConfigureAwait(false);
