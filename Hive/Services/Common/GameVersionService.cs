@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using NodaTime;
 using System.Threading.Tasks;
 using Hive.Models.Serialized;
+using System.Text.Json;
 
 namespace Hive.Services.Common
 {
@@ -46,6 +47,13 @@ namespace Hive.Services.Common
         /// <param name="versions">Input versions to filter</param>
         [return: StopIfReturnsEmpty]
         IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions) => versions;
+
+
+        /// <summary>
+        /// A hook that is called when a new <see cref="GameVersion"/> is successfully created and added to the database.
+        /// </summary>
+        /// <param name="gameVersion">The version that was just created.</param>
+        void NewGameVersionCreated(GameVersion gameVersion) { }
     }
 
     internal class HiveGameVersionsControllerPlugin : IGameVersionsPlugin { }
@@ -136,6 +144,7 @@ namespace Hive.Services.Common
         {
             if (gameVersion is null)
                 throw new ArgumentNullException(nameof(gameVersion));
+
             // If permission system says the user cannot create a new game version, forbid.
             if (!permissions.CanDo(CreateActionName, new PermissionContext { User = user }, ref versionsParseState))
                 return forbiddenSingularResponse;
@@ -159,7 +168,19 @@ namespace Hive.Services.Common
                 AdditionalData = gameVersion.AdditionalData
             };
 
-            // TODO: If an instance of the same ID already exists, ret 409
+            // Set AdditionalData if it's undefined
+            if (version.AdditionalData.ValueKind == JsonValueKind.Undefined)
+                version.AdditionalData = JsonElementHelper.BlankObject;
+
+            // Exit if there's already an existing version with the same name
+            var existingVersions = await context.GameVersions.ToListAsync().ConfigureAwait(false);
+
+            if (existingVersions.Any(x => x.Name == version.Name))
+                return new HiveObjectQuery<GameVersion>(null, "A channel with this name already exists.", StatusCodes.Status409Conflict);
+
+            // Call our hooks
+            combined.NewGameVersionCreated(version);
+
             _ = await context.GameVersions.AddAsync(version).ConfigureAwait(false);
             _ = await context.SaveChangesAsync().ConfigureAwait(false);
 

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace Hive.Services.Common
 {
@@ -42,6 +43,12 @@ namespace Hive.Services.Common
         /// <param name="channels">Input channels to filter</param>
         /// <returns>Filtered channels</returns>
         IEnumerable<Channel> GetChannelsFilter(User? user, [TakesReturnValue] IEnumerable<Channel> channels) => channels;
+
+        /// <summary>
+        /// A hook that is called when a new <see cref="Channel"/> is successfully created and added to the database.
+        /// </summary>
+        /// <param name="newChannel">The channel that was just created.</param>
+        void NewChannelCreated(Channel newChannel) { }
     }
 
     internal class HiveChannelsControllerPlugin : IChannelsControllerPlugin { }
@@ -132,6 +139,9 @@ namespace Hive.Services.Common
         /// <returns>The wrapped <see cref="Channel"/> that was created, if successful.</returns>
         public async Task<HiveObjectQuery<Channel>> CreateNewChannel(User? user, Channel newChannel)
         {
+            if (newChannel is null)
+                throw new ArgumentNullException(nameof(newChannel));
+
             // hive.channel with a null channel in the context should be permissible
             // iff a given user (or none) is allowed to view any channels. Thus, this should almost always be true
             if (!permissions.CanDo(CreateActionName, new PermissionContext { User = user }, ref channelsParseState))
@@ -151,7 +161,18 @@ namespace Hive.Services.Common
 
             log.Debug("Adding the new channel...");
 
-            // TODO: If an instance of the same ID already exists, ret 409
+            // Set AdditionalData if it's undefined
+            if (newChannel.AdditionalData.ValueKind == JsonValueKind.Undefined)
+                newChannel.AdditionalData = JsonElementHelper.BlankObject;
+
+            // Exit if there's already an existing channel with the same name
+            var existingChannels = await context.Channels.ToListAsync().ConfigureAwait(false);
+
+            if (existingChannels.Any(x => x.Name == newChannel.Name))
+                return new HiveObjectQuery<Channel>(null, "A channel with this name already exists.", StatusCodes.Status409Conflict);
+
+            // Call our hooks
+            plugin.Instance.NewChannelCreated(newChannel);
 
             _ = await context.Channels.AddAsync(newChannel).ConfigureAwait(false);
             _ = await context.SaveChangesAsync().ConfigureAwait(false);
