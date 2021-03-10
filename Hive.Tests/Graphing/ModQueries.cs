@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -23,6 +24,11 @@ namespace Hive.Tests.Graphing
     {
         private readonly ITestOutputHelper helper;
 
+        private static readonly IEnumerable<IModsPlugin> defaultPlugins = new List<IModsPlugin>()
+        {
+            new HiveModsControllerPlugin()
+        };
+
         public ModQueries(ITestOutputHelper helper) : base(DbExamples.PopulatedPartialContext()) => this.helper = helper;
 
         [Fact]
@@ -37,18 +43,44 @@ namespace Hive.Tests.Graphing
             Assert.Equal("Forbidden", error.Message);
         }
 
-        // NOT PASSING LOL
-        /*[Fact]
+        [Fact]
         public async Task SpecificModWithIDOnly()
         {
             var services = CreateProvider("next(true)", CreateMockRequest(null!));
             var result = await services.ExecuteGraphAsync("{ mod(id: \"lilac\") { readableID } }");
             Assert.NotNull(result);
-            Assert.Empty(result.Errors);
+            Assert.Null(result.Errors);
             Assert.NotNull(result.Data);
             var mod = FindAndCastDataObject<Mod>(result, "mod");
             Assert.Equal("lilac", mod.ReadableID);
-        }*/
+        }
+
+        [Fact]
+        public async Task SpecificModWithAllStandardSerializableFields()
+        {
+            var services = CreateProvider("next(true)", CreateMockRequest(null!));
+            var result = await services.ExecuteGraphAsync(
+                @"{
+                    mod(id: ""lilac"") {
+                    authors { username }
+                    conflicts { modID versionRange }
+                    contributors { username }
+                    dependencies { modID versionRange }
+                    downloadLink
+                    id
+                    localizations { changelog credits description name }
+                    readableID
+                    supportedVersions { name }
+                    uploader { username }
+                    }
+                }");
+            Assert.NotNull(result);
+            Assert.Null(result.Errors);
+            Assert.NotNull(result.Data);
+            var mod = FindAndCastDataObject<Mod>(result, "mod");
+            Assert.Equal("lilac", mod.ReadableID);
+            Assert.Equal("raftario best modder", mod.Uploader.Username);
+        }
 
         private ServiceProvider CreateProvider(string permissionRule, HttpContext context)
         {
@@ -59,6 +91,7 @@ namespace Hive.Tests.Graphing
                 .AddSingleton<IHttpContextAccessor, DIHelper.TestAccessor>(sp => new DIHelper.TestAccessor(context))
                 .AddTransient<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>()
                 .AddTransient<IGameVersionsPlugin, HiveGameVersionsControllerPlugin>()
+                .AddTransient<IModsPlugin, HiveModsControllerPlugin>()
                 .AddScoped<DependencyResolverService>()
                 .AddScoped<GameVersionService>()
                 .AddScoped<ChannelService>()
@@ -87,10 +120,9 @@ namespace Hive.Tests.Graphing
             return contextMoq.Object;
         }
 
-        private static T FindAndCastDataObject<T>(ExecutionResult result, string keyName)
+        private static T FindAndCastDataObject<T>(ExecutionResult result, string propertyName)
         {
-            var serializedData = JsonSerializer.Serialize(result.Data);
-            return JsonSerializer.Deserialize<JsonElement>(serializedData, new JsonSerializerOptions(JsonSerializerDefaults.Web)).GetProperty(keyName).GetPropertyValue<T>();
+            return JsonSerializer.Deserialize<T>(JsonDocument.Parse(JsonSerializer.Serialize(result.Data)).RootElement.GetProperty(propertyName).GetRawText(), new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
         }
     }
 }
