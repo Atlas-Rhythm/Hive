@@ -126,7 +126,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", CreateDefaultPlugin());
             controller.ControllerContext.HttpContext = CreateMockRequest(GenerateStreamFromString("archival"));
 
-            var res = await controller.CreateNewChannel(new Channel { Name = "archival" });
+            var res = await controller.CreateNewChannel(new Channel { Name = "archival", AdditionalData = DIHelper.EmptyAdditionalData });
 
             Assert.NotNull(res);
             // Should succeed and give us our new channel back
