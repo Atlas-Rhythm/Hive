@@ -186,4 +186,37 @@
     <value>Unknown input specifying attribute {0}</value>
     <comment>{0} is the attribute</comment>
   </data>
+  <data name="PluginLoadException_DefaultMessage" xml:space="preserve">
+    <value>An error ocurred while loading plugin {0}</value>
+    <comment>{0} is the name of the plugin that failed to load</comment>
+  </data>
+  <data name="PluginLoad_ConfigureServicesCanOnlyTakeServiceCollection" xml:space="preserve">
+    <value>The ConfigureServices method must either be parameterless, or take one parameter of type IServiceCollection.</value>
+  </data>
+  <data name="PluginLoad_ErrorsWhenLoadingPlugins" xml:space="preserve">
+    <value>One or more errors ocurred while loading plugins.</value>
+  </data>
+  <data name="PluginLoad_MultipleOverloadsNotSupported" xml:space="preserve">
+    <value>Multiple overloads of method '{0}' on a plugin startup type is not supported.</value>
+    <comment>{0} is the name of the method</comment>
+  </data>
+  <data name="PluginLoad_NoPluginFileInPluginDir" xml:space="preserve">
+    <value>There is no file '{0}' in the plugin directory '{1}'; could not load the plugin.</value>
+    <comment>{0} is the expected name of the plugin file, {1} is the path of the plugin directory</comment>
+  </data>
+  <data name="PluginStarupException_DefaultMessage" xml:space="preserve">
+    <value>An error ocurred while initializing the plugin startup type '{0}'</value>
+    <comment>{0} is the full type name that failed</comment>
+  </data>
+  <data name="ServiceResolutionException_DefaultMessage" xml:space="preserve">
+    <value>The requested service could not be resolved.</value>
+  </data>
+  <data name="Utils_Inject_CouldNotResolveService" xml:space="preserve">
+    <value>Could not resolve a service of type '{0}' for the parameter '{1}' of method '{2}' on type '{3}'.</value>
+    <comment>{0} is the service type, {1} is the parameter name, {2} is the method being injected, {3} is the type the method is on</comment>
+  </data>
+  <data name="Utils_Inject_TooManyArguments" xml:space="preserve">
+    <value>Too many arguments were provided during the injection of '{0}' on type '{1}'</value>
+    <comment>{0} is the method being injected, {1} is the type the method is on</comment>
+  </data>
 </root>

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace Hive.Plugins
+namespace Hive.Plugins.Aggregates
 {
     internal interface IAggregatorAttribute { }
 
@@ -97,17 +97,17 @@ namespace Hive.Plugins
 
         Expression IStopIfReturns.Test(Expression value)
         {
-            var getEnumerator = value.Type.GetMethod("GetEnumerator", Array.Empty<Type>());
+            var getEnumerator = value.Type.GetMethod(nameof(IEnumerable.GetEnumerator), Array.Empty<Type>());
             if (getEnumerator == null) // The value might not have a public GetEnumerator; if so, we need to look via the interface type.
             {
                 var enumerableType = value.Type.GetInterfaces().Where(x => x == typeof(IEnumerable)).First();
-                getEnumerator = enumerableType.GetMethod("GetEnumerator");
+                getEnumerator = enumerableType.GetMethod(nameof(IEnumerable.GetEnumerator))!;
             }
 
             return Expression.IsFalse( // return "!value.GetEnumerator().MoveNext()"
                 Expression.Call(
                     Expression.Call(value, getEnumerator),
-                    typeof(IEnumerator).GetMethod("MoveNext")
+                    typeof(IEnumerator).GetMethod(nameof(IEnumerator.MoveNext))!
                     )
                 );
         }
@@ -154,19 +154,19 @@ namespace Hive.Plugins
         /// <summary>
         /// Constructs an <see cref="AggregateWithAttribute"/> with the specified target type and method name.
         /// </summary>
-        /// <param name="targetType">The type that contains the method to use to aggregate the values.</param>
-        /// <param name="targetName">The name of the method to use to aggregate the values.</param>
-        public AggregateWithAttribute(Type targetType, string targetName)
+        /// <param name="typeWithAggregator">The type that contains the method to use to aggregate the values.</param>
+        /// <param name="aggregatorName">The name of the method to use to aggregate the values.</param>
+        public AggregateWithAttribute(Type typeWithAggregator, string aggregatorName)
         {
-            if (targetType is null)
-                throw new ArgumentNullException(nameof(targetType));
-            if (targetName is null)
-                throw new ArgumentNullException(nameof(targetName));
+            if (typeWithAggregator is null)
+                throw new ArgumentNullException(nameof(typeWithAggregator));
+            if (aggregatorName is null)
+                throw new ArgumentNullException(nameof(aggregatorName));
 
-            TypeWithAggregator = targetType;
-            AggregatorName = targetName;
+            TypeWithAggregator = typeWithAggregator;
+            AggregatorName = aggregatorName;
 
-            var exprAgg = targetType.GetMethod(targetName,
+            var exprAgg = typeWithAggregator.GetMethod(aggregatorName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static,
                 null,
                 new[] { typeof(Expression), typeof(Expression) },
@@ -183,7 +183,7 @@ namespace Hive.Plugins
         Expression IExpressionAggregator.Aggregate(Expression prev, Expression next)
         {
             if (ExpressionAggregator != null)
-                return (Expression)ExpressionAggregator.Invoke(null, new[] { prev, next });
+                return (Expression)ExpressionAggregator.Invoke(null, new[] { prev, next })!;
 
             var valueAggregator = TypeWithAggregator.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
                 .Where(m => m.Name == AggregatorName)
@@ -223,10 +223,10 @@ namespace Hive.Plugins
         /// Constructs a <see cref="TakesOutValueAttribute"/> with the index of the <see langword="out"/>  parameter to reference.
         /// </summary>
         /// <remarks>
-        /// <paramref name="index"/> <b>must</b> be a 0-indexed reference to an <see langword="out"/> parameter.
+        /// <paramref name="parameterIndex"/> <b>must</b> be a 0-indexed reference to an <see langword="out"/> parameter.
         /// </remarks>
-        /// <param name="index">The index of the <see langword="out"/> parameter to take the value of.</param>
-        public TakesOutValueAttribute(int index)
-            => ParameterIndex = index;
+        /// <param name="parameterIndex">The index of the <see langword="out"/> parameter to take the value of.</param>
+        public TakesOutValueAttribute(int parameterIndex)
+            => ParameterIndex = parameterIndex;
     }
 }

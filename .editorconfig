@@ -354,4 +354,8 @@ dotnet_naming_style.begins_with_i.required_suffix =
 dotnet_naming_style.begins_with_i.word_separator = 
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 
+[*.Tests/**.cs]
 
+# In tests specifically, we want to not warn on variable non-usage
+dotnet_diagnostic.IDE0058.severity = suggestion
+csharp_style_unused_value_expression_statement_preference = discard_variable:suggestion

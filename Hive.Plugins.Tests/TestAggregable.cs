@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
+using Hive.Plugins.Aggregates;
 
 namespace Hive.Plugins.Tests
 {

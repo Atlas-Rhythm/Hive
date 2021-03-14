@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Hive.Plugins.Aggregates;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Hive.Plugins
 {

@@ -1,5 +1,5 @@
 ﻿using Hive.Models;
-using Hive.Plugins;
+using Hive.Plugins.Aggregates;
 using Hive.Versioning;
 using Hive.Controllers;
 using Hive.Permissions;

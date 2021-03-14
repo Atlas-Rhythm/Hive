@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Hive.Plugins
+namespace Hive.Plugins.Aggregates
 {
     /// <summary>
     /// Indicates that an interface can be used in an <see cref="IAggregate{T}"/>.

@@ -3,6 +3,7 @@ using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services.Common;
+using Hive.Plugins.Aggregates;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
