@@ -231,6 +231,15 @@
   <data name="User" xml:space="preserve">
     <value>Represents an individual account on this Hive instance</value>
   </data>
+  <data name="User_AuthoredFor" xml:space="preserve">
+    <value>The mods that this user authored for.</value>
+  </data>
+  <data name="User_ContributedOn" xml:space="preserve">
+    <value>The mods that this user contributed on.</value>
+  </data>
+  <data name="User_Uploaded" xml:space="preserve">
+    <value>The mods that this user has uploaded.</value>
+  </data>
   <data name="User_Username" xml:space="preserve">
     <value>The username of the user.</value>
   </data>

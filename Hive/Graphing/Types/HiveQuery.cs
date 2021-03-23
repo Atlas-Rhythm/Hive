@@ -36,11 +36,7 @@ namespace Hive.Graphing.Types
 
             _ = Field<ModType, Mod?>().Name("mod").Argument<IdGraphType>("id", Resources.GraphQL.Mod_ID).ResolveAsync(GetMod);
             _ = Field<ListGraphType<ModType>, IEnumerable<Mod>>()
-                .Name("mods")
-                .Argument<EnumerationGraphType<ModType.Filter>, ModType.Filter>("filter", description: "The filter", defaultValue: ModType.Filter.Latest)
-                .Argument<ListGraphType<IdGraphType>, IEnumerable<string>?>("channelIds", description: "The ids for channels to look through", defaultValue: null)
-                .Argument<StringGraphType, string?>("gameVersion", description: "The game version of mods to look for.", defaultValue: null)
-                .ResolveAsync(GetAllMods);
+                .Name("mods").AddModFilters().ResolveAsync(GetAllMods);
         }
 
         private async Task<Channel?> GetChannel(IResolveFieldContext<object> ctx)

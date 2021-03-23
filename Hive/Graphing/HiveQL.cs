@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using GraphQL;
+using GraphQL.Builders;
 using GraphQL.Server;
 using GraphQL.Types;
+using Hive.Models;
 using Microsoft.Extensions.DependencyInjection;
+using static Hive.Graphing.Types.ModType;
 
 namespace Hive.Graphing
 {
@@ -67,6 +71,22 @@ namespace Hive.Graphing
 
             if (!queryResult.Successful)
                 ctx.Errors.Add(new ExecutionError(queryResult.Message!));
+        }
+
+
+        /// <summary>
+        /// Generates basic mod filters.
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <returns></returns>
+        public static FieldBuilder<T, IEnumerable<Mod>> AddModFilters<T>(this FieldBuilder<T, IEnumerable<Mod>> builder)
+        {
+            return builder is null
+                ? throw new ArgumentNullException(nameof(builder))
+                : builder
+                .Argument<EnumerationGraphType<Filter>, Filter>("filter", description: "The filter", defaultValue: Filter.Latest)
+                .Argument<ListGraphType<IdGraphType>, IEnumerable<string>?>("channelIds", description: "The ids for channels to look through", defaultValue: null)
+                .Argument<StringGraphType, string?>("gameVersion", description: "The game version of mods to look for.", defaultValue: null);
         }
     }
 }

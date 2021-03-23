@@ -1,5 +1,7 @@
 ﻿using Hive.Models;
 using GraphQL.Types;
+using GraphQL.Builders;
+using System.Collections.Generic;
 
 namespace Hive.Graphing.Types
 {
