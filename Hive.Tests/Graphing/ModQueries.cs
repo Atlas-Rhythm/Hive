@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using GraphQL;
@@ -23,11 +21,6 @@ namespace Hive.Tests.Graphing
     public class ModQueries : TestDbWrapper
     {
         private readonly ITestOutputHelper helper;
-
-        private static readonly IEnumerable<IModsPlugin> defaultPlugins = new List<IModsPlugin>()
-        {
-            new HiveModsControllerPlugin()
-        };
 
         public ModQueries(ITestOutputHelper helper) : base(DbExamples.PopulatedPartialContext()) => this.helper = helper;
 
