@@ -70,7 +70,7 @@ namespace Hive.Graphing.Types
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
             var queryResult = await channelService.GetChannel(ctx.GetArgument<string>("id"), user).ConfigureAwait(false);
 
-            ctx.Anaylze(queryResult);
+            ctx.Analyze(queryResult);
             return queryResult.Value;
         }
 
@@ -82,7 +82,7 @@ namespace Hive.Graphing.Types
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
             var queryResult = channelService.RetrieveAllChannels(user);
 
-            ctx.Anaylze(queryResult);
+            ctx.Analyze(queryResult);
             return queryResult.Value ?? Array.Empty<Channel>();
         }
 
@@ -94,7 +94,7 @@ namespace Hive.Graphing.Types
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
             var queryResult = modService.GetMod(user, ctx.GetArgument<string>("id"));
 
-            ctx.Anaylze(queryResult);
+            ctx.Analyze(queryResult);
             return queryResult.Value;
         }
 
@@ -110,7 +110,7 @@ namespace Hive.Graphing.Types
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
             var queryResult = modService.GetAllMods(user, channels?.ToArray(), gameVersion, filterType);
 
-            ctx.Anaylze(queryResult);
+            ctx.Analyze(queryResult);
             return queryResult.Value ?? Array.Empty<Mod>();
         }
 
@@ -123,7 +123,7 @@ namespace Hive.Graphing.Types
             var queryResult = versionService.RetrieveAllVersions(user);
             var version = ctx.GetArgument<string>("name");
 
-            ctx.Anaylze(queryResult);
+            ctx.Analyze(queryResult);
             return queryResult.Value?.FirstOrDefault(v => version == v.Name);
         }
 
@@ -135,7 +135,7 @@ namespace Hive.Graphing.Types
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
             var queryResult = versionService.RetrieveAllVersions(user);
 
-            ctx.Anaylze(queryResult);
+            ctx.Analyze(queryResult);
             return queryResult.Value ?? Array.Empty<GameVersion>();
         }
 

@@ -37,7 +37,7 @@ namespace Hive.Graphing.Types
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
             var queryResult = modService.GetAllMods(user, new[] { ctx.Source.Name });
 
-            ctx.Anaylze(queryResult);
+            ctx.Analyze(queryResult);
             return queryResult.Value ?? Array.Empty<Mod>();
         }
     }

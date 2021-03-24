@@ -55,7 +55,7 @@ namespace Hive.Graphing.Types
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
             var queryResult = modService.GetAllMods(user, channels?.ToArray(), gameVersion, filterType);
 
-            ctx.Anaylze(queryResult);
+            ctx.Analyze(queryResult);
             return queryResult.Value?.Where(searchFunc) ?? Array.Empty<Mod>();
         }
     }

@@ -61,7 +61,7 @@ namespace Hive.Graphing
         /// <typeparam name="T">The type of the object query.</typeparam>
         /// <param name="ctx">The resolver context.</param>
         /// <param name="queryResult">The query.</param>
-        public static void Anaylze<T>(this IResolveFieldContext ctx, HiveObjectQuery<T> queryResult)
+        public static void Analyze<T>(this IResolveFieldContext ctx, HiveObjectQuery<T> queryResult)
         {
             if (ctx is null)
                 throw new ArgumentNullException(nameof(ctx));
