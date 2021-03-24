@@ -50,6 +50,16 @@ namespace Hive.Graphing.Types
                 .Name("mods").AddModFilters()
                 .Description(Resources.GraphQL.Query_Mods)
                 .ResolveAsync(GetAllMods);
+
+            _ = Field<GameVersionType, GameVersion?>()
+                .Name("gameVersion").Argument<IdGraphType>("name", Resources.GraphQL.GameVersion_Name)
+                .Description(Resources.GraphQL.GameVersion)
+                .ResolveAsync(GetGameVersion);
+
+            _ = Field<ListGraphType<GameVersionType>, IEnumerable<GameVersion?>>()
+                .Name("gameVersions")
+                .Description(Resources.GraphQL.Query_GameVersions)
+                .ResolveAsync(GetAllGameVersions);
         }
 
         private async Task<Channel?> GetChannel(IResolveFieldContext<object> ctx)
@@ -103,5 +113,31 @@ namespace Hive.Graphing.Types
             ctx.Anaylze(queryResult);
             return queryResult.Value ?? Array.Empty<Mod>();
         }
+
+        private async Task<GameVersion?> GetGameVersion(IResolveFieldContext<object> ctx)
+        {
+            (var versionService, var http, var authService)
+                = ctx.RequestServices.GetRequiredServices<GameVersionService, IHttpContextAccessor, IProxyAuthenticationService>();
+
+            var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
+            var queryResult = versionService.RetrieveAllVersions(user);
+            var version = ctx.GetArgument<string>("name");
+
+            ctx.Anaylze(queryResult);
+            return queryResult.Value?.FirstOrDefault(v => version == v.Name);
+        }
+
+        private async Task<IEnumerable<GameVersion?>> GetAllGameVersions(IResolveFieldContext<object> ctx)
+        {
+            (var versionService, var http, var authService)
+                = ctx.RequestServices.GetRequiredServices<GameVersionService, IHttpContextAccessor, IProxyAuthenticationService>();
+
+            var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
+            var queryResult = versionService.RetrieveAllVersions(user);
+
+            ctx.Anaylze(queryResult);
+            return queryResult.Value ?? Array.Empty<GameVersion>();
+        }
+
     }
 }

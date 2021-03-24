@@ -228,6 +228,15 @@
   <data name="Mod_Version" xml:space="preserve">
     <value>The SemVer version of the mod.</value>
   </data>
+  <data name="Query_Channels" xml:space="preserve">
+    <value>Get information about all the channels in this current instance.</value>
+  </data>
+  <data name="Query_GameVersions" xml:space="preserve">
+    <value>Get information about all the game versions in this current instance.</value>
+  </data>
+  <data name="Query_Mods" xml:space="preserve">
+    <value>Get information about mods in this current instance.</value>
+  </data>
   <data name="User" xml:space="preserve">
     <value>Represents an individual account on this Hive instance</value>
   </data>
