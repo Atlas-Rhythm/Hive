@@ -31,12 +31,25 @@ namespace Hive.Graphing.Types
 
             l.Debug("Initializing");
 
-            _ = Field<ChannelType, Channel?>().Name("channel").Argument<IdGraphType>("id", Resources.GraphQL.Channel_Name).ResolveAsync(GetChannel);
-            _ = Field<ListGraphType<ChannelType>, IEnumerable<Channel>>().Name("channels").ResolveAsync(GetAllChannels);
+            _ = Field<ChannelType, Channel?>()
+                .Name("channel").Argument<IdGraphType>("id", Resources.GraphQL.Channel_Name)
+                .Description(Resources.GraphQL.Channel)
+                .ResolveAsync(GetChannel);
 
-            _ = Field<ModType, Mod?>().Name("mod").Argument<IdGraphType>("id", Resources.GraphQL.Mod_ID).ResolveAsync(GetMod);
+            _ = Field<ListGraphType<ChannelType>, IEnumerable<Channel>>()
+                .Name("channels")
+                .Description(Resources.GraphQL.Query_Channels)
+                .ResolveAsync(GetAllChannels);
+
+            _ = Field<ModType, Mod?>()
+                .Name("mod").Argument<IdGraphType>("id", Resources.GraphQL.Mod_ID)
+                .Description(Resources.GraphQL.Mod)
+                .ResolveAsync(GetMod);
+
             _ = Field<ListGraphType<ModType>, IEnumerable<Mod>>()
-                .Name("mods").AddModFilters().ResolveAsync(GetAllMods);
+                .Name("mods").AddModFilters()
+                .Description(Resources.GraphQL.Query_Mods)
+                .ResolveAsync(GetAllMods);
         }
 
         private async Task<Channel?> GetChannel(IResolveFieldContext<object> ctx)
