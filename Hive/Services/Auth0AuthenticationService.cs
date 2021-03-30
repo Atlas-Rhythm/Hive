@@ -81,18 +81,8 @@ namespace Hive.Services
             if (request is null)
                 return throwOnError ? throw new ArgumentNullException(nameof(request)) : null;
 
-            try
-            {
-                if (managementToken is null || clock.GetCurrentInstant() > managementExpireInstant)
-                    await RefreshManagementAPIToken().ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, "An exception ocurred when trying to refresh the management token!");
-                if (throwOnError)
-                    throw;
-                return null;
-            }
+            await EnsureValidManagementAPIToken(throwOnError).ConfigureAwait(false);
+
             using var message = new HttpRequestMessage(HttpMethod.Get, authenticationAPIUserEndpoint);
 
             if (request.Headers.TryGetValue("Authorization", out var auth))
@@ -136,10 +126,7 @@ namespace Hive.Services
             }
 
             // Refresh our management API token if it has expired.
-            if (clock.GetCurrentInstant() >= managementExpireInstant)
-            {
-                await RefreshManagementAPIToken().ConfigureAwait(false);
-            }
+            await EnsureValidManagementAPIToken(throwOnError).ConfigureAwait(false);
 
             // TODO: Test this query string, possible other fields to search: "nickname" and "name"
             // We don't need the whole kitchen sink here, so let's reduce fields to what we need
@@ -173,6 +160,22 @@ namespace Hive.Services
                 if (throwOnError)
                     throw;
                 return null;
+            }
+        }
+
+        private async Task EnsureValidManagementAPIToken(bool throwOnError = true)
+        {
+            try
+            {
+                if (managementToken == null || clock.GetCurrentInstant() >= managementExpireInstant)
+                {
+                    await RefreshManagementAPIToken().ConfigureAwait(false);
+                }
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "An exception occured while attempting to refresh our Auth0 Management API Token.");
+                if (throwOnError) throw;
             }
         }
 
