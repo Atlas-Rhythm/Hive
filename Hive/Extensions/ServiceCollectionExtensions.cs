@@ -14,7 +14,7 @@ namespace Hive.Extensions
             where T1 : class where T2 : class where TImplemented : class, T1, T2
         {
             return services.AddSingleton<T1, TImplemented>()
-                .AddSingleton((sp) => (T2)sp.GetRequiredService<TImplemented>());
+                .AddSingleton((sp) => (T2)(TImplemented)sp.GetRequiredService<T1>());
         }
     }
 }
