@@ -33,7 +33,7 @@ namespace Hive.Controllers
         [HttpGet("get_data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<Auth0ReturnData> GetData() => auth0Service.Enabled && auth0Service.Data != null ? auth0Service.Data : NotFound();
+        public ActionResult<Auth0ReturnData> GetData() => (ActionResult)Ok(auth0Service.Data) ?? NotFound(null);
 
         /// <summary>
         /// Authenticates and returns a <see cref="Auth0TokenResponse"/> for the provided authentication code and state, or null on failure.
@@ -47,9 +47,7 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<Auth0TokenResponse?>> Callback([FromQuery] string code, [FromQuery] string? state)
         {
-            return auth0Service.Enabled
-                ? await auth0Service.RequestToken(new Uri(HttpContext.Request.GetDisplayUrl()), code, state).ConfigureAwait(false)
-                : (ActionResult<Auth0TokenResponse?>)NotFound();
+            return await auth0Service.RequestToken(new Uri(HttpContext.Request.GetDisplayUrl()), code, state).ConfigureAwait(false);
         }
     }
 }

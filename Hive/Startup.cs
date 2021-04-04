@@ -25,13 +25,13 @@ namespace Hive
     public class Startup
     {
         /// <summary>
-        ///
+        /// Startup constructor with configuration
         /// </summary>
         /// <param name="configuration"></param>
         public Startup(IConfiguration configuration) => Configuration = configuration;
 
         /// <summary>
-        ///
+        /// Configuration instance
         /// </summary>
         public IConfiguration Configuration { get; }
 

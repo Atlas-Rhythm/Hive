@@ -10,11 +10,6 @@ namespace Hive.Services
     public interface IAuth0Service
     {
         /// <summary>
-        /// Whether Auth0 is enabled or not. Defaults to false, should be true for all non-trivial implementations of this interface.
-        /// </summary>
-        bool Enabled => false;
-
-        /// <summary>
         /// Holds the data necessary for external Auth0 requests. This is used by the <see cref="Controllers.Auth0Controller"/> type to return valid data to the frontend.
         /// </summary>
         Auth0ReturnData? Data { get; }
