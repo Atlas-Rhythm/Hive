@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NodaTime;
 using Serilog;
+using Hive.Extensions;
 
 namespace Hive
 {
@@ -58,9 +59,7 @@ namespace Hive
             // If the config file doesn't have an Auth0 section, we'll assume that the auth service is provided by a plugin.
             if (Configuration.GetSection("Auth0").Exists())
             {
-                _ = services.AddSingleton<IProxyAuthenticationService, Auth0AuthenticationService>();
-                // Yes, this really seems like the best way to do this...
-                _ = services.AddSingleton<IAuth0Service>(sp => (sp.GetRequiredService<IProxyAuthenticationService>() as Auth0AuthenticationService)!);
+                _ = services.AddInterfacesAsSingleton<Auth0AuthenticationService, IProxyAuthenticationService, IAuth0Service>();
             }
             // Uncomment the following code if you need mock authentication for HOPEFULLY DEVELOPMENT reasons
             //else
