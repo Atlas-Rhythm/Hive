@@ -34,9 +34,6 @@ namespace Hive.Services
         private Instant? managementExpireInstant;
 
         /// <inheritdoc/>
-        public bool Enabled => true;
-
-        /// <inheritdoc/>
         public Auth0ReturnData Data { get; }
 
         /// <summary>
@@ -99,11 +96,11 @@ namespace Hive.Services
                 var auth0User = await response.Content.ReadFromJsonAsync<Auth0User>(jsonSerializerOptions).ConfigureAwait(false);
 
                 // REVIEW: is this dumb
-                return auth0User is null || string.IsNullOrEmpty(auth0User.Nickname)
+                return auth0User is null || string.IsNullOrEmpty(auth0User.Username)
                     ? null
                     : new User
                     {
-                        Username = auth0User.Nickname,
+                        Username = auth0User.Username,
                         AdditionalData = auth0User.User_Metadata
                     };
             }
@@ -248,13 +245,15 @@ namespace Hive.Services
 
         private record Auth0User
         {
+            public string Username { get; set; }
             public string Nickname { get; set; }
 
             [JsonExtensionData]
             public Dictionary<string, JsonElement> User_Metadata { get; set; } = new Dictionary<string, JsonElement>();
 
-            public Auth0User(string nickname)
+            public Auth0User(string username, string nickname)
             {
+                Username = username;
                 Nickname = nickname;
             }
         }

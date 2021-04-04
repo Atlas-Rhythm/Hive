@@ -15,7 +15,7 @@ namespace Hive.Controllers
     /// <summary>
     /// A REST controller for game version related actions.
     /// </summary>
-    [Route("api/")]
+    [Route("api/game/versions")]
     [ApiController]
     public class GameVersionsController : ControllerBase
     {
@@ -43,7 +43,7 @@ namespace Hive.Controllers
         /// Furthermore, game versions are further filtered by a permission check at: <c>hive.game.version.filter</c>.
         /// </summary>
         /// <returns>A wrapped enumerable of <see cref="GameVersion"/> objects, if successful.</returns>
-        [HttpGet("game/versions")]
+        [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<IEnumerable<SerializedGameVersion>>> GetGameVersions()
@@ -63,7 +63,7 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="ver">The new game version to create.</param>
         /// <returns>A wrapped <see cref="GameVersion"/> object, if successful.</returns>
-        [HttpPost("game/versions/new")]
+        [HttpPost("/new")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
