@@ -200,6 +200,9 @@ namespace Hive.Services
         // For more info, see https://auth0.com/docs/tokens/management-api-access-tokens
         private async Task RefreshManagementAPIToken()
         {
+            // Exit if we are using the semaphore already.
+            if (refreshTokenSemaphore.CurrentCount == 0)
+                return;
             logger.Information("Refreshing Auth0 Management API Token...");
             // Only if we are not currently getting a management API token do we call this, thus the TryEnter as opposed to a lock.
             // If we do NOT enter, that means that another thread wants to refresh the token while this is currently being used.
