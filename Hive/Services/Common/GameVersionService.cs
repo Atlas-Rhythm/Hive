@@ -48,7 +48,6 @@ namespace Hive.Services.Common
         [return: StopIfReturnsEmpty]
         IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions) => versions;
 
-
         /// <summary>
         /// A hook that is called when a new <see cref="GameVersion"/> is successfully created and added to the database.
         /// </summary>
@@ -173,9 +172,7 @@ namespace Hive.Services.Common
                 version.AdditionalData = JsonElementHelper.BlankObject;
 
             // Exit if there's already an existing version with the same name
-            var existingVersions = await context.GameVersions.ToListAsync().ConfigureAwait(false);
-
-            if (existingVersions.Any(x => x.Name == version.Name))
+            if (await context.GameVersions.AnyAsync(x => x.Name == version.Name).ConfigureAwait(false))
                 return new HiveObjectQuery<GameVersion>(null, "A channel with this name already exists.", StatusCodes.Status409Conflict);
 
             // Call our hooks

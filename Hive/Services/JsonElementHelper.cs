@@ -10,7 +10,6 @@ namespace Hive.Services
         /// <summary>
         /// Returns a <see cref="JsonElement"/> that represents an empty JSON object.
         /// </summary>
-        // REVIEW: Is cloning necessary?
         public static JsonElement BlankObject { get; private set; } = JsonDocument.Parse("{}").RootElement;
     }
 }
