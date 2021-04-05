@@ -12,6 +12,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Linq;
 using System.Text.Json.Serialization;
+using System.Threading;
 
 namespace Hive.Services
 {
@@ -36,6 +37,13 @@ namespace Hive.Services
         /// <inheritdoc/>
         public Auth0ReturnData Data { get; }
 
+        private readonly Dictionary<string, string> refreshTokenJsonBody;
+
+        /// <summary>
+        /// A semaphore that only allows for one job to perform work for refreshing the token.
+        /// </summary>
+        private static readonly SemaphoreSlim refreshTokenSemaphore = new(1);
+
         /// <summary>
         /// Construct a <see cref="Auth0AuthenticationService"/> with DI.
         /// </summary>
@@ -58,7 +66,17 @@ namespace Hive.Services
             // in order to retrieve users by their IDs.
             var clientID = section.GetValue<string>("ClientID");
             Data = new Auth0ReturnData(domain.ToString(), clientID, audience);
+
             clientSecret = section.GetValue<string>("ClientSecret");
+
+            // Create refresh token json body, used for sending requests of the proper type/shape
+            refreshTokenJsonBody = new Dictionary<string, string>
+            {
+                { "grant_type", "client_credentials" },
+                { "client_id", Data.ClientId },
+                { "client_secret", clientSecret },
+                { "audience", Data.Audience }
+            };
 
             var timeout = new TimeSpan(0, 0, 0, 0, section.GetValue("TimeoutMS", 10000));
             client = new HttpClient
@@ -183,32 +201,35 @@ namespace Hive.Services
         private async Task RefreshManagementAPIToken()
         {
             logger.Information("Refreshing Auth0 Management API Token...");
-
-            using var message = new HttpRequestMessage(HttpMethod.Post, authenticationAPIGetToken);
-
-            var data = new Dictionary<string, string>()
+            // Only if we are not currently getting a management API token do we call this, thus the TryEnter as opposed to a lock.
+            // If we do NOT enter, that means that another thread wants to refresh the token while this is currently being used.
+            await refreshTokenSemaphore.WaitAsync().ConfigureAwait(false);
+            try
             {
-                { "grant_type", "client_credentials" },
-                { "client_id", Data.ClientId },
-                { "client_secret", clientSecret },
-                { "audience", Data.Audience },
-            };
+                using var message = new HttpRequestMessage(HttpMethod.Post, authenticationAPIGetToken)
+                {
+                    Content = JsonContent.Create(refreshTokenJsonBody)
+                };
 
-            message.Content = JsonContent.Create(data);
+                // Any exception here will bubble to caller.
+                var response = await client.SendAsync(message).ConfigureAwait(false);
+                if (!response.IsSuccessStatusCode)
+                {
+                    logger.Error("Failed to retrieve new auth0 token! Failed status code: {StatusCode}", response.StatusCode);
+                    // Short circuit exit without fixing management token on failure to retreive one later.
+                    // TODO: This is ultimately something we may want to consider making a new exception type for.
+                    throw new InvalidOperationException(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+                }
 
-            // Any exception here will bubble to caller.
-            var response = await client.SendAsync(message).ConfigureAwait(false);
-            if (!response.IsSuccessStatusCode)
-            {
-                logger.Error("Failed to retrieve new auth0 token! Failed status code: {StatusCode}", response.StatusCode);
-                // Short circuit exit without fixing management token on failure to retreive one later.
-                return;
+                var body = await response.Content.ReadFromJsonAsync<ManagementAPIResponse>(jsonSerializerOptions).ConfigureAwait(false);
+
+                managementToken = body!.Access_Token;
+                managementExpireInstant = clock.GetCurrentInstant() + Duration.FromSeconds(body!.Expires_In);
             }
-
-            var body = await response.Content.ReadFromJsonAsync<ManagementAPIResponse>(jsonSerializerOptions).ConfigureAwait(false);
-
-            managementToken = body!.Access_Token;
-            managementExpireInstant = clock.GetCurrentInstant() + Duration.FromSeconds(body!.Expires_In);
+            finally
+            {
+                _ = refreshTokenSemaphore.Release();
+            }
         }
 
         /// <inheritdoc/>
