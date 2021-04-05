@@ -43,7 +43,7 @@ jobs:
       - name: Setup PostgreSQL DB Test Connection String
         run: dotnet user-secrets set "ConnectionStrings:Test" "User ID=postgres;Password=postgres;Host=127.0.0.1;Port=5432;" --project "./Hive"
       - name: Install dependencies
-        run: dotnet restore -c Release -clp:NoSummary
+        run: dotnet restore -p:Configuration=Release -clp:NoSummary
       - name: Build
         run: dotnet build --no-restore -c Release -clp:NoSummary
       - name: Test
