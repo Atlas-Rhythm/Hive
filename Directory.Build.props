@@ -7,7 +7,14 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 
     <IsCLSCompliant>true</IsCLSCompliant>
+
+    <RoslynVersion>3.9.0</RoslynVersion>
+    <MSBuildRequiredVersion>16.9.0</MSBuildRequiredVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
+  </ItemGroup>
 
   <ItemGroup Condition="'$(IsCodeGen)' != 'true'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" />

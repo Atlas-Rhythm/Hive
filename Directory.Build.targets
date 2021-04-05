@@ -63,10 +63,18 @@
   <PropertyGroup>
     <_LiteralAssemblyFile Condition="'$(Language)' == 'C#'">$(IntermediateOutputPath)LiteralAssemblyAttributes.cs</_LiteralAssemblyFile>
     <CoreCompileDependsOn>
+      EnsureSupportedMSBuildVersion;
       AddLiteralAssemblyAttributes;
       $(CoreCompileDependsOn);
     </CoreCompileDependsOn>
   </PropertyGroup>
+
+  <Target Name="EnsureSupportedMSBuildVersion"
+          BeforeTargets="CoreCompile"
+          Condition="'$(MSBuildRequiredVersion)' != ''">
+    <Error Code="HB0001" ContinueOnError="false" Text="MSBuild version is too old to build this project; currently $(MSBuildVersion) needs at least $(MSBuildRequiredversion)"
+           Condition="$([MSBuild]::VersionLessThan('$(MSBuildVersion)', '$(MSBuildRequiredVersion)'))" />
+  </Target>
   
   <Target Name="AddLiteralAssemblyAttributes"
           BeforeTargets="CoreCompile"
