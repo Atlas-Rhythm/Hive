@@ -9,6 +9,7 @@
     <IsCLSCompliant>true</IsCLSCompliant>
 
     <RoslynVersion>3.9.0</RoslynVersion>
+    <MSBuildRequiredVersion>16.9.0</MSBuildRequiredVersion>
   </PropertyGroup>
 
   <ItemGroup>
