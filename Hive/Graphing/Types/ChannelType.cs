@@ -1,5 +1,6 @@
 ﻿using Hive.Models;
 using GraphQL.Types;
+using System.Collections.Generic;
 
 namespace Hive.Graphing.Types
 {
@@ -11,13 +12,19 @@ namespace Hive.Graphing.Types
         /// <summary>
         /// Setup a ChannelType for GQL.
         /// </summary>
-        public ChannelType()
+        public ChannelType(IEnumerable<ICustomHiveGraph<ChannelType>> customGraphs)
         {
+            if (customGraphs is null)
+                throw new System.ArgumentNullException(nameof(customGraphs));
+
             Name = nameof(Channel);
             Description = Resources.GraphQL.Channel;
 
             _ = Field(c => c.Name)
                 .Description(Resources.GraphQL.Channel_Name);
+
+            foreach (var graph in customGraphs)
+                graph.Configure(this);
         }
     }
 }
