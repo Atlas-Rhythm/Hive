@@ -64,8 +64,7 @@ namespace Hive
             // Uncomment the following code if you need mock authentication for HOPEFULLY DEVELOPMENT reasons
             //else
             //{
-            //    _ = services.AddSingleton<IProxyAuthenticationService, MockAuthenticationService>();
-            //    _ = services.AddSingleton<IAuth0Service>(sp => (sp.GetRequiredService<IProxyAuthenticationService>() as MockAuthenticationService)!);
+            //    _ = services.AddInterfacesAsSingleton<MockAuthenticationService, IProxyAuthenticationService, IAuth0Service>();
             //}
 
             _ = services.AddDbContext<HiveContext>(options =>
@@ -96,7 +95,13 @@ namespace Hive
                     .AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>()
                     .AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
             }
-            _ = services.AddControllers();
+
+            var conditionalFeature = new HiveConditionalControllerFeatureProvider()
+                .RegisterCondition<Auth0Controller>(Configuration.GetSection("Auth0").Exists());
+
+            _ = services
+                .AddControllers()
+                .ConfigureApplicationPartManager(manager => manager.FeatureProviders.Add(conditionalFeature));
         }
 
         /// <summary>
