@@ -159,7 +159,7 @@ namespace Hive.Services.Common
 
             log.Debug("Creating a new Game Version...");
 
-            // TODO: Pass this instance into plugins before making it
+            // TODO: Pass the InputGameVersion into plugins before creating the GameVersion instance for further modification of additional data?
             var version = new GameVersion()
             {
                 Name = gameVersion.Name,
