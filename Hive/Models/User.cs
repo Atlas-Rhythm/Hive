@@ -1,14 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Security.Principal;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Hive.Models
 {
-    // User would ideally come from the auth server, and be a thin proxy to the appropriate RPC calls
     /// <summary>
     /// A moderately thin proxy to the auth server, holds some information that will probably be useful.
     /// </summary>
-    public class User : IIdentity
+    public class User
     {
         // TODO: this should be from the authentication client library
 
@@ -29,16 +29,11 @@ namespace Hive.Models
 
         /// <summary>
         /// The additional data attached to the user object.
+        /// This is a dictionary as it holds each of the exact identities from Auth0 or any other authentication platform.
+        /// Each of these can map to an arbitrary JSON object, so we map it like such.
+        /// Ideally, a conversion step would take place in order to convert the values of this dictionary into something more legible, perhaps some form of interface providable to plugins.
         /// </summary>
-        public JsonElement AdditionalData { get; set; }
-
-        /// <inheritdoc/>
-        public string? AuthenticationType { get; set; }
-
-        /// <inheritdoc/>
-        public bool IsAuthenticated { get; set; }
-
-        /// <inheritdoc/>
-        public string? Name => Username;
+        [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "We want to set it explicitly to our data from our Auth0 instance, and also allow plugins to do the same.")]
+        public Dictionary<string, JsonElement> AdditionalData { get; set; } = new();
     }
 }

@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NodaTime;
 using Serilog;
+using Hive.Extensions;
 
 namespace Hive
 {
@@ -25,13 +26,13 @@ namespace Hive
     public class Startup
     {
         /// <summary>
-        ///
+        /// Startup constructor with configuration
         /// </summary>
         /// <param name="configuration"></param>
         public Startup(IConfiguration configuration) => Configuration = configuration;
 
         /// <summary>
-        ///
+        /// Configuration instance
         /// </summary>
         public IConfiguration Configuration { get; }
 
@@ -53,9 +54,18 @@ namespace Hive
                 .AddSingleton<IModsPlugin, HiveModsControllerPlugin>()
                 .AddSingleton<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>()
                 .AddSingleton<IUploadPlugin, HiveDefaultUploadPlugin>()
-                //.AddSingleton<IProxyAuthenticationService>(sp => new VaulthAuthenticationService(sp.GetService<Serilog.ILogger>(), sp.GetService<IConfiguration>()));
-                .AddSingleton<IProxyAuthenticationService, MockAuthenticationService>()
                 .AddSingleton<SymmetricAlgorithm>(sp => Rijndael.Create()); // TODO: pick an algo
+
+            // If the config file doesn't have an Auth0 section, we'll assume that the auth service is provided by a plugin.
+            if (Configuration.GetSection("Auth0").Exists())
+            {
+                _ = services.AddInterfacesAsSingleton<Auth0AuthenticationService, IProxyAuthenticationService, IAuth0Service>();
+            }
+            // Uncomment the following code if you need mock authentication for HOPEFULLY DEVELOPMENT reasons
+            //else
+            //{
+            //    _ = services.AddInterfacesAsSingleton<MockAuthenticationService, IProxyAuthenticationService, IAuth0Service>();
+            //}
 
             _ = services.AddDbContext<HiveContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
@@ -86,13 +96,12 @@ namespace Hive
                     .AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
             }
 
-            _ = services.AddAuthentication(a =>
-            {
-                a.AddScheme<MockAuthenticationHandler>("Bearer", "MockAuth");
-                a.DefaultScheme = "Bearer";
-            });
+            var conditionalFeature = new HiveConditionalControllerFeatureProvider()
+                .RegisterCondition<Auth0Controller>(Configuration.GetSection("Auth0").Exists());
 
-            _ = services.AddControllers();
+            _ = services
+                .AddControllers()
+                .ConfigureApplicationPartManager(manager => manager.FeatureProviders.Add(conditionalFeature));
         }
 
         /// <summary>

@@ -7,6 +7,8 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace Hive.Services.Common
 {
@@ -41,6 +43,12 @@ namespace Hive.Services.Common
         /// <param name="channels">Input channels to filter</param>
         /// <returns>Filtered channels</returns>
         IEnumerable<Channel> GetChannelsFilter(User? user, [TakesReturnValue] IEnumerable<Channel> channels) => channels;
+
+        /// <summary>
+        /// A hook that is called when a new <see cref="Channel"/> is successfully created and added to the database.
+        /// </summary>
+        /// <param name="newChannel">The channel that was just created.</param>
+        void NewChannelCreated(Channel newChannel) { }
     }
 
     internal class HiveChannelsControllerPlugin : IChannelsControllerPlugin { }
@@ -88,7 +96,7 @@ namespace Hive.Services.Common
         /// </summary>
         /// <param name="user">The users to associate with this request.</param>
         /// <returns>A wrapped collection of <see cref="Channel"/>, if successful.</returns>
-        public HiveObjectQuery<IEnumerable<Channel>> RetrieveAllChannels(User? user)
+        public async Task<HiveObjectQuery<IEnumerable<Channel>>> RetrieveAllChannels(User? user)
         {
             // hive.channel with a null channel in the context should be permissible
             // iff a given user (or none) is allowed to view any channels. Thus, this should almost always be true
@@ -108,7 +116,7 @@ namespace Hive.Services.Common
             // Filter channels based off of user-level permission
             // Permission for a given channel is entirely plugin-based, channels in Hive are defaultly entirely public.
             // For a mix of private/public channels, a plugin that maintains a user-level list of read/write channels is probably ideal.
-            var channels = context.Channels.ToList();
+            var channels = await context.Channels.ToListAsync().ConfigureAwait(false);
             log.Debug("Filtering channels from {0} channels...", channels.Count);
 
             // First, we filter over if the given channel is accessible to the given user.
@@ -127,10 +135,13 @@ namespace Hive.Services.Common
         /// This performs a permission check at: <c>hive.channel.create</c>.
         /// </summary>
         /// <param name="user">The user to associate with the request.</param>
-        /// <param name="channelName">The name of the new channel</param>
+        /// <param name="newChannel">The new channel to add.</param>
         /// <returns>The wrapped <see cref="Channel"/> that was created, if successful.</returns>
-        public HiveObjectQuery<Channel> CreateNewChannel(User? user, string channelName)
+        public async Task<HiveObjectQuery<Channel>> CreateNewChannel(User? user, Channel newChannel)
         {
+            if (newChannel is null)
+                throw new ArgumentNullException(nameof(newChannel));
+
             // hive.channel with a null channel in the context should be permissible
             // iff a given user (or none) is allowed to view any channels. Thus, this should almost always be true
             if (!permissions.CanDo(CreateActionName, new PermissionContext { User = user }, ref channelsParseState))
@@ -146,14 +157,25 @@ namespace Hive.Services.Common
             if (!combined.CreateChannelAdditionalChecks(user))
                 return forbiddenSingularResponse;
 
-            log.Debug("Creating a new channel...");
+            // TODO: Plugin for additional channel checks and exit
 
-            var newChannel = new Channel
-            {
-                Name = channelName
-            };
+            log.Debug("Adding the new channel...");
 
-            _ = context.Channels.Add(newChannel);
+            // Set AdditionalData if it's undefined
+            if (newChannel.AdditionalData.ValueKind == JsonValueKind.Undefined)
+                newChannel.AdditionalData = JsonElementHelper.BlankObject;
+
+            // Exit if there's already an existing channel with the same name
+            var existingChannels = await context.Channels.ToListAsync().ConfigureAwait(false);
+
+            if (existingChannels.Any(x => x.Name == newChannel.Name))
+                return new HiveObjectQuery<Channel>(null, "A channel with this name already exists.", StatusCodes.Status409Conflict);
+
+            // Call our hooks
+            combined.NewChannelCreated(newChannel);
+
+            _ = await context.Channels.AddAsync(newChannel).ConfigureAwait(false);
+            _ = await context.SaveChangesAsync().ConfigureAwait(false);
 
             return new HiveObjectQuery<Channel>(newChannel, null, StatusCodes.Status200OK);
         }
