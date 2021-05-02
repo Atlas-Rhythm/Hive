@@ -15,7 +15,7 @@ namespace Hive.Services
         private Dictionary<string, User?> Users { get; } = new Dictionary<string, User?>();
 
         /// <inheritdoc/>
-        public Auth0ReturnData? Data => null;
+        public Auth0ReturnData Data => null!;
 
         /// <summary>
         /// Creates and populates some dummy users

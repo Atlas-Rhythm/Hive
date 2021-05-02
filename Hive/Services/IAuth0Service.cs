@@ -12,7 +12,7 @@ namespace Hive.Services
         /// <summary>
         /// Holds the data necessary for external Auth0 requests. This is used by the <see cref="Controllers.Auth0Controller"/> type to return valid data to the frontend.
         /// </summary>
-        Auth0ReturnData? Data { get; }
+        Auth0ReturnData Data { get; }
 
         /// <summary>
         /// Requests a token from the provided source Uri, authentication code, and state. This should be called as part of the callback from Auth0.

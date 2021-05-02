@@ -33,7 +33,7 @@ namespace Hive.Controllers
         [HttpGet("get_data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<Auth0ReturnData> GetData() => (ActionResult)Ok(auth0Service.Data) ?? NotFound(null);
+        public ActionResult<Auth0ReturnData> GetData() => Ok(auth0Service.Data);
 
         /// <summary>
         /// Authenticates and returns a <see cref="Auth0TokenResponse"/> for the provided authentication code and state, or null on failure.
