@@ -80,7 +80,7 @@ namespace Hive.Graphing.Types
                 = ctx.RequestServices.GetRequiredServices<ChannelService, IHttpContextAccessor, IProxyAuthenticationService>();
 
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
-            var queryResult = channelService.RetrieveAllChannels(user);
+            var queryResult = await channelService.RetrieveAllChannels(user).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
             return queryResult.Value ?? Array.Empty<Channel>();
@@ -92,7 +92,7 @@ namespace Hive.Graphing.Types
                 = ctx.RequestServices.GetRequiredServices<ModService, IHttpContextAccessor, IProxyAuthenticationService>();
 
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
-            var queryResult = modService.GetMod(user, ctx.GetArgument<string>("id"));
+            var queryResult = await modService.GetMod(user, ctx.GetArgument<string>("id")).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
             return queryResult.Value;
@@ -108,7 +108,7 @@ namespace Hive.Graphing.Types
             var gameVersion = ctx.GetArgument<string?>("gameVersion");
 
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
-            var queryResult = modService.GetAllMods(user, channels?.ToArray(), gameVersion, filterType);
+            var queryResult = await modService.GetAllMods(user, channels?.ToArray(), gameVersion, filterType).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
             return queryResult.Value ?? Array.Empty<Mod>();
@@ -120,7 +120,7 @@ namespace Hive.Graphing.Types
                 = ctx.RequestServices.GetRequiredServices<GameVersionService, IHttpContextAccessor, IProxyAuthenticationService>();
 
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
-            var queryResult = versionService.RetrieveAllVersions(user);
+            var queryResult = await versionService.RetrieveAllVersions(user).ConfigureAwait(false);
             var version = ctx.GetArgument<string>("name");
 
             ctx.Analyze(queryResult);
@@ -133,7 +133,7 @@ namespace Hive.Graphing.Types
                 = ctx.RequestServices.GetRequiredServices<GameVersionService, IHttpContextAccessor, IProxyAuthenticationService>();
 
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
-            var queryResult = versionService.RetrieveAllVersions(user);
+            var queryResult = await versionService.RetrieveAllVersions(user).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
             return queryResult.Value ?? Array.Empty<GameVersion>();

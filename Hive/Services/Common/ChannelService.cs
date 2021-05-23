@@ -49,6 +49,20 @@ namespace Hive.Services.Common
         /// </summary>
         /// <param name="newChannel">The channel that was just created.</param>
         void NewChannelCreated(Channel newChannel) { }
+
+        /// <summary>
+        /// Returns true if the specified user has access to view a particular channel, false otherwise.
+        /// This method is called for each channel the user wants to access.
+        /// <para>Hive default is to return true for each channel.</para>
+        /// </summary>
+        /// <remarks>
+        /// This method is called in a LINQ expression that is not tracked by EntityFramework,
+        /// so modifications done to the <see cref="Channel"/> object will not be reflected in the database.
+        /// </remarks>
+        /// <param name="user">User in context</param>
+        /// <param name="contextChannel">Mod in context</param>
+        [return: StopIfReturns(false)]
+        public bool GetSpecificChannelAdditionalChecks(User? user, Channel? contextChannel) => true;
     }
 
     internal class HiveChannelsControllerPlugin : IChannelsControllerPlugin { }
@@ -67,6 +81,7 @@ namespace Hive.Services.Common
         private static readonly HiveObjectQuery<IEnumerable<Channel>> forbiddenEnumerableResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
         private static readonly HiveObjectQuery<Channel> forbiddenSingularResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
 
+        private const string ActionName = "hive.channel";
         private const string ListActionName = "hive.channels.list";
         private const string FilterActionName = "hive.channels.filter";
 
@@ -95,26 +110,26 @@ namespace Hive.Services.Common
         /// <param name="id">The name/id of the channel.</param>
         /// <param name="user">The user for authenticating the query.</param>
         /// <returns></returns>
-        public async Task<HiveObjectQuery<Channel?>> GetChannel(string id, User? user)
+        public async Task<HiveObjectQuery<Channel>> GetChannel(string id, User? user)
         {
             if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref channelsParseState))
-                return forbiddenResponseSingle;
+                return forbiddenSingularResponse;
 
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;
 
             if (!combined.GetChannelsAdditionalChecks(user))
-                return forbiddenResponseSingle;
+                return forbiddenSingularResponse;
 
             var channel = await context.Channels.FindAsync(id).ConfigureAwait(false);
 
             if (channel is null)
-                return notFoundResponseSingle;
+                return forbiddenSingularResponse;
 
             var hasPermission = permissions.CanDo(ActionName, new PermissionContext { Channel = channel, User = user }, ref channelsParseState)
                 && combined.GetSpecificChannelAdditionalChecks(user, channel);
 
-            return !hasPermission ? forbiddenResponseSingle : new HiveObjectQuery<Channel?>(channel, null, StatusCodes.Status200OK);
+            return !hasPermission ? forbiddenSingularResponse : new HiveObjectQuery<Channel>(channel, null, StatusCodes.Status200OK);
         }
 
         /// <summary>

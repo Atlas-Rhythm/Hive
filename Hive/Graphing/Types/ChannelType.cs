@@ -35,7 +35,7 @@ namespace Hive.Graphing.Types
                 = ctx.RequestServices.GetRequiredServices<ModService, IHttpContextAccessor, IProxyAuthenticationService>();
 
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
-            var queryResult = modService.GetAllMods(user, new[] { ctx.Source.Name });
+            var queryResult = await modService.GetAllMods(user, new[] { ctx.Source.Name }).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
             return queryResult.Value ?? Array.Empty<Mod>();
