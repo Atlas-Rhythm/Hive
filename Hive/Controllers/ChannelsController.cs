@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Hive.Models;
-using Hive.Plugins.Aggregates;
 using Hive.Services;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Http;

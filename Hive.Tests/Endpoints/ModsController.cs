@@ -1,31 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Hive.Controllers;
 using Hive.Models;
-﻿using Hive.Models;
 using Hive.Models.Serialized;
+using Hive.Permissions;
 using Hive.Plugins;
-using Microsoft.AspNetCore.Http;
 using Hive.Services.Common;
 using Hive.Utilities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Primitives;
+using Microsoft.Net.Http.Headers;
+using Moq;
 using NodaTime;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
-using static Hive.Tests.TestHelpers;
 
 namespace Hive.Tests.Endpoints
 {
@@ -453,6 +448,8 @@ namespace Hive.Tests.Endpoints
             contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
 
             return contextMoq.Object;
+        }
+
         // This plugin will filter out a mod if it's in the beta channel. Super super basic but works.
         private class BetaModsFilterPlugin : IModsPlugin
         {

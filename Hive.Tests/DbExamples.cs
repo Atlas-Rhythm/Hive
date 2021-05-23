@@ -16,14 +16,14 @@ namespace Hive.Tests
         {
             GenericUsers = new Dictionary<string, User>
             {
-                { "Eris", new User { Username = "Eris", AdditionalData = DIHelper.EmptyAdditionalData } },
-                { "Auros", new User { Username = "Auros", AdditionalData = DIHelper.EmptyAdditionalData } },
-                { "DaNike", new User { Username = "DaNike", AdditionalData = DIHelper.EmptyAdditionalData } },
-                { "Umbranox", new User { Username = "Umbranox", AdditionalData = DIHelper.EmptyAdditionalData } },
-                { "Caeden117", new User { Username = "Caeden117", AdditionalData = DIHelper.EmptyAdditionalData } },
-                { "monkeymanboy", new User { Username = "monkeymanboy", AdditionalData = DIHelper.EmptyAdditionalData } },
-                { "Toni Macaroni", new User { Username = "Toni Macaroni", AdditionalData = DIHelper.EmptyAdditionalData } },
-                { "raftario", new User { Username = "raftario best modder", AdditionalData = DIHelper.EmptyAdditionalData } },
+                { "Eris", new User { Username = "Eris", AdditionalData = DIHelper.EmptyAdditionalSet } },
+                { "Auros", new User { Username = "Auros", AdditionalData = DIHelper.EmptyAdditionalSet } },
+                { "DaNike", new User { Username = "DaNike", AdditionalData = DIHelper.EmptyAdditionalSet } },
+                { "Umbranox", new User { Username = "Umbranox", AdditionalData = DIHelper.EmptyAdditionalSet } },
+                { "Caeden117", new User { Username = "Caeden117", AdditionalData = DIHelper.EmptyAdditionalSet } },
+                { "monkeymanboy", new User { Username = "monkeymanboy", AdditionalData = DIHelper.EmptyAdditionalSet } },
+                { "Toni Macaroni", new User { Username = "Toni Macaroni", AdditionalData = DIHelper.EmptyAdditionalSet } },
+                { "raftario", new User { Username = "raftario best modder", AdditionalData = DIHelper.EmptyAdditionalSet } },
             };
 
             GenericChannels = new List<Channel>

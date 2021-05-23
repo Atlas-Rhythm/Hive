@@ -21,6 +21,7 @@ namespace Hive.Tests
 {
     public static class DIHelper
     {
+        internal static Dictionary<string, JsonElement> EmptyAdditionalSet => new();
         internal static JsonElement EmptyAdditionalData => JsonDocument.Parse("{}").RootElement.Clone();
 
         /// <summary>
