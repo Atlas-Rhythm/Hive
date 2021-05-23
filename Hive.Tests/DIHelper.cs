@@ -71,7 +71,7 @@ namespace Hive.Tests
             // Used for ensuring objects exist in context
             if (context is not null)
             {
-                DbHelper.CopyData(context, dbContext);
+                TestHelpers.CopyData(context, dbContext);
             }
             // This singleton SHOULD be properly initialized to operate with the test DB.
             // There should only ever be one per service collection, so this checks out.

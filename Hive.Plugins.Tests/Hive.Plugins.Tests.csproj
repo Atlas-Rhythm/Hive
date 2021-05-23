@@ -8,12 +8,26 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.0-preview-20201123-03" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.0-preview-20210127-04" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Hive.Plugins.Tests.TestPlugin\Hive.Plugins.Tests.TestPlugin.csproj">
+      <!-- We only actually care that this was built first -->
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
     <ProjectReference Include="..\Hive.Plugins\Hive.Plugins.csproj" />
-    <ProjectReference Include="..\Hive\Hive.csproj" />
   </ItemGroup>
+
+  <Target Name="MoveTestPlugin" AfterTargets="AfterBuild">
+    <MakeDir Directories="$(OutputPath)plugins\Hive.Plugins.Tests.TestPlugin" />
+    <ItemGroup>
+      <FilesToMove Include="$(MSBuildThisFileDirectory)\..\Hive.Plugins.Tests.TestPlugin\bin\$(Configuration)\$(TargetFramework)\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FilesToMove)" DestinationFolder="$(OutputPath)plugins\Hive.Plugins.Tests.TestPlugin" />
+  </Target>
   
 </Project>

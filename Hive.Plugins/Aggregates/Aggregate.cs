@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Hive.Plugins
+namespace Hive.Plugins.Aggregates
 {
     /// <summary>
     /// An aggregation of a collection of <typeparamref name="T"/> implementations.

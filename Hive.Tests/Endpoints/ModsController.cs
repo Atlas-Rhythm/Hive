@@ -7,17 +7,25 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Hive.Controllers;
 using Hive.Models;
+﻿using Hive.Models;
 using Hive.Models.Serialized;
 using Hive.Plugins;
 using Microsoft.AspNetCore.Http;
+using Hive.Services.Common;
+using Hive.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Primitives;
-using Microsoft.Net.Http.Headers;
-using Moq;
 using NodaTime;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using static Hive.Tests.TestHelpers;
 
 namespace Hive.Tests.Endpoints
 {
@@ -384,7 +392,7 @@ namespace Hive.Tests.Endpoints
 
             services
                 .AddTransient(sp => plugins)
-                .AddScoped<Services.Common.ModService>()
+                .AddScoped<ModService>()
                 .AddScoped<Controllers.ModsController>()
                 .AddAggregates();
 
@@ -445,6 +453,40 @@ namespace Hive.Tests.Endpoints
             contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
 
             return contextMoq.Object;
+        // This plugin will filter out a mod if it's in the beta channel. Super super basic but works.
+        private class BetaModsFilterPlugin : IModsPlugin
+        {
+            public bool GetSpecificModAdditionalChecks(User? user, Mod contextMod) => contextMod.Channel.Name != "Beta";
+        }
+
+        // This is taken from GameVersionsController to have a configurable permission rule.
+        private class ModsRuleProvider : IRuleProvider
+        {
+            private readonly string permissionRule;
+
+            public ModsRuleProvider(string permissionRule)
+            {
+                this.permissionRule = permissionRule;
+            }
+
+            public bool HasRuleChangedSince(StringView name, Instant time) => true;
+
+            public bool HasRuleChangedSince(Rule rule, Instant time) => true;
+
+            public bool TryGetRule(StringView name, [MaybeNullWhen(false)] out Rule gotten)
+            {
+                var nameString = name.ToString();
+                switch (nameString)
+                {
+                    case "hive":
+                        gotten = new Rule(nameString, "next(false)");
+                        return true;
+
+                    default:
+                        gotten = new Rule(nameString, permissionRule);
+                        return true;
+                }
+            }
         }
     }
 }

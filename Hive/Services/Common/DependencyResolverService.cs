@@ -1,5 +1,5 @@
 ﻿using Hive.Models;
-using Hive.Plugins;
+using Hive.Plugins.Aggregates;
 using Hive.Versioning;
 using Hive.Controllers;
 using Hive.Permissions;
@@ -16,6 +16,23 @@ using Version = Hive.Versioning.Version;
 
 namespace Hive.Services.Common
 {
+    /// <summary>
+    /// A class for plugins that allow modifications of <see cref="ResolveDependenciesController"/>
+    /// </summary>
+    [Aggregable]
+    public interface IResolveDependenciesPlugin
+    {
+        /// <summary>
+        /// Returns true if the specified/anonymous user can resolve dependencies, false otherwise.
+        /// <para>Hive default is to return true.</para>
+        /// </summary>
+        /// <param name="user">User in context</param>
+        [return: StopIfReturns(false)]
+        bool GetAdditionalChecks(User? user) => true;
+    }
+
+    internal class HiveResolveDependenciesControllerPlugin : IResolveDependenciesPlugin { }
+
     /// <summary>
     /// Common functionality for dependency resolution actions.
     /// </summary>

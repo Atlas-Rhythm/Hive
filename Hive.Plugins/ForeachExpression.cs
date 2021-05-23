@@ -116,8 +116,8 @@ namespace Hive.Plugins
                 throw new ArgumentException(SR.Foreach_IncorrectLoopVariable.Format(EnumerationType), nameof(loopVariable));
         }
 
-        private static readonly MethodInfo EnumeratorMoveNext = typeof(IEnumerator).GetMethod(nameof(IEnumerator.MoveNext), BindingFlags.Public | BindingFlags.Instance);
-        private static readonly MethodInfo DisposableDispose = typeof(IDisposable).GetMethod(nameof(IDisposable.Dispose), BindingFlags.Public | BindingFlags.Instance);
+        private static readonly MethodInfo EnumeratorMoveNext = typeof(IEnumerator).GetMethod(nameof(IEnumerator.MoveNext), BindingFlags.Public | BindingFlags.Instance)!;
+        private static readonly MethodInfo DisposableDispose = typeof(IDisposable).GetMethod(nameof(IDisposable.Dispose), BindingFlags.Public | BindingFlags.Instance)!;
 
         /// <inheritdoc/>
         public override Expression Reduce()

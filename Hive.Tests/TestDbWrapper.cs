@@ -38,7 +38,7 @@ namespace Hive.Tests
             // Create Options
             Options = new DbContextOptionsBuilder<HiveContext>().UseNpgsql(connectionString + "Database='" + dbName + "';", o => o.UseNodaTime()).EnableSensitiveDataLogging().Options;
             // Setup DB using context
-            DbHelper.SetupDb(Options, context);
+            TestHelpers.SetupDb(Options, context);
         }
     }
 }

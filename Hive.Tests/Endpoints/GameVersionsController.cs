@@ -1,7 +1,9 @@
-﻿using Hive.Controllers;
-using Hive.Models;
+﻿using Hive.Models;
+using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
+using Hive.Services.Common;
+using Hive.Plugins.Aggregates;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +15,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using static Hive.Tests.TestHelpers;
 
 namespace Hive.Tests.Endpoints
 {
@@ -78,12 +81,12 @@ namespace Hive.Tests.Endpoints
             Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed.
             var result = res.Result as OkObjectResult;
             Assert.NotNull(result);
-            var value = result!.Value as IEnumerable<GameVersion>;
+            var value = result!.Value as IEnumerable<SerializedGameVersion>;
             Assert.NotNull(value); // We must be given a list of versions back.
 
             // Check if the result given back contains all of the versions we put into it.
             foreach (var version in defaultGameVersions)
-                Assert.Contains(version, value);
+                Assert.Contains(value, item => item.Name == version.Name);
         }
 
         [Fact]
@@ -99,15 +102,15 @@ namespace Hive.Tests.Endpoints
             Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed, and the permission rule gives us all public versions.
             var result = res.Result as OkObjectResult;
             Assert.NotNull(result);
-            var value = result!.Value as IEnumerable<GameVersion>;
+            var value = result!.Value as IEnumerable<SerializedGameVersion>;
             Assert.NotNull(value); // We must be given a list of versions back.
 
             // Should only contain non-beta versions
-            Assert.DoesNotContain(defaultGameVersions.Last(), value);
+            Assert.DoesNotContain(value, item => item.Name == defaultGameVersions.Last().Name);
             // Should contain all public versions (in our case, all versions except the very last one)
             for (var i = 0; i < defaultGameVersions.Count() - 1; i++)
             {
-                Assert.Contains(defaultGameVersions.ElementAt(i), value);
+                Assert.Contains(value, item => item.Name == defaultGameVersions.ElementAt(i).Name);
             }
         }
 
@@ -127,16 +130,48 @@ namespace Hive.Tests.Endpoints
             Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed, and the plugin will gives us all public versions.
             var result = res.Result as OkObjectResult;
             Assert.NotNull(result);
-            var value = result!.Value as IEnumerable<GameVersion>;
+            var value = result!.Value as IEnumerable<SerializedGameVersion>;
             Assert.NotNull(value); // We must be given a list of versions back.
 
             // Should only contain non-beta versions
-            Assert.DoesNotContain(defaultGameVersions.Last(), value);
+            Assert.DoesNotContain(value, item => item.Name == defaultGameVersions.Last().Name);
             // Should contain all public versions (in our case, all versions except the very last one)
             for (var i = 0; i < defaultGameVersions.Count() - 1; i++)
             {
-                Assert.Contains(defaultGameVersions.ElementAt(i), value);
+                Assert.Contains(value, item => item.Name == defaultGameVersions.ElementAt(i).Name);
             }
+        }
+
+        [Fact]
+        public async Task CreateNewVersion()
+        {
+            // Yeah we're just going to simply make a new game version and call it a day.
+            var controller = CreateController("next(true)", defaultPlugins);
+            controller.ControllerContext.HttpContext = CreateMockRequest(GenerateStreamFromString("1.13.2"));
+
+            var res = await controller.CreateGameVersion(new InputGameVersion("1.13.2", DIHelper.EmptyAdditionalData));
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed.
+            var result = res.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var value = result!.Value as SerializedGameVersion;
+            Assert.NotNull(value); // We must be given one GameVersion back whose name matches our input
+            Assert.True(value!.Name == "1.13.2");
+        }
+
+        [Fact]
+        public async Task CreateNewVersionUnauthorized()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+
+            // Whoops, we "forgot" to assign a user.
+            var res = await controller.CreateGameVersion(new InputGameVersion("1.13.3", default));
+
+            Assert.NotNull(res);
+            // Should fail.
+            Assert.IsType<UnauthorizedResult>(res.Result);
         }
 
         private Controllers.GameVersionsController CreateController(string permissionRule, IEnumerable<IGameVersionsPlugin> plugins)
@@ -153,7 +188,7 @@ namespace Hive.Tests.Endpoints
 
             services
                 .AddTransient(sp => plugins)
-                .AddScoped<Services.Common.GameVersionService>()
+                .AddScoped<GameVersionService>()
                 .AddScoped<Controllers.GameVersionsController>()
                 .AddAggregates();
 
@@ -162,7 +197,7 @@ namespace Hive.Tests.Endpoints
 
         private class DenyUserAccessPlugin : IGameVersionsPlugin
         {
-            public bool GetGameVersionsAdditionalChecks(User? _) => false; // If it is active, restrict access.
+            public bool ListGameVersionsAdditionalChecks(User? _) => false; // If it is active, restrict access.
         }
 
         private class FilterBetaVersionsPlugin : IGameVersionsPlugin
@@ -195,13 +230,9 @@ namespace Hive.Tests.Endpoints
                         gotten = new Rule(nameString, "next(false)");
                         return true;
 
-                    case "hive.game.version":
+                    default:
                         gotten = new Rule(nameString, permissionRule);
                         return true;
-
-                    default:
-                        gotten = null;
-                        return false;
                 }
             }
         }

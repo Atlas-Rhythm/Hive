@@ -6,12 +6,12 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Hive.Plugins;
+using Hive.Plugins.Aggregates;
 using Hive.Plugins.Resources;
 
 [assembly: InternalsVisibleTo(AggregatedInstanceGenerator.AssemblyName)]
 
-namespace Hive.Plugins
+namespace Hive.Plugins.Aggregates
 {
     internal static class AggregatedInstanceGenerator<T> where T : class
     {
@@ -52,7 +52,7 @@ namespace Hive.Plugins
             => param.Attributes;
 
         internal static Type AsNonByRef(this Type type)
-            => type.IsByRef ? type.GetElementType() : type;
+            => type.IsByRef ? type.GetElementType()! : type;
 
         public static (IEnumerable<(MethodInfo Method, Type DelegateType)> ImplOrder, Func<Delegate[], IEnumerable<object>, object> Creator) CreateAggregatedInstance(Type ifaceType)
         {
@@ -76,7 +76,7 @@ namespace Hive.Plugins
                 gen.AddInterfaceImplementation(aggList);
 
                 var listProp = aggList.GetProperty(nameof(IAggregateList<object>.List)) ?? throw new InvalidOperationException();
-                var listGet = listProp.GetGetMethod();
+                var listGet = listProp.GetGetMethod()!;
 
                 var listImpl = gen.DefineMethod("get_List", MethodAttrs, enumerableType, Array.Empty<Type>());
                 gen.DefineMethodOverride(listImpl, listGet);
@@ -174,7 +174,7 @@ namespace Hive.Plugins
                         EmitLdarg(il, i);
                     }
 
-                    var target = delType.GetMethod("Invoke");
+                    var target = delType.GetMethod("Invoke")!;
                     il.Emit(OpCodes.Tailcall);
                     il.Emit(OpCodes.Callvirt, target);
                     il.Emit(OpCodes.Ret);
@@ -203,12 +203,12 @@ namespace Hive.Plugins
                 il.Emit(OpCodes.Ret);
             }
 
-            var genType = gen.CreateType();
+            var genType = gen.CreateType()!;
 
             var delParams = Expression.Parameter(typeof(Delegate[]), "delegates");
             var enumParams = Expression.Parameter(typeof(IEnumerable<object>), "impls");
             var creator = Expression.Lambda<Func<Delegate[], IEnumerable<object>, object>>(
-                Expression.New(genType.GetConstructor(new[] { typeof(Delegate[]), enumerableType }), delParams, Expression.Convert(enumParams, enumerableType)),
+                Expression.New(genType.GetConstructor(new[] { typeof(Delegate[]), enumerableType })!, delParams, Expression.Convert(enumParams, enumerableType)),
                 delParams, enumParams
             ).Compile();
 
@@ -297,7 +297,7 @@ namespace Hive.Plugins
             _ = endInvoke.DefineParameter(0, GetAttrsFor(ret), "return");
             _ = endInvoke.DefineParameter(1, ParameterAttributes.None, "result");
 
-            type = newDelType.CreateType();
+            type = newDelType.CreateType()!;
 
             return (type, hasResult);
         }

@@ -5,7 +5,7 @@ namespace Hive.CodeGen
     /// <summary>
     /// Specifies that a generic class will be automatically parameterized within the range specified.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
     public sealed class ParameterizeGenericParametersAttribute : Attribute
     {
         /// <summary>
@@ -31,13 +31,13 @@ namespace Hive.CodeGen
     /// <summary>
     /// Marks that a generic class is a generated parameterization of a type.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
     public sealed class GeneratedParameterizationAttribute : Attribute
     {
         /// <summary>
-        /// Gets the type name of the type it was parameterized from.
+        /// Gets the type name of the type it was parameterized from, if this is applied to a generated type.
         /// </summary>
-        public Type GeneratedFrom { get; }
+        public Type? GeneratedFrom { get; }
 
         /// <summary>
         /// Gets the number of parameters this was instantiated with.
@@ -49,7 +49,7 @@ namespace Hive.CodeGen
         /// </summary>
         /// <param name="from">The type that this instantiation was generated from.</param>
         /// <param name="with">The number of parameters it was generated with.</param>
-        public GeneratedParameterizationAttribute(Type from, int with)
+        public GeneratedParameterizationAttribute(Type? from, int with)
             => (GeneratedFrom, WithParameters) = (from, with);
     }
 }
