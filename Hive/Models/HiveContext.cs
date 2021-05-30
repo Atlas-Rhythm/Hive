@@ -42,6 +42,11 @@ namespace Hive.Models
         /// </summary>
         public virtual DbSet<GameVersion> GameVersions { get; set; } = null!;
 
+        /// <summary>
+        /// The database collection of <see cref="User"/> objects.
+        /// </summary>
+        public virtual DbSet<User> Users { get; set; } = null!;
+
         /// <inheritdoc/>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
