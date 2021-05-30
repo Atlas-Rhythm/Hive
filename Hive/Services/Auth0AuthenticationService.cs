@@ -13,6 +13,7 @@ using System.Text.Json;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hive.Services
 {
@@ -23,13 +24,14 @@ namespace Hive.Services
     {
         private const string authenticationAPIUserEndpoint = "userinfo";
         private const string authenticationAPIGetToken = "oauth/token";
-        private const string managementAPIUserEndpoint = "api/v2/users";
+        //private const string managementAPIUserEndpoint = "api/v2/users";
 
         private readonly JsonSerializerOptions jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
         private readonly HttpClient client;
         private readonly string clientSecret;
         private readonly ILogger logger;
         private readonly IClock clock;
+        private readonly HiveContext context;
 
         private string? managementToken;
         private Instant? managementExpireInstant;
@@ -47,7 +49,7 @@ namespace Hive.Services
         /// <summary>
         /// Construct a <see cref="Auth0AuthenticationService"/> with DI.
         /// </summary>
-        public Auth0AuthenticationService([DisallowNull] ILogger log, IClock clock, IConfiguration configuration)
+        public Auth0AuthenticationService([DisallowNull] ILogger log, IClock clock, IConfiguration configuration, HiveContext context)
         {
             if (log is null)
                 throw new ArgumentNullException(nameof(log));
@@ -56,6 +58,7 @@ namespace Hive.Services
                 throw new ArgumentNullException(nameof(configuration));
 
             this.clock = clock;
+            this.context = context;
             logger = log.ForContext<Auth0AuthenticationService>();
 
             var section = configuration.GetSection("Auth0");
@@ -111,16 +114,39 @@ namespace Hive.Services
                 {
                     return null;
                 }
+                // We should obtain both the nickname and the sub
                 var auth0User = await response.Content.ReadFromJsonAsync<Auth0User>(jsonSerializerOptions).ConfigureAwait(false);
 
-                // REVIEW: is this dumb
-                return auth0User is null || string.IsNullOrEmpty(auth0User.Nickname)
-                    ? null
-                    : new User
+                // We should perform a DB lookup on the sub to see if we can find a User object with that sub.
+                // Note that the found object is WITH tracking, so modifications can be applied and saved.
+                // TODO: This may not be what we want.
+                // This will throw if we have more than one matching sub
+                var matching = await context.Users.Where(u => u.AlternativeId == auth0User!.Sub).SingleOrDefaultAsync().ConfigureAwait(false);
+                if (matching is not null)
+                {
+                    return matching;
+                }
+                else
+                {
+                    // If we cannot find an existing sub, we make a new username and ensure no duplicates.
+                    // Also note that accounts need to be LINKED in order for them to be considered the same (ex, Discord and GH accounts linked on frontend)
+                    // Once accounts are linked, they have the same sub
+                    // TODO: Add plugin somewhere here
+                    var u = new User
                     {
-                        Username = auth0User.Nickname,
+                        Username = auth0User!.Nickname,
+                        AlternativeId = auth0User!.Sub,
                         AdditionalData = auth0User.User_Metadata
                     };
+                    while (await context.Users.AsNoTracking().ContainsAsync(u).ConfigureAwait(false))
+                    {
+                        u.Username += Guid.NewGuid();
+                    }
+
+                    _ = await context.Users.AddAsync(u).ConfigureAwait(false);
+                    _ = await context.SaveChangesAsync().ConfigureAwait(false);
+                    return u;
+                }
             }
             catch (Exception e)
             {
@@ -140,42 +166,8 @@ namespace Hive.Services
                 return throwOnError ? throw new ArgumentNullException(nameof(userId)) : null;
             }
 
-            // Refresh our management API token if it has expired.
-            await EnsureValidManagementAPIToken(throwOnError).ConfigureAwait(false);
-
-            // TODO: Test this query string, possible other fields to search: "nickname" and "name"
-            // We don't need the whole kitchen sink here, so let's reduce fields to what we need
-            var query = $"q=username:\"{userId}\"&search_engine=v3&include_fields=true&fields=nickname,user_metadata";
-
-            using var message = new HttpRequestMessage(HttpMethod.Get,
-                Uri.EscapeDataString($"{managementAPIUserEndpoint}?{query}"));
-
-            try
-            {
-                var response = await client.SendAsync(message).ConfigureAwait(false);
-
-                // The endpoint returns a collection of users that match our query.
-                var auth0Users = await response.Content.ReadFromJsonAsync<Auth0User[]>(jsonSerializerOptions).ConfigureAwait(false);
-
-                // REVIEW: should I panic if there's multiple returned users (they all have to share the same EXACT username)
-                var auth0User = auth0Users?.FirstOrDefault();
-
-                // REVIEW: is this dumb
-                return auth0User is null || string.IsNullOrEmpty(auth0User.Nickname)
-                    ? null
-                    : new User
-                    {
-                        Username = auth0User.Nickname,
-                        AdditionalData = auth0User.User_Metadata,
-                    };
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "An exception occured while attempting to retrieve user information.");
-                if (throwOnError)
-                    throw;
-                return null;
-            }
+            // This will ALWAYS throw if there are multiple users with the same username, which should never be the case.
+            return await context.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Username == userId).ConfigureAwait(false);
         }
 
         private async Task EnsureValidManagementAPIToken(bool throwOnError = true)
@@ -271,12 +263,15 @@ namespace Hive.Services
         {
             public string Nickname { get; set; }
 
+            public string Sub { get; set; }
+
             [JsonExtensionData]
             public Dictionary<string, JsonElement> User_Metadata { get; set; } = new Dictionary<string, JsonElement>();
 
-            public Auth0User(string nickname)
+            public Auth0User(string nickname, string sub)
             {
                 Nickname = nickname;
+                Sub = sub;
             }
         }
     }
