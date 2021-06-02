@@ -9,6 +9,10 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <Compile Include="$(MSBuildThisFileDirectory)\..\System.Diagnostics.CodeAnalysis.cs" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ExcludeFromInternalize Include="Hive.Utilities.StringView" />
+  </ItemGroup>
   
   <ItemGroup>
     <EmbeddedResource Update="Resources\SR.resx" IsResXToGenerate="true" />
