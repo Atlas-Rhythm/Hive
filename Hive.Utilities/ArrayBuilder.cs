@@ -76,7 +76,10 @@ namespace Hive.Utilities
         {
             if (array != null && amount <= array.Length) return;
 
-            Resize(amount);
+            var newSize = array is not null ? array.Length * 2 : 8;
+            while (amount > newSize)
+                newSize *= 2;
+            Resize(newSize);
         }
 
 #if !NETSTANDARD2_1
