@@ -1,5 +1,7 @@
 ﻿using Hive.Models;
 using GraphQL.Types;
+using System;
+using System.Collections.Generic;
 
 namespace Hive.Graphing.Types
 {
@@ -11,8 +13,11 @@ namespace Hive.Graphing.Types
         /// <summary>
         /// Setup a GameVersionType for GQL.
         /// </summary>
-        public GameVersionType()
+        public GameVersionType(IEnumerable<ICustomHiveGraph<GameVersionType>> customGraphs)
         {
+            if (customGraphs is null)
+                throw new ArgumentNullException(nameof(customGraphs));
+
             Name = nameof(GameVersion);
             Description = Resources.GraphQL.GameVersion;
 
@@ -23,6 +28,9 @@ namespace Hive.Graphing.Types
                 "creationTime",
                 Resources.GraphQL.GameVersion_CreationTime,
                 resolve: ctx => ctx.Source.CreationTime.ToString());
+
+            foreach (var graph in customGraphs)
+                graph.Configure(this);
         }
     }
 }
