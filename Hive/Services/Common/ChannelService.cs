@@ -81,7 +81,7 @@ namespace Hive.Services.Common
         private static readonly HiveObjectQuery<IEnumerable<Channel>> forbiddenEnumerableResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
         private static readonly HiveObjectQuery<Channel> forbiddenSingularResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
 
-        private const string ActionName = "hive.channel";
+        private const string GetModActionName = "hive.channel.get";
         private const string ListActionName = "hive.channels.list";
         private const string FilterActionName = "hive.channels.filter";
 
@@ -112,7 +112,7 @@ namespace Hive.Services.Common
         /// <returns></returns>
         public async Task<HiveObjectQuery<Channel>> GetChannel(string id, User? user)
         {
-            if (!permissions.CanDo(ActionName, new PermissionContext { User = user }, ref channelsParseState))
+            if (!permissions.CanDo(GetModActionName, new PermissionContext { User = user }, ref channelsParseState))
                 return forbiddenSingularResponse;
 
             log.Debug("Combining plugins...");
@@ -126,7 +126,7 @@ namespace Hive.Services.Common
             if (channel is null)
                 return forbiddenSingularResponse;
 
-            var hasPermission = permissions.CanDo(ActionName, new PermissionContext { Channel = channel, User = user }, ref channelsParseState)
+            var hasPermission = permissions.CanDo(GetModActionName, new PermissionContext { Channel = channel, User = user }, ref channelsParseState)
                 && combined.GetSpecificChannelAdditionalChecks(user, channel);
 
             return !hasPermission ? forbiddenSingularResponse : new HiveObjectQuery<Channel>(channel, null, StatusCodes.Status200OK);
