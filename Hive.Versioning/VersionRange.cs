@@ -119,6 +119,7 @@ namespace Hive.Versioning
             return new VersionRange(allSubranges, comparer);
         }
 
+
         /// <summary>
         /// Computes the logical disjunction (or) of the two arguments.
         /// </summary>
@@ -126,6 +127,7 @@ namespace Hive.Versioning
         /// <param name="b">The second argument.</param>
         /// <returns>The logical disjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
         /// <seealso cref="Disjunction(VersionRange)"/>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "The named alternate is Disjunction().")]
         public static VersionRange operator |(VersionRange a, VersionRange b)
         {
             if (a is null) throw new ArgumentNullException(nameof(a));
@@ -163,6 +165,7 @@ namespace Hive.Versioning
             return ~(~this | ~other);
         }
 
+
         /// <summary>
         /// Computes the logical conjunction (and) of the two arguments.
         /// </summary>
@@ -170,6 +173,7 @@ namespace Hive.Versioning
         /// <param name="b">The second argument.</param>
         /// <returns>The logical disjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
         /// <seealso cref="Conjunction(VersionRange)"/>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "The named alternate is Conjunction().")]
         public static VersionRange operator &(VersionRange a, VersionRange b)
         {
             if (a is null) throw new ArgumentNullException(nameof(a));
@@ -287,12 +291,14 @@ namespace Hive.Versioning
             return _inverse;
         }
 
+
         /// <summary>
         /// Computes the compliment of the argument.
         /// </summary>
         /// <param name="r">The <see cref="VersionRange"/> to compute the compliment of.</param>
         /// <returns>The compliment of <paramref name="r"/>.</returns>
         /// <seealso cref="Invert()"/>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "The named alternate is Invert().")]
         public static VersionRange operator ~(VersionRange r)
         {
             if (r is null) throw new ArgumentNullException(nameof(r));
@@ -766,7 +772,6 @@ namespace Hive.Versioning
             compare = null;
             return false;
         }
-
         #endregion Parser
     }
 }

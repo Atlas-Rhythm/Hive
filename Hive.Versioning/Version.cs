@@ -261,11 +261,11 @@ namespace Hive.Versioning
             => a < b ? a : b;
 
         /// <summary>
-        /// Compares <see langword="this"/> version to <paramref name="o"/> for equality.
+        /// Compares <see langword="this"/> version to <paramref name="obj"/> for equality.
         /// </summary>
-        /// <param name="o">The object to compare to.</param>
+        /// <param name="obj">The object to compare to.</param>
         /// <returns><see langword="true"/> if they are equal, <see langword="false"/> otherwise.</returns>
-        public override bool Equals(object o) => o is Version v && Equals(v);
+        public override bool Equals(object obj) => obj is Version v && Equals(v);
 
         /// <summary>
         /// Gets the hash code of this <see cref="Version"/>.
