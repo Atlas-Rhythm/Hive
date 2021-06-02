@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
@@ -87,6 +88,7 @@ namespace Hive.Utilities
             Length = len;
         }
 
+
         /// <summary>
         /// Gets the character at the specified index in the view.
         /// </summary>
@@ -100,7 +102,7 @@ namespace Hive.Utilities
             get
             {
                 if (index >= Length || index < 0)
-                    throw new IndexOutOfRangeException();
+                    throw new ArgumentOutOfRangeException(nameof(index));
                 return BaseString[Start + index];
             }
         }
@@ -237,11 +239,14 @@ namespace Hive.Utilities
             }
         }
 
+
         /// <summary>
         /// Implicitly converts a <see cref="string"/> to a <see cref="StringView"/>, using <see cref="StringView(string)"/>.
         /// </summary>
         /// <param name="value">The string to wrap.</param>
         /// <seealso cref="StringView(string)"/>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
+            Justification = "The other name for this operation is the basic string view constructor.")]
         public static implicit operator StringView(string value)
             => new(value);
 
@@ -376,12 +381,15 @@ namespace Hive.Utilities
             return sb.ToString();
         }
 
+
         /// <summary>
         /// Concatenates two <see cref="StringView"/>s into a single <see cref="StringView"/>.
         /// </summary>
         /// <param name="a">The first view to concatenate.</param>
         /// <param name="b">The second view to concatenate.</param>
         /// <returns>The concatenated <see cref="StringView"/>.</returns>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
+            Justification = "The named alternate for this is Concat().")]
         public static StringView operator +(StringView a, StringView b) => Concat(a, b);
 
         /// <summary>
