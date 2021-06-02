@@ -73,6 +73,7 @@
     Outputs="@(IntermediateAssembly->'$(ILLinkOutputDir)%(Filename)%(Extension)');@(ReferenceCopyLocalPaths->'$(ILLinkOutputDir)%(Filename)%(Extension)')"-->
 
     <Message Importance="normal" Text="ILLinkLib @(IntermediateAssembly)" />
+    <Message Importance="low" Text="copylocal @(ReferenceCopyLocalPaths)" />
 
     <ItemGroup>
       <_LinkInputAssemblies Include="@(IntermediateAssembly)" />

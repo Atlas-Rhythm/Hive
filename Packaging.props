@@ -12,6 +12,7 @@
     
     <ILRepackTargetsFile>$(MSBuildThisFileDirectory)_EmptyProjectForILRepack.targets</ILRepackTargetsFile>
     <TrimMode>link</TrimMode>
+    <CopyLocalLockFileAssemblies Condition="'$(DoNotMergeNugetPackages)' != 'true'">true</CopyLocalLockFileAssemblies>
     
   </PropertyGroup>
   
