@@ -60,7 +60,7 @@ namespace Hive.Services.Common
         /// so modifications done to the <see cref="Channel"/> object will not be reflected in the database.
         /// </remarks>
         /// <param name="user">User in context</param>
-        /// <param name="contextChannel">Mod in context</param>
+        /// <param name="contextChannel">Channel in context</param>
         [return: StopIfReturns(false)]
         public bool GetSpecificChannelAdditionalChecks(User? user, Channel? contextChannel) => true;
     }
