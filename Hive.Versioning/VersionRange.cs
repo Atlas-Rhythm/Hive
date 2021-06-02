@@ -49,6 +49,14 @@ namespace Hive.Versioning
         }
 
         /// <summary>
+        /// Creates a <see cref="VersionRange"/> which matches only the provided <paramref name="version"/>.
+        /// </summary>
+        /// <param name="version">The <see cref="Version"/> to match.</param>
+        /// <returns>A <see cref="VersionRange"/> matching only the provided <paramref name="version"/>.</returns>
+        public static VersionRange ForVersion(Version version)
+            => new(Array.Empty<Subrange>(), new VersionComparer(version, ComparisonType.ExactEqual));
+
+        /// <summary>
         /// Computes the logical disjunction (or) of this <see cref="VersionRange"/> and <paramref name="other"/>.
         /// </summary>
         /// <param name="other">The other <see cref="VersionRange"/> to compute the disjunction of.</param>
@@ -56,8 +64,7 @@ namespace Hive.Versioning
         /// <seealso cref="operator |(VersionRange, VersionRange)"/>
         [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
 #if !NETSTANDARD2_0
-        [SuppressMessage("Style", "IDE0056:Use index operator",
-            Justification = "Standard 2.0 doesn't have System.Index")]
+        [SuppressMessage("Style", "IDE0056:Use index operator", Justification = "Standard 2.0 doesn't have System.Index")]
 #endif
         public VersionRange Disjunction(VersionRange other)
         {
