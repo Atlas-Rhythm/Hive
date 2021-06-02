@@ -171,7 +171,7 @@ namespace Hive.Versioning
         /// </summary>
         /// <param name="a">The first argument.</param>
         /// <param name="b">The second argument.</param>
-        /// <returns>The logical disjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
+        /// <returns>The logical conjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
         /// <seealso cref="Conjunction(VersionRange)"/>
         [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "The named alternate is Conjunction().")]
         public static VersionRange operator &(VersionRange a, VersionRange b)
@@ -550,7 +550,7 @@ namespace Hive.Versioning
             => ToString(new StringBuilder()).ToString();
 
         /// <inheritdoc/>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
             => obj is VersionRange range && Equals(range);
 
         /// <summary>
@@ -558,7 +558,7 @@ namespace Hive.Versioning
         /// </summary>
         /// <param name="other">The <see cref="VersionRange"/> to compare to.</param>
         /// <returns><see langword="true"/> if they are equivalent, <see langword="false"/> otherwise.</returns>
-        public bool Equals(VersionRange other)
+        public bool Equals(VersionRange? other)
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -671,6 +671,13 @@ namespace Hive.Versioning
                 return false;
             }
 
+            // check for our everything range array as a minor optimization
+            if (srs == EverythingSubranges)
+            {
+                range = Everything;
+                return true;
+            }
+
             range = new VersionRange(srs, compare);
             return true;
         }
@@ -682,6 +689,13 @@ namespace Hive.Versioning
         {
             sranges = null;
             comparer = null;
+
+            // check for the "everything" range first, which is just a star
+            if (TryTake(ref text, '*'))
+            {
+                sranges = EverythingSubranges;
+                return true;
+            }
 
             if (!TryReadComponent(ref text, out var range, out var compare))
                 return false;

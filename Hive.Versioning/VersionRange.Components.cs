@@ -814,7 +814,9 @@ namespace Hive.Versioning
             {
                 var copy = text;
 
-                // first we check for a ^ range
+                // first we check for a star range
+                if (TryReadStarRange(ref text, out subrange)) return true;
+                // then we check for a ^ range
                 if (TryReadCaretRange(ref text, out subrange)) return true;
 
                 // otherwise we just try read two VersionComparers in a row
@@ -885,6 +887,60 @@ namespace Hive.Versioning
                     upper = new Version(0, 0, lower.Patch + 1);
 
                 range = new Subrange(new VersionComparer(lower, ComparisonType.GreaterEqual), new VersionComparer(upper, ComparisonType.Less));
+                return true;
+            }
+
+            private static bool TryReadStarRange(ref StringPart text, out Subrange range)
+            {
+                var copy = text;
+                if (!Version.TryParseNumId(ref text, out var majorNum) || !TryTake(ref text, '.'))
+                {
+                    text = copy;
+                    range = default;
+                    return false;
+                }
+
+                // at this point, we *know* that we have a star range
+                if (TryTake(ref text, '*'))
+                {
+                    copy = text;
+                    // try to read another star
+                    if (!TryTake(ref text, '.')
+                        || !TryTake(ref text, '*'))
+                    {
+                        // if we can't, that's fine, just rewind to copy
+                        // this might be something else
+                        text = copy;
+                    }
+
+                    // we now have a star range
+                    var versionBase = new Version(majorNum, 0, 0);
+                    var versionUpper = new Version(majorNum + 1, 0, 0);
+                    range = new Subrange(new VersionComparer(versionBase, ComparisonType.GreaterEqual), new VersionComparer(versionUpper, ComparisonType.Less));
+                    return true;
+                }
+
+                // try to read the second number
+                if (!Version.TryParseNumId(ref text, out var minorNum) || !TryTake(ref text, '.'))
+                {
+                    // if we can't read the last bit then rewind and exit
+                    text = copy;
+                    range = default;
+                    return false;
+                }
+
+                // if our last thing isn't a star, then this isn't a star range
+                if (!TryTake(ref text, '*'))
+                {
+                    text = copy;
+                    range = default;
+                    return false;
+                }
+
+                // we now have a star range
+                var versionBase2 = new Version(majorNum, minorNum, 0);
+                var versionUpper2 = new Version(majorNum, minorNum + 1, 0);
+                range = new Subrange(new VersionComparer(versionBase2, ComparisonType.GreaterEqual), new VersionComparer(versionUpper2, ComparisonType.Less));
                 return true;
             }
 
