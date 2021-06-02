@@ -82,10 +82,6 @@ namespace Hive
 
             if (Configuration.GetValue<bool>("UseRateLimiting"))
             {
-                // AspNetCoreRateLimit requires this.
-                // A PR was merged that made this unnecessary, but that has not made it into an official release.
-                _ = services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-
                 _ = services.AddMemoryCache()
                     .Configure<ClientRateLimitOptions>(Configuration.GetSection("ClientRateLimiting"))
                     .Configure<ClientRateLimitPolicies>(Configuration.GetSection("ClientRateLimitPolicies"))
