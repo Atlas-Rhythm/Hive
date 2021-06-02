@@ -115,6 +115,10 @@
       <ReferenceCopyLocalPaths Include="@(_LinkOutputAssemblies)" />
     </ItemGroup>
 
+    <ItemGroup>
+      <FileWrites Include="@(_LinkOutputAssemblies);@(_LinkOutputIntermediaryAssembly)" />
+    </ItemGroup>
+
   </Target>
 
   <PropertyGroup>
@@ -145,6 +149,10 @@
     </ItemGroup>
 
     <WriteLinesToFile File="$(IntermediateOutputPath)ilrepack.exclusions" Encoding="UTF-8" Lines="@(ExcludeFromInternalize)" Overwrite="true" />
+    
+    <ItemGroup>
+      <FileWrites Include="$(IntermediateOutputPath)ilrepack.exclusions" />
+    </ItemGroup>
 
     <ItemGroup>
       <_ILRCmdArg Include="-union" />
@@ -176,6 +184,10 @@
       <IntermediateAssembly Remove="@(IntermediateAssembly)" />
       <IntermediateAssembly Include="$(ILRepackOutput)" />
       <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <FileWrites Include="$(ILRepackOutput)" />
     </ItemGroup>
 
   </Target>

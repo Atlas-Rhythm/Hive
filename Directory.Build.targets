@@ -95,6 +95,9 @@
     </ItemGroup>
 
     <WriteLinesToFile File="$(_LiteralAssemblyFile)" Encoding="UTF-8" Lines="@(_LiteralAssemblyAttrDecls)" Overwrite="true" />
+    <ItemGroup>
+      <FileWrites Include="$(_LiteralAssemblyFile)" />
+    </ItemGroup>
     
   </Target>
 
