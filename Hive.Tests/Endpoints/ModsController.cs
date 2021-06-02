@@ -277,9 +277,9 @@ namespace Hive.Tests.Endpoints
                 Version = "1.0.0"
             };
 
-            using var stringStream = GenerateStreamFromString(JsonSerializer.Serialize(identifier));
+            using var stringStream = TestHelpers.GenerateStreamFromString(JsonSerializer.Serialize(identifier));
 
-            controller.ControllerContext.HttpContext = CreateMockRequest(stringStream);
+            controller.ControllerContext.HttpContext = TestHelpers.CreateMockRequest(stringStream);
 
             var res = await controller.MoveModToChannel("Public", identifier);
 
@@ -421,33 +421,6 @@ namespace Hive.Tests.Endpoints
             mod.Localizations.Add(info);
 
             return mod;
-        }
-
-        private static Stream GenerateStreamFromString(string s)
-        {
-            var stream = new MemoryStream();
-            var writer = new StreamWriter(stream);
-            writer.Write(s);
-            writer.Flush();
-            stream.Position = 0;
-            return stream;
-        }
-
-        private static HttpContext CreateMockRequest(Stream body)
-        {
-            var requestMoq = new Mock<HttpRequest>();
-            requestMoq.SetupGet(r => r.Body).Returns(body);
-            requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
-                new Dictionary<string, StringValues>()
-                {
-                    { HeaderNames.Authorization, new StringValues("Bearer: test") }
-                })
-            );
-
-            var contextMoq = new Mock<HttpContext>();
-            contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
-
-            return contextMoq.Object;
         }
 
         // This plugin will filter out a mod if it's in the beta channel. Super super basic but works.
