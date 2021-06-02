@@ -1,18 +1,12 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Threading.Tasks;
 using GraphQL;
-using Hive.Controllers;
 using Hive.Graphing;
 using Hive.Models;
 using Hive.Plugins;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Primitives;
-using Microsoft.Net.Http.Headers;
-using Moq;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -27,7 +21,7 @@ namespace Hive.Tests.Graphing
         [Fact]
         public async Task PermissionForbidModByID()
         {
-            var services = CreateProvider("next(false)", CreateMockRequest(null!));
+            var services = CreateProvider("next(false)", TestHelpers.CreateMockRequest(null!));
             var result = await services.ExecuteGraphAsync("{ mod(id: \"uwu\") { readableID } }");
             Assert.NotNull(result);
             Assert.NotNull(result.Errors);
@@ -39,7 +33,7 @@ namespace Hive.Tests.Graphing
         [Fact]
         public async Task SpecificModWithIDOnly()
         {
-            var services = CreateProvider("next(true)", CreateMockRequest(null!));
+            var services = CreateProvider("next(true)", TestHelpers.CreateMockRequest(null!));
             var result = await services.ExecuteGraphAsync("{ mod(id: \"lilac\") { readableID } }");
             Assert.NotNull(result);
             Assert.Null(result.Errors);
@@ -51,7 +45,7 @@ namespace Hive.Tests.Graphing
         [Fact]
         public async Task SpecificModWithAllStandardSerializableFields()
         {
-            var services = CreateProvider("next(true)", CreateMockRequest(null!));
+            var services = CreateProvider("next(true)", TestHelpers.CreateMockRequest(null!));
             var result = await services.ExecuteGraphAsync(
                 @"{
                     mod(id: ""lilac"") {
@@ -94,23 +88,6 @@ namespace Hive.Tests.Graphing
                 .AddHiveGraphQL();
 
             return services.BuildServiceProvider();
-        }
-
-        private static HttpContext CreateMockRequest(Stream body)
-        {
-            var requestMoq = new Mock<HttpRequest>();
-            _ = requestMoq.SetupGet(r => r.Body).Returns(body);
-            _ = requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
-                new Dictionary<string, StringValues>()
-                {
-                    { HeaderNames.Authorization, new StringValues("Bearer: test") }
-                })
-            );
-
-            var contextMoq = new Mock<HttpContext>();
-            _ = contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
-
-            return contextMoq.Object;
         }
 
         private static T FindAndCastDataObject<T>(ExecutionResult result, string propertyName)
