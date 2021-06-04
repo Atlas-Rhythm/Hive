@@ -69,11 +69,11 @@ namespace Hive
             // Grab the route the user is wanting to access
             var route = httpContext.Request.Path.Value!;
 
-            // We do not bother with extra computations the request is already processed, or our route is not restricted.
+            // We do not bother with extra computations if the request is already processed, or our route is not restricted.
             if (!httpContext.Response.HasStarted && restrictedRoutes.Contains(route, StringComparer.InvariantCultureIgnoreCase))
             {
                 // See if we can obtain user information from the request
-                // REVIEW: We already have to grab our user here. Is there any way to pass this User object down the chain?
+                // REVIEW: We already have to grab our user here. Can/should I find a way to pass this User object down to the controller/services?
                 var user = await auth.GetUser(httpContext.Request).ConfigureAwait(false);
 
                 // If the user is not authenticated, and trying to access a restricted endpoint, return 401 Unauthorized.
