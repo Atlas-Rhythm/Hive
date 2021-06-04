@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Hive.Services;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 
@@ -72,6 +73,7 @@ namespace Hive
             if (!httpContext.Response.HasStarted && restrictedRoutes.Contains(route, StringComparer.InvariantCultureIgnoreCase))
             {
                 // See if we can obtain user information from the request
+                // REVIEW: We already have to grab our user here. Is there any way to pass this User object down the chain?
                 var user = await auth.GetUser(httpContext.Request).ConfigureAwait(false);
 
                 // If the user is not authenticated, and trying to access a restricted endpoint, return 401 Unauthorized.
@@ -99,5 +101,19 @@ namespace Hive
 
             await next.Invoke(httpContext).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>    
+    public static class GuestRestrictingMiddlewareExtensions
+    {
+        /// <summary>
+        /// Extension method used to add <see cref="GuestRestrictionMiddleware"/> to the HTTP request pipeline.
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <returns></returns>
+        public static IApplicationBuilder UseGuestRestrictionMiddleware(this IApplicationBuilder builder)
+            => builder.UseMiddleware<GuestRestrictionMiddleware>();
     }
 }

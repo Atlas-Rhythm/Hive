@@ -111,6 +111,12 @@ namespace Hive
         /// <param name="env"></param>
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // REVIEW: Is a config on/off switch necessary?
+            if (Configuration.GetValue<bool>("RestrictEndpoints"))
+            {
+                _ = app.UseGuestRestrictionMiddleware();
+            }
+
             if (Configuration.GetValue<bool>("UseRateLimiting"))
             {
                 _ = app.UseClientRateLimiting()
