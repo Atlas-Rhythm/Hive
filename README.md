@@ -103,3 +103,19 @@ This also has support for proxies via the `RealIpHeader` option.
 This describes advanced rules that will apply to specific IPs.
 You can apply rules to specific addresses and ranges for both IPv4 and IPv6.
 See the [IP rate limit configuration](https://github.com/stefanprodan/AspNetCoreRateLimit/wiki/IpRateLimitMiddleware#setup) for more information.
+
+### Restricting Non-Authenticated Users
+
+There are certain situations where you need to restrict route access to authenticated users.
+While this can be achieved with Hive's permission system, it is an expensive operation which may not be desireable, especially with potential Denial of Service attacks.
+To solve this, Hive has a simple Middleware that prevents all non-authenticated users from accessing a given list of routes. This does not use the permission system, so it is faster in cases where you only need to deny access to non-authenticated users.
+
+#### `RestrictEndpoints`
+
+This is a simple boolean value that toggles this Middleware on and off.
+If you do not care about restricting access, then disabling the entire system can slightly increase performance.
+
+#### `RestrictedRoutes`
+
+This is a list of all routes that will be restricted to authenticated users.
+Any subroutes will also be restricted. For example, restricting `/api/mod/` will also restrict `/api/mod/move` and `/api/mod/edit`.

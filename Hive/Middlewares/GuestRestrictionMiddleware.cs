@@ -70,6 +70,7 @@ namespace Hive
             var route = httpContext.Request.Path.Value!;
 
             // We do not bother with extra computations if the request is already processed, or our route is not restricted.
+            // REVIEW: Is IEnumerable.Contains() even the best way to go about this?
             if (!httpContext.Response.HasStarted && restrictedRoutes.Contains(route, StringComparer.InvariantCultureIgnoreCase))
             {
                 // See if we can obtain user information from the request
