@@ -34,18 +34,6 @@ namespace Hive.Tests.Endpoints
         }
 
         [Fact]
-        public async Task PermissionForbid()
-        {
-            var plugin = CreateDefaultPlugin();
-
-            var controller = CreateController("next(false)", plugin);
-            var res = await controller.GetChannels();
-            Assert.NotNull(res);
-            // Should forbid based off of a permission failure.
-            Assert.IsType<ForbidResult>(res.Result);
-        }
-
-        [Fact]
         public async Task PluginDeny()
         {
             var plugin = CreatePlugin();

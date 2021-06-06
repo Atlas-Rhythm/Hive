@@ -245,17 +245,6 @@ namespace Hive.Tests.Endpoints
         }
 
         [Fact]
-        public async Task AllModsForbid()
-        {
-            var controller = CreateController("next(false)", defaultPlugins); // By default, no one is allowed access.
-            var res = await controller.GetAllMods(); // Send the request
-
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must be fail due to the permission rule.
-        }
-
-        [Fact]
         public async Task MoveModStandard()
         {
             var controller = CreateController("next(true)", defaultPlugins);
