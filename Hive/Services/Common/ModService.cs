@@ -76,7 +76,6 @@ namespace Hive.Services.Common
         [ThreadStatic] private static PermissionActionParseState getModsParseState;
         [ThreadStatic] private static PermissionActionParseState moveModsParseState;
 
-        private static readonly HiveObjectQuery<IEnumerable<Mod>> forbiddenEnumerableResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
         private static readonly HiveObjectQuery<Mod> forbiddenModResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
         private static readonly HiveObjectQuery<Mod> notFoundModResponse = new(null, "Not Found", StatusCodes.Status404NotFound);
 
