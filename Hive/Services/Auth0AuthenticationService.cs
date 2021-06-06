@@ -18,6 +18,24 @@ using Microsoft.EntityFrameworkCore;
 namespace Hive.Services
 {
     /// <summary>
+    /// Represents a plugin that chooses unique usernames until valid.
+    /// </summary>
+    public interface IUsernamePlugin
+    {
+        /// <summary>
+        /// This function is called once when a new user is to be created. This function should return the username conversion from the original username, if there should be one.
+        /// Hive will try to create a new user with the returned username. However, if another user already exists, Hive will append a GUID after the username returned by this method.
+        /// This is because Hive requires unique users. If you wish to control unique usernames yourself, return only unique usernames from this method.
+        /// Hive default is to return the original username.
+        /// </summary>
+        /// <param name="originalUsername">The original username to convert, if necessary</param>
+        /// <returns></returns>
+        string ChooseUsername(string originalUsername) => originalUsername;
+    }
+
+    internal class HiveUsernamePlugin : IUsernamePlugin { }
+
+    /// <summary>
     /// An authentication service for linking with Auth0.
     /// </summary>
     public sealed class Auth0AuthenticationService : IProxyAuthenticationService, IAuth0Service, IDisposable
@@ -32,6 +50,7 @@ namespace Hive.Services
         private readonly ILogger logger;
         private readonly IClock clock;
         private readonly HiveContext context;
+        private readonly IUsernamePlugin usernamePlugin;
 
         private string? managementToken;
         private Instant? managementExpireInstant;
@@ -49,7 +68,7 @@ namespace Hive.Services
         /// <summary>
         /// Construct a <see cref="Auth0AuthenticationService"/> with DI.
         /// </summary>
-        public Auth0AuthenticationService([DisallowNull] ILogger log, IClock clock, IConfiguration configuration, HiveContext context)
+        public Auth0AuthenticationService([DisallowNull] ILogger log, IClock clock, IConfiguration configuration, HiveContext context, IUsernamePlugin usernamePlugin)
         {
             if (log is null)
                 throw new ArgumentNullException(nameof(log));
@@ -88,6 +107,7 @@ namespace Hive.Services
                 DefaultRequestVersion = new Version(2, 0),
                 Timeout = timeout,
             };
+            this.usernamePlugin = usernamePlugin;
         }
 
         /// <inheritdoc/>
@@ -117,11 +137,16 @@ namespace Hive.Services
                 // We should obtain both the nickname and the sub
                 var auth0User = await response.Content.ReadFromJsonAsync<Auth0User>(jsonSerializerOptions).ConfigureAwait(false);
 
+                if (auth0User is null)
+                {
+                    // We can either throw here because we MUST have a valid auth0 user, or return null
+                    throw new InvalidOperationException("Auth0 user not found!");
+                }
                 // We should perform a DB lookup on the sub to see if we can find a User object with that sub.
                 // Note that the found object is WITH tracking, so modifications can be applied and saved.
                 // TODO: This may not be what we want.
                 // This will throw if we have more than one matching sub
-                var matching = await context.Users.Where(u => u.AlternativeId == auth0User!.Sub).SingleOrDefaultAsync().ConfigureAwait(false);
+                var matching = await context.Users.Where(u => u.AlternativeId == auth0User.Sub).SingleOrDefaultAsync().ConfigureAwait(false);
                 if (matching is not null)
                 {
                     return matching;
@@ -132,12 +157,18 @@ namespace Hive.Services
                     // Also note that accounts need to be LINKED in order for them to be considered the same (ex, Discord and GH accounts linked on frontend)
                     // Once accounts are linked, they have the same sub
                     // TODO: Add plugin somewhere here
+
+                    // Design decision: Do we want to make it so users only ever (really) exist with Auth0 or should we make them exist without auth0 entirely?
+                    // If we have them exist only with auth0, it allows us to just have this type, plugin would be applied to the username
+                    // If we have them exist anywhere, it will require a bigger change.
+                    // For now I shall assume that users shall only exist with Auth0
                     var u = new User
                     {
-                        Username = auth0User!.Nickname,
-                        AlternativeId = auth0User!.Sub,
+                        Username = usernamePlugin.ChooseUsername(auth0User.Nickname),
+                        AlternativeId = auth0User.Sub,
                         AdditionalData = auth0User.User_Metadata
                     };
+
                     while (await context.Users.AsNoTracking().ContainsAsync(u).ConfigureAwait(false))
                     {
                         u.Username += Guid.NewGuid();
@@ -167,7 +198,7 @@ namespace Hive.Services
             }
 
             // This will ALWAYS throw if there are multiple users with the same username, which should never be the case.
-            return await context.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Username == userId).ConfigureAwait(false);
+            return await context.Users.Where(u => u.Username == userId).SingleAsync().ConfigureAwait(false);
         }
 
         private async Task EnsureValidManagementAPIToken(bool throwOnError = true)

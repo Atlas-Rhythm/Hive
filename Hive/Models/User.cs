@@ -25,13 +25,13 @@ namespace Hive.Models
         /// <summary>
         /// The username of the user.
         /// </summary>
-        [Key]
         public string Username { get; set; } = null!;
 
         /// <summary>
         /// An alternative ID of the user.
         /// In Auth0's case, this would be the auth0 unique ID, which would then be mappable to this particular username/user structure.
         /// </summary>
+        [Key]
         public string AlternativeId { get; set; } = null!;
 
         /// <summary>

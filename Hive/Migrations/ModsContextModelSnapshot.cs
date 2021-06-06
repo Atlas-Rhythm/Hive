@@ -174,18 +174,18 @@ namespace Hive.Migrations
 
             modelBuilder.Entity("Hive.Models.User", b =>
                 {
-                    b.Property<string>("Username")
+                    b.Property<string>("AlternativeId")
                         .HasColumnType("text");
 
                     b.Property<Dictionary<string, JsonElement>>("AdditionalData")
                         .IsRequired()
                         .HasColumnType("jsonb");
 
-                    b.Property<string>("AlternativeId")
+                    b.Property<string>("Username")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("Username");
+                    b.HasKey("AlternativeId");
 
                     b.ToTable("Users");
                 });
