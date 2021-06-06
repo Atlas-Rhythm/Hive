@@ -34,6 +34,9 @@ namespace Hive.Controllers
 
     internal class HiveUserPlugin : IUserPlugin { }
 
+    /// <summary>
+    /// User controller for API
+    /// </summary>
     [Route("api/user/")]
     [ApiController]
     public class UserController : ControllerBase
@@ -42,6 +45,12 @@ namespace Hive.Controllers
         private readonly IAggregate<IUserPlugin> plugin;
         private readonly HiveContext context;
 
+        /// <summary>
+        /// Create with DI
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="authService"></param>
+        /// <param name="plugin"></param>
         public UserController(HiveContext context, IProxyAuthenticationService authService, IAggregate<IUserPlugin> plugin)
         {
             this.context = context;
@@ -49,6 +58,11 @@ namespace Hive.Controllers
             this.plugin = plugin;
         }
 
+        /// <summary>
+        /// Rename a username from a query string.
+        /// </summary>
+        /// <param name="username">Username to change the logged in user to.</param>
+        /// <returns>The changed username (post-modification).</returns>
         [Route("rename")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
