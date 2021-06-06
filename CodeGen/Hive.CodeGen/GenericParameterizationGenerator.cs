@@ -108,12 +108,16 @@ namespace Hive.CodeGen
             ct = 0;
 
             foreach (var g in methods
-                .GroupBy(t => t.syn.SyntaxTree.GetCompilationUnitRoot()/*, (IEqualityComparer<INamedTypeSymbol?>)SymbolEqualityComparer.Default*/))
+                .GroupBy(t => t.methSym.ContainingType, (IEqualityComparer<INamedTypeSymbol?>)SymbolEqualityComparer.Default))
             {
-                var source = GenerateForMethodsOnType(g.Key, targetingAttribute, g.AsEnumerable(), context);
-                if (source != null)
+                foreach (var h in g
+                    .GroupBy(t => t.syn.SyntaxTree.GetCompilationUnitRoot()))
                 {
-                    context.AddSource($"ParameterizedMeth_{/*g.Key.Name*/7}_{ct++}.cs", SourceText.From(source, Encoding.UTF8));
+                    var source = GenerateForMethodsOnTypeInCU(h.Key, g.Key, targetingAttribute, h.AsEnumerable(), context);
+                    if (source != null)
+                    {
+                        context.AddSource($"ParameterizedMeth_{g.Key.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)}_{ct++}.cs", SourceText.From(source, Encoding.UTF8));
+                    }
                 }
             }
         }
@@ -321,13 +325,13 @@ namespace {type.ContainingNamespace.ToDisplayString()}
         [SuppressMessage("Style", "IDE0072:Add missing cases",
             Justification = "All other cases are for types that cannot (or shouldn't be able to) have declared members with the attribute")]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We report exceptions via a diagnostic.")]
-        private static string? GenerateForMethodsOnType(/*INamedTypeSymbol type*/ CompilationUnitSyntax root,
+        private static string? GenerateForMethodsOnTypeInCU(
+            CompilationUnitSyntax root,
+            INamedTypeSymbol type,
             INamedTypeSymbol attribute,
             IEnumerable<(IMethodSymbol methSym, MethodDeclarationSyntax syn, int minParam, int maxParam)> enumerable,
             GeneratorExecutionContext context)
         {
-            var type = enumerable.First().methSym.ContainingType;
-
             var typeSpec = type.TypeKind switch
             {
                 TypeKind.Class => "class",
