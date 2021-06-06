@@ -35,7 +35,7 @@ namespace Hive.CodeGen
         {
             if (CurrentlyRewriting == null)
             {
-                if (node.Arity == 0 || node.TypeParameterList == null)
+                if (node.Arity == 0 || node.TypeParameterList is null)
                     throw new InvalidOperationException("First type decl the transformer finds must be generic");
 
                 if (node.Arity < rewriteWithParams)
@@ -66,7 +66,7 @@ namespace Hive.CodeGen
         {
             // this is called if the topmost node we find is a method decl (ie not currently rewriting anything)
 
-            if (node.Arity == 0 || node.TypeParameterList == null)
+            if (node.Arity == 0 || node.TypeParameterList is null)
                 throw new InvalidOperationException("First method decl the transformer finds must be generic");
 
             if (node.Arity < rewriteWithParams)
@@ -319,13 +319,11 @@ namespace Hive.CodeGen
                     null,
                     $"ParamsToRemove: {string.Join(" / ", ParamsToRemove.Select(p => p.ToFullString() + $" ({p.Identifier.Text})"))}"
                 ));
-                if (ParamsToKeep != null)
-                {
-                    context.ReportDiagnostic(Diagnostic.Create(GenericParameterizationGenerator.Report,
-                        null,
-                        $"ParamsToKeep: {string.Join(" / ", ParamsToKeep.Select(p => p.ToFullString() + $" ({p.Identifier.Text})"))}"
-                    ));
-                }
+
+                context.ReportDiagnostic(Diagnostic.Create(GenericParameterizationGenerator.Report,
+                    null,
+                    $"ParamsToKeep: {string.Join(" / ", ParamsToKeep.Select(p => p.ToFullString() + $" ({p.Identifier.Text})"))}"
+                ));
 
                 var rewritten = orig(node);
 

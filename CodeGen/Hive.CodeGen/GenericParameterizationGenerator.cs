@@ -181,6 +181,8 @@ namespace Hive.CodeGen
                 isEnabledByDefault: true
             );
 
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "We report the error as a diagnostic so it may be debugged.")]
         private static string? GenerateForType(INamedTypeSymbol type, INamedTypeSymbol attribute, TypeDeclarationSyntax synType, int minParam, int maxParam, GeneratorExecutionContext context)
         {
             context.ReportDiagnostic(Diagnostic.Create(ToParameterizeType,
@@ -318,7 +320,8 @@ namespace {type.ContainingNamespace.ToDisplayString()}
 
         [SuppressMessage("Style", "IDE0072:Add missing cases",
             Justification = "All other cases are for types that cannot (or shouldn't be able to) have declared members with the attribute")]
-        private string? GenerateForMethodsOnType(/*INamedTypeSymbol type*/ CompilationUnitSyntax root,
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We report exceptions via a diagnostic.")]
+        private static string? GenerateForMethodsOnType(/*INamedTypeSymbol type*/ CompilationUnitSyntax root,
             INamedTypeSymbol attribute,
             IEnumerable<(IMethodSymbol methSym, MethodDeclarationSyntax syn, int minParam, int maxParam)> enumerable,
             GeneratorExecutionContext context)
@@ -389,7 +392,8 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             return sb.ToString();
         }
 
-        private IEnumerable<MethodDeclarationSyntax> GenerateForMethod(INamedTypeSymbol attribute,
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We report exceptions via a diagnostic.")]
+        private static IEnumerable<MethodDeclarationSyntax> GenerateForMethod(INamedTypeSymbol attribute,
             IMethodSymbol methSym,
             MethodDeclarationSyntax methodSyntax,
             int minParam, int maxParam,
