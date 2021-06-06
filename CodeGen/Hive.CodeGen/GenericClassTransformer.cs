@@ -132,24 +132,17 @@ namespace Hive.CodeGen
                 for (var i = 0; i < args.Count; i++)
                 {
                     var arg = args[i];
-                    if (arg is IdentifierNameSyntax simple)
+                    if (IsTypeParamToRemove(arg))
                     {
-                        foreach (var option in TypeParamsToRemove)
-                        {
-                            if (simple.Identifier.Text == option.Identifier.Text)
-                            {
-                                context.ReportDiagnostic(Diagnostic.Create(
-                                    GenericParameterizationGenerator.ToRemoveTypeArg,
-                                    Location.Create(origTree, simple.Span),
-                                    new[] { Location.Create(origTree, option.Span) },
-                                    simple.ToFullString(),
-                                    option.ToFullString()
-                                ));
+                        context.ReportDiagnostic(Diagnostic.Create(
+                            GenericParameterizationGenerator.ToRemoveTypeArg,
+                            Location.Create(origTree, arg.Span),
+                            Enumerable.Empty<Location>(),
+                            arg.ToFullString(),
+                            ""
+                        ));
 
-                                args = args.RemoveAt(i--);
-                                break;
-                            }
-                        }
+                        args = args.RemoveAt(i--);
                     }
                 }
 
@@ -169,24 +162,17 @@ namespace Hive.CodeGen
                 for (var i = 0; i < args.Count; i++)
                 {
                     var arg = args[i].Type;
-                    if (arg is IdentifierNameSyntax simple)
+                    if (IsTypeParamToRemove(arg))
                     {
-                        foreach (var option in TypeParamsToRemove)
-                        {
-                            if (simple.Identifier.Text == option.Identifier.Text)
-                            {
-                                context.ReportDiagnostic(Diagnostic.Create(
-                                    GenericParameterizationGenerator.ToRemoveTypeArg,
-                                    Location.Create(origTree, simple.Span),
-                                    new[] { Location.Create(origTree, option.Span) },
-                                    simple.ToFullString(),
-                                    option.ToFullString()
-                                ));
+                        context.ReportDiagnostic(Diagnostic.Create(
+                            GenericParameterizationGenerator.ToRemoveTypeArg,
+                            Location.Create(origTree, arg.Span),
+                            Enumerable.Empty<Location>(),
+                            arg.ToFullString(),
+                            ""
+                        ));
 
-                                args = args.RemoveAt(i--);
-                                break;
-                            }
-                        }
+                        args = args.RemoveAt(i--);
                     }
                 }
 
@@ -274,6 +260,22 @@ namespace Hive.CodeGen
         public override SyntaxNode? VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
             => VisitBaseMethodDecl(node, node => base.VisitConstructorDeclaration((ConstructorDeclarationSyntax)node));
 
+        private bool IsTypeParamToRemove(TypeSyntax? type)
+        {
+            if (type is not SimpleNameSyntax simple)
+                return false;
+
+            foreach (var option in TypeParamsToRemove)
+            {
+                if (simple.Identifier.Text == option?.Identifier.Text)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private SyntaxNode? VisitBaseMethodDecl(BaseMethodDeclarationSyntax node, Func<BaseMethodDeclarationSyntax, SyntaxNode?> orig)
         {
             if (CurrentlyRewriting == null && node is MethodDeclarationSyntax meth)
@@ -291,23 +293,15 @@ namespace Hive.CodeGen
                 for (var i = 0; i < parameters.Count; i++)
                 {
                     var param = parameters[i];
-                    if (param.Type is SimpleNameSyntax simple)
+                    if (IsTypeParamToRemove(param.Type))
                     {
-                        foreach (var option in TypeParamsToRemove)
-                        {
-                            if (simple.Identifier.Text == option?.Identifier.Text)
-                            {
-                                parameters = parameters.RemoveAt(i--);
-                                removed.Add(param);
-                                goto @continue;
-                            }
-                        }
+                        parameters = parameters.RemoveAt(i--);
+                        removed.Add(param);
+                        continue;
                     }
 
                     if (ParamsToRemove?.Any(p => p?.Identifier.Text == param.Identifier.Text) ?? false)
                         reAdded.Add(param);
-
-                    @continue:;
                 }
 
                 paramList = paramList.WithParameters(parameters);
@@ -384,6 +378,11 @@ namespace Hive.CodeGen
         }
 
         public override SyntaxNode? VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
+            => VisitBaseObjectCreationExpression(node, n => base.VisitObjectCreationExpression((ObjectCreationExpressionSyntax)n));
+        public override SyntaxNode? VisitImplicitObjectCreationExpression(ImplicitObjectCreationExpressionSyntax node)
+            => VisitBaseObjectCreationExpression(node, n => base.VisitImplicitObjectCreationExpression((ImplicitObjectCreationExpressionSyntax)n));
+
+        private SyntaxNode? VisitBaseObjectCreationExpression(BaseObjectCreationExpressionSyntax node, Func<BaseObjectCreationExpressionSyntax, SyntaxNode?> baseCall)
         {
             if (ParamsToRemove != null)
             {
@@ -395,7 +394,7 @@ namespace Hive.CodeGen
                 }
             }
 
-            var result = (ObjectCreationExpressionSyntax)base.VisitObjectCreationExpression(node)!;
+            var result = (BaseObjectCreationExpressionSyntax)baseCall(node)!;
 
             if (TypeParamsToRemove != null)
             {
