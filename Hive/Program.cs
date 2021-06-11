@@ -1,7 +1,10 @@
 using AspNetCoreRateLimit;
 using Hive.Models;
+using Hive.Plugins.Loading;
 using Hive.Versioning;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NodaTime;
@@ -12,7 +15,9 @@ using Serilog.Exceptions.Core;
 using Serilog.Exceptions.EntityFrameworkCore.Destructurers;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Version = Hive.Versioning.Version;
@@ -81,7 +86,36 @@ namespace Hive
                         .WithDefaultDestructurers()
                         .WithDestructurers(new[] { new DbUpdateExceptionDestructurer() }))
                     .WriteTo.Console())
-                .ConfigureWebHostDefaults(webBuilder => _ = webBuilder.UseStartup<Startup>());
+                .ConfigureWebHostDefaults(webBuilder => _ = webBuilder.UseStartup<Startup>())
+                .UseWebHostPlugins(builder
+                    => builder
+                        .WithConfigurationKey("Plugins")
+                        .WithApplicationConfigureRegistrar((sc, target, method)
+                            => sc.AddSingleton<IStartupFilter>(sp => new CustomStartupFilter(sp, target, method)))
+                        .ConfigurePluginConfig((builder, plugin) =>
+                        {
+                            _ = builder
+                                .AddJsonFile(Path.Combine(plugin.PluginDirectory.FullName, "pluginsettings.json"))
+                                .AddEnvironmentVariables("PLUGIN_" + plugin.Name.Replace(".", "_", StringComparison.Ordinal) + "__");
+                        })
+                );
+
+        private class CustomStartupFilter : IStartupFilter
+        {
+            private readonly IServiceProvider services;
+            private readonly object target;
+            private readonly MethodInfo method;
+
+            public CustomStartupFilter(IServiceProvider services, object target, MethodInfo method)
+                => (this.services, this.target, this.method) = (services, target, method);
+
+            public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+                => app =>
+                {
+                    next(app);
+                    services.InjectVoidMethod(method, t => t == typeof(IApplicationBuilder) ? (object)app : null, null)(target);
+                };
+        }
 
         private static LoggerConfiguration LibraryTypes(this LoggerDestructuringConfiguration conf)
             => conf.AsScalar<Version>()

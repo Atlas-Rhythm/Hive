@@ -10,13 +10,6 @@ namespace Hive.Services
     public interface IProxyAuthenticationService
     {
         /// <summary>
-        /// Returns whether a request contains a valid user or not.
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        public Task<bool> IsValid(HttpRequest request);
-
-        /// <summary>
         /// Returns a <see cref="User"/> from a request, throwing an exception if specified.
         /// </summary>
         /// <param name="request"></param>

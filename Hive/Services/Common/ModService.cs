@@ -1,5 +1,5 @@
 ﻿using Hive.Models;
-using Hive.Plugins;
+using Hive.Plugins.Aggregates;
 using Hive.Versioning;
 using Hive.Controllers;
 using Hive.Permissions;
@@ -111,7 +111,7 @@ namespace Hive.Services.Common
         /// <param name="gameVersion">The game version to search within.</param>
         /// <param name="filterType">How to filter the results.</param>
         /// <returns>A wrapped collection of <see cref="Mod"/> objects, if successful.</returns>
-        public HiveObjectQuery<IEnumerable<Mod>> GetAllMods(User? user, string[]? channelIds = null, string? gameVersion = null, string? filterType = null)
+        public async Task<HiveObjectQuery<IEnumerable<Mod>>> GetAllMods(User? user, string[]? channelIds = null, string? gameVersion = null, string? filterType = null)
         {
             // iff a given user (or none) is allowed to access any mods. This should almost always be true.
             if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user }, ref getModsParseState))
@@ -122,7 +122,7 @@ namespace Hive.Services.Common
             var combined = plugin.Instance;
 
             // Grab our filtered mod list with our various filtering parameters
-            var filteredMods = GetFilteredModList(channelIds, gameVersion, filterType, null);
+            var filteredMods = await GetFilteredModList(channelIds, gameVersion, filterType, null).ConfigureAwait(false);
 
             // Further filter these mods by both a permissions check and a plugin check
             filteredMods = filteredMods.Where(m =>
@@ -146,7 +146,7 @@ namespace Hive.Services.Common
         /// <param name="gameVersion">The game version to search within.</param>
         /// <param name="filterType">How to filter the results.</param>
         /// <returns>A wrapped <see cref="Mod"/> of the found mod, if successful.</returns>
-        public HiveObjectQuery<Mod> GetMod(User? user, string id, VersionRange? range = null, string? channelIds = null, string? gameVersion = null, string? filterType = null)
+        public async Task<HiveObjectQuery<Mod>> GetMod(User? user, string id, VersionRange? range = null, string? channelIds = null, string? gameVersion = null, string? filterType = null)
         {
             // iff a given user (or none) is allowed to access any mods. This should almost always be true.
             if (!permissions.CanDo(GetModActionName, new PermissionContext { User = user }, ref getModsParseState))
@@ -162,7 +162,7 @@ namespace Hive.Services.Common
                 : new[] { channelIds };
 
             // Grab our filtered mod list with our various filtering parameters
-            var filteredMods = GetFilteredModList(filteredChannels, gameVersion, filterType, range);
+            var filteredMods = await GetFilteredModList(filteredChannels, gameVersion, filterType, range).ConfigureAwait(false);
 
             // Grab the first mod version in our list (doesn't matter if it's the most recently uploaded, or most up-to-date)
             var mod = filteredMods
@@ -200,9 +200,8 @@ namespace Hive.Services.Common
             var targetVersion = new Version(identifier.Version);
 
             // Get the database mod that represents the ModIdentifier.
-            var databaseMod = CreateModQuery().Where(x => x.ReadableID == identifier.ID
-                    && x.Version == targetVersion)
-                .FirstOrDefault();
+            var databaseMod = await CreateModQuery().Where(x => x.ReadableID == identifier.ID && x.Version == targetVersion)
+                .FirstOrDefaultAsync().ConfigureAwait(false);
 
             // The POSTed mod was successfully deserialzed, but no Mod exists in the database.
             if (databaseMod == null)
@@ -210,7 +209,7 @@ namespace Hive.Services.Common
 
             // Grab our origin and destination channels.
             var origin = databaseMod.Channel;
-            var destination = context.Channels.Where(x => x.Name == channelDestination).FirstOrDefault();
+            var destination = await context.Channels.Where(x => x.Name == channelDestination).FirstOrDefaultAsync().ConfigureAwait(false);
 
             // The channelId from our Route does not point to an existing Channel. Okay, we just return 404.
             if (destination is null)
@@ -241,7 +240,7 @@ namespace Hive.Services.Common
 
         // Helper function that abstracts common filtering functionality from GET /mods and GET /mod/{id}
         // TODO: default to the instance default Channel if channelIds is null
-        private IEnumerable<Mod> GetFilteredModList(string[]? channelIds, string? gameVersion, string? filterType, VersionRange? filteredVersionRange)
+        private async Task<IEnumerable<Mod>> GetFilteredModList(string[]? channelIds, string? gameVersion, string? filterType, VersionRange? filteredVersionRange)
         {
             log.Debug("Filtering and serializing mods by existing plugins...");
 
@@ -251,14 +250,14 @@ namespace Hive.Services.Common
             // Perform various filtering on our mods
             if (channelIds != null && channelIds.Length >= 0)
             {
-                var filteredChannels = context.Channels.AsNoTracking().Where(c => channelIds.Contains(c.Name));
+                var filteredChannels = await context.Channels.AsNoTracking().Where(c => channelIds.Contains(c.Name)).ToListAsync().ConfigureAwait(false);
 
                 mods = mods.Where(m => filteredChannels.Contains(m.Channel));
             }
 
             if (gameVersion != null)
             {
-                var filteredGameVersion = context.GameVersions.AsNoTracking().Where(g => g.Name == gameVersion).FirstOrDefault();
+                var filteredGameVersion = await context.GameVersions.AsNoTracking().Where(g => g.Name == gameVersion).FirstOrDefaultAsync().ConfigureAwait(false);
 
                 if (filteredGameVersion != null)
                 {
@@ -273,7 +272,7 @@ namespace Hive.Services.Common
 
             // Because EF (or PostgreSQL or both) does not like advanced LINQ expressions (like GroupBy),
             // we convert to an enumerable and do additional filtering on the client.
-            var filteredMods = mods.AsEnumerable();
+            var filteredMods = await mods.ToListAsync().ConfigureAwait(false);
 
             var filteredType = filterType?.ToUpperInvariant() ?? "LATEST";
 
@@ -288,7 +287,8 @@ namespace Hive.Services.Common
                 case "RECENT":
                     filteredMods = filteredMods
                         .GroupBy(m => m.ReadableID)
-                        .Select(g => g.OrderByDescending(m => m.UploadedAt).First());
+                        .Select(g => g.OrderByDescending(m => m.UploadedAt).First())
+                        .ToList();
                     break;
 
                 // This is "LATEST", but should probably be default behavior, just to be safe.
@@ -296,7 +296,8 @@ namespace Hive.Services.Common
                 default:
                     filteredMods = filteredMods
                         .GroupBy(m => m.ReadableID)
-                        .Select(g => g.OrderByDescending(m => m.Version).First());
+                        .Select(g => g.OrderByDescending(m => m.Version).First())
+                        .ToList();
                     break;
             }
 

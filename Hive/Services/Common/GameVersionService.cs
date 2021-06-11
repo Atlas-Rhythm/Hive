@@ -1,5 +1,5 @@
 ﻿using Hive.Models;
-using Hive.Plugins;
+using Hive.Plugins.Aggregates;
 using Hive.Controllers;
 using Hive.Permissions;
 using System;
@@ -8,6 +8,9 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
 using NodaTime;
+using System.Threading.Tasks;
+using Hive.Models.Serialized;
+using System.Text.Json;
 
 namespace Hive.Services.Common
 {
@@ -44,6 +47,12 @@ namespace Hive.Services.Common
         /// <param name="versions">Input versions to filter</param>
         [return: StopIfReturnsEmpty]
         IEnumerable<GameVersion> GetGameVersionsFilter(User? user, [TakesReturnValue] IEnumerable<GameVersion> versions) => versions;
+
+        /// <summary>
+        /// A hook that is called when a new <see cref="GameVersion"/> is successfully created and added to the database.
+        /// </summary>
+        /// <param name="gameVersion">The version that was just created.</param>
+        void NewGameVersionCreated(GameVersion gameVersion) { }
     }
 
     internal class HiveGameVersionsControllerPlugin : IGameVersionsPlugin { }
@@ -92,7 +101,7 @@ namespace Hive.Services.Common
         /// </summary>
         /// <param name="user">The user to associate with this request.</param>
         /// <returns>A wrapped enumerable of <see cref="GameVersion"/> objects, if successful.</returns>
-        public HiveObjectQuery<IEnumerable<GameVersion>> RetrieveAllVersions(User? user)
+        public async Task<HiveObjectQuery<IEnumerable<GameVersion>>> RetrieveAllVersions(User? user)
         {
             if (!permissions.CanDo(ListActionName, new PermissionContext { User = user }, ref versionsParseState))
                 return forbiddenEnumerableResponse;
@@ -107,7 +116,7 @@ namespace Hive.Services.Common
                 return forbiddenEnumerableResponse;
 
             // Grab our list of game versions
-            var versions = context.GameVersions.ToList();
+            var versions = await context.GameVersions.ToListAsync().ConfigureAwait(false);
             log.Debug("Filtering versions from all {0} versions...", versions.Count);
 
             // First, we perform a permission check on each game version, in case we need to filter any specific ones
@@ -128,10 +137,13 @@ namespace Hive.Services.Common
         /// This performs a permission check at: <c>hive.game.version.create</c>
         /// </summary>
         /// <param name="user">The user to associate with this request.</param>
-        /// <param name="versionName">The name of the new version</param>
+        /// <param name="gameVersion">The new game version to create.</param>
         /// <returns>A wrapped <see cref="GameVersion"/> object, if successful.</returns>
-        public HiveObjectQuery<GameVersion> CreateNewGameVersion(User? user, string versionName)
+        public async Task<HiveObjectQuery<GameVersion>> CreateNewGameVersion(User? user, InputGameVersion gameVersion)
         {
+            if (gameVersion is null)
+                throw new ArgumentNullException(nameof(gameVersion));
+
             // If permission system says the user cannot create a new game version, forbid.
             if (!permissions.CanDo(CreateActionName, new PermissionContext { User = user }, ref versionsParseState))
                 return forbiddenSingularResponse;
@@ -147,14 +159,27 @@ namespace Hive.Services.Common
 
             log.Debug("Creating a new Game Version...");
 
-            // REVIEW: Do I need to fill any other fields here?
+            // TODO: Pass the InputGameVersion into plugins before creating the GameVersion instance for further modification of additional data?
             var version = new GameVersion()
             {
-                Name = versionName,
-                CreationTime = clock.GetCurrentInstant()
+                Name = gameVersion.Name,
+                CreationTime = clock.GetCurrentInstant(),
+                AdditionalData = gameVersion.AdditionalData
             };
 
-            _ = context.GameVersions.Add(version);
+            // Set AdditionalData if it's undefined
+            if (version.AdditionalData.ValueKind == JsonValueKind.Undefined)
+                version.AdditionalData = JsonElementHelper.BlankObject;
+
+            // Exit if there's already an existing version with the same name
+            if (await context.GameVersions.AnyAsync(x => x.Name == version.Name).ConfigureAwait(false))
+                return new HiveObjectQuery<GameVersion>(null, "A channel with this name already exists.", StatusCodes.Status409Conflict);
+
+            // Call our hooks
+            combined.NewGameVersionCreated(version);
+
+            _ = await context.GameVersions.AddAsync(version).ConfigureAwait(false);
+            _ = await context.SaveChangesAsync().ConfigureAwait(false);
 
             return new HiveObjectQuery<GameVersion>(version, null, StatusCodes.Status200OK);
         }

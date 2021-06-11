@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup Condition="'$(Language)' == 'C#'">
 
@@ -63,10 +63,18 @@
   <PropertyGroup>
     <_LiteralAssemblyFile Condition="'$(Language)' == 'C#'">$(IntermediateOutputPath)LiteralAssemblyAttributes.cs</_LiteralAssemblyFile>
     <CoreCompileDependsOn>
+      EnsureSupportedMSBuildVersion;
       AddLiteralAssemblyAttributes;
       $(CoreCompileDependsOn);
     </CoreCompileDependsOn>
   </PropertyGroup>
+
+  <Target Name="EnsureSupportedMSBuildVersion"
+          BeforeTargets="CoreCompile"
+          Condition="'$(MSBuildRequiredVersion)' != ''">
+    <Error Code="HB0001" ContinueOnError="false" Text="MSBuild version is too old to build this project; currently $(MSBuildVersion) needs at least $(MSBuildRequiredversion)"
+           Condition="$([MSBuild]::VersionLessThan('$(MSBuildVersion)', '$(MSBuildRequiredVersion)'))" />
+  </Target>
   
   <Target Name="AddLiteralAssemblyAttributes"
           BeforeTargets="CoreCompile"
@@ -87,9 +95,13 @@
     </ItemGroup>
 
     <WriteLinesToFile File="$(_LiteralAssemblyFile)" Encoding="UTF-8" Lines="@(_LiteralAssemblyAttrDecls)" Overwrite="true" />
+    <ItemGroup>
+      <FileWrites Include="$(_LiteralAssemblyFile)" />
+    </ItemGroup>
     
   </Target>
 
   <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" Condition="'$(IsCodeGen)' != 'true'" />
+  <Import Project="$(MSBuildThisFileDirectory)\Packaging.targets" Condition="'$(BuildingStandalone)' == 'true'" />
 
 </Project>

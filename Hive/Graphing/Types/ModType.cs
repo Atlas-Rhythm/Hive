@@ -1,5 +1,7 @@
 ﻿using Hive.Models;
 using GraphQL.Types;
+using System.Collections.Generic;
+using System;
 
 namespace Hive.Graphing.Types
 {
@@ -11,8 +13,11 @@ namespace Hive.Graphing.Types
         /// <summary>
         /// Setup a ModType for GQL.
         /// </summary>
-        public ModType()
+        public ModType(IEnumerable<ICustomHiveGraph<ModType>> customGraphs)
         {
+            if (customGraphs is null)
+                throw new ArgumentNullException(nameof(customGraphs));
+
             Name = nameof(Mod);
             Description = Resources.GraphQL.Mod;
 
@@ -82,6 +87,9 @@ namespace Hive.Graphing.Types
                 Resources.GraphQL.Mod_DownloadLink,
                 resolve: context => context.Source.DownloadLink.ToString()
             );
+
+            foreach (var graph in customGraphs)
+                graph.Configure(this);
         }
     }
 }

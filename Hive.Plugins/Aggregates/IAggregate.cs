@@ -1,4 +1,4 @@
-﻿namespace Hive.Plugins
+﻿namespace Hive.Plugins.Aggregates
 {
     /// <summary>
     /// An interface that provides access to an implementation of <typeparamref name="T"/> that aggregates

@@ -93,7 +93,7 @@ namespace Hive.Utilities.Tests
             for (var i = start - 2; i <= start + len; i++)
             {
                 if (i < start || i >= start + len)
-                    Assert.Throws<IndexOutOfRangeException>(() => sv[i - start]);
+                    Assert.Throws<ArgumentOutOfRangeException>(() => sv[i - start]);
                 else
                     Assert.Equal(source[i], sv[i - start]);
             }

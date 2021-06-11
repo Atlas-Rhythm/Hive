@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+
+    <BuildingStandalone>false</BuildingStandalone>
+    <BuildingStandalone Condition="'$(BuildStandalone)' == '$(MSBuildProjectName)'">true</BuildingStandalone>
+    
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(BuildingStandalone)' == 'true'">
+    
+    <ILRepackTargetsFile>$(MSBuildThisFileDirectory)_EmptyProjectForILRepack.targets</ILRepackTargetsFile>
+    <TrimMode>link</TrimMode>
+    <CopyLocalLockFileAssemblies Condition="'$(DoNotMergeNugetPackages)' != 'true'">true</CopyLocalLockFileAssemblies>
+    
+  </PropertyGroup>
+  
+  <ItemGroup Condition="'$(BuildingStandalone)' == 'true'">
+    <AllowRepackDuplicateType Include="Microsoft.CodeAnalysis.EmbeddedAttribute" />
+    <AllowRepackDuplicateType Include="System.Runtime.CompilerServices.NullableAttribute" />
+    <AllowRepackDuplicateType Include="System.Runtime.CompilerServices.NullableContextAttribute" />
+    <AllowRepackDuplicateType Include="System.Runtime.CompilerServices.IsByRefLikeAttribute" />
+    <AllowRepackDuplicateType Include="System.Runtime.CompilerServices.IsReadOnlyAttribute" />
+  </ItemGroup>
+  
+</Project>

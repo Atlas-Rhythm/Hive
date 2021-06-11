@@ -1,7 +1,7 @@
 ﻿using Hive.Models;
 using Hive.Models.Serialized;
 using Hive.Permissions;
-using Hive.Plugins;
+using Hive.Plugins.Aggregates;
 using Hive.Services;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Http;
@@ -350,7 +350,7 @@ namespace Hive.Controllers
             var user = await authService.GetUser(Request).ConfigureAwait(false);
 
             if (user is null)
-                return Unauthorized();
+                return new UnauthorizedResult();
 
             if (file is null)
                 return BadRequest(UploadResult.ErrNoFile());
@@ -360,7 +360,7 @@ namespace Hive.Controllers
 
             // check if the user is allowed to upload at all
             if (!permissions.CanDo(BaseUploadAction, new PermissionContext { User = user }, ref BaseUploadParseState))
-                return Forbid();
+                return new ForbidResult();
 
             logger.Information("Began mod upload by user {User}", user.Username);
 
@@ -398,7 +398,7 @@ namespace Hive.Controllers
                 return BadRequest(UploadResult.ErrValidationFailed(valFailCtx));
 
             if (!permissions.CanDo(UploadWithDataAction, new PermissionContext { User = user, Mod = modData }, ref UploadWithDataParseState))
-                return Forbid();
+                return new ForbidResult();
 
             // we've gotten the OK based on all of our other checks, lets upload the file to the actual CDN
             _ = memStream.Seek(0, SeekOrigin.Begin);
@@ -433,7 +433,7 @@ namespace Hive.Controllers
             var user = await authService.GetUser(Request).ConfigureAwait(false);
 
             if (user is null)
-                return Unauthorized();
+                return new UnauthorizedResult();
 
             if (finalMetadata.ID is null
              || finalMetadata.Version is null
@@ -534,7 +534,7 @@ namespace Hive.Controllers
             {
                 // the user doesn't have permissions, so we don't want to keep the object on the CDN
                 _ = await cdn.TryDeleteObject(cdnObject).ConfigureAwait(false); // if it failed, that should mean that it doesn't exist
-                return Forbid();
+                return new ForbidResult();
             }
 
             // ok, we're good to just go ahead and insert it into the database
