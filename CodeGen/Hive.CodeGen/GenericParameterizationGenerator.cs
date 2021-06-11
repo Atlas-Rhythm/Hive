@@ -79,7 +79,7 @@ namespace Hive.CodeGen
                 var source = GenerateForType(type, targetingAttribute, syn, min, max, context);
                 if (source != null)
                 {
-                    context.AddSource($"Parameterized_{type.Name}_{ct++}.cs", SourceText.From(source, Encoding.UTF8));
+                    context.AddSource($"Parameterized_{type.Name}_{ct++}.g", SourceText.From(source, Encoding.UTF8)); // always add .g so that coverlet doesn't hate us
                 }
             }
 
@@ -116,7 +116,7 @@ namespace Hive.CodeGen
                     var source = GenerateForMethodsOnTypeInCU(h.Key, g.Key, targetingAttribute, h.AsEnumerable(), context);
                     if (source != null)
                     {
-                        context.AddSource($"ParameterizedMeth_{g.Key.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)}_{ct++}.cs", SourceText.From(source, Encoding.UTF8));
+                        context.AddSource($"ParameterizedMeth_{g.Key.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)}_{ct++}.g", SourceText.From(source, Encoding.UTF8));
                     }
                 }
             }

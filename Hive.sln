@@ -12,12 +12,15 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{359F68C9-18C8-435C-9573-A5C7CBD0ADE0}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		coverlet.runsettings = coverlet.runsettings
 		_EmptyProjectForILRepack.targets = _EmptyProjectForILRepack.targets
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
-		.github\workflows\dotnet-core.yml = .github\workflows\dotnet-core.yml
 		Packaging.props = Packaging.props
 		Packaging.targets = Packaging.targets
+		.github\workflows\dotnet-core.yml = .github\workflows\dotnet-core.yml
+		FCC_UpdateCoverlet.ps1 = FCC_UpdateCoverlet.ps1
+		NuGet.config = NuGet.config
 		README.md = README.md
 		System.Diagnostics.CodeAnalysis.cs = System.Diagnostics.CodeAnalysis.cs
 	EndProjectSection
