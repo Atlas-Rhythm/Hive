@@ -119,10 +119,10 @@ namespace Hive.Services
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We return null from this on ANY exception type instead of forwarding it to our callers.")]
         public async Task<User?> GetUser(HttpRequest request)
         {
+            if (request is null)
+                throw new ArgumentNullException(nameof(request));
             try
             {
-                if (request is null)
-                    throw new ArgumentNullException(nameof(request));
                 // Note that this call CAN throw exceptions.
                 // If it does, we should return null immediately, since we need a valid management API token.
                 await EnsureValidManagementAPIToken().ConfigureAwait(false);
@@ -189,12 +189,12 @@ namespace Hive.Services
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We return null from this on ANY exception type instead of forwarding it to our callers.")]
         public async Task<User?> GetUser(string userId)
         {
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentNullException(nameof(userId));
             try
             {
-                if (string.IsNullOrEmpty(userId))
-                    throw new ArgumentNullException(nameof(userId));
-                // Should only have one matching user. If it does not, this will throw.
-                return await context.Users.Where(u => u.Username == userId).SingleAsync().ConfigureAwait(false);
+                // Should only have one matching user. If it has more than that, this will throw. Otherwise, will return null.
+                return await context.Users.Where(u => u.Username == userId).SingleOrDefaultAsync().ConfigureAwait(false);
             }
             catch
             {

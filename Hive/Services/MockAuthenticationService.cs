@@ -34,11 +34,10 @@ namespace Hive.Services
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We return null from this on ANY exception type instead of forwarding it to our callers.")]
         public Task<User?> GetUser(HttpRequest request)
         {
+            if (request is null)
+                throw new ArgumentNullException(nameof(request));
             try
             {
-                if (request is null)
-                    throw new ArgumentNullException(nameof(request));
-
                 if (request.Headers.TryGetValue(HeaderNames.Authorization, out var authHeader))
                 {
                     if (Users.TryGetValue(authHeader, out var outp))
@@ -56,11 +55,11 @@ namespace Hive.Services
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We return null from this on ANY exception type instead of forwarding it to our callers.")]
         public Task<User?> GetUser(string userId)
         {
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentNullException(nameof(userId));
             try
             {
-                return string.IsNullOrEmpty(userId)
-                    ? throw new ArgumentNullException(nameof(userId))
-                    : Users.TryGetValue(userId, out var outp) ? Task.FromResult(outp) : Task.FromResult<User?>(null);
+                return Users.TryGetValue(userId, out var outp) ? Task.FromResult(outp) : Task.FromResult<User?>(null);
             }
             catch
             {
