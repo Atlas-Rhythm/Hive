@@ -111,8 +111,8 @@ paths:
 
         Plugins can be used to perform additional permissions checks and filter mods. See Hive.Services.Common.IModsPlugin
 
-        Plugin permission check at rule: hive.mods.list
-        Plugin filter call at rule: hive.mods.filter
+        Plugin permission check at rule: `hive.mods.list`
+        Plugin filter call at rule: `hive.mods.filter`
   '/mod/{modId}':
     parameters:
       - schema:
@@ -178,7 +178,7 @@ paths:
         Plugins can be used to perform additional permissions checks and filter mods. See Hive.Services.Common.IModsPlugin
 
         Plugin permission check at rule: hive.mod.get
-        Plugin filter check at rule: hive.mod.filter
+        Plugin filter check at rule: `hive.mod.filter`
       security:
         - Auth0AuthToken: []
   /mod/upload:
@@ -259,7 +259,7 @@ paths:
         4. Uploads the uploaded file to the CDN.
         5. Returns the data necessary for the next step of uploading. See: /mod/upload/finish
 
-        Plugin permission checks are performed at rule: hive.mod.upload and at rule: hive.mod.upload.with_data
+        Plugin permission checks are performed at rule: `hive.mod.upload` and at rule: `hive.mod.upload.with_data`
       parameters: []
       requestBody:
         content:
@@ -305,8 +305,8 @@ paths:
 
         Plugins can be used to both deny and filter access to some or all game versions. See Hive.Services.Common.IGameVersionsPlugin
 
-        Plugin permission check at rule: hive.game.versions.list
-        Plugin filter call at rule: hive.game.versions.filter
+        Plugin permission check at rule: `hive.game.versions.list`
+        Plugin filter call at rule: `hive.game.versions.filter`
       security:
         - Auth0AuthToken: []
   /resolve_dependencies:
@@ -404,7 +404,7 @@ paths:
         Returns a list of mods that should be installed to resolve all dependencies.
         If the dependencies cannot be resolved, returns a non-200 status code and an empty array.
 
-        Plugin permission check at rule: hive.resolve_dependencies
+        Plugin permission check at rule: `hive.resolve_dependencies`
       parameters: []
       requestBody:
         content:
@@ -482,7 +482,7 @@ paths:
       description: |-
         Moves a specific ModIdentifier to the provided channelId.
 
-        Plugins permission check at rule: hive.mod.move
+        Plugins permission check at rule: `hive.mod.move`
   /channels:
     get:
       summary: 'Gets all publicly viewable channels, or all channels viewable by the given user'
@@ -526,8 +526,8 @@ paths:
 
         Plugins can be used to both deny and filter access to some or all channels. See Hive.Services.Common.IChannelsControllerPlugin
 
-        Plugin permission check at rule: hive.channels.list
-        Plugin filter call at rule: hive.channels.filter
+        Plugin permission check at rule: `hive.channels.list`
+        Plugin filter call at rule: `hive.channels.filter`
   '/mod/{modId}/latest':
     parameters:
       - schema:
@@ -629,7 +629,7 @@ paths:
       description: |-
         The final stage of an upload. Completes an upload by providing the final metadata of the mod.
 
-        Plugin permission check at rule: hive.mod.upload.with_data
+        Plugin permission check at rule: `hive.mod.upload.with_data`
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -681,7 +681,7 @@ paths:
 
         Plugins can be used to deny access to creations and perform additional edits to channel instances. See Hive.Services.Common.IChannelsControllerPlugin
 
-        Plugin permission check at rule: hive.channels.create
+        Plugin permission check at rule: `hive.channels.create`
       security:
         - Auth0AuthToken: []
       requestBody:
@@ -730,7 +730,7 @@ paths:
 
         Plugins can be used to deny access to creations and perform additional edits to game version instances. See Hive.Services.Common.IGameVersionsPlugin
 
-        Plugin permission check at rule: hive.game.versions.create
+        Plugin permission check at rule: `hive.game.versions.create`
       requestBody:
         content:
           application/json:
@@ -818,6 +818,28 @@ paths:
           in: query
           name: state
           description: Optional state
+  /user/rename:
+    post:
+      summary: ''
+      operationId: post-user-rename
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+      description: |-
+        Renames the current user to the provided username.
+        The new username must be unique, if it is not, this will return a 401.
+        If the user is not logged in, this will return a 401.
+        If the current user cannot rename themselves, this will return a 401.
+
+        If the rename completes successfully, will return the changed username.
+
+        Plugin permission check at: `hive.user.rename`
 components:
   schemas:
     Channel:
