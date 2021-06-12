@@ -10,14 +10,14 @@ namespace Hive.Services
     public interface IProxyAuthenticationService
     {
         /// <summary>
-        /// Returns a <see cref="User"/> from a request, throwing an exception if specified.
+        /// Returns a <see cref="User"/> from a request, should not throw any exceptions.
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
         public Task<User?> GetUser(HttpRequest request);
 
         /// <summary>
-        /// Returns a <see cref="User"/> from a user ID, throwing an exception if specified.
+        /// Returns a <see cref="User"/> from a user ID, should not throw any exceptions.
         /// </summary>
         /// <param name="userId"></param>
         /// <returns></returns>
