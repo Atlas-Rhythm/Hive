@@ -120,7 +120,8 @@ namespace Hive.Services
         public async Task<User?> GetUser(HttpRequest request)
         {
             if (request is null)
-                throw new ArgumentNullException(nameof(request));
+                // If we have a null request, we return a null user. This is the same as an unauthorized request.
+                return null;
             try
             {
                 // Note that this call CAN throw exceptions.

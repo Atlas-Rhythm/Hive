@@ -35,7 +35,8 @@ namespace Hive.Services
         public Task<User?> GetUser(HttpRequest request)
         {
             if (request is null)
-                throw new ArgumentNullException(nameof(request));
+                // If we have a null request, we return a null user. This is the same as an unauthenticated request.
+                return Task.FromResult<User?>(null);
             try
             {
                 if (request.Headers.TryGetValue(HeaderNames.Authorization, out var authHeader))
