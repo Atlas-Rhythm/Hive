@@ -56,6 +56,8 @@ namespace Hive.Permissions.Tests
             public string ArbitraryString { get; set; } = string.Empty;
             public Inner? NonTrivialObject { get; set; } = null;
 
+            public object? LiteralObjectType => NonTrivialObject;
+
             public static implicit operator bool(Context _) => true;
         }
 
@@ -256,6 +258,26 @@ namespace Hive.Permissions.Tests
 
             var hiveRule = new Rule("hive", "ctx.Hive | next(false)");
             var hiveModRule = new Rule("hive.mod", "ctx.NonTrivialObject.DoesThing");
+            mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
+            mock.Setup(rules => rules.TryGetRule(hiveModRule.Name, out hiveModRule)).Returns(true);
+
+            var permManager = new PermissionsManager<Context>(mock.Object, logger, ".");
+
+            PermissionActionParseState state = default;
+            // This will throw a PermissionException containing an NRE, because Context.NonTrivialObject is null
+            Assert.Throws<PermissionException>(() => permManager.CanDo("hive.mod", new Context(), ref state));
+            Assert.True(permManager.CanDo("hive.mod", new Context { Hive = true }, ref state));
+            Assert.True(permManager.CanDo("hive.mod", new Context { NonTrivialObject = new Context.Inner { DoesThing = true } }, ref state));
+            Assert.False(permManager.CanDo("hive.mod", new Context { NonTrivialObject = new Context.Inner { DoesThing = false } }, ref state));
+        }
+
+        [Fact]
+        public void TestCastFunction()
+        {
+            var mock = MockRuleProvider();
+
+            var hiveRule = new Rule("hive", "ctx.Hive | next(false)");
+            var hiveModRule = new Rule("hive.mod", $"cast(\"{typeof(Context.Inner).AssemblyQualifiedName}\", ctx.LiteralObjectType).DoesThing");
             mock.Setup(rules => rules.TryGetRule(hiveRule.Name, out hiveRule)).Returns(true);
             mock.Setup(rules => rules.TryGetRule(hiveModRule.Name, out hiveModRule)).Returns(true);
 
