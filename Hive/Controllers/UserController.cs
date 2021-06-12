@@ -84,7 +84,7 @@ namespace Hive.Controllers
             var pluginInstance = plugin.Instance;
             try
             {
-                var user = await authService.GetUser(Request, true).ConfigureAwait(false);
+                var user = await authService.GetUser(Request).ConfigureAwait(false);
                 if (user is null)
                 {
                     // Unauthorized if user not logged in

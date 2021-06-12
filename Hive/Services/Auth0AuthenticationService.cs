@@ -116,20 +116,22 @@ namespace Hive.Services
         public void Dispose() => client.Dispose();
 
         /// <inheritdoc/>
-        public async Task<User?> GetUser(HttpRequest request, bool throwOnError = false)
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We return null from this on ANY exception type instead of forwarding it to our callers.")]
+        public async Task<User?> GetUser(HttpRequest request)
         {
-            if (request is null)
-                return throwOnError ? throw new ArgumentNullException(nameof(request)) : null;
-
-            await EnsureValidManagementAPIToken(throwOnError).ConfigureAwait(false);
-
-            using var message = new HttpRequestMessage(HttpMethod.Get, authenticationAPIUserEndpoint);
-
-            if (request.Headers.TryGetValue("Authorization", out var auth))
-                message.Headers.Add("Authorization", new List<string> { auth });
-
             try
             {
+                if (request is null)
+                    throw new ArgumentNullException(nameof(request));
+                // Note that this call CAN throw exceptions.
+                // If it does, we should return null immediately, since we need a valid management API token.
+                await EnsureValidManagementAPIToken().ConfigureAwait(false);
+
+                using var message = new HttpRequestMessage(HttpMethod.Get, authenticationAPIUserEndpoint);
+
+                if (request.Headers.TryGetValue("Authorization", out var auth))
+                    message.Headers.Add("Authorization", new List<string> { auth });
+
                 var response = await client.SendAsync(message).ConfigureAwait(false);
 
                 if (!response.IsSuccessStatusCode)
@@ -158,12 +160,6 @@ namespace Hive.Services
                     // If we cannot find an existing sub, we make a new username and ensure no duplicates.
                     // Also note that accounts need to be LINKED in order for them to be considered the same (ex, Discord and GH accounts linked on frontend)
                     // Once accounts are linked, they have the same sub
-                    // TODO: Add plugin somewhere here
-
-                    // Design decision: Do we want to make it so users only ever (really) exist with Auth0 or should we make them exist without auth0 entirely?
-                    // If we have them exist only with auth0, it allows us to just have this type, plugin would be applied to the username
-                    // If we have them exist anywhere, it will require a bigger change.
-                    // For now I shall assume that users shall only exist with Auth0
                     var u = new User
                     {
                         Username = usernamePlugin.Instance.ChooseUsername(auth0User.Nickname),
@@ -184,36 +180,29 @@ namespace Hive.Services
             catch (Exception e)
             {
                 logger.Error(e, "An exception occured while attempting to retrieve user information.");
-                if (throwOnError)
-                    throw;
                 return null;
             }
         }
 
         /// <inheritdoc/>
         // TODO: document: THE MACHINE-TO-MACHINE APPLICATION NEEDS THE "read:users" SCOPE
-        public async Task<User?> GetUser(string userId, bool throwOnError = false)
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We return null from this on ANY exception type instead of forwarding it to our callers.")]
+        public async Task<User?> GetUser(string userId)
         {
-            if (string.IsNullOrEmpty(userId))
+            try
             {
-                return throwOnError ? throw new ArgumentNullException(nameof(userId)) : null;
+                if (string.IsNullOrEmpty(userId))
+                    throw new ArgumentNullException(nameof(userId));
+                // Should only have one matching user. If it does not, this will throw.
+                return await context.Users.Where(u => u.Username == userId).SingleAsync().ConfigureAwait(false);
             }
-
-            var query = context.Users.Where(u => u.Username == userId);
-            if (throwOnError)
+            catch
             {
-                return await query.SingleAsync().ConfigureAwait(false);
-            }
-            else
-            {
-                // Evaluate query once
-                var enumerable = query.AsEnumerable();
-                // Should only have one matching user, no need to assert via SingleOrDefault since we checked length already.
-                return query.Count() > 1 ? null : query.FirstOrDefault();
+                return null;
             }
         }
 
-        private async Task EnsureValidManagementAPIToken(bool throwOnError = true)
+        private async Task EnsureValidManagementAPIToken()
         {
             try
             {
@@ -225,7 +214,7 @@ namespace Hive.Services
             catch (Exception e)
             {
                 logger.Error(e, "An exception occured while attempting to refresh our Auth0 Management API Token.");
-                if (throwOnError) throw;
+                throw;
             }
         }
 
@@ -299,7 +288,6 @@ namespace Hive.Services
             return await response.Content.ReadFromJsonAsync<Auth0TokenResponse>(jsonSerializerOptions).ConfigureAwait(false);
         }
 
-        // REVIEW: Should these be moved to Hive.Models?
         private record ManagementAPIResponse(string Access_Token, int Expires_In, string Scope, string Token_Type);
 
         private record Auth0User
