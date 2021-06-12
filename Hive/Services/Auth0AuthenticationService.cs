@@ -200,10 +200,17 @@ namespace Hive.Services
             }
 
             var query = context.Users.Where(u => u.Username == userId);
-            return throwOnError
-                ? await query.SingleAsync().ConfigureAwait(false)
+            if (throwOnError)
+            {
+                return await query.SingleAsync().ConfigureAwait(false);
+            }
+            else
+            {
+                // Evaluate query once
+                var enumerable = query.AsEnumerable();
                 // Should only have one matching user, no need to assert via SingleOrDefault since we checked length already.
-                : query.Count() > 1 ? null : await query.FirstOrDefaultAsync().ConfigureAwait(false);
+                return query.Count() > 1 ? null : query.FirstOrDefault();
+            }
         }
 
         private async Task EnsureValidManagementAPIToken(bool throwOnError = true)
