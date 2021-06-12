@@ -52,6 +52,7 @@ namespace Hive.Models
         {
             base.OnModelCreating(modelBuilder);
 
+            User.Configure(modelBuilder);
             Mod.Configure(modelBuilder);
             GameVersion.Configure(modelBuilder);
         }
