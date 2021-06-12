@@ -30,7 +30,7 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="username">The input username to rename.</param>
         /// <returns>The new username to apply.</returns>
-        string ForceRename(string username) => username;
+        string ForceRename([TakesReturnValue] string username) => username;
     }
 
     internal class HiveUserPlugin : IUserPlugin { }

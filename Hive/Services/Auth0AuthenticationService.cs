@@ -32,7 +32,7 @@ namespace Hive.Services
         /// </summary>
         /// <param name="originalUsername">The original username to convert, if necessary</param>
         /// <returns></returns>
-        string ChooseUsername(string originalUsername) => originalUsername;
+        string ChooseUsername([TakesReturnValue] string originalUsername) => originalUsername;
     }
 
     internal class HiveUsernamePlugin : IUsernamePlugin { }
