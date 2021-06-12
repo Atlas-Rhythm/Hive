@@ -49,6 +49,14 @@ namespace Hive.Versioning
         }
 
         /// <summary>
+        /// Creates a <see cref="VersionRange"/> which matches only the provided <paramref name="version"/>.
+        /// </summary>
+        /// <param name="version">The <see cref="Version"/> to match.</param>
+        /// <returns>A <see cref="VersionRange"/> matching only the provided <paramref name="version"/>.</returns>
+        public static VersionRange ForVersion(Version version)
+            => new(Array.Empty<Subrange>(), new VersionComparer(version, ComparisonType.ExactEqual));
+
+        /// <summary>
         /// Computes the logical disjunction (or) of this <see cref="VersionRange"/> and <paramref name="other"/>.
         /// </summary>
         /// <param name="other">The other <see cref="VersionRange"/> to compute the disjunction of.</param>
@@ -56,8 +64,7 @@ namespace Hive.Versioning
         /// <seealso cref="operator |(VersionRange, VersionRange)"/>
         [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
 #if !NETSTANDARD2_0
-        [SuppressMessage("Style", "IDE0056:Use index operator",
-            Justification = "Standard 2.0 doesn't have System.Index")]
+        [SuppressMessage("Style", "IDE0056:Use index operator", Justification = "Standard 2.0 doesn't have System.Index")]
 #endif
         public VersionRange Disjunction(VersionRange other)
         {
@@ -112,6 +119,7 @@ namespace Hive.Versioning
             return new VersionRange(allSubranges, comparer);
         }
 
+
         /// <summary>
         /// Computes the logical disjunction (or) of the two arguments.
         /// </summary>
@@ -119,6 +127,7 @@ namespace Hive.Versioning
         /// <param name="b">The second argument.</param>
         /// <returns>The logical disjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
         /// <seealso cref="Disjunction(VersionRange)"/>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "The named alternate is Disjunction().")]
         public static VersionRange operator |(VersionRange a, VersionRange b)
         {
             if (a is null) throw new ArgumentNullException(nameof(a));
@@ -156,13 +165,15 @@ namespace Hive.Versioning
             return ~(~this | ~other);
         }
 
+
         /// <summary>
         /// Computes the logical conjunction (and) of the two arguments.
         /// </summary>
         /// <param name="a">The first argument.</param>
         /// <param name="b">The second argument.</param>
-        /// <returns>The logical disjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
+        /// <returns>The logical conjunction of <paramref name="a"/> and <paramref name="b"/>.</returns>
         /// <seealso cref="Conjunction(VersionRange)"/>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "The named alternate is Conjunction().")]
         public static VersionRange operator &(VersionRange a, VersionRange b)
         {
             if (a is null) throw new ArgumentNullException(nameof(a));
@@ -280,12 +291,14 @@ namespace Hive.Versioning
             return _inverse;
         }
 
+
         /// <summary>
         /// Computes the compliment of the argument.
         /// </summary>
         /// <param name="r">The <see cref="VersionRange"/> to compute the compliment of.</param>
         /// <returns>The compliment of <paramref name="r"/>.</returns>
         /// <seealso cref="Invert()"/>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "The named alternate is Invert().")]
         public static VersionRange operator ~(VersionRange r)
         {
             if (r is null) throw new ArgumentNullException(nameof(r));
@@ -537,7 +550,7 @@ namespace Hive.Versioning
             => ToString(new StringBuilder()).ToString();
 
         /// <inheritdoc/>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
             => obj is VersionRange range && Equals(range);
 
         /// <summary>
@@ -545,7 +558,7 @@ namespace Hive.Versioning
         /// </summary>
         /// <param name="other">The <see cref="VersionRange"/> to compare to.</param>
         /// <returns><see langword="true"/> if they are equivalent, <see langword="false"/> otherwise.</returns>
-        public bool Equals(VersionRange other)
+        public bool Equals(VersionRange? other)
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -658,6 +671,13 @@ namespace Hive.Versioning
                 return false;
             }
 
+            // check for our everything range array as a minor optimization
+            if (srs == EverythingSubranges)
+            {
+                range = Everything;
+                return true;
+            }
+
             range = new VersionRange(srs, compare);
             return true;
         }
@@ -669,6 +689,13 @@ namespace Hive.Versioning
         {
             sranges = null;
             comparer = null;
+
+            // check for the "everything" range first, which is just a star
+            if (TryTake(ref text, '*'))
+            {
+                sranges = EverythingSubranges;
+                return true;
+            }
 
             if (!TryReadComponent(ref text, out var range, out var compare))
                 return false;
@@ -759,7 +786,6 @@ namespace Hive.Versioning
             compare = null;
             return false;
         }
-
         #endregion Parser
     }
 }

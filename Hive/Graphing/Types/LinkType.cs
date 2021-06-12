@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using GraphQL.Types;
 
 namespace Hive.Graphing.Types
@@ -11,8 +12,11 @@ namespace Hive.Graphing.Types
         /// <summary>
         /// Setup a LinkType for GQL.
         /// </summary>
-        public LinkType()
+        public LinkType(IEnumerable<ICustomHiveGraph<LinkType>> customGraphs)
         {
+            if (customGraphs is null)
+                throw new ArgumentNullException(nameof(customGraphs));
+
             Name = "Link";
             Description = Resources.GraphQL.Link;
 
@@ -25,6 +29,9 @@ namespace Hive.Graphing.Types
                 Resources.GraphQL.Link_URL,
                 resolve: context => context.Source.Item2.ToString()
             );
+
+            foreach (var graph in customGraphs)
+                graph.Configure(this);
         }
     }
 }

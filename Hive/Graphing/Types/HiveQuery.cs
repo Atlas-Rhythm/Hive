@@ -3,6 +3,7 @@ using Serilog;
 using Hive.Models;
 using GraphQL.Types;
 using System.Diagnostics.CodeAnalysis;
+using System.Collections.Generic;
 
 namespace Hive.Graphing.Types
 {
@@ -15,10 +16,13 @@ namespace Hive.Graphing.Types
         /// Create a GQL query.
         /// </summary>
         /// <param name="logger"></param>
-        public HiveQuery([DisallowNull] ILogger logger)
+        /// <param name="customGraphs"></param>
+        public HiveQuery([DisallowNull] ILogger logger, IEnumerable<ICustomHiveGraph<HiveQuery>> customGraphs)
         {
             if (logger is null)
                 throw new ArgumentNullException(nameof(logger));
+            if (customGraphs is null)
+                throw new ArgumentNullException(nameof(customGraphs));
 
             var l = logger.ForContext<HiveQuery>();
 
@@ -27,6 +31,9 @@ namespace Hive.Graphing.Types
             _ = Field<ListGraphType<ChannelType>>(
                 name: "channels",
                 resolve: context => Array.Empty<Channel>());
+
+            foreach (var graph in customGraphs)
+                graph.Configure(this);
         }
     }
 }

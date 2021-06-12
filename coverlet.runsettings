@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>json,cobertura</Format> <!-- TODO: Which formats do we actually need? -->
+          <Include>[Hive*]*</Include>
+          <Exclude>[Hive.CodeGen.Attributes]*,[*]System.*</Exclude>
+          <ExcludeByFile>**/Migrations/*</ExcludeByFile>
+          <ExcludeByAttribute>GeneratedCodeAttribute,IsGeneratedAttribute,Obsolete</ExcludeByAttribute>
+          <IncludeTestAssembly>true</IncludeTestAssembly>
+          <SkipAutoProps>true</SkipAutoProps>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

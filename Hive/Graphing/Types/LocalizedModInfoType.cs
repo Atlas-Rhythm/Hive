@@ -1,5 +1,7 @@
 ﻿using Hive.Models;
 using GraphQL.Types;
+using System.Collections.Generic;
+using System;
 
 namespace Hive.Graphing.Types
 {
@@ -11,8 +13,11 @@ namespace Hive.Graphing.Types
         /// <summary>
         /// Setup a LocalizedModInfoType for GQL.
         /// </summary>
-        public LocalizedModInfoType()
+        public LocalizedModInfoType(IEnumerable<ICustomHiveGraph<LocalizedModInfoType>> customGraphs)
         {
+            if (customGraphs is null)
+                throw new ArgumentNullException(nameof(customGraphs));
+
             Name = nameof(LocalizedModInfo);
             Description = Resources.GraphQL.LocalizedModInfo;
 
@@ -27,6 +32,9 @@ namespace Hive.Graphing.Types
 
             _ = Field(lmi => lmi.Credits, nullable: true)
                 .Description(Resources.GraphQL.LocalizedModInfo_Credits);
+
+            foreach (var graph in customGraphs)
+                graph.Configure(this);
         }
     }
 }
