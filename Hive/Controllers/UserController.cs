@@ -71,6 +71,7 @@ namespace Hive.Controllers
         /// <param name="username">Username to change the logged in user to.</param>
         /// <returns>The changed username (post-modification).</returns>
         [Route("rename")]
+        [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
