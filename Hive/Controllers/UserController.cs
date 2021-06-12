@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using Hive.Models;
+using Hive.Permissions;
 using Hive.Plugins.Aggregates;
 using Hive.Services;
 using Microsoft.AspNetCore.Http;
@@ -44,6 +45,10 @@ namespace Hive.Controllers
         private readonly IProxyAuthenticationService authService;
         private readonly IAggregate<IUserPlugin> plugin;
         private readonly HiveContext context;
+        private readonly PermissionsManager<PermissionContext> permissions;
+
+        private const string RenameActionName = "hive.user.rename";
+        private PermissionActionParseState renameParseState;
 
         /// <summary>
         /// Create with DI
@@ -51,11 +56,13 @@ namespace Hive.Controllers
         /// <param name="context"></param>
         /// <param name="authService"></param>
         /// <param name="plugin"></param>
-        public UserController(HiveContext context, IProxyAuthenticationService authService, IAggregate<IUserPlugin> plugin)
+        /// <param name="perms"></param>
+        public UserController(HiveContext context, IProxyAuthenticationService authService, IAggregate<IUserPlugin> plugin, PermissionsManager<PermissionContext> perms)
         {
             this.context = context;
             this.authService = authService;
             this.plugin = plugin;
+            permissions = perms;
         }
 
         /// <summary>
@@ -84,6 +91,11 @@ namespace Hive.Controllers
                 }
                 // Get plugin username/allow/deny
                 if (!pluginInstance.AllowUsername(username))
+                {
+                    return Unauthorized();
+                }
+                // Get permissions username rename allow/deny
+                if (!permissions.CanDo(RenameActionName, new PermissionContext { User = user, Username = username }, ref renameParseState))
                 {
                     return Unauthorized();
                 }

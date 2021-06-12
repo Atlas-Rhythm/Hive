@@ -36,5 +36,11 @@ namespace Hive.Permissions
         /// The destination <see cref="Models.Channel"/> of a move action, if this is a move action.
         /// </summary>
         public Channel? DestinationChannel { get; set; }
+
+        /// <summary>
+        /// The username to associate with the request, should it exist.
+        /// For rename requests, this will be the username to change to.
+        /// </summary>
+        public string? Username { get; set; }
     }
 }
