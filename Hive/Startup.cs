@@ -58,10 +58,6 @@ namespace Hive
                 .AddSingleton<IUserPlugin, HiveUserPlugin>()
                 .AddSingleton<SymmetricAlgorithm>(sp => Rijndael.Create()); // TODO: pick an algo
 
-            _ = services.AddDbContext<HiveContext>(options =>
-                options.UseNpgsql(Configuration.GetConnectionString("Default"),
-                    o => o.UseNodaTime().SetPostgresVersion(12, 0)));
-
             // If the config file doesn't have an Auth0 section, we'll assume that the auth service is provided by a plugin.
             if (Configuration.GetSection("Auth0").Exists())
             {
@@ -70,8 +66,12 @@ namespace Hive
             // Uncomment the following code if you need mock authentication for HOPEFULLY DEVELOPMENT reasons
             //else
             //{
-            //    _ = services.AddInterfacesAsSingleton<MockAuthenticationService, IProxyAuthenticationService, IAuth0Service>();
+            //    _ = services.AddInterfacesAsScoped<MockAuthenticationService, IProxyAuthenticationService, IAuth0Service>();
             //}
+
+            _ = services.AddDbContext<HiveContext>(options =>
+                options.UseNpgsql(Configuration.GetConnectionString("Default"),
+                    o => o.UseNodaTime().SetPostgresVersion(12, 0)));
 
             _ = services.AddScoped<ModService>()
                 .AddScoped<ChannelService>()

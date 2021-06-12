@@ -199,8 +199,11 @@ namespace Hive.Services
                 return throwOnError ? throw new ArgumentNullException(nameof(userId)) : null;
             }
 
-            // This will ALWAYS throw if there are multiple users with the same username, which should never be the case.
-            return await context.Users.Where(u => u.Username == userId).SingleAsync().ConfigureAwait(false);
+            var query = context.Users.Where(u => u.Username == userId);
+            return throwOnError
+                ? await query.SingleAsync().ConfigureAwait(false)
+                // Should only have one matching user, no need to assert via SingleOrDefault since we checked length already.
+                : query.Count() > 1 ? null : await query.FirstOrDefaultAsync().ConfigureAwait(false);
         }
 
         private async Task EnsureValidManagementAPIToken(bool throwOnError = true)

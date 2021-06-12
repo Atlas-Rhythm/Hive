@@ -77,6 +77,11 @@ namespace Hive.Controllers
             try
             {
                 var user = await authService.GetUser(Request, true).ConfigureAwait(false);
+                if (user is null)
+                {
+                    // Unauthorized if user not logged in
+                    return Unauthorized();
+                }
                 // Get plugin username/allow/deny
                 if (!pluginInstance.AllowUsername(username))
                 {
@@ -88,7 +93,7 @@ namespace Hive.Controllers
                     // Deny this username because it conflicts with A user who already exists (this means that a user renaming themselves to their own name is denied)
                     return Unauthorized();
                 }
-                user!.Username = username;
+                user.Username = username;
                 _ = await context.SaveChangesAsync().ConfigureAwait(false);
             }
             catch
