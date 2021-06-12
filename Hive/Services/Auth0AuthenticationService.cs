@@ -14,12 +14,14 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
+using Hive.Plugins.Aggregates;
 
 namespace Hive.Services
 {
     /// <summary>
     /// Represents a plugin that chooses unique usernames until valid.
     /// </summary>
+    [Aggregable]
     public interface IUsernamePlugin
     {
         /// <summary>
@@ -50,7 +52,7 @@ namespace Hive.Services
         private readonly ILogger logger;
         private readonly IClock clock;
         private readonly HiveContext context;
-        private readonly IUsernamePlugin usernamePlugin;
+        private readonly IAggregate<IUsernamePlugin> usernamePlugin;
 
         private string? managementToken;
         private Instant? managementExpireInstant;
@@ -68,7 +70,7 @@ namespace Hive.Services
         /// <summary>
         /// Construct a <see cref="Auth0AuthenticationService"/> with DI.
         /// </summary>
-        public Auth0AuthenticationService([DisallowNull] ILogger log, IClock clock, IConfiguration configuration, HiveContext context, IUsernamePlugin usernamePlugin)
+        public Auth0AuthenticationService([DisallowNull] ILogger log, IClock clock, IConfiguration configuration, HiveContext context, IAggregate<IUsernamePlugin> usernamePlugin)
         {
             if (log is null)
                 throw new ArgumentNullException(nameof(log));
@@ -164,7 +166,7 @@ namespace Hive.Services
                     // For now I shall assume that users shall only exist with Auth0
                     var u = new User
                     {
-                        Username = usernamePlugin.ChooseUsername(auth0User.Nickname),
+                        Username = usernamePlugin.Instance.ChooseUsername(auth0User.Nickname),
                         AlternativeId = auth0User.Sub,
                         AdditionalData = auth0User.User_Metadata
                     };
