@@ -5,6 +5,7 @@ using GraphQL.Builders;
 using GraphQL.MicrosoftDI;
 using GraphQL.Server;
 using GraphQL.Types;
+using Hive.Graphing.Types;
 using Hive.Models;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,10 +27,7 @@ namespace Hive.Graphing
             _ = services.AddGraphQL((options, provider) =>
             {
                 var logger = provider.GetRequiredService<Serilog.ILogger>();
-                options.UnhandledExceptionDelegate = ctx =>
-                {
-                    logger.Error("An error has occured initializing GraphQL: {Message}", ctx.OriginalException.Message);
-                };
+                options.UnhandledExceptionDelegate = ctx => logger.Error("An error has occured initializing GraphQL: {Message}", ctx.OriginalException.Message);
             }).AddSystemTextJson();
             return services;
         }
@@ -63,7 +61,7 @@ namespace Hive.Graphing
             return builder is null
                 ? throw new ArgumentNullException(nameof(builder))
                 : builder
-                //.Argument<FilterEnumType>("filter", description: "The filter", defaultValue: FilterEnumType)
+                .Argument<FilterEnumType, ModType.Filter>("filter", description: "The filter", defaultValue: ModType.Filter.Latest)
                 .Argument<ListGraphType<IdGraphType>, IEnumerable<string>?>("channelIds", description: "The ids for channels to look through", defaultValue: null)
                 .Argument<StringGraphType, string?>("gameVersion", description: "The game version of mods to look for.", defaultValue: null);
         }

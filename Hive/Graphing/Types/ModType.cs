@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using GraphQL.Types;
 using Hive.Models;
-using static Hive.Graphing.Types.ModType;
 
 namespace Hive.Graphing.Types
 {
@@ -114,18 +113,4 @@ namespace Hive.Graphing.Types
             Latest
         }
     }
-
-    /*public class FilterEnumType : EnumerationGraphType<Filter>
-    {
-        public FilterEnumType(IEnumerable<ICustomHiveGraph<FilterEnumType>> customGraphs)
-        {
-            if (customGraphs is null)
-                throw new ArgumentNullException(nameof(customGraphs));
-
-            Description = "The different order filters for querying mods.";
-
-            foreach (var graph in customGraphs)
-                graph.Configure(this);
-        }
-    }*/
 }

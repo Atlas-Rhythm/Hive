@@ -22,10 +22,14 @@ namespace Hive.Graphing.Types
         /// Create a GQL query.
         /// </summary>
         /// <param name="logger"></param>
-        public HiveQuery([DisallowNull] ILogger logger)
+        /// <param name="customGraphs"></param>
+        public HiveQuery([DisallowNull] ILogger logger, IEnumerable<ICustomHiveGraph<HiveQuery>> customGraphs)
         {
             if (logger is null)
                 throw new ArgumentNullException(nameof(logger));
+
+            if (customGraphs is null)
+                throw new ArgumentNullException(nameof(customGraphs));
 
             var l = logger.ForContext<HiveQuery>();
 
@@ -60,6 +64,9 @@ namespace Hive.Graphing.Types
                 .Name("gameVersions")
                 .Description(Resources.GraphQL.Query_GameVersions)
                 .ResolveAsync(GetAllGameVersions);
+
+            foreach (var graph in customGraphs)
+                graph.Configure(this);
         }
 
         private async Task<Channel?> GetChannel(IResolveFieldContext<object> ctx)
