@@ -168,10 +168,10 @@ namespace Hive.Models
                 .IsVaulthUser();
             _ = b.Entity<Mod>()
                 .Property(m => m.Authors)
-                .IsVaulthUsers();
+                .IsValidUsers();
             _ = b.Entity<Mod>()
                 .Property(m => m.Contributors)
-                .IsVaulthUsers();
+                .IsValidUsers();
         }
     }
 
