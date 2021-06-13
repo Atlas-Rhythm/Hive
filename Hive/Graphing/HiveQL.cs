@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using GraphQL;
 using GraphQL.Builders;
 using GraphQL.MicrosoftDI;
-using GraphQL.NewtonsoftJson;
+using GraphQL.Server;
 using GraphQL.Types;
 using Hive.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,19 +22,16 @@ namespace Hive.Graphing
         /// <returns></returns>
         public static IServiceCollection AddHiveGraphQL(this IServiceCollection services)
         {
-            _ = services.AddSingleton<IDocumentExecuter, DocumentExecuter>();
-            _ = services.AddSingleton<IDocumentWriter, DocumentWriter>();
             _ = services.AddSingleton(services => new HiveSchema(new SelfActivatingServiceProvider(services)));
-            return services;
-            /*
-        return services.AddSingleton<HiveSchema>()
-            .AddGraphQL((options, provider) =>
+            _ = services.AddGraphQL((options, provider) =>
             {
                 var logger = provider.GetRequiredService<Serilog.ILogger>();
-                options.UnhandledExceptionDelegate = ctx => logger.Error("An error has occured initializing GraphQL: {Message}", ctx.OriginalException.Message);
-            })
-            .AddSystemTextJson()
-            .AddGraphTypes(typeof(HiveSchema));*/
+                options.UnhandledExceptionDelegate = ctx =>
+                {
+                    logger.Error("An error has occured initializing GraphQL: {Message}", ctx.OriginalException.Message);
+                };
+            }).AddSystemTextJson();
+            return services;
         }
 
         /// <summary>

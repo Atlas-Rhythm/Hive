@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
 using GraphQL;
+using GraphQL.Execution;
 using Hive.Graphing;
 using Hive.Models;
 using Hive.Plugins;
@@ -38,7 +39,12 @@ namespace Hive.Tests.Graphing
             Assert.NotNull(result);
             Assert.Null(result.Errors);
             Assert.NotNull(result.Data);
-            var mod = FindAndCastDataObject<Mod>(result, "mod");
+            Assert.IsType<RootExecutionNode>(result.Data);
+            var execution = (result.Data as RootExecutionNode)!;
+            Assert.NotEmpty(execution.SubFields);
+            Assert.Equal("mod", execution.SubFields[0].Name);
+            Assert.IsType<Mod>(execution.SubFields[0].Result);
+            var mod = (execution.SubFields[0].Result as Mod)!;
             Assert.Equal("lilac", mod.ReadableID);
         }
 
@@ -64,7 +70,13 @@ namespace Hive.Tests.Graphing
             Assert.NotNull(result);
             Assert.Null(result.Errors);
             Assert.NotNull(result.Data);
-            var mod = FindAndCastDataObject<Mod>(result, "mod");
+            Assert.IsType<RootExecutionNode>(result.Data);
+            var execution = (result.Data as RootExecutionNode)!;
+            Assert.NotEmpty(execution.SubFields);
+            Assert.Equal("mod", execution.SubFields[0].Name);
+            Assert.IsType<Mod>(execution.SubFields[0].Result);
+            var mod = (execution.SubFields[0].Result as Mod)!;
+
             Assert.Equal("lilac", mod.ReadableID);
             Assert.Equal("raftario best modder", mod.Uploader.Username);
         }
@@ -88,8 +100,5 @@ namespace Hive.Tests.Graphing
 
             return services.BuildServiceProvider();
         }
-
-        private static T FindAndCastDataObject<T>(ExecutionResult result, string propertyName)
-            => JsonSerializer.Deserialize<T>(JsonDocument.Parse(JsonSerializer.Serialize(result.Data)).RootElement.GetProperty(propertyName).GetRawText(), new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
     }
 }
