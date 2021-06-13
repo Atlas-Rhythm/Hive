@@ -1,0 +1,201 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- This is mostly pulled from the SDK files  -->
+  <Target Name="ComputeILLinkProps">
+
+    <PropertyGroup>
+      <ILLinkWarningLevel Condition=" '$(ILLinkWarningLevel)' == '' And
+                                      '$(EffectiveAnalysisLevel)' != '' And
+                                       $([MSBuild]::VersionGreaterThanOrEquals($(EffectiveAnalysisLevel), '5.0')) ">5</ILLinkWarningLevel>
+      <ILLinkWarningLevel Condition=" '$(ILLinkWarningLevel)' == '' ">0</ILLinkWarningLevel>
+      <ILLinkTreatWarningsAsErrors Condition=" '$(ILLinkTreatWarningsAsErrors)' == '' ">$(TreatWarningsAsErrors)</ILLinkTreatWarningsAsErrors>
+      <SuppressTrimAnalysisWarnings Condition=" '$(SuppressTrimAnalysisWarnings)' == '' ">true</SuppressTrimAnalysisWarnings>
+      <_ExtraTrimmerArgs>--skip-unresolved true $(_ExtraTrimmerArgs)</_ExtraTrimmerArgs>
+      <TrimMode Condition=" '$(TrimMode)' == '' ">link</TrimMode>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(SuppressTrimAnalysisWarnings)' == 'true' ">
+      <!-- RequiresUnreferenceCodeAttribute method called -->
+      <NoWarn>$(NoWarn);IL2026</NoWarn>
+      <!-- Invalid use of DynamicallyAccessedMembersAttribute -->
+      <NoWarn>$(NoWarn);IL2041;IL2042;IL2043;IL2056</NoWarn>
+      <!-- Reference to removed attribute type -->
+      <NoWarn>$(NoWarn);IL2045</NoWarn>
+      <!-- RequiresUnreferencedCodeAttribute mismatch on virtual override -->
+      <NoWarn>$(NoWarn);IL2046</NoWarn>
+      <!-- COM marshalling warning -->
+      <NoWarn>$(NoWarn);IL2050</NoWarn>
+      <!-- Reflection intrinsics with unknown arguments -->
+      <NoWarn>$(NoWarn);IL2032;IL2055;IL2057;IL2058;IL2059;IL2060;IL2061;IL2096</NoWarn>
+      <!-- Unknown values passed to locations with DynamicallyAccessedMemberTypes -->
+      <NoWarn>$(NoWarn);IL2062;IL2063;IL2064;IL2065;IL2066</NoWarn>
+      <!-- Unsatisfied DynamicallyAccessedMembers requirements -->
+      <NoWarn>$(NoWarn);IL2067;IL2068;IL2069;IL2070;IL2071;IL2072;IL2073;IL2074;IL2075;IL2076;IL2077;IL2078;IL2079;IL2080;IL2081;IL2082;IL2083;IL2084;IL2085;IL2086;IL2087;IL2088;IL2089;IL2090;IL2091</NoWarn>
+      <!-- DynamicallyAccessedMembersAttribute mismatch on virtual override -->
+      <NoWarn>$(NoWarn);IL2092;IL2093;IL2094;IL2095</NoWarn>
+      <!-- DynamicallyAccessedMembersAttribute used on unsupported member -->
+      <NoWarn>$(NoWarn);IL2097;IL2098;IL2099</NoWarn>
+
+      <!-- Warnings from the framework. Can be removed once https://github.com/dotnet/runtime/issues/40336 is fixed. -->
+      <!-- Framework embedded XML descriptors reference windows-only members. -->
+      <NoWarn Condition=" !$(RuntimeIdentifier.StartsWith('win')) ">$(NoWarn);IL2008</NoWarn>
+      <!-- Unresolved type referenced in XML. -->
+      <NoWarn Condition=" !$(RuntimeIdentifier.StartsWith('win')) ">$(NoWarn);IL2009</NoWarn>
+      <!-- Unresolved member on type referenced in XML. -->
+      <!-- Framework has DynamicDependencyAttributes that reference windows-only members. -->
+      <NoWarn Condition=" !$(RuntimeIdentifier.StartsWith('win')) ">$(NoWarn);IL2037</NoWarn>
+      <!-- Unresolved member for DynamicDependencyAttribute -->
+      <!-- Framework embedded XML descriptors reference 32-bit-only members. -->
+      <NoWarn Condition=" '$(PlatformTarget)' != 'x64' AND '$(PlatformTarget)' != 'arm64'">$(NoWarn);IL2009;IL2012</NoWarn>
+      <!-- Unresolved field referenced in XML -->
+    </PropertyGroup>
+
+    <!-- Set a default value for TrimmerRemoveSymbols unless set explicitly. -->
+    <PropertyGroup Condition=" '$(TrimmerRemoveSymbols)' == '' ">
+      <!-- The default is to remove symbols when debugger support is disabled, and keep them otherwise. -->
+      <TrimmerRemoveSymbols Condition=" '$(DebuggerSupport)' == 'false' ">true</TrimmerRemoveSymbols>
+      <TrimmerRemoveSymbols Condition=" '$(DebuggerSupport)' != 'false' ">false</TrimmerRemoveSymbols>
+    </PropertyGroup>
+
+  </Target>
+
+  <PropertyGroup>
+    <ILLinkOutputDir>$(IntermediateOutputPath)illink\</ILLinkOutputDir>
+  </PropertyGroup>
+
+
+  <Target Name="ILLinkLib"
+          AfterTargets="CoreCompile"
+          BeforeTargets="ILRepacker"
+          DependsOnTargets="ComputeILLinkProps">
+    <!--Inputs="@(IntermediateAssembly);@(ReferenceCopyLocalPaths)"
+    Outputs="@(IntermediateAssembly->'$(ILLinkOutputDir)%(Filename)%(Extension)');@(ReferenceCopyLocalPaths->'$(ILLinkOutputDir)%(Filename)%(Extension)')"-->
+
+    <Message Importance="normal" Text="ILLinkLib @(IntermediateAssembly)" />
+    <Message Importance="low" Text="copylocal @(ReferenceCopyLocalPaths)" />
+
+    <ItemGroup>
+      <_LinkInputAssemblies Include="@(IntermediateAssembly)" />
+      <_LinkInputAssemblies Include="@(ReferenceCopyLocalPaths)" />
+    </ItemGroup>
+
+    <!-- When running from Desktop MSBuild, DOTNET_HOST_PATH is not set.
+         In this case, explicitly specify the path to the dotnet host. -->
+    <PropertyGroup Condition=" '$(DOTNET_HOST_PATH)' == '' ">
+      <_DotNetHostDirectory>$(NetCoreRoot)</_DotNetHostDirectory>
+      <_DotNetHostFileName>dotnet</_DotNetHostFileName>
+      <_DotNetHostFileName Condition=" '$(OS)' == 'Windows_NT' ">dotnet.exe</_DotNetHostFileName>
+    </PropertyGroup>
+
+    <ILLink AssemblyPaths="@(_LinkInputAssemblies)"
+            ReferenceAssemblyPaths="@(ReferencePath)"
+            RootAssemblyNames="$(AssemblyName)"
+            OutputDirectory="$(ILLinkOutputDir)"
+            TrimMode="$(TrimMode)"
+            RemoveSymbols="$(TrimmerRemoveSymbols)"
+
+            Warn="$(ILLinkWarningLevel)"
+            NoWarn="$(NoWarn)"
+            TreatWarningsAsErrors="$(ILLinkTreatWarningsAsErrors)"
+            WarningsAsErrors="$(WarningsAsErrors)"
+            WarningsNotAsErrors="$(WarningsNotAsErrors)"
+            
+            ToolExe="$(_DotNetHostFileName)"
+            ToolPath="$(_DotNetHostDirectory)"
+            ContinueOnError="ErrorAndContinue"
+            ExtraArgs="$(_ExtraTrimmerArgs)" />
+
+    <ItemGroup>
+      <_LinkOutputAssemblies Include="$(ILLinkOutputDir)**\*" />
+      <_LinkOutputIntermediaryAssembly Include="@(IntermediateAssembly->'$(ILLinkOutputDir)%(Filename)%(Extension)')" />
+      <_LinkOutputAssemblies Remove="@(_LinkOutputIntermediaryAssembly)" />
+      <IntermediateAssembly Remove="@(IntermediateAssembly)" />
+      <IntermediateAssembly Include="@(_LinkOutputIntermediaryAssembly)" />
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" />
+      <ReferenceCopyLocalPaths Include="@(_LinkOutputAssemblies)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <FileWrites Include="@(_LinkOutputAssemblies);@(_LinkOutputIntermediaryAssembly)" />
+    </ItemGroup>
+
+  </Target>
+
+  <PropertyGroup>
+    <ILRepackOutputDir>$(IntermediateOutputPath)ilrepack\</ILRepackOutputDir>
+    <ILRepackOutput>$(ILRepackOutputDir)$(AssemblyName)$(TargetExt)</ILRepackOutput>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ILRepack" Version="2.*">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <Target Name="ILRepacker"
+          AfterTargets="ILLinkLib;CoreCompile"
+          Condition="'$(SkipILRepack)' != 'true'">
+    <!--Inputs="$(MSBuildAllProjects);@(_LinkOutputAssemblies)"
+    Outputs="$(ILRepackOutput)"-->
+
+    <Message Importance="normal" Text="ILRepacker @(IntermediateAssembly)" />
+    <Message Importance="low" Text="copylocal @(ReferenceCopyLocalPaths)" />
+
+    <ItemGroup>
+      <_RepackInputAssemblies Include="@(IntermediateAssembly)" Condition="'%(Extension)' == '.dll'" />
+      <_RepackInputAssemblies Include="@(ReferenceCopyLocalPaths)" Condition="'%(Extension)' == '.dll'" />
+      <_RepackCopyFiles Include="@(_LinkOutputAssemblies)" Condition="'%(Extension)' != '.dll'" />
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(IntermediateOutputPath)ilrepack.exclusions" Encoding="UTF-8" Lines="@(ExcludeFromInternalize)" Overwrite="true" />
+    
+    <ItemGroup>
+      <FileWrites Include="$(IntermediateOutputPath)ilrepack.exclusions" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ILRCmdArg Include="-union" />
+      <_ILRCmdArg Include="-xmldocs" />
+      <_ILRCmdArg Include="-internalize:$(IntermediateOutputPath)ilrepack.exclusions" />
+      <_ILRCmdArg Include="-allowdup:%(AllowRepackDuplicateType.Identity)" Condition="'@(AllowRepackDuplicateType)' != ''" />
+      <_ILRCmdArg Include="-out:$(ILRepackOutput)" />
+      <_ILRCmdArg Include="%(_RepackInputAssemblies.Identity)" />
+    </ItemGroup>
+
+    <!-- TODO: make sure this behaves on Unix -->
+    <Exec ConsoleToMsBuild="true"
+          Command="$(ILRepack) @(_ILRCmdArg->'&quot;%(Identity)&quot;', ' ')" />
+    <!--<ILRepack
+      Parallel="true"
+      DebugInfo="true"
+      Internalize="true"
+      XmlDocumentation="true"
+      Union="true"
+      LogFile="$(ILRepackOutputDir)ilrepack.log"
+      InputAssemblies="@(_RepackInputAssemblies)"
+      InternalizeExclude="$(DoNotInternalize)"
+      TargetKind="SameAsPrimaryAssembly"
+      LibraryPath="@(ReferencePath)"
+      OutputFile="$(ILRepackOutput)"
+      />-->
+
+    <ItemGroup>
+      <IntermediateAssembly Remove="@(IntermediateAssembly)" />
+      <IntermediateAssembly Include="$(ILRepackOutput)" />
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <FileWrites Include="$(ILRepackOutput)" />
+    </ItemGroup>
+
+  </Target>
+
+  <!-- This target is used only when we want to skip the ILRepack step for whatever reason -->
+  <Target Name="LinkedMove" AfterTargets="ILLinkLib" Condition="'$(SkipILRepack)' == 'true'">
+    <Message Importance="high" Text="LinkedMove" />
+  </Target>
+  
+</Project>

@@ -1,5 +1,7 @@
 ﻿using Hive.Models;
 using GraphQL.Types;
+using System;
+using System.Collections.Generic;
 
 namespace Hive.Graphing.Types
 {
@@ -11,8 +13,11 @@ namespace Hive.Graphing.Types
         /// <summary>
         /// Setup a ModReferenceType for GQL.
         /// </summary>
-        public ModReferenceType()
+        public ModReferenceType(IEnumerable<ICustomHiveGraph<ModReferenceType>> customGraphs)
         {
+            if (customGraphs is null)
+                throw new ArgumentNullException(nameof(customGraphs));
+
             Name = nameof(ModReference);
             Description = Resources.GraphQL.ModReference;
 
@@ -24,6 +29,9 @@ namespace Hive.Graphing.Types
                 Resources.GraphQL.ModReference_VersionRange,
                 resolve: ctx => ctx.Source.Versions.ToString()
                 );
+
+            foreach (var graph in customGraphs)
+                graph.Configure(this);
         }
     }
 }

@@ -153,7 +153,7 @@ namespace Hive.Utilities
                 => IsValueTuple = TypeIsValueTuple(Type);
 
             private static bool TypeIsValueTuple(Type type)
-                => type.FullName.StartsWith("System.ValueTuple`");
+                => type.FullName.StartsWith("System.ValueTuple`", StringComparison.InvariantCulture);
 
             private static Func<object, object?>[] MakeValueGetters(Type type)
                 => type.GetFields()

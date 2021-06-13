@@ -79,7 +79,7 @@ namespace Hive.CodeGen
                 var source = GenerateForType(type, targetingAttribute, syn, min, max, context);
                 if (source != null)
                 {
-                    context.AddSource($"Parameterized_{type.Name}_{ct++}.cs", SourceText.From(source, Encoding.UTF8));
+                    context.AddSource($"Parameterized_{type.Name}_{ct++}.g", SourceText.From(source, Encoding.UTF8)); // always add .g so that coverlet doesn't hate us
                 }
             }
 
@@ -110,10 +110,14 @@ namespace Hive.CodeGen
             foreach (var g in methods
                 .GroupBy(t => t.methSym.ContainingType, (IEqualityComparer<INamedTypeSymbol?>)SymbolEqualityComparer.Default))
             {
-                var source = GenerateForMethodsOnType(g.Key, targetingAttribute, g.AsEnumerable(), context);
-                if (source != null)
+                foreach (var h in g
+                    .GroupBy(t => t.syn.SyntaxTree.GetCompilationUnitRoot()))
                 {
-                    context.AddSource($"ParameterizedMeth_{g.Key.Name}_{ct++}.cs", SourceText.From(source, Encoding.UTF8));
+                    var source = GenerateForMethodsOnTypeInCU(h.Key, g.Key, targetingAttribute, h.AsEnumerable(), context);
+                    if (source != null)
+                    {
+                        context.AddSource($"ParameterizedMeth_{g.Key.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)}_{ct++}.g", SourceText.From(source, Encoding.UTF8));
+                    }
                 }
             }
         }
@@ -181,6 +185,8 @@ namespace Hive.CodeGen
                 isEnabledByDefault: true
             );
 
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "We report the error as a diagnostic so it may be debugged.")]
         private static string? GenerateForType(INamedTypeSymbol type, INamedTypeSymbol attribute, TypeDeclarationSyntax synType, int minParam, int maxParam, GeneratorExecutionContext context)
         {
             context.ReportDiagnostic(Diagnostic.Create(ToParameterizeType,
@@ -230,15 +236,7 @@ namespace Hive.CodeGen
 
             var sb = new StringBuilder();
 
-            foreach (var @extern in root.Externs)
-            {
-                _ = sb.Append(@extern.ToFullString());
-            }
-
-            foreach (var @using in root.Usings)
-            {
-                _ = sb.Append(@using.ToFullString());
-            }
+            _ = AppendUsings(sb, root);
 
             _ = sb.Append($@"
 namespace {type.ContainingNamespace.ToDisplayString()}
@@ -309,9 +307,27 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             return text;
         }
 
+        private static StringBuilder AppendUsings(StringBuilder sb, CompilationUnitSyntax root)
+        {
+            foreach (var @extern in root.Externs)
+            {
+                _ = sb.Append(@extern.ToFullString());
+            }
+
+            foreach (var @using in root.Usings)
+            {
+                _ = sb.Append(@using.ToFullString());
+            }
+
+            return sb;
+        }
+
         [SuppressMessage("Style", "IDE0072:Add missing cases",
             Justification = "All other cases are for types that cannot (or shouldn't be able to) have declared members with the attribute")]
-        private string? GenerateForMethodsOnType(INamedTypeSymbol type,
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We report exceptions via a diagnostic.")]
+        private static string? GenerateForMethodsOnTypeInCU(
+            CompilationUnitSyntax root,
+            INamedTypeSymbol type,
             INamedTypeSymbol attribute,
             IEnumerable<(IMethodSymbol methSym, MethodDeclarationSyntax syn, int minParam, int maxParam)> enumerable,
             GeneratorExecutionContext context)
@@ -333,6 +349,9 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             }
 
             var sb = new StringBuilder();
+
+            _ = AppendUsings(sb, root);
+
             _ = sb.Append(@$"
 namespace {type.ContainingNamespace.ToDisplayString()}
 {{
@@ -377,7 +396,8 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             return sb.ToString();
         }
 
-        private IEnumerable<MethodDeclarationSyntax> GenerateForMethod(INamedTypeSymbol attribute,
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We report exceptions via a diagnostic.")]
+        private static IEnumerable<MethodDeclarationSyntax> GenerateForMethod(INamedTypeSymbol attribute,
             IMethodSymbol methSym,
             MethodDeclarationSyntax methodSyntax,
             int minParam, int maxParam,
@@ -387,7 +407,8 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             var qualifiedSyntax = (MethodDeclarationSyntax)CloneWithoutAttributes(attribute, methodSyntax, context, semModel);
 
             // I need to do this to get a semantic model for the right method
-            var origCu = methodSyntax.SyntaxTree.GetCompilationUnitRoot();
+            // There isn't an easy way to properly qualify names without breaking stuff
+            /*var origCu = methodSyntax.SyntaxTree.GetCompilationUnitRoot();
             var qualCu = SyntaxFactory.CompilationUnit()
                 .WithMembers(SyntaxFactory.List(
                     new MemberDeclarationSyntax[] {
@@ -401,7 +422,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
             var qualCuComp = context.Compilation.AddSyntaxTrees(qualCu.SyntaxTree);
             semModel = qualCuComp.GetSemanticModel(qualCu.SyntaxTree);
             qualifiedSyntax = (MethodDeclarationSyntax)((ClassDeclarationSyntax)qualCu.Members.First()).Members.First();
-            qualifiedSyntax = (MethodDeclarationSyntax)QualifyTypeNames(qualifiedSyntax, semModel);
+            qualifiedSyntax = (MethodDeclarationSyntax)QualifyTypeNames(qualifiedSyntax, semModel);*/
 
             for (var i = minParam; i <= maxParam; i++)
             {
@@ -430,6 +451,12 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                     context.ReportDiagnostic(Diagnostic.Create(Report,
                         null,
                         $"Trivia after: {generateWith.GetLeadingTrivia().ToFullString().Replace(Environment.NewLine, "\\n")}"
+                    ));
+
+
+                    context.ReportDiagnostic(Diagnostic.Create(Report,
+                        null,
+                        generateWith.ToFullString().Replace(Environment.NewLine, "\\n")
                     ));
 
                     decl = (MethodDeclarationSyntax)GenerateInstantiation(methodSyntax.SyntaxTree, generateWith, i, context);
@@ -605,7 +632,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                 => symbol switch
                 {
                     var s when s is ITypeSymbol and not ITypeParameterSymbol
-                        => SyntaxFactory.ParseName(s.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+                        => SyntaxFactory.ParseTypeName(s.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
                             .WithLeadingTrivia(SyntaxFactory.SyntaxTrivia(SyntaxKind.WhitespaceTrivia, " "))
                             .WithTrailingTrivia(SyntaxFactory.SyntaxTrivia(SyntaxKind.WhitespaceTrivia, " ")),
                     IMethodSymbol m when !m.IsExtensionMethod

@@ -261,11 +261,11 @@ namespace Hive.Versioning
             => a < b ? a : b;
 
         /// <summary>
-        /// Compares <see langword="this"/> version to <paramref name="o"/> for equality.
+        /// Compares <see langword="this"/> version to <paramref name="obj"/> for equality.
         /// </summary>
-        /// <param name="o">The object to compare to.</param>
+        /// <param name="obj">The object to compare to.</param>
         /// <returns><see langword="true"/> if they are equal, <see langword="false"/> otherwise.</returns>
-        public override bool Equals(object o) => o is Version v && Equals(v);
+        public override bool Equals(object obj) => obj is Version v && Equals(v);
 
         /// <summary>
         /// Gets the hash code of this <see cref="Version"/>.
@@ -287,7 +287,7 @@ namespace Hive.Versioning
         /// </summary>
         /// <param name="other">The version to compare to.</param>
         /// <returns><see langword="true"/> if the versions are equal, <see langword="false"/> otherwise.</returns>
-        public bool Equals(Version other)
+        public bool Equals(Version? other)
             => !(other is null)
             && Major == other.Major && Minor == other.Minor && Patch == other.Patch
             && prereleaseIds.Length == other.prereleaseIds.Length
@@ -299,9 +299,9 @@ namespace Hive.Versioning
         /// <param name="other">The version to compare to.</param>
         /// <returns>Less than zero if <see langword="this"/> is less than <paramref name="other"/>, zero if they are equal, and
         /// more than zero if <see langword="this"/> is greater than <paramref name="other"/></returns>
-        public int CompareTo(Version other)
+        public int CompareTo(Version? other)
         {
-            if (other is null) throw new ArgumentNullException(nameof(other));
+            if (other is null) return 1;
 
             var val = Major.CompareTo(other.Major);
             if (val != 0) return val;
@@ -590,7 +590,7 @@ namespace Hive.Versioning
             return hasNonDigit;
         }
 
-        private static bool TryParseNumId(ref StringPart text, out ulong num)
+        internal static bool TryParseNumId(ref StringPart text, out ulong num)
         {
             var copy = text;
             if (TryReadNumId(ref text, out var id))

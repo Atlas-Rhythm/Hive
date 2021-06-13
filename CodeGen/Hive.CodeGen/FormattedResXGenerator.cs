@@ -103,7 +103,7 @@ namespace Hive.CodeGen
                         null,
                         result.Replace(Environment.NewLine, "\\n")
                     ));
-                    context.AddSource($"{ns}.{name}_resx", SourceText.From(result, Encoding.UTF8));
+                    context.AddSource($"{ns}.{name}_resx.g", SourceText.From(result, Encoding.UTF8)); // always add .g so that coverlet doesn't hate us
                 }
             }
         }
