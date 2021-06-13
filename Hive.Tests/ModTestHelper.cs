@@ -48,6 +48,7 @@ namespace Hive.Tests
                         return true;
 
                     case "hive.mod":
+                    case "hive.mods":
                         gotten = new Rule(nameString, permissionRule);
                         return true;
 
