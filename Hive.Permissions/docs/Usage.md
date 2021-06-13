@@ -26,7 +26,8 @@ type `TContext` (the type parameter to the PermissionsManager), and all fields, 
 defined on that type are accessible as long as they are public. It is important to remember that the expressions
 are ***not*** C# expressions, but instead a DSL implemented by [MathExpr](https://github.com/nike4613/MathExpr).
 It was originally written to compile and evaluate mathematical expressions, and so the operators' spelling is
-catered primarily to that.
+catered primarily to that. These expressions are entirely statically typed, however all types are implicit,
+though you can force a value to a specific type using the [`cast()`](Builtins.md#cast_type_value_) builtin.
 
 For example, most boolean operators are represented using their single character rather than a double (ex. `&`
 instead of `&&`, `|` instead of `||`), negation is represented by `~` and can be prepended to a boolean operator
