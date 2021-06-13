@@ -77,7 +77,6 @@ namespace Hive
                 .AddScoped<GameVersionService>()
                 .AddScoped<DependencyResolverService>()
                 .AddAggregates()
-                .AddHiveQLTypes()
                 .AddHiveGraphQL();
 
             if (Configuration.GetValue<bool>("UseRateLimiting"))

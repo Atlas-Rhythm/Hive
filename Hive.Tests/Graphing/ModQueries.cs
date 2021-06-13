@@ -84,15 +84,12 @@ namespace Hive.Tests.Graphing
                 .AddScoped<ChannelService>()
                 .AddScoped<ModService>()
                 .AddAggregates()
-                .AddHiveQLTypes()
                 .AddHiveGraphQL();
 
             return services.BuildServiceProvider();
         }
 
         private static T FindAndCastDataObject<T>(ExecutionResult result, string propertyName)
-        {
-            return JsonSerializer.Deserialize<T>(JsonDocument.Parse(JsonSerializer.Serialize(result.Data)).RootElement.GetProperty(propertyName).GetRawText(), new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
-        }
+            => JsonSerializer.Deserialize<T>(JsonDocument.Parse(JsonSerializer.Serialize(result.Data)).RootElement.GetProperty(propertyName).GetRawText(), new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
     }
 }

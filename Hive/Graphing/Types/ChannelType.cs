@@ -18,8 +18,11 @@ namespace Hive.Graphing.Types
         /// <summary>
         /// Setup a ChannelType for GQL.
         /// </summary>
-        public ChannelType()
+        public ChannelType(IEnumerable<ICustomHiveGraph<ChannelType>> customGraphs)
         {
+            if (customGraphs is null)
+                throw new ArgumentNullException(nameof(customGraphs));
+
             Name = nameof(Channel);
             Description = Resources.GraphQL.Channel;
 
@@ -27,6 +30,9 @@ namespace Hive.Graphing.Types
                 .Description(Resources.GraphQL.Channel_Name);
 
             _ = Field<ListGraphType<ModType>, IEnumerable<Mod>>().Name("mods").ResolveAsync(GetChannelMods);
+
+            foreach (var graph in customGraphs)
+                graph.Configure(this);
         }
 
         private async Task<IEnumerable<Mod>> GetChannelMods(IResolveFieldContext<Channel> ctx)

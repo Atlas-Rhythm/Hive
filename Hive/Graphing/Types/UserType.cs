@@ -19,8 +19,11 @@ namespace Hive.Graphing.Types
         /// <summary>
         /// Setup a UserType for GQL.
         /// </summary>
-        public UserType()
+        public UserType(IEnumerable<ICustomHiveGraph<UserType>> customGraphs)
         {
+            if (customGraphs is null)
+                throw new ArgumentNullException(nameof(customGraphs));
+
             Name = nameof(User);
             Description = Resources.GraphQL.User;
 
@@ -41,6 +44,9 @@ namespace Hive.Graphing.Types
                 .Name("authoredFor").AddModFilters()
                 .Description(Resources.GraphQL.User_AuthoredFor)
                 .ResolveAsync((ctx) => GetAllModsFromUser(ctx, mod => mod.Authors.Any(author => author.Username == ctx.Source.Username)));
+
+            foreach (var graph in customGraphs)
+                graph.Configure(this);
         }
 
         private static async Task<IEnumerable<Mod>> GetAllModsFromUser(IResolveFieldContext<User> ctx, Func<Mod, bool> searchFunc)
@@ -48,12 +54,12 @@ namespace Hive.Graphing.Types
             (var modService, var http, var authService)
                 = ctx.RequestServices.GetRequiredServices<ModService, IHttpContextAccessor, IProxyAuthenticationService>();
 
-            var filterType = ctx.GetArgument("filter", ModType.Filter.Latest).ToString();
+            //var filterType = ctx.GetArgument("filter", ModType.Filter.Latest).ToString();
             var channels = ctx.GetArgument<IEnumerable<string>?>("channelIds");
             var gameVersion = ctx.GetArgument<string?>("gameVersion");
 
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
-            var queryResult = await modService.GetAllMods(user, channels?.ToArray(), gameVersion, filterType).ConfigureAwait(false);
+            var queryResult = await modService.GetAllMods(user, channels?.ToArray(), gameVersion, "Latest").ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
             return queryResult.Value?.Where(searchFunc) ?? Array.Empty<Mod>();

@@ -1,7 +1,8 @@
-﻿using Hive.Models;
-using GraphQL.Types;
-using GraphQL.Builders;
+﻿using System;
 using System.Collections.Generic;
+using GraphQL.Types;
+using Hive.Models;
+using static Hive.Graphing.Types.ModType;
 
 namespace Hive.Graphing.Types
 {
@@ -13,8 +14,11 @@ namespace Hive.Graphing.Types
         /// <summary>
         /// Setup a ModType for GQL.
         /// </summary>
-        public ModType()
+        public ModType(IEnumerable<ICustomHiveGraph<ModType>> customGraphs)
         {
+            if (customGraphs is null)
+                throw new ArgumentNullException(nameof(customGraphs));
+
             Name = nameof(Mod);
             Description = Resources.GraphQL.Mod;
 
@@ -84,6 +88,9 @@ namespace Hive.Graphing.Types
                 Resources.GraphQL.Mod_DownloadLink,
                 resolve: context => context.Source.DownloadLink.ToString()
             );
+
+            foreach (var graph in customGraphs)
+                graph.Configure(this);
         }
 
         /// <summary>
@@ -107,4 +114,18 @@ namespace Hive.Graphing.Types
             Latest
         }
     }
+
+    /*public class FilterEnumType : EnumerationGraphType<Filter>
+    {
+        public FilterEnumType(IEnumerable<ICustomHiveGraph<FilterEnumType>> customGraphs)
+        {
+            if (customGraphs is null)
+                throw new ArgumentNullException(nameof(customGraphs));
+
+            Description = "The different order filters for querying mods.";
+
+            foreach (var graph in customGraphs)
+                graph.Configure(this);
+        }
+    }*/
 }
