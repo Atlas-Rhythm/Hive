@@ -19,4 +19,5 @@ may be described in one of 3 ways:
 For example, if you wanted to cast a value to a `double`, you could write `cast(double, value)`, and if you
 wanted to cast a value to `System.Type`, you would write `cast(System.Type, value)`, but if you wanted to cast
 to some custom type, like `HivePlugin.PermissionContext` (in assembly `HivePlugin`), you would have to write
-`cast("HivePlugin.PermissionContext, HivePlugin", value)`.
+`cast("HivePlugin.PermissionContext, HivePlugin", value)`. Casting behaviour is mostly the same as in C#, but
+it also follows conversion chains (through implicit and explicit conversions) to get to the target.
