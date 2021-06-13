@@ -117,7 +117,7 @@ namespace Hive.Services
 
         /// <inheritdoc/>
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We return null from this on ANY exception type instead of forwarding it to our callers.")]
-        public async Task<User?> GetUser(HttpRequest request)
+        public async Task<User?> GetUser(HttpRequest? request)
         {
             if (request is null)
                 // If we have a null request, we return a null user. This is the same as an unauthorized request.

@@ -14,7 +14,7 @@ namespace Hive.Services
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public Task<User?> GetUser(HttpRequest request);
+        public Task<User?> GetUser(HttpRequest? request);
 
         /// <summary>
         /// Returns a <see cref="User"/> from a user ID, should not throw any exceptions.
