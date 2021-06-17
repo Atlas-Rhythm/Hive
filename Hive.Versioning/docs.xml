@@ -48,7 +48,18 @@
         or a version with some numbers substituted with an asterisk. Once an element has been substituted, however, any following elements must
         either not be present or be a star themselves. Prereleases and build ids cannot be specified when using star syntax. For example,
         <c>*</c> is valid, <c>*.3</c> is not. <c>1.*</c> and <c>1.*.*</c> are valid (and equivalent), but <c>1.*.2</c> is not. <c>1.2.*</c> is
-        valid, but <c>1.2.*-pre.1</c> is not. Importantly, <c>*.*.*</c> or anything similar is also not valid. Just use <c>*</c>.
+        valid, but <c>1.2.*-pre.1</c> is not. Importantly, <c>*.*.*</c> or anything similar is also not valid. Just use <c>*</c>. In all cases
+        except the singular <c>*</c>, any <c>*</c> may also be an <c>x</c> or <c>X</c>.
+      </para>
+      <para>
+        A bounded regioon may also be specified using hyphen syntax, though it is generally not recommended, as it is not always clear to a reader
+        what exactly is meant, and is remarkably easy to mess up. The syntax for this is <c>1.2.3 - 4.5.6</c>, of course substituting <c>1.2.3</c>
+        and <c>4.5.6</c> with any valid version. The space before is <b>required</b>. This is important. the space <i>after the first version,
+        before the hyphen, is</i> <b>required</b>. This is because <c>1.2.3-4.5.6</c> is a valid, and <i>complete</i>, version, causing the parser
+        to try to read the first version in the hyphen range, then hit the end of input instead of a hyphen and back out, eventually rejecting the
+        range altogether, because <b>a version by itself is not a valid version range</b>. <c>1.2.3- 4.5.6</c> is also not valid, because it
+        is an <i>incomplete</i> version followed by a complete, simple version. Since incomplete versions are rejected, it means that this attempts
+        to parse a first version, fails, and tries other forms a range can take before eventually failing out.
       </para>
     </syntax>
   </class>

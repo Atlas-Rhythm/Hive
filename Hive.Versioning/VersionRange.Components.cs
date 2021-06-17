@@ -816,6 +816,11 @@ namespace Hive.Versioning
 
                 // first we check for a star range
                 if (TryReadStarRange(ref text, out subrange)) return true;
+                // then we check for a hyphen range
+                if (TryReadHyphenRange(ref text, out subrange)) return true;
+
+                //---EVERYTHING AFTER THIS POINT HAS A SPECIAL FIRST CHARACTER---\\
+
                 // then we check for a ^ range
                 if (TryReadCaretRange(ref text, out subrange)) return true;
 
@@ -890,6 +895,36 @@ namespace Hive.Versioning
                 return true;
             }
 
+            private static bool TryReadHyphenRange(ref StringPart text, out Subrange range)
+            {
+                var copy = text;
+                if (!Version.TryParse(ref text, out var lowVersion))
+                {
+                    range = default;
+                    text = copy;
+                    return false;
+                }
+
+                text = text.TrimStart();
+                if (!TryTake(ref text, '-'))
+                {
+                    range = default;
+                    text = copy;
+                    return false;
+                }
+                text = text.TrimStart();
+
+                if (!Version.TryParse(ref text, out var highVersion))
+                {
+                    range = default;
+                    text = copy;
+                    return false;
+                }
+
+                range = new(new(lowVersion, ComparisonType.GreaterEqual), new(highVersion, ComparisonType.LessEqual));
+                return true;
+            }
+
             private static bool TryReadStarRange(ref StringPart text, out Subrange range)
             {
                 var copy = text;
@@ -900,13 +935,16 @@ namespace Hive.Versioning
                     return false;
                 }
 
+                static bool TryTakePlaceholder(ref StringPart text)
+                    => TryTake(ref text, '*') || TryTake(ref text, 'x') || TryTake(ref text, 'X');
+
                 // at this point, we *know* that we have a star range
-                if (TryTake(ref text, '*'))
+                if (TryTakePlaceholder(ref text))
                 {
                     copy = text;
                     // try to read another star
                     if (!TryTake(ref text, '.')
-                        || !TryTake(ref text, '*'))
+                        || !TryTakePlaceholder(ref text))
                     {
                         // if we can't, that's fine, just rewind to copy
                         // this might be something else
@@ -930,7 +968,7 @@ namespace Hive.Versioning
                 }
 
                 // if our last thing isn't a star, then this isn't a star range
-                if (!TryTake(ref text, '*'))
+                if (!TryTakePlaceholder(ref text))
                 {
                     text = copy;
                     range = default;

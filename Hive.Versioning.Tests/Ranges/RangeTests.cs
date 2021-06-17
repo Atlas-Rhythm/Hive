@@ -329,7 +329,20 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData("<1.0.0 || ^2.0.0 || >4.0.0", "^2.0.0 || <1.0.0 || >4.0.0", true)]
         [InlineData("1.*", ">=1.0.0 <2.0.0", true)]
         [InlineData("1.*.*", ">=1.0.0 <2.0.0", true)]
+        [InlineData("1.*.x", ">=1.0.0 <2.0.0", true)]
+        [InlineData("1.*.X", ">=1.0.0 <2.0.0", true)]
+        [InlineData("1.x.*", ">=1.0.0 <2.0.0", true)]
+        [InlineData("1.X.*", ">=1.0.0 <2.0.0", true)]
         [InlineData("1.2.*", ">=1.2.0 <1.3.0", true)]
+        [InlineData("1.x", ">=1.0.0 <2.0.0", true)]
+        [InlineData("1.x.x", ">=1.0.0 <2.0.0", true)]
+        [InlineData("1.X.x", ">=1.0.0 <2.0.0", true)]
+        [InlineData("1.x.X", ">=1.0.0 <2.0.0", true)]
+        [InlineData("1.2.x", ">=1.2.0 <1.3.0", true)]
+        [InlineData("1.X", ">=1.0.0 <2.0.0", true)]
+        [InlineData("1.X.X", ">=1.0.0 <2.0.0", true)]
+        [InlineData("1.2.X", ">=1.2.0 <1.3.0", true)]
+        [InlineData("1.2.3 - 2.3.4", ">=1.2.3 <=2.3.4", true)]
         public void TestEquality(string Sa, string Sb, bool equal)
         {
             Assert.True(VersionRange.TryParse(Sa, out var a));
