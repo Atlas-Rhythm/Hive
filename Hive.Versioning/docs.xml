@@ -3,32 +3,42 @@
   <class name="VersionRange">
     <syntax>
       <para>
-        A valid <see cref="VersionRange"/> string is made up of a set of disjoint regions joined by <c>||</c>. 
+        A valid <see cref="T:Hive.Versioning.VersionRange"/> string is made up of a set of disjoint regions joined by <c>||</c>. 
         These regions can be either bounded or unbounded.
         <br/>A bounded region is a pair of unbounded regions separated by whitespace, such that both unbounded regions overlap, 
         and the unbounded region whose written value is lower comes first.
-        <br/>An unbounded region is any valid <see cref="Version"/> prefixed with one of the following comparison operators:
+        <br/>An unbounded region is any valid <see cref="T:Hive.Versioning.Version"/> prefixed with one of the following comparison operators:
       </para>
       <list type="table">
         <item>
           <term><c>&gt;=</c></term>
-          <description>The unbounded range matches any <see cref="Version"/> greater than or equal to its specified <see cref="Version"/>.</description>
+          <description>
+            The unbounded range matches any <see cref="T:Hive.Versioning.Version"/> greater than or equal to its specified<see cref="T:Hive.Versioning.Version"/>.
+          </description>
         </item>
         <item>
           <term><c>&lt;=</c></term>
-          <description>The unbounded range matches any <see cref="Version"/> less than or equal to its specified <see cref="Version"/>.</description>
+          <description>
+            The unbounded range matches any <see cref="T:Hive.Versioning.Version"/> less than or equal to its specified <see cref="T:Hive.Versioning.Version"/>.
+          </description>
         </item>
         <item>
           <term><c>&gt;</c></term>
-          <description>The unbounded range matches any <see cref="Version"/> greater than its specified <see cref="Version"/>.</description>
+          <description>
+            The unbounded range matches any <see cref="T:Hive.Versioning.Version"/> greater than its specified <see cref="T:Hive.Versioning.Version"/>.
+          </description>
         </item>
         <item>
           <term><c>&lt;</c></term>
-          <description>The unbounded range matches any <see cref="Version"/> less than its specified <see cref="Version"/>.</description>
+          <description>
+            The unbounded range matches any <see cref="T:Hive.Versioning.Version"/> less than its specified <see cref="T:Hive.Versioning.Version"/>.
+          </description>
         </item>
         <item>
           <term><c>=</c></term>
-          <description>The range matches only the <see cref="Version"/> that it is specified with.</description>
+          <description>
+            The range matches only the <see cref="T:Hive.Versioning.Version"/> that it is specified with.
+          </description>
         </item>
       </list>
       <para>Note that unbounded ranges using the <c>=</c> comparison operator cannot be part of a bounded region.</para>
@@ -37,9 +47,24 @@
         <item>
           <term><c>^</c></term>
           <description>
-            The bounded range matches all versions greater than or equal to its specified <see cref="Version"/> and less than the next major incremented
+            The bounded range matches all versions greater than or equal to its specified <see cref="T:Hive.Versioning.Version"/> and less than the next major incremented
             version. For example, <c>^1.5.4</c> would be equivalent to the bounded range <c>&gt;=1.5.4 &lt;2.0.0</c>, while <c>^0.4.2</c> would be equivalent
             to <c>&gt;=0.4.2 &lt;0.5.0</c>.
+          </description>
+        </item>
+      </list>
+      <para>There are also a few special ranges:</para>
+      <list type="table">
+        <item>
+          <term><c>*</c></term>
+          <description>
+            The <see cref="P:Hive.Versioning.VersionRange.Everything"/> range. This range matches every possible version.
+          </description>
+        </item>
+        <item>
+          <term><c>z</c> or <c>Z</c></term>
+          <description>
+            The <see cref="P:Hive.Versioning.VersionRange.Nothing"/> range. This range matches nothing.
           </description>
         </item>
       </list>

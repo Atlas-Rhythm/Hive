@@ -525,6 +525,12 @@ namespace Hive.Versioning
         {
             if (sb is null) throw new ArgumentNullException(nameof(sb));
 
+            // special case handling for the nothing range
+            if (subranges.Length == 0 && additionalComparer is null)
+            {
+                return sb.Append('Z');
+            }
+
             for (var i = 0; i < subranges.Length; i++)
             {
                 _ = subranges[i].ToString(sb);
@@ -616,7 +622,7 @@ namespace Hive.Versioning
         /// <remarks>
         /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
         /// </remarks>
-        /// <param name="text">The stirng to parse.</param>
+        /// <param name="text">The string to parse.</param>
         /// <returns>The parsed <see cref="VersionRange"/>.</returns>
         /// <seealso cref="TryParse(StringPart, out VersionRange)"/>
         /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid <see cref="VersionRange"/>.</exception>
@@ -677,6 +683,12 @@ namespace Hive.Versioning
                 range = Everything;
                 return true;
             }
+            // check for empty subranges list, signifying the nothing range
+            if (srs.Length == 0 && compare is null)
+            {
+                range = Nothing;
+                return true;
+            }
 
             range = new VersionRange(srs, compare);
             return true;
@@ -694,6 +706,13 @@ namespace Hive.Versioning
             if (TryTake(ref text, '*'))
             {
                 sranges = EverythingSubranges;
+                return true;
+            }
+
+            // then check for the "nothing" range, which is z or Z
+            if (TryTake(ref text, 'z') || TryTake(ref text, 'Z'))
+            {
+                sranges = Array.Empty<Subrange>();
                 return true;
             }
 

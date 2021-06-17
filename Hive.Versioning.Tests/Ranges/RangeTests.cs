@@ -291,6 +291,9 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData("^0.1.5")]
         [InlineData("=1.0.0 || <=2.0.0")]
         [InlineData("=1.0.0 || >=2.0.0")]
+        [InlineData("z")]
+        [InlineData("Z")]
+        [InlineData("*")]
         [InlineData("=9.0.0-0.8.0||=1.0.0-q0.-0.0.0-0||=1.0.0-q0.0||=1.0.0-0||=1.0.0||=1.0.0||=1.0.0-q0.1.0.0--||=1.0.0||=1.0.0-0.0.0-0.0.-0.0.0||=1.0.0-q0.-0||=1.0.0-0||=1.0.0-q0.0||" +
             "=1.0.0-0||=1.0.0||=1.0.0-0.0.0||=1.0.0-q0.1.0.0--||=1.0.0||=1.0.0-0.0.-0||=1.0.0-0-10||=1.0.0-0||=1.0.0-q0.0||=1.0.0-0||=1.0.0||=1.0.0-0.0.0||=1.0.0-q0.1.0.0--||=1.0.0||=" +
             "1.0.0-0.0.-0||=1.0.0-0-1.0||=1.0.0-0.0.-0||=1.0.0-0.0-0.0.0||=1.0.0-q0.0-0||=1.0.0-0-1.0||=1.0.0-0.0.-0||=1.0.0-0.0-0.0.0||=1.0.0-q0||=1.0.0-0||=1.0.0-q0.0||=1.0.0||=1.0." +
@@ -343,6 +346,7 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData("1.X.X", ">=1.0.0 <2.0.0", true)]
         [InlineData("1.2.X", ">=1.2.0 <1.3.0", true)]
         [InlineData("1.2.3 - 2.3.4", ">=1.2.3 <=2.3.4", true)]
+        [InlineData("z", "Z", true)]
         public void TestEquality(string Sa, string Sb, bool equal)
         {
             Assert.True(VersionRange.TryParse(Sa, out var a));
@@ -390,6 +394,8 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData("^1.0.0 || <0.1.0", ">=0.1.0 <1.0.0 || >=2.0.0")]
         [InlineData("^1.0.0 || ^3.0.0", "<1.0.0 || >=2.0.0 <3.0.0 || >=4.0.0")]
         [InlineData("^1.0.0 || ^3.0.0 || ^5.0.0", "<1.0.0 || >=2.0.0 <3.0.0 || >=4.0.0 <5.0.0 || >=6.0.0")]
+        [InlineData("z", "*")]
+        [InlineData("Z", "*")]
         public void TestInverse(string Sinr, string Sexpect)
         {
             Assert.True(VersionRange.TryParse(Sinr, out var inr));
