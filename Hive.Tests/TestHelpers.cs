@@ -1,11 +1,9 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using Hive.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
-using Moq;
 
 namespace Hive.Tests
 {
@@ -57,19 +55,11 @@ namespace Hive.Tests
 
         internal static HttpContext CreateMockRequest(Stream body)
         {
-            var requestMoq = new Mock<HttpRequest>();
-            requestMoq.SetupGet(r => r.Body).Returns(body);
-            requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
-                new Dictionary<string, StringValues>()
-                {
-                    { HeaderNames.Authorization, new StringValues("Bearer: test") }
-                })
-            );
+            var context = new DefaultHttpContext();
+            context.Request.Headers.Add(HeaderNames.Authorization, new StringValues("Bearer: test"));
+            context.Request.Body = body;
 
-            var contextMoq = new Mock<HttpContext>();
-            contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
-
-            return contextMoq.Object;
+            return context;
         }
     }
 }
