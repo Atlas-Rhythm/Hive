@@ -60,7 +60,6 @@ namespace Hive
             rootRestrictionNode = new Node();
 
             // This configuration option is simply a list of routes ("/api/mod", "/api/upload", etc.)
-            // REVIEW: Should I handle cases like "/api/mod/{id}/latest"? How would I go about doing that?
             var restrictedRoutes = configuration.GetSection("RestrictedRoutes").Get<List<string>>();
 
             foreach (var route in restrictedRoutes)
