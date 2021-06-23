@@ -55,6 +55,8 @@ namespace Hive.Tests
 
         internal static HttpContext CreateMockRequest(Stream body)
         {
+            // I've changed this from using Moq to the DefaultHttpContext as the GuestRestrictionMiddleware
+            // requires access to more advanced parts of an HttpContext that can't be replicated with Moq.
             var context = new DefaultHttpContext();
             context.Request.Headers.Add(HeaderNames.Authorization, new StringValues("Bearer: test"));
             context.Request.Body = body;
