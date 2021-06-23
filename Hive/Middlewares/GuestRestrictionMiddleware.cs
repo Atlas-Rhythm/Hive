@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Hive.Services;
+using Hive.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +18,11 @@ namespace Hive
     /// </summary>
     public class GuestRestrictionMiddleware
     {
+        private static readonly StringView routeSeparator = new("/");
+        private static readonly StringView wildcardToken = new("*");
+        private const char cascadingSuffix = '/';
+        private const char explicitUnrestrictedPrefix = '!';
+
         private static readonly JsonSerializerOptions serializerOptions = new()
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
@@ -26,7 +31,7 @@ namespace Hive
         private readonly RequestDelegate next;
         private readonly Serilog.ILogger logger;
         private readonly IProxyAuthenticationService auth;
-        private readonly IList<string> restrictedRoutes;
+        private readonly Node rootRestrictionNode;
 
         /// <summary>
         /// Creates a Middleware instance using DI.
@@ -43,13 +48,25 @@ namespace Hive
                 throw new ArgumentNullException(nameof(logger));
             }
 
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+
             this.next = next;
             this.logger = logger.ForContext<GuestRestrictionMiddleware>();
             this.auth = auth;
 
+            rootRestrictionNode = new Node();
+
             // This configuration option is simply a list of routes ("/api/mod", "/api/upload", etc.)
             // REVIEW: Should I handle cases like "/api/mod/{id}/latest"? How would I go about doing that?
-            restrictedRoutes = configuration.GetValue<List<string>>("RestrictedRoutes");
+            var restrictedRoutes = configuration.GetSection("RestrictedRoutes").Get<List<string>>();
+
+            foreach (var route in restrictedRoutes)
+            {
+                DecomposeRouteIntoNodeTree(route);
+            }
         }
 
         /// <summary>
@@ -59,6 +76,7 @@ namespace Hive
         /// </summary>
         /// <param name="httpContext"></param>
         /// <returns></returns>
+        // TODO: Document this new behavior
         public async Task Invoke(HttpContext httpContext)
         {
             if (httpContext is null)
@@ -66,41 +84,200 @@ namespace Hive
                 throw new ArgumentNullException(nameof(httpContext));
             }
 
-            // Grab the route the user is wanting to access
-            var route = httpContext.Request.Path.Value!;
-
-            // We do not bother with extra computations if the request is already processed, or our route is not restricted.
-            // REVIEW: Is IEnumerable.Contains() even the best way to go about this?
-            if (!httpContext.Response.HasStarted && restrictedRoutes.Contains(route, StringComparer.InvariantCultureIgnoreCase))
+            if (!httpContext.Response.HasStarted)
             {
-                // See if we can obtain user information from the request
-                // REVIEW: We already have to grab our user here. Can/should I find a way to pass this User object down to the controller/services?
-                var user = await auth.GetUser(httpContext.Request).ConfigureAwait(false);
+                // Grab the route the user is wanting to access (and remove case sensitivity while we're at it)
+                var route = httpContext.Request.Path.Value!.ToUpperInvariant();
 
-                // If the user is not authenticated, and trying to access a restricted endpoint, return 401 Unauthorized.
-                if (user == null)
+                // Split our route into the individual components
+                var routeView = new StringView(route);
+                var routeComponents = routeView.Split(routeSeparator);
+
+                var currentNode = rootRestrictionNode;
+                Node? cascadingNode = null;
+
+                // Let's iterate down the chain and find which node we should use.
+                foreach (var component in routeComponents)
                 {
-                    // REVIEW: Should this string be integrated into Resources?
-                    logger.Error("Non-authenticated user prevented access to {0}", route);
-
-                    httpContext.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                    httpContext.Response.ContentType = "application/json";
-
-                    var jsonException = new JsonApiException
+                    // Keep going down the chain if we can safely do so.
+                    if (currentNode!.Children.ContainsKey(component))
                     {
-                        StatusCode = httpContext.Response.StatusCode,
-                        // REVIEW: Should this string be integrated into Resources?
-                        Message = "You must be logged in to gain access."
-                    };
+                        // If this node happens to cascade, we save it for later.
+                        if (currentNode.CascadesToChildren)
+                        {
+                            cascadingNode = currentNode;
+                        }
 
-                    var json = JsonSerializer.Serialize(jsonException, serializerOptions);
-                    await httpContext.Response.WriteAsync(json).ConfigureAwait(false);
+                        currentNode = currentNode!.Children[component];
+                        continue;
+                    }
 
-                    return;
+                    // If we encounter no children, but have a wildcard, we continue down the wildcard path.
+                    if (currentNode!.Wildcard != null)
+                    {
+                        currentNode = currentNode.Wildcard;
+                        continue;
+                    }
+
+                    // If we hit a dead end, we see if we should use the last parent node that cascades down.
+                    // By caching our last cascading node, we don't have to re-iterate back up the chain.
+                    if (cascadingNode != null)
+                    {
+                        currentNode = cascadingNode;
+                    }
+
+                    // At this point, we've hit a dead end, so we should break
+                    break;
+                }
+
+                // If we have a valid node, we see whether or not it's restricted to authenticated users.
+                if (currentNode != null && currentNode.Restricted)
+                {
+                    // See if we can obtain user information from the request
+                    var user = await auth.GetUser(httpContext.Request).ConfigureAwait(false);
+
+                    // TODO: Let's see if we cant get our Controllers and Services to use our cached user
+                    httpContext.Items["HiveUser"] = user;
+
+                    // If the user is not authenticated, and trying to access a restricted endpoint, return 401 Unauthorized.
+                    if (user == null)
+                    {
+                        logger.Error("Non-authenticated user prevented access to {0}", route);
+
+                        httpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        httpContext.Response.ContentType = "application/json";
+
+                        var jsonException = new JsonApiException
+                        {
+                            StatusCode = httpContext.Response.StatusCode,
+                            // REVIEW: Should this string be integrated into Resources?
+                            Message = "You must be logged in to gain access."
+                        };
+
+                        await httpContext.Response.WriteAsJsonAsync(jsonException, serializerOptions).ConfigureAwait(false);
+
+                        return;
+                    }
                 }
             }
 
             await next.Invoke(httpContext).ConfigureAwait(false);
+        }
+
+        // Take a route and decompose it into separate parts for our node tree.
+        private void DecomposeRouteIntoNodeTree(string route)
+        {
+            if (string.IsNullOrWhiteSpace(route)) return;
+
+            // Remove case sensitivity by forcing uppercase
+            var routeView = new StringView(route.ToUpperInvariant());
+
+            var isRestricted = true;
+            var cascades = false;
+
+            if (routeView[0] == explicitUnrestrictedPrefix)
+            {
+                // This endpoint (and potentially all subroutes) are explicitly unrestricted.
+                isRestricted = false;
+                routeView = routeView[1..];
+            }
+
+            if (routeView.Last() == cascadingSuffix)
+            {
+                // All children to this route will inherit this route's Restricted status.
+                cascades = true;
+                routeView = routeView[0..^1];
+            }
+
+            // Split our route into the individual components
+            var routeComponents = routeView.Split(routeSeparator, true);
+            var currentNode = rootRestrictionNode;
+            var count = routeComponents.Count();
+
+            // Keep our own iteration variable, as we may need to check for ambiguity at our last iteration
+            var i = 0;
+
+            foreach (var component in routeComponents)
+            {
+                // Continue down our node tree if we can safely do so.
+                if (currentNode.Children.ContainsKey(component))
+                {
+                    currentNode = currentNode.Children[component];
+
+                    // We only need to do an ambiguity check if we are on our last component and it already exists
+                    if (i == count - 1)
+                    {
+                        TestForAmbiguity(routeView, currentNode, isRestricted, cascades);
+                    }
+
+                    i++;
+
+                    continue;
+                }
+
+                // Ensure that our path down to the last node is created.
+                // Default behavior is that these Nodes are not restricted, and do not cascade.
+                var node = new Node
+                {
+                    Parent = currentNode
+                };
+
+                // Wildcard is a special case, should assign wildcard (if its null) then continue
+                if (component == wildcardToken)
+                {
+                    // We may need to do an ambiguity check with our wildcard node
+                    if (currentNode.Wildcard != null && i == count - 1)
+                    {
+                        TestForAmbiguity(routeView, currentNode.Wildcard, isRestricted, cascades);
+                    }
+
+                    currentNode.Wildcard ??= node;
+                }
+                else
+                {
+                    currentNode.Children.Add(component, node);
+                }
+
+                currentNode = node;
+
+                i++;
+            }
+
+            // Once we've reached the last node, and it passes the ambiguity check, we can now assign values.
+            currentNode.Restricted = isRestricted;
+            currentNode.CascadesToChildren = cascades;
+        }
+
+        private static void TestForAmbiguity(StringView routeView, Node currentNode, bool isRestricted, bool cascades)
+        {
+            // We might be at risk of ambiguity if our last route component already exists and shares the same cascade state.
+            if (currentNode.Children.Count is 0 && currentNode.CascadesToChildren == cascades)
+            {
+                // If we have conflicting restriction values, we throw.
+                // I don't wanna deal with ambiguity lmao
+                if (currentNode.Restricted != isRestricted)
+                {
+                    throw new InvalidOperationException($"Ambiguity exists at endpoint {routeView}.");
+                }
+            }
+        }
+
+        private class Node
+        {
+            // Whether or not this particular endpoint is restricted to authenticated users.
+            public bool Restricted;
+
+            // If true, the Restricted will be inherited to subroutes, unless otherwise specified.
+            public bool CascadesToChildren;
+
+            // A wildcard Node, assigned to *, which (if defined) handles all routes at that level.
+            public Node? Wildcard;
+
+            // The parent Node. This Parent node should have this Node instance in the Children collection.
+            public Node? Parent;
+
+            // A dictionary of child nodes.
+            public Dictionary<StringView, Node> Children = new();
         }
     }
 
