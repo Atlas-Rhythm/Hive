@@ -271,7 +271,7 @@ namespace Hive.Plugins.Aggregates
         private static Expression DefaultForType(Type type)
             => type.IsByRef
             ? Expression.Call(Expression.New(typeof(DefaultByRef<>).MakeGenericType(type.GetElementType()!)), nameof(DefaultByRef<object>.ByRefDefault), null)
-            : (Expression)Expression.Default(type);
+            : Expression.Default(type);
 
         private class DefaultByRef<T>
         {

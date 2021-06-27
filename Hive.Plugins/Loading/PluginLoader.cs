@@ -117,6 +117,8 @@ namespace Hive.Plugins.Loading
             // this will 1. locate the plugins' startup types, 2. construct them, and 3. call ConfigureServices on them.
             // it will *also* register an IStartupFilter instance which calls through to the Configure method.
 
+            using var _ctxReflScope = plugin.LoadContext.EnterContextualReflection();
+
             IConfiguration pluginConfig;
             if (config.UsePluginSpecificConfig)
             {
