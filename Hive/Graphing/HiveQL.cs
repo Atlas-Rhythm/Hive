@@ -27,7 +27,7 @@ namespace Hive.Graphing
             _ = services.AddGraphQL((options, provider) =>
             {
                 var logger = provider.GetRequiredService<Serilog.ILogger>();
-                options.UnhandledExceptionDelegate = ctx => logger.Error("An error has occured initializing GraphQL: {Message}", ctx.OriginalException.Message);
+                options.UnhandledExceptionDelegate = ctx => logger.Error(ctx.OriginalException, "An error has occured initializing GraphQL");
             }).AddSystemTextJson();
             return services;
         }
