@@ -155,7 +155,20 @@
       <FileWrites Include="$(IntermediateOutputPath)ilrepack.exclusions" />
     </ItemGroup>
 
+    <!-- ReferencePath contains actual files which can be referenced, we need directories -->
     <ItemGroup>
+      <!-- Transform each entry into its directory -->
+      <_ReferenceDirsDupl Include="@(ReferencePath->'%(RelativeDir)')" />
+    </ItemGroup>
+    <!-- De-duplicate the directories for sanity -->
+    <RemoveDuplicates Inputs="@(_ReferenceDirsDupl)">
+      <Output TaskParameter="Filtered" ItemName="_ReferenceDirs" />
+    </RemoveDuplicates>
+
+    <Message Importance="low" Text="referencedirs @(_ReferenceDirs)" />
+
+    <ItemGroup>
+      <_ILRCmdArg Include="-lib:%(_ReferenceDirs.Identity)" />
       <_ILRCmdArg Include="-union" />
       <_ILRCmdArg Include="-xmldocs" />
       <_ILRCmdArg Include="-internalize:$(IntermediateOutputPath)ilrepack.exclusions" />
@@ -164,22 +177,10 @@
       <_ILRCmdArg Include="%(_RepackInputAssemblies.Identity)" />
     </ItemGroup>
 
-    <!-- TODO: make sure this behaves on Unix -->
+    <!-- This behaves just fine if the machine is a Linux and has Mono installed, with binfmt configured -->
+    <!-- TODO: Make this work without needing Mono/binfmt -->
     <Exec ConsoleToMsBuild="true"
           Command="$(ILRepack) @(_ILRCmdArg->'&quot;%(Identity)&quot;', ' ')" />
-    <!--<ILRepack
-      Parallel="true"
-      DebugInfo="true"
-      Internalize="true"
-      XmlDocumentation="true"
-      Union="true"
-      LogFile="$(ILRepackOutputDir)ilrepack.log"
-      InputAssemblies="@(_RepackInputAssemblies)"
-      InternalizeExclude="$(DoNotInternalize)"
-      TargetKind="SameAsPrimaryAssembly"
-      LibraryPath="@(ReferencePath)"
-      OutputFile="$(ILRepackOutput)"
-      />-->
 
     <ItemGroup>
       <IntermediateAssembly Remove="@(IntermediateAssembly)" />
