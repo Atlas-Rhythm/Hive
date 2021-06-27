@@ -54,12 +54,12 @@ namespace Hive.Graphing.Types
             (var modService, var http, var authService)
                 = ctx.RequestServices.GetRequiredServices<ModService, IHttpContextAccessor, IProxyAuthenticationService>();
 
-            //var filterType = ctx.GetArgument("filter", ModType.Filter.Latest).ToString();
+            var filterType = ctx.GetArgument("filter", ModType.Filter.Latest).ToString();
             var channels = ctx.GetArgument<IEnumerable<string>?>("channelIds");
             var gameVersion = ctx.GetArgument<string?>("gameVersion");
 
             var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
-            var queryResult = await modService.GetAllMods(user, channels?.ToArray(), gameVersion, "Latest").ConfigureAwait(false);
+            var queryResult = await modService.GetAllMods(user, channels?.ToArray(), gameVersion, filterType).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
             return queryResult.Value?.Where(searchFunc) ?? Array.Empty<Mod>();
