@@ -44,6 +44,16 @@
              Projects="$(_PackageProject)">
       <Output TaskParameter="TargetOutputs" ItemName="_PkgAnalyzer" />
     </MSBuild>
+    
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=RoslynVersion"
+             Projects="$(_PackageProject)">
+      <Output TaskParameter="TargetOutputs" ItemName="_PkgRoslynVer" />
+    </MSBuild>
+
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=MSBuildRequiredVersion"
+             Projects="$(_PackageProject)">
+      <Output TaskParameter="TargetOutputs" ItemName="_PkgMsbuildVer" />
+    </MSBuild>
 
     <ItemGroup>
       <PackageInfo Include="$(_PackageProject)">
@@ -52,6 +62,8 @@
         <IsRoslynExtension>@(_PkgRoslyn)</IsRoslynExtension>
         <IsCodeGen>@(_PkgCodegen)</IsCodeGen>
         <IsAnalyzer>@(_PkgAnalyzer)</IsAnalyzer>
+        <RoslynVersion>@(_PkgRoslynVer)</RoslynVersion>
+        <MSBuildVersion>@(_PkgMsbuildVer)</MSBuildVersion>
       </PackageInfo>
     </ItemGroup>
     <ItemGroup>
@@ -65,6 +77,7 @@
 
   <PropertyGroup>
     <_GeneratedPropsFile>$(IntermediateOutputPath)Packages.proj</_GeneratedPropsFile>
+    <_CodegenPropsFile>$(IntermediateOutputPath)CodeGen.props</_CodegenPropsFile>
   </PropertyGroup>
   
   <Target Name="BuildPackageReferenceList">
@@ -75,6 +88,7 @@
 
     <Message Importance="normal" Text="%(_PackageInfo.Identity) (%(PackageId),%(Version),r:%(IsRoslynExtension),cg:%(IsCodeGen),a:%(IsAnalyzer))" />
 
+    <!-- Generate the project file for the PackageReferences -->
     <ItemGroup>
       <_PackageInfo>
         <ConditionProp></ConditionProp>
@@ -109,6 +123,38 @@
       <None Include="$(_GeneratedPropsFile)" Pack="true" PackagePath="Sdk\tools\" />
     </ItemGroup>
     
+    <!-- Generate the properties file for CodeGen props -->
+    <ItemGroup>
+      <_PkgVersionReqs Include="%(_PackageInfo.RoslynVersion),%(MSBuildVersion)">
+        <RoslynVersion>%(RoslynVersion)</RoslynVersion>
+        <MSBuildVersion>%(MSBuildVersion)</MSBuildVersion>
+      </_PkgVersionReqs>
+    </ItemGroup>
+    
+    <RemoveDuplicates Inputs="@(_PkgVersionReqs)">
+      <Output TaskParameter="Filtered" ItemName="_PkgVersionReq" />
+    </RemoveDuplicates>
+
+    <Message Importance="normal" Text="Version reqs: %(_PkgVersionReq.RoslynVersion) and %(MSBuildVersion)" />
+
+    <ItemGroup>
+      <_CGPropsLines Include="&lt;Project&gt;" />
+      <_CGPropsLines Include="%09&lt;PropertyGroup&gt;" />
+      <_CGPropsLines Include="%09%09&lt;HiveCodeGenRoslynVersion&gt;%(_PkgVersionReq.RoslynVersion)&lt;/HiveCodeGenRoslynVersion&gt;" />
+      <_CGPropsLines Include="%09%09&lt;HiveCodeGenMSBuildVersion&gt;%(_PkgVersionReq.MSBuildVersion)&lt;/HiveCodeGenMSBuildVersion&gt;" />
+      <_CGPropsLines Include="%09&lt;/PropertyGroup&gt;" />
+      <_CGPropsLines Include="&lt;/Project&gt;" />
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(_CodegenPropsFile)" Encoding="UTF-8" Lines="@(_CGPropsLines)" Overwrite="true" />
+    <ItemGroup>
+      <FileWrites Include="$(_CodegenPropsFile)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="$(_CodegenPropsFile)" Pack="true" PackagePath="Sdk\tools\" />
+    </ItemGroup>
+  
   </Target>
   
 </Project>
