@@ -15,10 +15,6 @@
     <MSBuildRequiredVersion Condition="'$(MSBuildRequiredVersion)' == ''">$(HiveCodeGenMSBuildVersion)</MSBuildRequiredVersion>
     <MSBuildRequiredVersion Condition="'$([MSBuild]::VersionLessThan('$(MSBuildRequiredVersion)', '$(HiveCodeGenMSBuildVersion)'))'">$(HiveCodeGenMSBuildVersion)</MSBuildRequiredVersion>
   </PropertyGroup>
-
-  <ItemGroup Condition="'$(EnableHiveCodeGen)' != 'false'">
-    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="$(HiveCodeGenRoslynVersion)" />
-  </ItemGroup>
   
   <!-- Always include the target for the MSBuild version check -->
   <Import Project="$(HiveToolsDirectory)MSBuildVersionCheck.targets" />

@@ -44,11 +44,6 @@
              Projects="$(_PackageProject)">
       <Output TaskParameter="TargetOutputs" ItemName="_PkgAnalyzer" />
     </MSBuild>
-    
-    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=RoslynVersion"
-             Projects="$(_PackageProject)">
-      <Output TaskParameter="TargetOutputs" ItemName="_PkgRoslynVer" />
-    </MSBuild>
 
     <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=MSBuildRequiredVersion"
              Projects="$(_PackageProject)">
@@ -62,7 +57,6 @@
         <IsRoslynExtension>@(_PkgRoslyn)</IsRoslynExtension>
         <IsCodeGen>@(_PkgCodegen)</IsCodeGen>
         <IsAnalyzer>@(_PkgAnalyzer)</IsAnalyzer>
-        <RoslynVersion>@(_PkgRoslynVer)</RoslynVersion>
         <MSBuildVersion>@(_PkgMsbuildVer)</MSBuildVersion>
       </PackageInfo>
     </ItemGroup>
@@ -125,8 +119,7 @@
     
     <!-- Generate the properties file for CodeGen props -->
     <ItemGroup>
-      <_PkgVersionReqs Include="%(_PackageInfo.RoslynVersion),%(MSBuildVersion)">
-        <RoslynVersion>%(RoslynVersion)</RoslynVersion>
+      <_PkgVersionReqs Include="%(_PackageInfo.MSBuildVersion)">
         <MSBuildVersion>%(MSBuildVersion)</MSBuildVersion>
       </_PkgVersionReqs>
     </ItemGroup>
@@ -135,12 +128,11 @@
       <Output TaskParameter="Filtered" ItemName="_PkgVersionReq" />
     </RemoveDuplicates>
 
-    <Message Importance="normal" Text="Version reqs: %(_PkgVersionReq.RoslynVersion) and %(MSBuildVersion)" />
+    <Message Importance="normal" Text="Version reqs: %(_PkgVersionReq.MSBuildVersion)" />
 
     <ItemGroup>
       <_CGPropsLines Include="&lt;Project&gt;" />
       <_CGPropsLines Include="%09&lt;PropertyGroup&gt;" />
-      <_CGPropsLines Include="%09%09&lt;HiveCodeGenRoslynVersion&gt;%(_PkgVersionReq.RoslynVersion)&lt;/HiveCodeGenRoslynVersion&gt;" />
       <_CGPropsLines Include="%09%09&lt;HiveCodeGenMSBuildVersion&gt;%(_PkgVersionReq.MSBuildVersion)&lt;/HiveCodeGenMSBuildVersion&gt;" />
       <_CGPropsLines Include="%09&lt;/PropertyGroup&gt;" />
       <_CGPropsLines Include="&lt;/Project&gt;" />
