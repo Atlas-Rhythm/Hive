@@ -13,6 +13,10 @@
 
   <ItemGroup>
     <None Include="Sdk\**" Pack="true" PackagePath="Sdk\" />
+
+    <HiveTool Include="InternalsVisibleToItemGroup.targets" />
+    <HiveTool Include="LiteralAssemblyAttributeItemGroup.targets" />
+    <HiveTool Include="MSBuildVersionCheck.targets" />
   </ItemGroup>
 
 </Project>

@@ -4,6 +4,15 @@
   <PropertyGroup>
     <MSBuildAllProjects Condition="'$(MSBuildToolsVersion)' != 'Current'">$(MSBuildAllProjects);$(MsBuildThisFileFullPath)</MSBuildAllProjects>
   </PropertyGroup>
+  
+  <!-- Always include the target for the MSBuild version check -->
+  <Import Project="$(HiveToolsDirectory)MSBuildVersionCheck.targets" />
+
+  <!-- Conditionally include other targets files -->
+  <Import Project="$(HiveToolsDirectory)InternalsVisibleToItemGroup.targets" 
+          Condition="'$(ImportHiveDefaultTargets)' != 'false' and '$(ImportInternalsVisibleToTargets)' != 'true'" />
+  <Import Project="$(HiveToolsDirectory)LiteralAssemblyAttributeItemGroup.targets"
+          Condition="'$(ImportHiveDefaultTargets)' != 'false' and '$(ImportLiteralAssemblyAttributeTargets)' != 'true'" />
 
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" Condition=" '$(CommonTargetsPath)' == '' " />
   

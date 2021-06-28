@@ -9,7 +9,7 @@
 
     <IsCLSCompliant>true</IsCLSCompliant>
 
-    <HiveToolsDirectory>$(MSBuildThisFileDirectory)\tools\</HiveToolsDirectory>
+    <HiveToolsDirectory>$(MSBuildThisFileDirectory)tools\</HiveToolsDirectory>
 
     <RoslynVersion>3.10.0-3.final</RoslynVersion>
     <MSBuildRequiredVersion>16.9.0</MSBuildRequiredVersion>

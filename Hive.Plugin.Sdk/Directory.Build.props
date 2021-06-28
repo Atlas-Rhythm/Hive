@@ -2,11 +2,16 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <HiveToolsDirectory>$(MSBuildThisFileDirectory)\..\tools\</HiveToolsDirectory>
+    <HiveToolsDirectory>$(MSBuildThisFileDirectory)..\tools\</HiveToolsDirectory>
+    <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
   </PropertyGroup>
 
   <!-- But we do want the shared Nuget info in the props file at the root -->
   <Import Project="$(HiveToolsDirectory)NuGetInfo.props" />
 
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)\*" Exclude="*.csproj" />
+  </ItemGroup>
+  
   <!-- Deliberately do not import parent Directory.Build.props -->
 </Project>
