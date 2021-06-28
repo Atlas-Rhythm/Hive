@@ -3,6 +3,7 @@
 
   <PropertyGroup>
     <HiveToolsDirectory>$(MSBuildThisFileDirectory)..\tools\</HiveToolsDirectory>
+    <NugetHiveToolsDir>msbtools\</NugetHiveToolsDir>
     <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
   </PropertyGroup>
 

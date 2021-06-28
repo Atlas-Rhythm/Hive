@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <PackageType>MSBuildSdk</PackageType>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
 
     <Description>Provides an easy-to-use SDK for writing Hive plugins.</Description>
     <PackageTags>hive;plugin;plugins</PackageTags>
@@ -13,10 +14,28 @@
 
   <ItemGroup>
     <None Include="Sdk\**" Pack="true" PackagePath="Sdk\" />
-
+  </ItemGroup>
+  
+  <ItemGroup>
     <HiveTool Include="InternalsVisibleToItemGroup.targets" />
     <HiveTool Include="LiteralAssemblyAttributeItemGroup.targets" />
     <HiveTool Include="MSBuildVersionCheck.targets" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <SdkReferencePackage Include="..\CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" />
+    <SdkReferencePackage Include="..\CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" />
+    <SdkNormalPackage Include="Hive" />
+    <SdkNormalPackage Include="Hive.Analyzers" />
+    <SdkNormalPackage Include="Hive.Dependencies" />
+    <SdkNormalPackage Include="Hive.Permissions" />
+    <SdkNormalPackage Include="Hive.Plugins" />
+    <SdkNormalPackage Include="Hive.Utilities" />
+    <SdkNormalPackage Include="Hive.Versioning" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Sdk\tools\" />
   </ItemGroup>
 
 </Project>

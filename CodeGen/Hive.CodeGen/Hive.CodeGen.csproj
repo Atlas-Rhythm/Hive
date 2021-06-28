@@ -23,5 +23,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" PrivateAssets="all" Private="true" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="build\**" Pack="true" PackagePath="build\" />
+  </ItemGroup>
   
 </Project>

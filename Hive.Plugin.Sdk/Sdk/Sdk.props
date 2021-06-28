@@ -9,5 +9,12 @@
   </PropertyGroup>
   
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" Condition=" '$(MicrosoftCommonPropsHasBeenImported)' != 'true' "/>
+
+  <PropertyGroup>
+    <ImportHiveDefaultTargets>true</ImportHiveDefaultTargets>
+    <ImportInternalsVisibleToTargets>true</ImportInternalsVisibleToTargets>
+    <ImportLiteralAssemblyAttributeTargets>true</ImportLiteralAssemblyAttributeTargets>
+    <EnableHiveCodeGen>true</EnableHiveCodeGen>
+  </PropertyGroup>
   
 </Project>

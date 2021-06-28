@@ -37,6 +37,15 @@
   <Import Project="$(HiveToolsDirectory)InternalsVisibleToItemGroup.targets" />
   <Import Project="$(HiveToolsDirectory)LiteralAssemblyAttributeItemGroup.targets" />
 
+  <Target Name="SdkGetProperty" Condition="'$(SdkPropertyToGet)' != ''" Returns="$(SdkGottenProperty)">
+    <ItemGroup>
+      <_SdkPropertyToGet Include="$(SdkPropertyToGet)" />
+    </ItemGroup>
+    <PropertyGroup>
+      <SdkGottenProperty>$(%(_SdkPropertyToGet.Identity))</SdkGottenProperty>
+    </PropertyGroup>
+  </Target>
+  
   <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" Condition="'$(IsCodeGen)' != 'true'" />
   <Import Project="$(HiveToolsDirectory)Packaging.targets" Condition="'$(BuildingStandalone)' == 'true'" />
 

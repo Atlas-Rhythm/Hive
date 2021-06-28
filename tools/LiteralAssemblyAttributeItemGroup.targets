@@ -10,7 +10,6 @@
   <PropertyGroup>
     <_LiteralAssemblyFile Condition="'$(Language)' == 'C#'">$(IntermediateOutputPath)LiteralAssemblyAttributes.cs</_LiteralAssemblyFile>
     <CoreCompileDependsOn>
-      EnsureSupportedMSBuildVersion;
       AddLiteralAssemblyAttributes;
       $(CoreCompileDependsOn);
     </CoreCompileDependsOn>
