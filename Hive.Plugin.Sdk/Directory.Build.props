@@ -5,6 +5,7 @@
     <HiveToolsDirectory>$(MSBuildThisFileDirectory)..\tools\</HiveToolsDirectory>
     <NugetHiveToolsDir>msbtools\</NugetHiveToolsDir>
     <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)..\artifacts\packages\$(Configuration)\</PackageOutputPath>
   </PropertyGroup>
 
   <!-- But we do want the shared Nuget info in the props file at the root -->

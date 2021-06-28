@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="build\**" Pack="true" PackagePath="build\" />
+    <None Include="build\*" Pack="true" PackagePath="build\" />
   </ItemGroup>
   
 </Project>

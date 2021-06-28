@@ -32,10 +32,6 @@
     <IsRoslynExtension Condition="'$(IsCodeGen)' == 'true' or '$(IsAnalyzer)' == 'true'">true</IsRoslynExtension>
     <IsCLSCompliant Condition="'$(Tests)' == 'true' or '$(IsRoslynExtension)' == 'true'">false</IsCLSCompliant>
   </PropertyGroup>
-  
-  <Import Project="$(HiveToolsDirectory)MSBuildVersionCheck.targets" />
-  <Import Project="$(HiveToolsDirectory)InternalsVisibleToItemGroup.targets" />
-  <Import Project="$(HiveToolsDirectory)LiteralAssemblyAttributeItemGroup.targets" />
 
   <Target Name="SdkGetProperty" Condition="'$(SdkPropertyToGet)' != ''" Returns="$(SdkGottenProperty)">
     <ItemGroup>
@@ -45,6 +41,10 @@
       <SdkGottenProperty>$(%(_SdkPropertyToGet.Identity))</SdkGottenProperty>
     </PropertyGroup>
   </Target>
+
+  <Import Project="$(HiveToolsDirectory)MSBuildVersionCheck.targets" />
+  <Import Project="$(HiveToolsDirectory)InternalsVisibleToItemGroup.targets" />
+  <Import Project="$(HiveToolsDirectory)LiteralAssemblyAttributeItemGroup.targets" />
   
   <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" Condition="'$(IsCodeGen)' != 'true'" />
   <Import Project="$(HiveToolsDirectory)Packaging.targets" Condition="'$(BuildingStandalone)' == 'true'" />
