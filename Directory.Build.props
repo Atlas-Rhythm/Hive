@@ -9,9 +9,13 @@
 
     <IsCLSCompliant>true</IsCLSCompliant>
 
+    <HiveToolsDirectory>$(MSBuildThisFileDirectory)\tools\</HiveToolsDirectory>
+
     <RoslynVersion>3.10.0-3.final</RoslynVersion>
     <MSBuildRequiredVersion>16.9.0</MSBuildRequiredVersion>
   </PropertyGroup>
+  
+  <Import Project="$(HiveToolsDirectory)NuGetInfo.props" />
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="$(RoslynVersion)" />
@@ -25,11 +29,11 @@
     <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)Hive.Analyzers\Hive.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(IsUtilities)' != 'true' And '$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)Hive.Utilities\Hive.Utilities.csproj" />
   </ItemGroup>
@@ -49,6 +53,6 @@
   </ItemGroup>
 
   <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.props" Condition="'$(IsCodeGen)' != 'true'" />
-  <Import Project="$(MSBuildThisFileDirectory)\Packaging.props" />
+  <Import Project="$(HiveToolsDirectory)Packaging.props" />
 
 </Project>

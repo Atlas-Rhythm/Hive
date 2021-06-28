@@ -13,11 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		coverlet.runsettings = coverlet.runsettings
-		_EmptyProjectForILRepack.targets = _EmptyProjectForILRepack.targets
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
-		Packaging.props = Packaging.props
-		Packaging.targets = Packaging.targets
 		.github\workflows\dotnet-core.yml = .github\workflows\dotnet-core.yml
 		FCC_UpdateCoverlet.ps1 = FCC_UpdateCoverlet.ps1
 		NuGet.config = NuGet.config
@@ -61,6 +58,19 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins.Tests", "Hive.Plugins.Tests\Hive.Plugins.Tests.csproj", "{486CEBA1-EDF4-4493-B81F-A485AA00B64C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins.Tests.TestPlugin", "Hive.Plugins.Tests.TestPlugin\Hive.Plugins.Tests.TestPlugin.csproj", "{35D283E6-B9A8-4EF7-99A0-555DBB741FEA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Plugin.Sdk", "Hive.Plugin.Sdk\Hive.Plugin.Sdk.csproj", "{DC562194-EB4D-48F2-B96D-52716D526AB8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{C6CF4A49-70F0-47B5-993D-A782197BE815}"
+	ProjectSection(SolutionItems) = preProject
+		tools\_EmptyProjectForILRepack.targets = tools\_EmptyProjectForILRepack.targets
+		tools\InternalsVisibleToItemGroup.targets = tools\InternalsVisibleToItemGroup.targets
+		tools\LiteralAssemblyAttributeItemGroup.targets = tools\LiteralAssemblyAttributeItemGroup.targets
+		tools\MSBuildVersionCheck.targets = tools\MSBuildVersionCheck.targets
+		tools\NuGetInfo.props = tools\NuGetInfo.props
+		tools\Packaging.props = tools\Packaging.props
+		tools\Packaging.targets = tools\Packaging.targets
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -136,6 +146,10 @@ Global
 		{35D283E6-B9A8-4EF7-99A0-555DBB741FEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{35D283E6-B9A8-4EF7-99A0-555DBB741FEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{35D283E6-B9A8-4EF7-99A0-555DBB741FEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC562194-EB4D-48F2-B96D-52716D526AB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC562194-EB4D-48F2-B96D-52716D526AB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC562194-EB4D-48F2-B96D-52716D526AB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC562194-EB4D-48F2-B96D-52716D526AB8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -144,6 +158,7 @@ Global
 		{D14CCA86-C8FA-4F96-A92B-9CF454C485B1} = {418DF181-8405-4B69-8B32-FBEEFACADAC6}
 		{585E184E-0F14-4456-B542-9AECFAB96A15} = {418DF181-8405-4B69-8B32-FBEEFACADAC6}
 		{8D72FE69-EB86-4B03-8A93-C4ED2D47A38D} = {418DF181-8405-4B69-8B32-FBEEFACADAC6}
+		{C6CF4A49-70F0-47B5-993D-A782197BE815} = {359F68C9-18C8-435C-9573-A5C7CBD0ADE0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A1B8AB62-9337-448C-9043-E0DEDB6A4DE9}
