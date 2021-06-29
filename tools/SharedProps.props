@@ -2,10 +2,12 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <!-- We add the CodeAnalysis package -->
+    <EnableNETAnalyzers Condition="'$(EnableNETAnalyzers)' == ''">true</EnableNETAnalyzers>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <AnalysisLevel>5.0</AnalysisLevel>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- We include our own analyzers -->
+    <EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == 'false'">false</EnforceCodeStyleInBuild>
     
     <DefaultCSharpLangVersion>9</DefaultCSharpLangVersion>
   </PropertyGroup>

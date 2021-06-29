@@ -100,7 +100,7 @@
 
     <ItemGroup>
       <_PackageInfo>
-        <Props>Include="%(PackageId)" Version="%(Version)"%(ConditionProp)%(ExtraProps)</Props>
+        <Props>Include="%(PackageId)" Version="%(Version)"%(ConditionProp)%(ExtraProps) IsImplicitlyDefined="true"</Props>
       </_PackageInfo>
     </ItemGroup>
 

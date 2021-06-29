@@ -16,6 +16,7 @@
       <PropertyGroup>
         <MSBuildRequiredVersion Condition="'$(MSBuildRequiredVersion)' == ''">$(HiveCodeGenMSBuildVersion)</MSBuildRequiredVersion>
         <MSBuildRequiredVersion Condition="'$([MSBuild]::VersionLessThan($(MSBuildRequiredVersion), $(HiveCodeGenMSBuildVersion)))'">$(HiveCodeGenMSBuildVersion)</MSBuildRequiredVersion>
+        <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
       </PropertyGroup>
 
       <ItemGroup>
