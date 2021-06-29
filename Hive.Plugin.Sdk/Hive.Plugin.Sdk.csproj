@@ -21,6 +21,8 @@
     <HiveTool Include="InternalsVisibleToItemGroup.targets" />
     <HiveTool Include="LiteralAssemblyAttributeItemGroup.targets" />
     <HiveTool Include="MSBuildVersionCheck.targets" />
+    <HiveTool Include="SharedProps.props" />
+    <HiveTool Include="SharedProps.targets" />
   </ItemGroup>
 
   <ItemGroup>

@@ -2,11 +2,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <AnalysisLevel>5.0</AnalysisLevel>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-
     <IsCLSCompliant>true</IsCLSCompliant>
 
     <!-- This is needed sometimes when packing single projects -->
@@ -18,7 +13,8 @@
     <RoslynVersion>3.10.0-3.final</RoslynVersion>
     <MSBuildRequiredVersion>16.9.0</MSBuildRequiredVersion>
   </PropertyGroup>
-  
+
+  <Import Project="$(HiveToolsDirectory)SharedProps.props"/>
   <Import Project="$(HiveToolsDirectory)NuGetInfo.props" />
 
   <ItemGroup>

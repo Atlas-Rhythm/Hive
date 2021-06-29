@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup Condition="'$(Language)' == 'C#'">
+    <LangVersion Condition="'$(LangVersion)' != 'latest' 
+                and '$(LangVersion)' != 'preview' 
+                and $([MSBuild]::VersionLessThan('$(LangVersion)', '$(DefaultCSharpLangVersion)'))">$(DefaultCSharpLangVersion)</LangVersion>
+    <Nullable Condition="'$(Nullable)' == ''">enable</Nullable>
+    <WarningsAsErrors>$(WarningsAsErrors);nullable</WarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA1716;CA1826;CA2000</NoWarn>
+
+    <!-- FXCop warnings that aren't terribly useful for tests, most of the time. -->
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepDesignWarnings)' != 'true'">
+      $(NoWarn);CA1034;CA1062
+    </NoWarn>
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepGlobalizeWarnings)' != 'true'">
+      $(NoWarn);CA1305
+    </NoWarn>
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepPerfWarnings)' != 'true'">
+      $(NoWarn);CA1805
+    </NoWarn>
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepReliableWarnings)' != 'true'">
+      $(NoWarn);CA2007;CA2225
+    </NoWarn>
+    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepDiscardWarnings)' != 'true'">
+      $(NoWarn);IDE0058;CA1002;CS1591
+    </NoWarn>
+  </PropertyGroup>
+  
+</Project>

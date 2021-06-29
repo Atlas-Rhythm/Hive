@@ -26,6 +26,8 @@
           Condition="'$(ImportHiveDefaultTargets)' != 'false' or '$(ImportLiteralAssemblyAttributeTargets)' != 'false'" />
 
   <Import Project="$(_HiveSdkPackagesProj)"/>
+
+  <Import Project="$(HiveToolsDirectory)SharedProps.targets" Condition="'$(UseHiveSharedProperties)' == 'true'" />
   
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" Condition=" '$(CommonTargetsPath)' == '' " />
   

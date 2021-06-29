@@ -59,7 +59,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins.Tests", "Hive.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins.Tests.TestPlugin", "Hive.Plugins.Tests.TestPlugin\Hive.Plugins.Tests.TestPlugin.csproj", "{35D283E6-B9A8-4EF7-99A0-555DBB741FEA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hive.Plugin.Sdk", "Hive.Plugin.Sdk\Hive.Plugin.Sdk.csproj", "{DC562194-EB4D-48F2-B96D-52716D526AB8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugin.Sdk", "Hive.Plugin.Sdk\Hive.Plugin.Sdk.csproj", "{DC562194-EB4D-48F2-B96D-52716D526AB8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{C6CF4A49-70F0-47B5-993D-A782197BE815}"
 	ProjectSection(SolutionItems) = preProject
@@ -70,6 +70,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{C6CF4A49
 		tools\NuGetInfo.props = tools\NuGetInfo.props
 		tools\Packaging.props = tools\Packaging.props
 		tools\Packaging.targets = tools\Packaging.targets
+		tools\SharedProps.props = tools\SharedProps.props
+		tools\SharedProps.targets = tools\SharedProps.targets
 	EndProjectSection
 EndProject
 Global

@@ -11,10 +11,13 @@
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" Condition=" '$(MicrosoftCommonPropsHasBeenImported)' != 'true' "/>
 
   <PropertyGroup>
-    <ImportHiveDefaultTargets>true</ImportHiveDefaultTargets>
-    <ImportInternalsVisibleToTargets>true</ImportInternalsVisibleToTargets>
-    <ImportLiteralAssemblyAttributeTargets>true</ImportLiteralAssemblyAttributeTargets>
-    <EnableHiveCodeGen>true</EnableHiveCodeGen>
+    <ImportHiveDefaultTargets Condition="'$(ImportHiveDefaultTargets)' == ''">true</ImportHiveDefaultTargets>
+    <ImportInternalsVisibleToTargets Condition="'$(ImportInternalsVisibleToTargets)' == ''">true</ImportInternalsVisibleToTargets>
+    <ImportLiteralAssemblyAttributeTargets Condition="'$(ImportLiteralAssemblyAttributeTargets)' == ''">true</ImportLiteralAssemblyAttributeTargets>
+    <EnableHiveCodeGen Condition="'$(EnableHiveCodeGen)' == ''">true</EnableHiveCodeGen>
+    <UseHiveSharedProperties Condition="'$(UseHiveSharedProperties)' == ''">true</UseHiveSharedProperties>
   </PropertyGroup>
+
+  <Import Project="$(HiveToolsDirectory)SharedProps.props" Condition="'$(UseHiveSharedProperties)' == 'true'" />
   
 </Project>
