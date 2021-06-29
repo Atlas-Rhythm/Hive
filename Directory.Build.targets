@@ -16,6 +16,7 @@
       <PropertyGroup>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <BeforePack>$(BeforePack);AddAnalyzerAssembly</BeforePack>
+        <NoWarn>$(NoWarn);NU5128</NoWarn>
       </PropertyGroup>
       
       <ItemGroup>

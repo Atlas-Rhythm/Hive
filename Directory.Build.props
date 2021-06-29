@@ -10,7 +10,7 @@
     <HiveToolsDirectory>$(MSBuildThisFileDirectory)tools\</HiveToolsDirectory>
     <PackageOutputPath>$(MSBuildThisFileDirectory)artifacts\packages\$(Configuration)\</PackageOutputPath>
 
-    <RoslynVersion>3.10.0-3.final</RoslynVersion>
+    <RoslynVersion>3.10.0</RoslynVersion>
     <MSBuildRequiredVersion>16.9.0</MSBuildRequiredVersion>
   </PropertyGroup>
 
