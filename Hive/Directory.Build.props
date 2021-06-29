@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- All of this is specifically so that we can pack just the reference assembly, since I can't come up with a better way to do it -->
+  
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('$(MSBuildThisFile)', '$(MSBuildThisFileDirectory)..\'))" />
+
+  <!-- TODO: make this actually pack just the reference assembly -->
+  
+  <PropertyGroup>
+    <PackageId>Hive.ReferenceAssembly</PackageId>
+
+    <IsPackable>true</IsPackable>
+    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+    <!--<IncludeBuildOutput>true</IncludeBuildOutput>-->
+    <IncludeContentInPack>false</IncludeContentInPack>
+    <!--<BuildOutputTargetFolder>ref</BuildOutputTargetFolder>--> <!-- fuck it, nuget doesn't like this -->
+  </PropertyGroup>
+  
+</Project>
