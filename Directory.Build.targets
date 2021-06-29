@@ -10,6 +10,25 @@
     <IsRoslynExtension Condition="'$(IsCodeGen)' == 'true' or '$(IsAnalyzer)' == 'true'">true</IsRoslynExtension>
     <IsCLSCompliant Condition="'$(Tests)' == 'true' or '$(IsRoslynExtension)' == 'true'">false</IsCLSCompliant>
   </PropertyGroup>
+
+  <Choose>
+    <When Condition="'$(IsRoslynExtension)' == 'true'">
+      <PropertyGroup>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <BeforePack>$(BeforePack);AddAnalyzerAssembly</BeforePack>
+      </PropertyGroup>
+      
+      <ItemGroup>
+        <PackageReference Update="NETStandard.Library" PrivateAssets="all" />
+      </ItemGroup>
+    </When>
+  </Choose>
+
+  <Target Name="AddAnalyzerAssembly" Condition="'$(IsRoslynExtension)' == 'true'">
+    <ItemGroup>
+      <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    </ItemGroup>
+  </Target>
   
   <Target Name="SdkGetProperty" Condition="'$(SdkPropertyToGet)' != ''" Returns="$(SdkGottenProperty)">
     <ItemGroup>

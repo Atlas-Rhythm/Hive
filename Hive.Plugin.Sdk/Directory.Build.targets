@@ -45,6 +45,11 @@
       <Output TaskParameter="TargetOutputs" ItemName="_PkgAnalyzer" />
     </MSBuild>
 
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=RoslynVersion"
+             Projects="$(_PackageProject)">
+      <Output TaskParameter="TargetOutputs" ItemName="_PkgRoslynVer" />
+    </MSBuild>
+    
     <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=MSBuildRequiredVersion"
              Projects="$(_PackageProject)">
       <Output TaskParameter="TargetOutputs" ItemName="_PkgMsbuildVer" />
@@ -57,6 +62,7 @@
         <IsRoslynExtension>@(_PkgRoslyn)</IsRoslynExtension>
         <IsCodeGen>@(_PkgCodegen)</IsCodeGen>
         <IsAnalyzer>@(_PkgAnalyzer)</IsAnalyzer>
+        <RoslynVersion>@(_PkgRoslynVer)</RoslynVersion>
         <MSBuildVersion>@(_PkgMsbuildVer)</MSBuildVersion>
       </PackageInfo>
     </ItemGroup>
@@ -86,15 +92,15 @@
     <ItemGroup>
       <_PackageInfo>
         <ConditionProp></ConditionProp>
-        <ExtraProps> Private="false"</ExtraProps>
-        <ConditionProp Condition="'%(IsCodeGen)' == 'true'"> Condition="'%24(EnableHiveCodeGen)' != 'false'"</ConditionProp>
-        <ExtraProps Condition="'%(IsRoslynExtension)' == 'true'"> PrivateAssets="all" IncludeAssets="build;analyzers"</ExtraProps>
+        <ExtraProps> Private="false" ExcludeAssets="buildTransitive"</ExtraProps>
+        <ConditionProp Condition="'%(IsRoslynExtension)' == 'true'"> Condition="'%24(EnableHiveAnalyzers)' != 'false'"</ConditionProp>
+        <ExtraProps Condition="'%(IsRoslynExtension)' == 'true'"> PrivateAssets="all" IncludeAssets="all"</ExtraProps>
       </_PackageInfo>
     </ItemGroup>
 
     <ItemGroup>
       <_PackageInfo>
-        <Props>Include="%(PackageId)" Version="%(Version)"%(ConditionProp)%(ExtraProps) ExcludeAssets="buildTransitive"</Props>
+        <Props>Include="%(PackageId)" Version="%(Version)"%(ConditionProp)%(ExtraProps)</Props>
       </_PackageInfo>
     </ItemGroup>
 
@@ -119,8 +125,9 @@
     
     <!-- Generate the properties file for CodeGen props -->
     <ItemGroup>
-      <_PkgVersionReqs Include="%(_PackageInfo.MSBuildVersion)">
+      <_PkgVersionReqs Include="%(_PackageInfo.MSBuildVersion),%(RoslynVersion)">
         <MSBuildVersion>%(MSBuildVersion)</MSBuildVersion>
+        <RoslynVersion>%(RoslynVersion)</RoslynVersion>
       </_PkgVersionReqs>
     </ItemGroup>
     
@@ -128,12 +135,13 @@
       <Output TaskParameter="Filtered" ItemName="_PkgVersionReq" />
     </RemoveDuplicates>
 
-    <Message Importance="normal" Text="Version reqs: %(_PkgVersionReq.MSBuildVersion)" />
+    <Message Importance="normal" Text="Version reqs: %(_PkgVersionReq.MSBuildVersion),%(RoslynVersion)" />
 
     <ItemGroup>
       <_CGPropsLines Include="&lt;Project&gt;" />
       <_CGPropsLines Include="%09&lt;PropertyGroup&gt;" />
       <_CGPropsLines Include="%09%09&lt;HiveCodeGenMSBuildVersion&gt;%(_PkgVersionReq.MSBuildVersion)&lt;/HiveCodeGenMSBuildVersion&gt;" />
+      <_CGPropsLines Include="%09%09&lt;HiveCodeGenRoslynVersion&gt;%(_PkgVersionReq.RoslynVersion)&lt;/HiveCodeGenRoslynVersion&gt;" />
       <_CGPropsLines Include="%09&lt;/PropertyGroup&gt;" />
       <_CGPropsLines Include="&lt;/Project&gt;" />
     </ItemGroup>

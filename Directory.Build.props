@@ -18,23 +18,24 @@
   <Import Project="$(HiveToolsDirectory)NuGetInfo.props" />
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="$(RoslynVersion)" />
+    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="$(RoslynVersion)" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="$(RoslynVersion)">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(IsCodeGen)' != 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" />
+  <ItemGroup Condition="'$(IsCodeGen)' != 'true' And '$(NoAutoProjectRefs)' != 'true'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" Condition="'$(IsAnalyzer)' != 'true'" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" Condition="'$(IsAnalyzer)' == 'true'" PrivateAssets="all" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true'">
+  <ItemGroup Condition="'$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true' And '$(NoAutoProjectRefs)' != 'true'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)Hive.Analyzers\Hive.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(IsUtilities)' != 'true' And '$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true'">
+  <ItemGroup Condition="'$(IsUtilities)' != 'true' And '$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true' And '$(NoAutoProjectRefs)' != 'true'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)Hive.Utilities\Hive.Utilities.csproj" />
   </ItemGroup>
 
