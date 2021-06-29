@@ -13,7 +13,7 @@
   
   <PropertyGroup Condition="'$(EnableHiveCodeGen)' != 'false'">
     <MSBuildRequiredVersion Condition="'$(MSBuildRequiredVersion)' == ''">$(HiveCodeGenMSBuildVersion)</MSBuildRequiredVersion>
-    <MSBuildRequiredVersion Condition="'$([MSBuild]::VersionLessThan('$(MSBuildRequiredVersion)', '$(HiveCodeGenMSBuildVersion)'))'">$(HiveCodeGenMSBuildVersion)</MSBuildRequiredVersion>
+    <MSBuildRequiredVersion Condition="'$([MSBuild]::VersionLessThan($(MSBuildRequiredVersion), $(HiveCodeGenMSBuildVersion)))'">$(HiveCodeGenMSBuildVersion)</MSBuildRequiredVersion>
   </PropertyGroup>
   
   <!-- Always include the target for the MSBuild version check -->

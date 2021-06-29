@@ -94,7 +94,7 @@
 
     <ItemGroup>
       <_PackageInfo>
-        <Props>Include="%(PackageId)" Version="%(Version)"%(ConditionProp)%(ExtraProps)</Props>
+        <Props>Include="%(PackageId)" Version="%(Version)"%(ConditionProp)%(ExtraProps) ExcludeAssets="buildTransitive"</Props>
       </_PackageInfo>
     </ItemGroup>
 

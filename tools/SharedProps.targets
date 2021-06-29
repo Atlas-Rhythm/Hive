@@ -4,7 +4,7 @@
   <PropertyGroup Condition="'$(Language)' == 'C#'">
     <LangVersion Condition="'$(LangVersion)' != 'latest' 
                 and '$(LangVersion)' != 'preview' 
-                and $([MSBuild]::VersionLessThan('$(LangVersion)', '$(DefaultCSharpLangVersion)'))">$(DefaultCSharpLangVersion)</LangVersion>
+                and $([MSBuild]::VersionLessThan($(LangVersion), $(DefaultCSharpLangVersion)))">$(DefaultCSharpLangVersion)</LangVersion>
     <Nullable Condition="'$(Nullable)' == ''">enable</Nullable>
     <WarningsAsErrors>$(WarningsAsErrors);nullable</WarningsAsErrors>
   </PropertyGroup>
