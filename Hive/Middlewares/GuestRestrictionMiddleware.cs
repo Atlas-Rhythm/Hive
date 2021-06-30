@@ -264,8 +264,10 @@ namespace Hive
 
         private static void TestForAmbiguity(StringView routeView, Node parentNode, Node currentNode, bool isRestricted)
         {
-            // We might be at risk of ambiguity if our last route component already exists and shares the same cascade state.
-            if (parentNode.Children.ContainsValue(currentNode) || parentNode.Wildcard == currentNode)
+            // We might be at risk of ambiguity if:
+            //   1) We have hit the last component to the route we are parsing
+            //   2) Our current node is either a child of the parent node OR the parent's wildcard node
+            if (currentNode.Parent == parentNode || parentNode.Wildcard == currentNode)
             {
                 // If we have conflicting restriction values, we throw.
                 // I don't wanna deal with ambiguity lmao
