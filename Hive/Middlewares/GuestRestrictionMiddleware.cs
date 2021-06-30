@@ -18,8 +18,8 @@ namespace Hive
     /// </summary>
     public class GuestRestrictionMiddleware
     {
-        private static readonly StringView routeSeparator = new("/");
-        private static readonly StringView wildcardToken = new("*");
+        private const string routeSeparator = "/";
+        private const string wildcardToken = "*";
         private const char cascadingSuffix = '/';
         private const char explicitUnrestrictedPrefix = '!';
         private const char queryParameterToken = '?';
