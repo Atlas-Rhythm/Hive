@@ -2,6 +2,8 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- Deliberately do not import parent Directory.Build.targets -->
 
+  <Import Project="$(HiveToolsDirectory)SdkGetProperty.targets" />
+    
   <PropertyGroup>
     <BeforePack>$(BeforePack);PackHiveTools;BuildPackageReferenceList</BeforePack>
   </PropertyGroup>
@@ -25,7 +27,7 @@
       <Output TaskParameter="TargetOutputs" ItemName="_PkgId" />
     </MSBuild>
 
-    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=Version"
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=PackageVersion"
              Projects="$(_PackageProject)">
       <Output TaskParameter="TargetOutputs" ItemName="_PkgVer" />
     </MSBuild>

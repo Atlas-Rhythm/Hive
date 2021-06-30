@@ -8,7 +8,6 @@
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     
     <HiveToolsDirectory>$(MSBuildThisFileDirectory)tools\</HiveToolsDirectory>
-    <PackageOutputPath>$(MSBuildThisFileDirectory)artifacts\packages\$(Configuration)\</PackageOutputPath>
 
     <RoslynVersion>3.10.0</RoslynVersion>
     <MSBuildRequiredVersion>16.9.0</MSBuildRequiredVersion>

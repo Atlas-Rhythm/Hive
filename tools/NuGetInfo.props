@@ -2,9 +2,14 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <Version>0.1.0-pre.alpha</Version>
+    <Version>0.1.0-pre.alpha.14</Version>
     <Description>A highly extensible mod repository.</Description>
+    <Authors></Authors>
     <!-- TODO: complete this a bit more -->
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)..\artifacts\packages\$(Configuration)\</PackageOutputPath>
   </PropertyGroup>
   
 </Project>
