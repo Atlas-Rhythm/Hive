@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Deliberately do not import parent Directory.Build.targets -->
+  
+  <Import Project="$(HiveToolsDirectory)SdkGetProperty.targets" />
+
+  <PropertyGroup>
+    <BeforePack>$(BeforePack);BuildContentTemplates</BeforePack>
+  </PropertyGroup>
+  
+  <Target Name="BuildContentTemplates">
+    <!-- Get SDK Information -->
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=PackageId"
+             Projects="$(SdkProject)">
+      <Output TaskParameter="TargetOutputs" ItemName="_SdkPackageId" />
+    </MSBuild>
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=PackageVersion"
+             Projects="$(SdkProject)">
+      <Output TaskParameter="TargetOutputs" ItemName="_SdkPackageVersion" />
+    </MSBuild>
+
+    <PropertyGroup>
+      <_SdkName>@(_SdkPackageId)</_SdkName>
+      <_SdkVersion>@(_SdkPackageVersion)</_SdkVersion>
+    </PropertyGroup>
+
+    <Message Importance="normal" Text="Sdk: $(_SdkName)/$(_SdkVersion)" />
+    <Message Importance="normal" Text="CTs: @(ContentTemplate)" />
+    
+    <!-- Process all content templates -->
+    <MSBuild Targets="_ProcessContentTemplate" Projects="$(MSBuildProjectFullPath)"
+             Properties="SdkPackageId=$(_SdkName);SdkVersion=$(_SdkVersion);_ContentTemplate=%(ContentTemplate.Identity)">
+      <Output TaskParameter="TargetOutputs" ItemName="Content" />
+    </MSBuild>
+  </Target>
+
+  <PropertyGroup>
+    <_ContentTemplateOutputPath>$(IntermediateOutputPath)ContentTemplates\</_ContentTemplateOutputPath>
+  </PropertyGroup>
+  
+  <Target Name="_ProcessContentTemplate" Returns="@(_FileOut)">
+    <Message Importance="normal" Text="CT: $(_ContentTemplate)" />
+    <ReadLinesFromFile File="$(_ContentTemplate)">
+      <Output TaskParameter="Lines" ItemName="_FileLines" />
+    </ReadLinesFromFile>
+    <ItemGroup>
+      <_FileLines>
+        <Processed>$([MSBuild]::ValueOrDefault('%(Identity)','')
+          .Replace('$Description', '$(Description)')
+          .Replace('$Authors', '$(Authors)')
+          .Replace('$SdkName', '$(SdkPackageId)')
+          .Replace('$SdkVersion', '$(SdkVersion)'))</Processed>
+      </_FileLines>
+    </ItemGroup>
+    <ItemGroup>
+      <_FileIn Include="$(_ContentTemplate)" />
+      <_FileOut Include="$(_ContentTemplateOutputPath)%(_FileIn.RelativeDir)%(Filename)%(Extension)"
+                PackagePath="$(ContentTargetFolders)\%(RelativeDir)%(Filename)%(Extension)" />
+      <FileWrites Include="@(_FileOut)" />
+    </ItemGroup>
+    <MakeDir Directories="%(_FileOut.Directory)" />
+    <WriteLinesToFile File="%(_FileOut.Identity)" Lines="@(_FileLines->'%(Processed)')"
+                      Overwrite="true" Encoding="UTF-8" />
+  </Target>
+  
+</Project>

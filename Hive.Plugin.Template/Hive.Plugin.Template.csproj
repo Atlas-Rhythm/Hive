@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.Build.NoTargets/3.0.4">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+
+    <PackageType>Template</PackageType>
+    <PackageTags>$(PackageTags);dotnet-new;templates</PackageTags>
+    
+    <SdkProject>..\Hive.Plugin.Sdk\Hive.Plugin.Sdk.csproj</SdkProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="PluginTemplate\*" />
+    <ContentTemplate Include="PluginTemplate\.template.config\template.json" />
+  </ItemGroup>
+  
+</Project>

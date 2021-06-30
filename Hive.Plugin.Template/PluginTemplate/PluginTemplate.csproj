@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Sdk Name="SdkName" Version="SdkVersion" />
+
+  <PropertyGroup>
+    <TargetFramework Condition="'$(TargetFrameworkOverride)' != ''">TargetFrameworkOverride</TargetFramework>
+
+    <ImportHiveDefaultTargets Condition="'$(ImportHiveBuildHelpers)' == 'false'">false</ImportHiveDefaultTargets>
+    <ImportInternalsVisibleToTargets Condition="'$(ImportHiveBuildHelpers)' == 'false'">false</ImportInternalsVisibleToTargets>
+    <ImportLiteralAssemblyAttributeTargets Condition="'$(ImportHiveBuildHelpers)' == 'false'">false</ImportLiteralAssemblyAttributeTargets>
+    <UseHiveSharedProperties Condition="'$(ImportHiveBuildHelpers)' == 'false'">false</UseHiveSharedProperties>
+    <EnableHiveCodeGen Condition="'$(UseHiveCodeGen)' == 'false'">false</EnableHiveCodeGen>
+  </PropertyGroup>
+  
+</Project>
