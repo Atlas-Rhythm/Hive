@@ -107,8 +107,11 @@ See the [IP rate limit configuration](https://github.com/stefanprodan/AspNetCore
 ### Restricting Non-Authenticated Users
 
 There are certain situations where you need to restrict route access to authenticated users.
-While this can be achieved with Hive's permission system, it is an expensive operation which may not be desireable, especially with potential Denial of Service attacks.
-To solve this, Hive has a simple Middleware that prevents all non-authenticated users from accessing a given list of routes. This does not use the permission system, so it is faster in cases where you only need to deny access to non-authenticated users.
+While this can be achieved with Hive's permission system, it can be a potentially expensive operation, which may not be desireable.
+To solve this, Hive has a simple and highly configurable Middleware that prevents non-authenticated users from accessing a given list of routes.
+
+By default, all routes are *unrestricted*, meaning they can be accessed by non-authenticated users.
+To *restrict* them to authenticated users only, you can utilize the below configuration options.
 
 #### `RestrictEndpoints`
 
@@ -118,4 +121,69 @@ If you do not care about restricting access, then disabling the entire system ca
 #### `RestrictedRoutes`
 
 This is a list of all routes that will be restricted to authenticated users.
-Any subroutes will also be restricted. For example, restricting `/api/mod/` will also restrict `/api/mod/move` and `/api/mod/edit`.
+HTTP Methods/Verbs are not supported and should not be included.
+Query parameters are ignored and do not affect how the route is parsed.
+
+There are some additional syntax to be aware of, which can affect how Hive processes the configuration:
+
+**Single Route**
+
+If you want to restrict a single route, you can simply write it as is.
+
+```json
+[
+    "/api",
+    "/api/mods",
+    "/api/mods/latest"
+]
+```
+
+**Cascading Route**
+
+If you want to restrict a route, and have it apply to all subroutes, you can append the cascading token (`/`) as a suffix.
+
+```json
+[
+    "/api/"
+]
+```
+
+**Wildcard**
+
+You can also use the wildcard token (`*`) if you want a generic case covering multiple routes.
+The wildcard token only applies to the part of a route it was defined in, but can be cascaded to cover subroutes as well.
+
+```json
+[
+    "/api/channel/*",
+    "/api/mod/*/"
+]
+```
+
+You can also use the wildcard token to ignore one (or multiple) route parameters.
+
+```json
+[
+    "/api/mod/*/move"
+]
+```
+
+**Explicit Unrestricting**
+
+If you need to explicitly unrestrict a route, you can start a route with the `!` prefix.
+
+```json
+[
+    "/api/*/",
+    "!/api/mod/"
+]
+```
+
+This form of explicit unrestricting can be combined with cascading routes and wildcards.
+
+```json
+[
+    "/api/*/",
+    "!/api/mods",
+    "!/api/mod/"
+]

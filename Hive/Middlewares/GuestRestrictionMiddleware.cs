@@ -76,7 +76,6 @@ namespace Hive
         /// </summary>
         /// <param name="httpContext"></param>
         /// <returns></returns>
-        // TODO: Document this new behavior
         public async Task Invoke(HttpContext httpContext)
         {
             if (httpContext is null)
