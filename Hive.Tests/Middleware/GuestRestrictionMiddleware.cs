@@ -137,20 +137,19 @@ namespace Hive.Tests.Middleware
 
         private Hive.GuestRestrictionMiddleware SetupMiddleware(params string[] restrictedEndpoints)
         {
-            // Get IConfiguration (most difficult component to programmatically make) out of the way
-            var configurationKVPs = new Dictionary<string, IEnumerable<string>>()
+            // Create our Configuration using a dictionary
+            var configurationKVPs = new Dictionary<string, string>();
+
+            // Iterate using a for loop, as we need to add each item as a new KVP, and also utilize their index.
+            for (var i = 0; i < restrictedEndpoints.Length; i++)
             {
-                { "RestrictedRoutes", restrictedEndpoints }
-            };
-
-            var json = JsonSerializer.Serialize(configurationKVPs);
-
-            var stream = GenerateStreamFromString(json);
+                configurationKVPs.Add($"RestrictedRoutes:{i}", restrictedEndpoints[i]);
+            }
 
             var services = DIHelper.ConfigureServices(Options, helper);
 
             var configuration = new ConfigurationBuilder()
-                .AddJsonStream(stream);
+                .AddInMemoryCollection(configurationKVPs);
 
             services.AddSingleton<IConfiguration>(configuration.Build())
                 .AddSingleton(requestDelegate)
