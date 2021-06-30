@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -46,6 +45,8 @@ namespace Hive.Tests.Middleware
         // Recursive wildcards
         [InlineData("/api/mod/BSIPA", "/*/*/")]
         [InlineData("/api/mod/BSIPA", "/*/*/*")]
+        // Query parameters should not matter.
+        [InlineData("/api/mods?filterType=latest", "/api/mods")]
         public async Task RestrictedAuthenticated(string requestedEndpoint, params string[] restrictedEndpoints)
         {
             var middleware = SetupMiddleware(restrictedEndpoints);
@@ -78,6 +79,8 @@ namespace Hive.Tests.Middleware
         [InlineData("/api/mod/BSIPA", "/*/*/*")]
         // Accessing endpoint with a cascading grandparent
         [InlineData("/api/mod/BSIPA", "/api/", "!/api/mod")]
+        // Query parameters should not matter.
+        [InlineData("/api/mods?filterType=latest", "/api/mods")]
         public async Task RestrictedNotAuthenticated(string requestedEndpoint, params string[] restrictedEndpoints)
         {
             var middleware = SetupMiddleware(restrictedEndpoints);
@@ -110,6 +113,8 @@ namespace Hive.Tests.Middleware
         // Accessing an unrestricted endpoint via wildcard with restricted, cascading parent
         [InlineData("/api/mod/BSIPA/latest", "/api/mod/", "!/api/mod/*/latest")]
         [InlineData("/api/mod/move", "/*/", "!/api/mod/*")]
+        // Query parameters should not matter.
+        [InlineData("/api/mods?filterType=latest", "!/api/mods")]
         public async Task UnrestrictedEndpoints(string requestedEndpoint, params string[] restrictedEndpoints)
         {
             var middleware = SetupMiddleware(restrictedEndpoints);

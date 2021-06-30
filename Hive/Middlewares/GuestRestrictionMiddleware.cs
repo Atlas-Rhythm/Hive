@@ -22,6 +22,7 @@ namespace Hive
         private static readonly StringView wildcardToken = new("*");
         private const char cascadingSuffix = '/';
         private const char explicitUnrestrictedPrefix = '!';
+        private const char queryParameterToken = '?';
 
         private static readonly JsonSerializerOptions serializerOptions = new()
         {
@@ -85,8 +86,12 @@ namespace Hive
 
             if (!httpContext.Response.HasStarted)
             {
-                // Grab the route the user is wanting to access (and remove case sensitivity while we're at it)
-                var route = httpContext.Request.Path.Value!.ToUpperInvariant();
+                // Grab the route the user is wanting to access
+                var route = httpContext.Request.Path.Value!
+                    // Remove case insensitivity
+                    .ToUpperInvariant()
+                    // Ignore all query parameters
+                    .Split(queryParameterToken).First();
 
                 // Split our route into the individual components
                 var routeView = new StringView(route);
@@ -174,8 +179,14 @@ namespace Hive
         {
             if (string.IsNullOrWhiteSpace(route)) return;
 
-            // Remove case sensitivity by forcing uppercase
-            var routeView = new StringView(route.ToUpperInvariant());
+            // We need to process our route a little bit before we decompose it into the node tree.
+            var processedRoute = route
+                // Remove case sensitivity
+                .ToUpperInvariant()
+                // Ignore all query parameters
+                .Split(queryParameterToken).First();
+
+            var routeView = new StringView(processedRoute);
 
             var isRestricted = true;
             var cascades = false;
