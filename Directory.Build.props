@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
@@ -9,7 +9,7 @@
 
     <IsCLSCompliant>true</IsCLSCompliant>
 
-    <RoslynVersion>3.9.0</RoslynVersion>
+    <RoslynVersion>3.10.0-3.final</RoslynVersion>
     <MSBuildRequiredVersion>16.9.0</MSBuildRequiredVersion>
   </PropertyGroup>
 
@@ -41,12 +41,14 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="coverlet.collector" Version="3.*">
+    <!-- Work around https://github.com/coverlet-coverage/coverlet/issues/1084 -->
+    <PackageReference Include="coverlet.collector" Version="3.0.3-preview.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
   <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.props" Condition="'$(IsCodeGen)' != 'true'" />
+  <Import Project="$(MSBuildThisFileDirectory)\Packaging.props" />
 
 </Project>

@@ -366,6 +366,7 @@ namespace Hive.Permissions
                 var compilerSettings = new RuleCompilationSettings(logger);
                 var nextFunc = new NextFunction("<>next");
                 compilerSettings.AddBuiltin(nextFunc);
+                compilerSettings.AddBuiltin(new CastFunction());
 
                 foreach (var (name, del) in builtinFunctions)
                     compilerSettings.AddBuiltin(new UserBuiltinFunction(name, del));

@@ -37,12 +37,12 @@ namespace Hive.Converters
         }
 
         /// <summary>
-        /// Compares to check if input are all vaulth users.
+        /// Compares to check if input are all valid users
         /// </summary>
         /// <param name="b"></param>
         /// <returns></returns>
         [SuppressMessage("Style", "IDE0004:Remove Unnecessary Cast", Justification = "Cast is required for EF")]
-        public static PropertyBuilder<IList<User>> IsVaulthUsers([DisallowNull] this PropertyBuilder<IList<User>> b)
+        public static PropertyBuilder<IList<User>> IsValidUsers([DisallowNull] this PropertyBuilder<IList<User>> b)
         {
             if (b is null)
                 throw new ArgumentNullException(nameof(b));

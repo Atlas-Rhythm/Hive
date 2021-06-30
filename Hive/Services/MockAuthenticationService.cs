@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace Hive.Services
@@ -30,27 +31,41 @@ namespace Hive.Services
         }
 
         /// <inheritdoc/>
-        public Task<User?> GetUser(HttpRequest request, bool throwOnError = false)
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We return null from this on ANY exception type instead of forwarding it to our callers.")]
+        public Task<User?> GetUser(HttpRequest? request)
         {
             if (request is null)
+                // If we have a null request, we return a null user. This is the same as an unauthenticated request.
+                return Task.FromResult<User?>(null);
+            try
             {
-                return throwOnError ? throw new ArgumentNullException(nameof(request)) : Task.FromResult<User?>(null);
+                if (request.Headers.TryGetValue(HeaderNames.Authorization, out var authHeader))
+                {
+                    if (Users.TryGetValue(authHeader, out var outp))
+                        return Task.FromResult(outp);
+                }
+                return Task.FromResult<User?>(null);
             }
-
-            if (request.Headers.TryGetValue(HeaderNames.Authorization, out var authHeader))
+            catch
             {
-                if (Users.TryGetValue(authHeader, out var outp))
-                    return Task.FromResult(outp);
+                return Task.FromResult<User?>(null);
             }
-            return Task.FromResult<User?>(null);
         }
 
         /// <inheritdoc/>
-        public Task<User?> GetUser(string userId, bool throwOnError = false)
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We return null from this on ANY exception type instead of forwarding it to our callers.")]
+        public Task<User?> GetUser(string userId)
         {
-            return string.IsNullOrEmpty(userId)
-                ? throwOnError ? throw new ArgumentNullException(nameof(userId)) : Task.FromResult<User?>(null)
-                : Users.TryGetValue(userId, out var outp) ? Task.FromResult(outp) : Task.FromResult<User?>(null);
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentNullException(nameof(userId));
+            try
+            {
+                return Users.TryGetValue(userId, out var outp) ? Task.FromResult(outp) : Task.FromResult<User?>(null);
+            }
+            catch
+            {
+                return Task.FromResult<User?>(null);
+            }
         }
 
         /// <inheritdoc/>

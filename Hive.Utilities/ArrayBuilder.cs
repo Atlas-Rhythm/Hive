@@ -1,5 +1,5 @@
 ﻿using System;
-#if !NETSTANDARD2_0
+#if NETSTANDARD2_1
 using System.Buffers;
 #else
 using System.Diagnostics.CodeAnalysis;
@@ -19,7 +19,7 @@ namespace Hive.Utilities
     {
         private T[] array;
 
-#if !NETSTANDARD2_0
+#if NETSTANDARD2_1
         private ArrayPool<T> pool;
 #endif
 
@@ -28,7 +28,7 @@ namespace Hive.Utilities
         /// </summary>
         public int Count { get; private set; }
 
-#if NETSTANDARD2_0
+#if !NETSTANDARD2_1
         [SuppressMessage("Style", "IDE0044:Add readonly modifier",
             Justification = "This is modified when using .NET Standard 2.1, and so is left as mutable for that.")]
 #endif
@@ -39,7 +39,7 @@ namespace Hive.Utilities
         /// </summary>
         /// <param name="capacity">The minimum capacity to initialize with.</param>
         public ArrayBuilder(int capacity = 4)
-#if !NETSTANDARD2_0
+#if NETSTANDARD2_1
             : this(ArrayPool<T>.Shared, capacity) { }
 #else
         {
@@ -49,7 +49,7 @@ namespace Hive.Utilities
         }
 #endif
 
-#if !NETSTANDARD2_0
+#if NETSTANDARD2_1
         /// <summary>
         /// Constructs a new <see cref="ArrayBuilder{T}"/> with the specified <see cref="ArrayPool{T}"/>
         /// and minimumm capcacity.
@@ -76,10 +76,13 @@ namespace Hive.Utilities
         {
             if (array != null && amount <= array.Length) return;
 
-            Resize(amount);
+            var newSize = array is not null ? array.Length * 2 : 8;
+            while (amount > newSize)
+                newSize *= 2;
+            Resize(newSize);
         }
 
-#if NETSTANDARD2_0
+#if !NETSTANDARD2_1
         private void Resize(int newSize)
             => Array.Resize(ref array, newSize);
 #else
@@ -108,18 +111,17 @@ namespace Hive.Utilities
             array = Array.Empty<T>();
         }
 
-#if NETSTANDARD2_0
+#if !NETSTANDARD2_1
+        [SuppressMessage("Performance", "CA1822:Mark members as static",
+            Justification = "This is an instance method to keep consistency between builds.")]
+#endif
         private void ClearInternal()
         {
-            // intentionally left empty
-        }
-#else
-        private void ClearInternal()
-        {
+#if NETSTANDARD2_1
             if (rented) pool.Return(array, true);
             rented = false;
-        }
 #endif
+        }
 
         /// <summary>
         /// Disposes of this <see cref="ArrayBuilder{T}"/>, releasing the underlying array if possible.

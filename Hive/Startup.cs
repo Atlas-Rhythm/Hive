@@ -54,17 +54,19 @@ namespace Hive
                 .AddSingleton<IModsPlugin, HiveModsControllerPlugin>()
                 .AddSingleton<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>()
                 .AddSingleton<IUploadPlugin, HiveDefaultUploadPlugin>()
+                .AddSingleton<IUsernamePlugin, HiveUsernamePlugin>()
+                .AddSingleton<IUserPlugin, HiveUserPlugin>()
                 .AddSingleton<SymmetricAlgorithm>(sp => Rijndael.Create()); // TODO: pick an algo
 
             // If the config file doesn't have an Auth0 section, we'll assume that the auth service is provided by a plugin.
             if (Configuration.GetSection("Auth0").Exists())
             {
-                _ = services.AddInterfacesAsSingleton<Auth0AuthenticationService, IProxyAuthenticationService, IAuth0Service>();
+                _ = services.AddInterfacesAsScoped<Auth0AuthenticationService, IProxyAuthenticationService, IAuth0Service>();
             }
             // Uncomment the following code if you need mock authentication for HOPEFULLY DEVELOPMENT reasons
             //else
             //{
-            //    _ = services.AddInterfacesAsSingleton<MockAuthenticationService, IProxyAuthenticationService, IAuth0Service>();
+            //    _ = services.AddInterfacesAsScoped<MockAuthenticationService, IProxyAuthenticationService, IAuth0Service>();
             //}
 
             _ = services.AddDbContext<HiveContext>(options =>
