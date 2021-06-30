@@ -219,9 +219,9 @@ namespace Hive
                     currentNode = currentNode.Children[component];
 
                     // We only need to do an ambiguity check if we are on our last component and it already exists
-                    if (i == count - 1)
+                    if (i == count - 1 && currentNode.Parent != null)
                     {
-                        TestForAmbiguity(routeView, currentNode, isRestricted, cascades);
+                        TestForAmbiguity(routeView, currentNode.Parent, currentNode, isRestricted);
                     }
 
                     i++;
@@ -242,7 +242,7 @@ namespace Hive
                     // We may need to do an ambiguity check with our wildcard node
                     if (currentNode.Wildcard != null && i == count - 1)
                     {
-                        TestForAmbiguity(routeView, currentNode.Wildcard, isRestricted, cascades);
+                        TestForAmbiguity(routeView, currentNode, currentNode.Wildcard, isRestricted);
                     }
 
                     currentNode.Wildcard ??= node;
@@ -262,10 +262,11 @@ namespace Hive
             currentNode.CascadesToChildren = cascades;
         }
 
-        private static void TestForAmbiguity(StringView routeView, Node currentNode, bool isRestricted, bool cascades)
+        private static void TestForAmbiguity(StringView routeView, Node parentNode, Node currentNode, bool isRestricted)
         {
             // We might be at risk of ambiguity if our last route component already exists and shares the same cascade state.
-            if (currentNode.Children.Count is 0 && currentNode.CascadesToChildren == cascades)
+            // This check happens
+            if (parentNode.Children.ContainsValue(currentNode) || parentNode.Wildcard == currentNode)
             {
                 // If we have conflicting restriction values, we throw.
                 // I don't wanna deal with ambiguity lmao

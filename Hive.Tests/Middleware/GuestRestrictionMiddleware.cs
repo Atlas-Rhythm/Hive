@@ -76,11 +76,12 @@ namespace Hive.Tests.Middleware
         [InlineData("/api/mod/BSIPA/latest", "/api/*/")]
         // Recursive wildcards
         [InlineData("/api/mod/BSIPA", "/*/*/")]
-        [InlineData("/api/mod/BSIPA", "/*/*/*")]
         // Accessing endpoint with a cascading grandparent
         [InlineData("/api/mod/BSIPA", "/api/", "!/api/mod")]
         // Query parameters should not matter.
         [InlineData("/api/mods?filterType=latest", "/api/mods")]
+        // *Almost* a case of ambiguity, but not quite.
+        [InlineData("/api/mods", "/api/*/", "!/api")]
         public async Task RestrictedNotAuthenticated(string requestedEndpoint, params string[] restrictedEndpoints)
         {
             var middleware = SetupMiddleware(restrictedEndpoints);
@@ -137,6 +138,7 @@ namespace Hive.Tests.Middleware
         [InlineData("/*/", "!/*/")]
         [InlineData("/*", "!/*")]
         [InlineData("/api/mod", "!/api/mod")]
+        [InlineData("/api/", "!/api")]
         public void AmbiguityExceptions(params string[] restrictedEndpoints)
             => Assert.Throws<InvalidOperationException>(() => SetupMiddleware(restrictedEndpoints));
 
