@@ -36,7 +36,7 @@
   <Import Project="$(HiveToolsDirectory)LiteralAssemblyAttributeItemGroup.targets" />
   <Import Project="$(HiveToolsDirectory)SdkGetProperty.targets" />
   
-  <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" Condition="'$(IsCodeGen)' != 'true'" />
+  <Import Project="$(HiveSourceDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" Condition="'$(IsCodeGen)' != 'true'" />
   <Import Project="$(HiveToolsDirectory)Packaging.targets" Condition="'$(BuildingStandalone)' == 'true'" />
 
 </Project>

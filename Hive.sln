@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30128.36
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive", "Hive\Hive.csproj", "{8B200BA9-DF61-45A4-A94B-805CA8B8C3B1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive", "src\Hive\Hive.csproj", "{8B200BA9-DF61-45A4-A94B-805CA8B8C3B1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Permissions", "Hive.Permissions\Hive.Permissions.csproj", "{1A05BBA5-7C7E-4EEF-A53D-3A1900B6899E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Permissions", "src\Hive.Permissions\Hive.Permissions.csproj", "{1A05BBA5-7C7E-4EEF-A53D-3A1900B6899E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Permissions.Tests", "Hive.Permissions.Tests\Hive.Permissions.Tests.csproj", "{7043FF4B-1731-48A6-BC0D-6BE7BB8224B5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Permissions.Tests", "src\Hive.Permissions.Tests\Hive.Permissions.Tests.csproj", "{7043FF4B-1731-48A6-BC0D-6BE7BB8224B5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{359F68C9-18C8-435C-9573-A5C7CBD0ADE0}"
 	ProjectSection(SolutionItems) = preProject
@@ -22,29 +22,29 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		System.Diagnostics.CodeAnalysis.cs = System.Diagnostics.CodeAnalysis.cs
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities", "Hive.Utilities\Hive.Utilities.csproj", "{3C265E15-AFDF-47B1-9893-7957F9A43818}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities", "src\Hive.Utilities\Hive.Utilities.csproj", "{3C265E15-AFDF-47B1-9893-7957F9A43818}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities.Tests", "Hive.Utilities.Tests\Hive.Utilities.Tests.csproj", "{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities.Tests", "src\Hive.Utilities.Tests\Hive.Utilities.Tests.csproj", "{00BDAD95-46B2-4518-80FA-E6EC7CAD3FA3}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Hive.Dependencies", "Hive.Dependencies\Hive.Dependencies.fsproj", "{14DA7AF2-7B06-4E06-864E-0284269D9655}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Hive.Dependencies", "src\Hive.Dependencies\Hive.Dependencies.fsproj", "{14DA7AF2-7B06-4E06-864E-0284269D9655}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Dependencies.Tests", "Hive.Dependencies.Tests\Hive.Dependencies.Tests.csproj", "{9086B6A4-8162-4CEC-B05A-D3222542EC4A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Dependencies.Tests", "src\Hive.Dependencies.Tests\Hive.Dependencies.Tests.csproj", "{9086B6A4-8162-4CEC-B05A-D3222542EC4A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Versioning", "Hive.Versioning\Hive.Versioning.csproj", "{67415FB4-6200-4DEA-BEC1-10D7C3B1399D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Versioning", "src\Hive.Versioning\Hive.Versioning.csproj", "{67415FB4-6200-4DEA-BEC1-10D7C3B1399D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Versioning.Tests", "Hive.Versioning.Tests\Hive.Versioning.Tests.csproj", "{E07BC8F2-00B7-4E6E-BC44-3007421A9831}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Versioning.Tests", "src\Hive.Versioning.Tests\Hive.Versioning.Tests.csproj", "{E07BC8F2-00B7-4E6E-BC44-3007421A9831}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Versioning.Fuzz", "Hive.Versioning.Fuzz\Hive.Versioning.Fuzz.csproj", "{6AADF57E-7EBA-4A89-81C5-3C8AF3A58605}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Versioning.Fuzz", "src\Hive.Versioning.Fuzz\Hive.Versioning.Fuzz.csproj", "{6AADF57E-7EBA-4A89-81C5-3C8AF3A58605}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Tests", "Hive.Tests\Hive.Tests.csproj", "{FC9760DF-50AA-4FEC-A0F4-64DB4767EB4F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Tests", "src\Hive.Tests\Hive.Tests.csproj", "{FC9760DF-50AA-4FEC-A0F4-64DB4767EB4F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins", "Hive.Plugins\Hive.Plugins.csproj", "{FEB62848-1C44-4ED3-B357-A5540B59C370}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins", "src\Hive.Plugins\Hive.Plugins.csproj", "{FEB62848-1C44-4ED3-B357-A5540B59C370}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CodeGen", "CodeGen", "{418DF181-8405-4B69-8B32-FBEEFACADAC6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.CodeGen", "CodeGen\Hive.CodeGen\Hive.CodeGen.csproj", "{D14CCA86-C8FA-4F96-A92B-9CF454C485B1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.CodeGen", "src\CodeGen\Hive.CodeGen\Hive.CodeGen.csproj", "{D14CCA86-C8FA-4F96-A92B-9CF454C485B1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.CodeGen.Attributes", "CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj", "{585E184E-0F14-4456-B542-9AECFAB96A15}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.CodeGen.Attributes", "src\CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj", "{585E184E-0F14-4456-B542-9AECFAB96A15}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{8D72FE69-EB86-4B03-8A93-C4ED2D47A38D}"
 	ProjectSection(SolutionItems) = preProject
@@ -53,13 +53,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{8D72FE69-E
 		CodeGen\docs\GenericParameterization.md = CodeGen\docs\GenericParameterization.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Analyzers", "Hive.Analyzers\Hive.Analyzers.csproj", "{19C11291-D96B-4607-BA44-CC32FA0E8641}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Analyzers", "src\Hive.Analyzers\Hive.Analyzers.csproj", "{19C11291-D96B-4607-BA44-CC32FA0E8641}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins.Tests", "Hive.Plugins.Tests\Hive.Plugins.Tests.csproj", "{486CEBA1-EDF4-4493-B81F-A485AA00B64C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins.Tests", "src\Hive.Plugins.Tests\Hive.Plugins.Tests.csproj", "{486CEBA1-EDF4-4493-B81F-A485AA00B64C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins.Tests.TestPlugin", "Hive.Plugins.Tests.TestPlugin\Hive.Plugins.Tests.TestPlugin.csproj", "{35D283E6-B9A8-4EF7-99A0-555DBB741FEA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugins.Tests.TestPlugin", "src\Hive.Plugins.Tests.TestPlugin\Hive.Plugins.Tests.TestPlugin.csproj", "{35D283E6-B9A8-4EF7-99A0-555DBB741FEA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugin.Sdk", "PluginSDK\Hive.Plugin.Sdk\Hive.Plugin.Sdk.csproj", "{DC562194-EB4D-48F2-B96D-52716D526AB8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugin.Sdk", "src\PluginSDK\Hive.Plugin.Sdk\Hive.Plugin.Sdk.csproj", "{DC562194-EB4D-48F2-B96D-52716D526AB8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{C6CF4A49-70F0-47B5-993D-A782197BE815}"
 	ProjectSection(SolutionItems) = preProject
@@ -75,7 +75,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{C6CF4A49
 		tools\SharedProps.targets = tools\SharedProps.targets
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugin.Template", "PluginSDK\Hive.Plugin.Template\Hive.Plugin.Template.csproj", "{98CC10C4-2AFE-4C46-AB85-B7DCB503B48A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugin.Template", "src\PluginSDK\Hive.Plugin.Template\Hive.Plugin.Template.csproj", "{98CC10C4-2AFE-4C46-AB85-B7DCB503B48A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PluginSDK", "PluginSDK", "{B7EB5CD3-41B5-4666-89BD-E3565DA18744}"
 EndProject

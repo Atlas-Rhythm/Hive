@@ -16,7 +16,7 @@
 
   <Target Name="_BuildNormalSdkRefPkgs" BeforeTargets="BuildPackageReferenceList">
     <ItemGroup>
-      <SdkReferencePackage Include="$(MSBuildThisFileDirectory)..\%(SdkNormalPackage.Identity)\%(SdkNormalPackage.Identity).*proj"
+      <SdkReferencePackage Include="$(HiveSourceDirectory)%(SdkNormalPackage.Identity)\%(SdkNormalPackage.Identity).*proj"
                            Condition="'@(SdkNormalPackage)' != ''" />
     </ItemGroup>
   </Target>

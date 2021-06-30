@@ -26,8 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <SdkReferencePackage Include="..\CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" />
-    <SdkReferencePackage Include="..\CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" />
+    <SdkReferencePackage Include="..\..\CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" />
+    <SdkReferencePackage Include="..\..\CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" />
     <SdkNormalPackage Include="Hive" />
     <SdkNormalPackage Include="Hive.Analyzers" />
     <SdkNormalPackage Include="Hive.Dependencies" />

@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <Compile Include="$(MSBuildThisFileDirectory)\..\System.Diagnostics.CodeAnalysis.cs" />
+    <Compile Include="$(HiveToolsDirectory)\..\System.Diagnostics.CodeAnalysis.cs" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(BuildingStandalone)' == 'true'">

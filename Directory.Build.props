@@ -8,6 +8,7 @@
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     
     <HiveToolsDirectory>$(MSBuildThisFileDirectory)tools\</HiveToolsDirectory>
+    <HiveSourceDirectory>$(MSBuildThisFileDirectory)src\</HiveSourceDirectory>
 
     <RoslynVersion>3.10.0</RoslynVersion>
     <MSBuildRequiredVersion>16.9.0</MSBuildRequiredVersion>
@@ -25,17 +26,17 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsCodeGen)' != 'true' And '$(NoAutoProjectRefs)' != 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" Condition="'$(IsAnalyzer)' != 'true'" />
-    <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" Condition="'$(IsAnalyzer)' == 'true'" PrivateAssets="all" />
-    <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="$(HiveSourceDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" Condition="'$(IsAnalyzer)' != 'true'" />
+    <ProjectReference Include="$(HiveSourceDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" Condition="'$(IsAnalyzer)' == 'true'" PrivateAssets="all" />
+    <ProjectReference Include="$(HiveSourceDirectory)CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true' And '$(NoAutoProjectRefs)' != 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)Hive.Analyzers\Hive.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="$(HiveSourceDirectory)Hive.Analyzers\Hive.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsUtilities)' != 'true' And '$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true' And '$(NoAutoProjectRefs)' != 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)Hive.Utilities\Hive.Utilities.csproj" />
+    <ProjectReference Include="$(HiveSourceDirectory)Hive.Utilities\Hive.Utilities.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Tests)' == 'true'">
@@ -52,7 +53,7 @@
     </PackageReference>
   </ItemGroup>
 
-  <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.props" Condition="'$(IsCodeGen)' != 'true'" />
+  <Import Project="$(HiveSourceDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.props" Condition="'$(IsCodeGen)' != 'true'" />
   <Import Project="$(HiveToolsDirectory)Packaging.props" />
 
 </Project>
