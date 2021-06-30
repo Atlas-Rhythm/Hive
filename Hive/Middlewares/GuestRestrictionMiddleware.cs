@@ -160,8 +160,7 @@ namespace Hive
                         var jsonException = new JsonApiException
                         {
                             StatusCode = httpContext.Response.StatusCode,
-                            // REVIEW: Should this string be integrated into Resources?
-                            Message = "You must be logged in to gain access."
+                            Message = Resources.Resource.RestrictionMiddleware_Unauthorized
                         };
 
                         await httpContext.Response.WriteAsJsonAsync(jsonException, serializerOptions).ConfigureAwait(false);
