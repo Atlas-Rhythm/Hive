@@ -46,7 +46,7 @@ namespace Hive.Tests.Middleware
         // Recursive wildcards
         [InlineData("/api/mod/BSIPA", "/*/*/")]
         [InlineData("/api/mod/BSIPA", "/*/*/*")]
-        public async void RestrictedAuthenticated(string requestedEndpoint, params string[] restrictedEndpoints)
+        public async Task RestrictedAuthenticated(string requestedEndpoint, params string[] restrictedEndpoints)
         {
             var middleware = SetupMiddleware(restrictedEndpoints);
 
@@ -78,7 +78,7 @@ namespace Hive.Tests.Middleware
         [InlineData("/api/mod/BSIPA", "/*/*/*")]
         // Accessing endpoint with a cascading grandparent
         [InlineData("/api/mod/BSIPA", "/api/", "!/api/mod")]
-        public async void RestrictedNotAuthenticated(string requestedEndpoint, params string[] restrictedEndpoints)
+        public async Task RestrictedNotAuthenticated(string requestedEndpoint, params string[] restrictedEndpoints)
         {
             var middleware = SetupMiddleware(restrictedEndpoints);
 
@@ -110,7 +110,7 @@ namespace Hive.Tests.Middleware
         // Accessing an unrestricted endpoint via wildcard with restricted, cascading parent
         [InlineData("/api/mod/BSIPA/latest", "/api/mod/", "!/api/mod/*/latest")]
         [InlineData("/api/mod/move", "/*/", "!/api/mod/*")]
-        public async void UnrestrictedEndpoints(string requestedEndpoint, params string[] restrictedEndpoints)
+        public async Task UnrestrictedEndpoints(string requestedEndpoint, params string[] restrictedEndpoints)
         {
             var middleware = SetupMiddleware(restrictedEndpoints);
 
