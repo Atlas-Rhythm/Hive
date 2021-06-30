@@ -159,7 +159,7 @@ namespace Hive
                         var jsonException = new JsonApiException
                         {
                             StatusCode = httpContext.Response.StatusCode,
-                            Message = Resources.Resource.RestrictionMiddleware_Unauthorized
+                            Message = Resources.SR.RestrictionMiddleware_Unauthorized
                         };
 
                         await httpContext.Response.WriteAsJsonAsync(jsonException, serializerOptions).ConfigureAwait(false);
