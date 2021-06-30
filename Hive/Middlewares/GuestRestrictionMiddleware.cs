@@ -99,7 +99,7 @@ namespace Hive
                 foreach (var component in routeComponents)
                 {
                     // Keep going down the chain if we can safely do so.
-                    if (currentNode!.Children.ContainsKey(component))
+                    if (currentNode.Children.ContainsKey(component))
                     {
                         // If this node happens to cascade, we save it for later.
                         if (currentNode.CascadesToChildren)
@@ -107,13 +107,19 @@ namespace Hive
                             cascadingNode = currentNode;
                         }
 
-                        currentNode = currentNode!.Children[component];
+                        currentNode = currentNode.Children[component];
                         continue;
                     }
 
                     // If we encounter no children, but have a wildcard, we continue down the wildcard path.
-                    if (currentNode!.Wildcard != null)
+                    if (currentNode.Wildcard != null)
                     {
+                        // If the wildcard happens to cascade, we save it for later.
+                        if (currentNode.Wildcard.CascadesToChildren)
+                        {
+                            cascadingNode = currentNode.Wildcard;
+                        }
+
                         currentNode = currentNode.Wildcard;
                         continue;
                     }
