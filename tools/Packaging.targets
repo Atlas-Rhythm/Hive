@@ -1,6 +1,29 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <!-- TODO: make dotnet packs with this output packages without references -->
+  
+  <PropertyGroup>
+    <CoreCompileDependsOn>PrivateAllProjectReferences;$(CoreCompileDependsOn)</CoreCompileDependsOn>
+    <BeforePack>PrivateAllProjectReferences;$(BeforePack)</BeforePack>
+  </PropertyGroup>
+  
+  <Target Name="PrivateAllProjectReferences" BeforeTargets="Restore;GenerateRestoreGraphFile;_LoadRestoreGraphEntryPoints">
+    <Message Importance="high" Text="Privating all references" />
+    <Message Importance="high" Text="@(ProjectReference->'%(Identity) :: %(PrivateAssets) :: %(Private)')" />
+    <ItemGroup>
+      <ProjectReference>
+        <PrivateAssets>all</PrivateAssets>
+        <Private>true</Private>
+      </ProjectReference>
+      <PackageReference>
+        <PrivateAssets>all</PrivateAssets>
+        <Private>true</Private>
+      </PackageReference>
+    </ItemGroup>
+    <Message Importance="high" Text="@(ProjectReference->'%(Identity) :: %(PrivateAssets) :: %(Private)')" />
+  </Target>
+  
   <!-- This is mostly pulled from the SDK files  -->
   <Target Name="ComputeILLinkProps">
 
@@ -168,7 +191,7 @@
     <Message Importance="low" Text="referencedirs @(_ReferenceDirs)" />
 
     <ItemGroup>
-      <_ILRCmdArg Include="-lib:%(_ReferenceDirs.Identity)" />
+      <_ILRCmdArg Include="-lib:%(_ReferenceDirs.Identity)" Condition="'$(OS)' != 'Windows_NT'" />
       <_ILRCmdArg Include="-union" />
       <_ILRCmdArg Include="-xmldocs" />
       <_ILRCmdArg Include="-internalize:$(IntermediateOutputPath)ilrepack.exclusions" />
