@@ -1,8 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
+    
   <PropertyGroup>
-    <Version>0.1.0-pre.alpha.14</Version>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <DevVersionSuffix>dev.local</DevVersionSuffix>
+    <DevVersionSuffix Condition="'$(DevVersionNumber)' != ''">$(DevVersionSuffix).$(DevVersionNumber)</DevVersionSuffix>
+    <VersionSuffix Condition="'$(VersionSuffix)' == '' and '$(BuildRelease)' != 'true'">$(DevVersionSuffix)</VersionSuffix>
+    
     <Description>A highly extensible mod repository.</Description>
     <Authors></Authors>
     <!-- TODO: complete this a bit more -->
