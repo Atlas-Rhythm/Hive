@@ -1,9 +1,9 @@
 {
   "$schema": "http://json.schemastore.org/template",
   "author": "$Authors",
-  "classifications": [ "Hive", "ClassLib", "Plugin", "C#9" ],
+  "classifications": [ "Hive", "Plugin" ],
   "identity": "Hive.Plugin.Template",
-  "name": "Hive Plugin Template",
+  "name": "Hive Plugin",
   "description": "$Description",
   "shortName": "hiveplug",
   "tags": {
@@ -31,14 +31,14 @@
     },
     "ImportHiveBuildHelpers": {
       "type": "parameter",
-      "description": "Disables the default SDK imported Hive build helpers, such as InternalsVisibleTo and LiteralAssemblyAttributes",
+      "description": "Enables the default SDK imported Hive build helpers, such as InternalsVisibleTo and LiteralAssemblyAttributes",
       "replaces": "ImportHiveBuildHelpers",
       "datatype": "bool",
       "defaultValue": "true"
     },
     "UseHiveCodeGen": {
       "type": "parameter",
-      "description": "Disables the Hive code generators and analyzers.",
+      "description": "Enables the Hive code generators and analyzers.",
       "replaces": "UseHiveCodeGen",
       "datatype": "bool",
       "defaultValue": "true"
