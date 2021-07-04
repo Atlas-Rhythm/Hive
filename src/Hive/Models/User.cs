@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
 using Hive.Controllers;
 using Microsoft.EntityFrameworkCore;
 
@@ -48,7 +47,7 @@ namespace Hive.Models
         /// </summary>
         [Column(TypeName = "jsonb")]
         [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "We want to set it explicitly to our data from our Auth0 instance, and also allow plugins to do the same.")]
-        public Dictionary<string, JsonElement> AdditionalData { get; set; } = new();
+        public Dictionary<string, string?> AdditionalData { get; set; } = new();
 
         /// <summary>
         /// Configures for EF
