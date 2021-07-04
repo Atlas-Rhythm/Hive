@@ -42,6 +42,11 @@
 /src/Hive/Permissions/              @nike4613
 /src/Hive/Logging/                  @nike4613
 
+/.github/                           @sc2ad
+/.github/workflows/                 @sc2ad @nike4613
+
+.editorconfig                       @nike4613
+
 *.targets                           @nike4613
 *.props                             @nike4613
 *.ps1                               @nike4613
