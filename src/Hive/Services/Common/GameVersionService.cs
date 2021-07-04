@@ -73,8 +73,8 @@ namespace Hive.Services.Common
         private const string FilterActionName = "hive.game.versions.filter";
         private const string CreateActionName = "hive.game.versions.create";
 
-        private static readonly HiveObjectQuery<IEnumerable<GameVersion>> forbiddenEnumerableResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
-        private static readonly HiveObjectQuery<GameVersion> forbiddenSingularResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<IEnumerable<GameVersion>> forbiddenEnumerableResponse = new(StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<GameVersion> forbiddenSingularResponse = new(StatusCodes.Status403Forbidden);
 
         /// <summary>
         /// Create a GameVersionService with DI.
@@ -129,7 +129,7 @@ namespace Hive.Services.Common
             // This final filtered list of versions is what we'll return back to the user.
             log.Debug("Remaining versions after plugin filters: {0}", filteredVersions.Count());
 
-            return new HiveObjectQuery<IEnumerable<GameVersion>>(filteredVersions, null, StatusCodes.Status200OK);
+            return new HiveObjectQuery<IEnumerable<GameVersion>>(StatusCodes.Status200OK, filteredVersions);
         }
 
         /// <summary>
@@ -167,13 +167,9 @@ namespace Hive.Services.Common
                 AdditionalData = gameVersion.AdditionalData
             };
 
-            // Set AdditionalData if it's undefined
-            if (version.AdditionalData.ValueKind == JsonValueKind.Undefined)
-                version.AdditionalData = JsonElementHelper.BlankObject;
-
             // Exit if there's already an existing version with the same name
             if (await context.GameVersions.AnyAsync(x => x.Name == version.Name).ConfigureAwait(false))
-                return new HiveObjectQuery<GameVersion>(null, "A channel with this name already exists.", StatusCodes.Status409Conflict);
+                return new HiveObjectQuery<GameVersion>(StatusCodes.Status409Conflict, "A channel with this name already exists.");
 
             // Call our hooks
             combined.NewGameVersionCreated(version);
@@ -181,7 +177,7 @@ namespace Hive.Services.Common
             _ = await context.GameVersions.AddAsync(version).ConfigureAwait(false);
             _ = await context.SaveChangesAsync().ConfigureAwait(false);
 
-            return new HiveObjectQuery<GameVersion>(version, null, StatusCodes.Status200OK);
+            return new HiveObjectQuery<GameVersion>(StatusCodes.Status200OK, version);
         }
     }
 }

@@ -25,9 +25,9 @@ namespace Hive.Tests.Endpoints
 
         private static readonly IEnumerable<GameVersion> defaultGameVersions = new List<GameVersion>()
         {
-            new GameVersion() { Name = "1.10.0", AdditionalData = DIHelper.EmptyAdditionalData },
-            new GameVersion() { Name = "1.11.0", AdditionalData = DIHelper.EmptyAdditionalData },
-            new GameVersion() { Name = "1.12.0-beta", AdditionalData = DIHelper.EmptyAdditionalData }
+            new GameVersion() { Name = "1.10.0" },
+            new GameVersion() { Name = "1.11.0" },
+            new GameVersion() { Name = "1.12.0-beta" }
         };
 
         private static readonly IEnumerable<IGameVersionsPlugin> defaultPlugins = new List<IGameVersionsPlugin>()
@@ -51,7 +51,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail from the permission rule.
+            AssertForbid(res.Result); // The above endpoint must fail from the permission rule.
         }
 
         [Fact]
@@ -67,7 +67,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail from the plugin.
+            AssertForbid(res.Result); // The above endpoint must fail from the plugin.
         }
 
         [Fact]
@@ -149,7 +149,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", defaultPlugins);
             controller.ControllerContext.HttpContext = CreateMockRequest(GenerateStreamFromString("1.13.2"));
 
-            var res = await controller.CreateGameVersion(new InputGameVersion("1.13.2", DIHelper.EmptyAdditionalData));
+            var res = await controller.CreateGameVersion(new InputGameVersion("1.13.2", new Dictionary<string, object?>()));
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
@@ -167,7 +167,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", defaultPlugins);
 
             // Whoops, we "forgot" to assign a user.
-            var res = await controller.CreateGameVersion(new InputGameVersion("1.13.3", default));
+            var res = await controller.CreateGameVersion(new InputGameVersion("1.13.3", new Dictionary<string, object?>()));
 
             Assert.NotNull(res);
             // Should fail.

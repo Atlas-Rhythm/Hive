@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
-using System.Text.Json;
 
 namespace Hive.Services.Common
 {
@@ -64,8 +63,8 @@ namespace Hive.Services.Common
         private readonly PermissionsManager<PermissionContext> permissions;
         private PermissionActionParseState channelsParseState;
 
-        private static readonly HiveObjectQuery<IEnumerable<Channel>> forbiddenEnumerableResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
-        private static readonly HiveObjectQuery<Channel> forbiddenSingularResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<IEnumerable<Channel>> forbiddenEnumerableResponse = new(StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<Channel> forbiddenSingularResponse = new(StatusCodes.Status403Forbidden);
 
         private const string ListActionName = "hive.channels.list";
         private const string FilterActionName = "hive.channels.filter";
@@ -127,7 +126,7 @@ namespace Hive.Services.Common
             filteredChannels = combined.GetChannelsFilter(user, filteredChannels);
             log.Debug("Remaining channels: {0}", filteredChannels.Count());
 
-            return new HiveObjectQuery<IEnumerable<Channel>>(filteredChannels, null, StatusCodes.Status200OK);
+            return new HiveObjectQuery<IEnumerable<Channel>>(StatusCodes.Status200OK, filteredChannels);
         }
 
         /// <summary>
@@ -161,15 +160,11 @@ namespace Hive.Services.Common
 
             log.Debug("Adding the new channel...");
 
-            // Set AdditionalData if it's undefined
-            if (newChannel.AdditionalData.ValueKind == JsonValueKind.Undefined)
-                newChannel.AdditionalData = JsonElementHelper.BlankObject;
-
             // Exit if there's already an existing channel with the same name
             var existingChannels = await context.Channels.ToListAsync().ConfigureAwait(false);
 
             if (existingChannels.Any(x => x.Name == newChannel.Name))
-                return new HiveObjectQuery<Channel>(null, "A channel with this name already exists.", StatusCodes.Status409Conflict);
+                return new HiveObjectQuery<Channel>(StatusCodes.Status409Conflict, "A channel with this name already exists.");
 
             // Call our hooks
             combined.NewChannelCreated(newChannel);
@@ -177,7 +172,7 @@ namespace Hive.Services.Common
             _ = await context.Channels.AddAsync(newChannel).ConfigureAwait(false);
             _ = await context.SaveChangesAsync().ConfigureAwait(false);
 
-            return new HiveObjectQuery<Channel>(newChannel, null, StatusCodes.Status200OK);
+            return new HiveObjectQuery<Channel>(StatusCodes.Status200OK, newChannel);
         }
     }
 }

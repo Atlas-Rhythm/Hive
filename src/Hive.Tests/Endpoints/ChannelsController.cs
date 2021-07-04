@@ -21,8 +21,8 @@ namespace Hive.Tests.Endpoints
 
         private static readonly IEnumerable<Channel> defaultChannels = new List<Channel>
         {
-            new Channel { Name = "Public", AdditionalData = DIHelper.EmptyAdditionalData },
-            new Channel { Name = "Beta", AdditionalData =  DIHelper.EmptyAdditionalData }
+            new Channel { Name = "Public" },
+            new Channel { Name = "Beta" }
         };
 
         public ChannelsController(ITestOutputHelper helper) : base(new PartialContext
@@ -42,7 +42,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.GetChannels();
             Assert.NotNull(res);
             // Should forbid based off of a permission failure.
-            Assert.IsType<ForbidResult>(res.Result);
+            AssertForbid(res.Result);
         }
 
         [Fact]
@@ -58,7 +58,7 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(res);
             // Should forbid based off of a plugin failure.
             Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result);
+            AssertForbid(res.Result);
         }
 
         [Fact]
@@ -126,7 +126,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", CreateDefaultPlugin());
             controller.ControllerContext.HttpContext = CreateMockRequest(GenerateStreamFromString("archival"));
 
-            var res = await controller.CreateNewChannel(new Channel { Name = "archival", AdditionalData = DIHelper.EmptyAdditionalData });
+            var res = await controller.CreateNewChannel(new Channel { Name = "archival" });
 
             Assert.NotNull(res);
             // Should succeed and give us our new channel back

@@ -117,10 +117,13 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="challenge_respose" xml:space="preserve">
-    <value>challenge</value>
+  <data name="StatusCode_Message_Unnecessary" xml:space="preserve">
+    <value>Do not provide this status code when also constructing this with a message parameter!</value>
   </data>
-  <data name="forbidden_respose" xml:space="preserve">
-    <value>forbidden</value>
+  <data name="StatusCode_None_Unnecessary" xml:space="preserve">
+    <value>Do not provide this status code when also constructing this with a no parameters!</value>
+  </data>
+  <data name="StatusCode_Value_Unnecessary" xml:space="preserve">
+    <value>Do not provide this status code when also constructing this with a value parameter!</value>
   </data>
 </root>

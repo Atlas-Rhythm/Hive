@@ -16,6 +16,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using static Hive.Tests.TestHelpers;
 
 namespace Hive.Tests.Endpoints
 {
@@ -25,8 +26,7 @@ namespace Hive.Tests.Endpoints
 
         private static readonly Channel DefaultChannel = new()
         {
-            Name = "Public",
-            AdditionalData = DIHelper.EmptyAdditionalData
+            Name = "Public"
         };
 
         // Build a simple-ish dependency tree.
@@ -132,7 +132,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.ResolveDependencies(input);
 
             Assert.NotNull(res.Result); // Make sure we got a request back
-            Assert.IsType<ForbidResult>(res.Result); // This endpoint must fail at the permissions check.
+            AssertForbid(res.Result); // This endpoint must fail at the permissions check.
         }
 
         [Fact]
@@ -146,7 +146,7 @@ namespace Hive.Tests.Endpoints
             var res = await controller.ResolveDependencies(input);
 
             Assert.NotNull(res.Result); // Make sure we got a request back
-            Assert.IsType<ForbidResult>(res.Result); // This endpoint must fail at the plugin check.
+            AssertForbid(res.Result); // This endpoint must fail at the plugin check.
         }
 
         [Fact]
@@ -303,7 +303,6 @@ namespace Hive.Tests.Endpoints
                 Uploader = new User() { Username = "Billy bob joe" },
                 Channel = DefaultChannel,
                 DownloadLink = new Uri("https://www.github.com/Atlas-Rhythm/Hive"),
-                AdditionalData = DIHelper.EmptyAdditionalData,
                 Dependencies = dependencies ?? new List<ModReference>(),
                 Conflicts = conflicts ?? new List<ModReference>()
             };

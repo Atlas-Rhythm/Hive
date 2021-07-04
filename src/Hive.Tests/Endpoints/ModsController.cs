@@ -28,13 +28,11 @@ namespace Hive.Tests.Endpoints
         {
             new Channel
             {
-                Name = "Public",
-                AdditionalData = DIHelper.EmptyAdditionalData
+                Name = "Public"
             },
             new Channel
             {
-                Name = "Beta",
-                AdditionalData = DIHelper.EmptyAdditionalData
+                Name = "Beta"
             }
         };
 
@@ -130,7 +128,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
+            AssertForbid(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
         [Fact]
@@ -156,7 +154,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must be fail, since Counters+ is in Beta.
+            AssertForbid(res.Result); // The above endpoint must be fail, since Counters+ is in Beta.
 
             res = await controller.GetSpecificMod("SongCore"); // Next, we will look for SongCore, which is in Release.
 
@@ -200,7 +198,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
+            AssertForbid(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
         [Fact]
@@ -226,7 +224,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must be fail, since Counters+ is in Beta.
+            AssertForbid(res.Result); // The above endpoint must be fail, since Counters+ is in Beta.
 
             res = await controller.GetSpecificMod("BSIPA"); // Next, we will look for SongCore, which is in Release.
 
@@ -252,7 +250,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must be fail due to the permission rule.
+            AssertForbid(res.Result); // The above endpoint must be fail due to the permission rule.
         }
 
         [Fact]
@@ -362,7 +360,7 @@ namespace Hive.Tests.Endpoints
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must fail due to the permission rule.
+            AssertForbid(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
         [Fact]
@@ -402,8 +400,7 @@ namespace Hive.Tests.Endpoints
                 EditedAt = null,
                 Uploader = new User() { Username = "Billy bob joe" },
                 Channel = defaultChannels.First(c => c.Name == channel),
-                DownloadLink = new Uri("https://www.github.com/Atlas-Rhythm/Hive"),
-                AdditionalData = DIHelper.EmptyAdditionalData
+                DownloadLink = new Uri("https://www.github.com/Atlas-Rhythm/Hive")
             };
 
             var info = new LocalizedModInfo()

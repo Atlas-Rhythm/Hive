@@ -12,6 +12,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Version = Hive.Versioning.Version;
+using Hive.Extensions;
 
 namespace Hive.Services.Common
 {
@@ -68,19 +69,21 @@ namespace Hive.Services.Common
 
         // Actions done on a list of mods
         private const string GetModsActionName = "hive.mods.list";
+
         private const string FilterModsActionName = "hive.mods.filter";
 
         // Actions done on a singular mod
         private const string GetModActionName = "hive.mod.get";
+
         private const string FilterModActionName = "hive.mod.filter";
         private const string MoveModActionName = "hive.mod.move";
 
         [ThreadStatic] private static PermissionActionParseState getModsParseState;
         [ThreadStatic] private static PermissionActionParseState moveModsParseState;
 
-        private static readonly HiveObjectQuery<IEnumerable<Mod>> forbiddenEnumerableResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
-        private static readonly HiveObjectQuery<Mod> forbiddenModResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
-        private static readonly HiveObjectQuery<Mod> notFoundModResponse = new(null, "Not Found", StatusCodes.Status404NotFound);
+        private static readonly HiveObjectQuery<IEnumerable<Mod>> forbiddenEnumerableResponse = new(StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<Mod> forbiddenModResponse = new(StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<Mod> notFoundModResponse = new(StatusCodes.Status404NotFound, "Not Found");
 
         /// <summary>
         /// Create a ModService with DI.
@@ -129,7 +132,7 @@ namespace Hive.Services.Common
                 permissions.CanDo(FilterModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState)
                         && combined.GetSpecificModAdditionalChecks(user, m));
 
-            return new HiveObjectQuery<IEnumerable<Mod>>(filteredMods, null, StatusCodes.Status200OK);
+            return new HiveObjectQuery<IEnumerable<Mod>>(StatusCodes.Status200OK, filteredMods);
         }
 
         /// <summary>
@@ -179,7 +182,7 @@ namespace Hive.Services.Common
                 || !combined.GetSpecificModAdditionalChecks(user, mod))
                 return forbiddenModResponse;
 
-            return new HiveObjectQuery<Mod>(mod, null, StatusCodes.Status200OK);
+            return new HiveObjectQuery<Mod>(StatusCodes.Status200OK, mod);
         }
 
         /// <summary>
@@ -195,7 +198,7 @@ namespace Hive.Services.Common
             log.Debug("Getting database objects...");
 
             if (identifier is null)
-                return new HiveObjectQuery<Mod>(null, "Mod Identifier is invalid", StatusCodes.Status400BadRequest);
+                return new HiveObjectQuery<Mod>(StatusCodes.Status400BadRequest, "Mod Identifier is invalid");
 
             var targetVersion = new Version(identifier.Version);
 
@@ -205,7 +208,7 @@ namespace Hive.Services.Common
 
             // The POSTed mod was successfully deserialzed, but no Mod exists in the database.
             if (databaseMod == null)
-                return new HiveObjectQuery<Mod>(null, "Mod does not exist", StatusCodes.Status404NotFound);
+                return new HiveObjectQuery<Mod>(StatusCodes.Status404NotFound, "Mod does not exist");
 
             // Grab our origin and destination channels.
             var origin = databaseMod.Channel;
@@ -213,7 +216,7 @@ namespace Hive.Services.Common
 
             // The channelId from our Route does not point to an existing Channel. Okay, we just return 404.
             if (destination is null)
-                return new HiveObjectQuery<Mod>(null, $"No channel exists with the name \"{channelDestination}\".", StatusCodes.Status404NotFound);
+                return new HiveObjectQuery<Mod>(StatusCodes.Status404NotFound, $"No channel exists with the name \"{channelDestination}\".");
 
             // Forbid iff a given user (or none) is allowed to move the mod.
             if (!permissions.CanDo(MoveModActionName, new PermissionContext { User = user, Mod = databaseMod, SourceChannel = origin, DestinationChannel = destination }, ref moveModsParseState))
@@ -235,7 +238,7 @@ namespace Hive.Services.Common
 
             _ = await context.SaveChangesAsync().ConfigureAwait(false);
 
-            return new HiveObjectQuery<Mod>(databaseMod, null, StatusCodes.Status200OK);
+            return new HiveObjectQuery<Mod>(StatusCodes.Status200OK, databaseMod);
         }
 
         // Helper function that abstracts common filtering functionality from GET /mods and GET /mod/{id}
