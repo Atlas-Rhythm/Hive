@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+﻿using System.Collections.Generic;
 
 namespace Hive.Models.Serialized
 {
@@ -7,5 +7,5 @@ namespace Hive.Models.Serialized
     /// <param name="Name">Name of the game version to create.</param>
     /// <param name="AdditionalData">Additional data to provide.</param>
     /// </summary>
-    public record InputGameVersion(string Name, JsonElement AdditionalData);
+    public record InputGameVersion(string Name, Dictionary<string, object?> AdditionalData);
 }

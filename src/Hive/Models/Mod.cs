@@ -96,8 +96,9 @@ namespace Hive.Models
         /// Represents extra data located within the mod.
         /// </summary>
         /// <remarks>This data is publicly read-only. Be sure not to store sensitive information as additional data.</remarks>
-        // this would be a JSON string, encoding arbitrary data (this should be some type that better represents that JSON data though)
-        public JsonElement AdditionalData { get; set; }
+        [Column(TypeName = "jsonb")]
+        [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "We want to allow plugins to do the same.")]
+        public Dictionary<string, object?> AdditionalData { get; set; } = new();
 
         /// <summary>
         /// A collection of link pairs, with the name and url of each link. May be empty.

@@ -20,6 +20,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Hive.Extensions;
 
 namespace Hive.Controllers
 {
@@ -105,7 +106,7 @@ namespace Hive.Controllers
         /// <param name="validationFailureInfo">An object containing information about the rejection, if any.</param>
         /// <returns><see langword="true"/> if the upload is valid, <see langword="false"/> otherwise.</returns>
         [return: StopIfReturns(false)]
-        bool ValidateAndFixUploadedData(Mod mod, JsonElement originalAdditionalData, [ReturnLast] out object? validationFailureInfo);
+        bool ValidateAndFixUploadedData(Mod mod, Dictionary<string, object?> originalAdditionalData, [ReturnLast] out object? validationFailureInfo);
 
         /// <summary>
         /// A hook that is called when a mod has been fully uploaded and added to the database.
@@ -117,7 +118,7 @@ namespace Hive.Controllers
     internal class HiveDefaultUploadPlugin : IUploadPlugin
     {
         [return: StopIfReturns(false)]
-        public bool ValidateAndFixUploadedData(Mod mod, JsonElement origAdditionalData, [ReturnLast] out object? validationFailureInfo)
+        public bool ValidateAndFixUploadedData(Mod mod, Dictionary<string, object?> origAdditionalData, [ReturnLast] out object? validationFailureInfo)
         {
             validationFailureInfo = null;
             return true;
@@ -377,7 +378,6 @@ namespace Hive.Controllers
             {
                 UploadedAt = nodaClock.GetCurrentInstant(),
                 Uploader = user,
-                AdditionalData = JsonDocument.Parse("{}").RootElement.Clone()
             };
 
             // the dataContext ref param allows the plugins to pass data around to avoid re-parsing, when possible

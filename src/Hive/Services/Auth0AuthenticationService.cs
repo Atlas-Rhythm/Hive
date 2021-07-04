@@ -15,6 +15,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Hive.Plugins.Aggregates;
+using Hive.Extensions;
 
 namespace Hive.Services
 {
@@ -40,7 +41,7 @@ namespace Hive.Services
         /// </summary>
         /// <param name="extraData">The original additional data to add to/remove from, if necessary</param>
         /// <returns>The modified data</returns>
-        Dictionary<string, string?> ExtraDataModification([TakesReturnValue] Dictionary<string, string?> extraData) => extraData;
+        void ExtraDataModification(Dictionary<string, object?> extraData) { }
     }
 
     internal class HiveUsernamePlugin : IUserCreationPlugin { }
@@ -173,7 +174,7 @@ namespace Hive.Services
                     {
                         Username = userCreationPlugin.Instance.ChooseUsername(auth0User.Nickname),
                         AlternativeId = auth0User.Sub,
-                        AdditionalData = auth0User.User_Metadata.ToDictionary(p => p.Key, p => p.Value.ToString())
+                        AdditionalData = auth0User.User_Metadata.ToDictionary(p => p.Key, p => (object?)p.Value)
                     };
 
                     while (await context.Users.AsNoTracking().ContainsAsync(u).ConfigureAwait(false))
@@ -181,7 +182,7 @@ namespace Hive.Services
                         u.Username += Guid.NewGuid();
                     }
 
-                    u.AdditionalData = userCreationPlugin.Instance.ExtraDataModification(u.AdditionalData);
+                    userCreationPlugin.Instance.ExtraDataModification(u.AdditionalData);
 
                     _ = await context.Users.AddAsync(u).ConfigureAwait(false);
                     _ = await context.SaveChangesAsync().ConfigureAwait(false);

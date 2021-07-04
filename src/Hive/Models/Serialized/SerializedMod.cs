@@ -1,6 +1,7 @@
 ﻿using Hive.Converters;
 using NodaTime;
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -92,7 +93,7 @@ namespace Hive.Models.Serialized
         /// The additional data associated with this <see cref="Mod"/>.
         /// All properties are public and readonly for all people who get mods.
         /// </summary>
-        public JsonElement AdditionalData { get; init; }
+        public Dictionary<string, object?> AdditionalData { get; private set; } = new();
 
         /// <summary>
         /// Serialize a <see cref="Mod"/> with an associated <see cref="Models.LocalizedModInfo"/> into a <see cref="SerializedMod"/>.

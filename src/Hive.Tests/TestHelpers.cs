@@ -2,10 +2,12 @@
 using System.IO;
 using Hive.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using Moq;
+using Xunit;
 
 namespace Hive.Tests
 {
@@ -70,6 +72,12 @@ namespace Hive.Tests
             contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
 
             return contextMoq.Object;
+        }
+
+        internal static void AssertForbid(ActionResult result)
+        {
+            Assert.IsType<EmptyStatusCodeResponse>(result);
+            Assert.Equal(StatusCodes.Status403Forbidden, (result as EmptyStatusCodeResponse)!.StatusCode);
         }
     }
 }

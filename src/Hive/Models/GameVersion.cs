@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Hive.Models
@@ -24,7 +23,9 @@ namespace Hive.Models
         /// <summary>
         /// Additional data associated with the GameVersion
         /// </summary>
-        public JsonElement AdditionalData { get; set; }
+        [Column(TypeName = "jsonb")]
+        [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "We want to allow plugins to do the same.")]
+        public Dictionary<string, object?> AdditionalData { get; set; } = new();
 
         /// <summary>
         /// The <see cref="Instant"/> this GameVersion was created

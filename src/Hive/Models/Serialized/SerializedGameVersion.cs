@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using Hive.Converters;
 using NodaTime;
@@ -26,7 +26,7 @@ namespace Hive.Models.Serialized
         /// <summary>
         /// Additional data associated with the GameVersion
         /// </summary>
-        public JsonElement AdditionalData { get; set; }
+        public Dictionary<string, object?> AdditionalData { get; private set; } = new();
 
         /// <summary>
         /// Serialize a <see cref="GameVersion"/> into a <see cref="SerializedGameVersion"/>.
