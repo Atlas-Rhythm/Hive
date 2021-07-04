@@ -1,107 +1,42 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <PropertyGroup Condition="'$(Language)' == 'C#'">
-
-    <LangVersion Condition="'$(LangVersion)' != 'preview'">9</LangVersion>
-    <Nullable>enable</Nullable>
-    <WarningsAsErrors>$(WarningsAsErrors);nullable</WarningsAsErrors>
-
+  <Import Project="$(HiveToolsDirectory)SharedProps.targets"/>
+  
+  <PropertyGroup>
     <NeutralLanguage>en-US</NeutralLanguage>
     
-    <NoWarn>$(NoWarn);CA1716;CA1826;CA2000</NoWarn>
-
-    <!-- FXCop warnings that aren't terribly useful for tests, most of the time. -->
-    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepDesignWarnings)' != 'true'">
-      $(NoWarn);CA1034;CA1062
-    </NoWarn>
-    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepGlobalizeWarnings)' != 'true'">
-      $(NoWarn);CA1305
-    </NoWarn>
-    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepPerfWarnings)' != 'true'">
-      $(NoWarn);CA1805
-    </NoWarn>
-    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepReliableWarnings)' != 'true'">
-      $(NoWarn);CA2007;CA2225
-    </NoWarn>
-    <NoWarn Condition="'$(Tests)' == 'true' And '$(KeepDiscardWarnings)' != 'true'">
-      $(NoWarn);IDE0058;CA1002;CS1591
-    </NoWarn>
-
     <IsRoslynExtension Condition="'$(IsRoslynExtension)' == ''">false</IsRoslynExtension>
     <IsRoslynExtension Condition="'$(IsCodeGen)' == 'true' or '$(IsAnalyzer)' == 'true'">true</IsRoslynExtension>
     <IsCLSCompliant Condition="'$(Tests)' == 'true' or '$(IsRoslynExtension)' == 'true'">false</IsCLSCompliant>
   </PropertyGroup>
 
-  <ItemGroup>
-    <LiteralAssemblyAttribute Include="global::System.CLSCompliantAttribute" Condition="'$(IsCLSCompliant)' != ''">
-      <_Parameters>$(IsCLSCompliant)</_Parameters>
-    </LiteralAssemblyAttribute>
-  </ItemGroup>
+  <Choose>
+    <When Condition="'$(IsRoslynExtension)' == 'true'">
+      <PropertyGroup>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <BeforePack>$(BeforePack);AddAnalyzerAssembly</BeforePack>
+        <NoWarn>$(NoWarn);NU5128</NoWarn>
+      </PropertyGroup>
+      
+      <ItemGroup>
+        <PackageReference Update="NETStandard.Library" PrivateAssets="all" />
+      </ItemGroup>
+    </When>
+  </Choose>
+
+  <Target Name="AddAnalyzerAssembly" Condition="'$(IsRoslynExtension)' == 'true'">
+    <ItemGroup>
+      <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    </ItemGroup>
+  </Target>
+
+  <Import Project="$(HiveToolsDirectory)MSBuildVersionCheck.targets" />
+  <Import Project="$(HiveToolsDirectory)InternalsVisibleToItemGroup.targets" />
+  <Import Project="$(HiveToolsDirectory)LiteralAssemblyAttributeItemGroup.targets" />
+  <Import Project="$(HiveToolsDirectory)SdkGetProperty.targets" />
   
-  <Target Name="AddInternalsVisibleTo" BeforeTargets="BeforeCompile">
-    <!-- Add default suffix if there is no InternalsVisibleTo or InternalsVisibleToSuffix defined -->
-    <ItemGroup Condition="@(InternalsVisibleToSuffix->Count()) == 0 AND @(InternalsVisibleTo->Count()) == 0">
-      <InternalsVisibleToSuffix Include=".Tests" />
-    </ItemGroup>
-
-    <!-- Handle InternalsVisibleTo -->
-    <ItemGroup Condition="'@(InternalsVisibleTo->Count())' &gt; 0">
-      <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-        <_Parameter1>%(InternalsVisibleTo.Identity)</_Parameter1>
-      </AssemblyAttribute>
-    </ItemGroup>
-
-    <!-- Handle InternalsVisibleToSuffix -->
-    <ItemGroup Condition="@(InternalsVisibleToSuffix->Count()) &gt; 0">
-      <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-        <_Parameter1>$(AssemblyName)%(InternalsVisibleToSuffix.Identity)</_Parameter1>
-      </AssemblyAttribute>
-    </ItemGroup>
-  </Target>
-
-  <PropertyGroup>
-    <_LiteralAssemblyFile Condition="'$(Language)' == 'C#'">$(IntermediateOutputPath)LiteralAssemblyAttributes.cs</_LiteralAssemblyFile>
-    <CoreCompileDependsOn>
-      EnsureSupportedMSBuildVersion;
-      AddLiteralAssemblyAttributes;
-      $(CoreCompileDependsOn);
-    </CoreCompileDependsOn>
-  </PropertyGroup>
-
-  <Target Name="EnsureSupportedMSBuildVersion"
-          BeforeTargets="CoreCompile"
-          Condition="'$(MSBuildRequiredVersion)' != ''">
-    <Error Code="HB0001" ContinueOnError="false" Text="MSBuild version is too old to build this project; currently $(MSBuildVersion) needs at least $(MSBuildRequiredversion)"
-           Condition="$([MSBuild]::VersionLessThan('$(MSBuildVersion)', '$(MSBuildRequiredVersion)'))" />
-  </Target>
-  
-  <Target Name="AddLiteralAssemblyAttributes"
-          BeforeTargets="CoreCompile"
-          Condition="'$(Language)' == 'C#'"
-          Inputs="$(MSBuildAllProjects)"
-          Outputs="$(_LiteralAssemblyFile)">
-
-    <ItemGroup>
-      <Compile Include="$(_LiteralAssemblyFile)" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <_LiteralAssemblyAttrDecls Include="// &lt;autogenerated /&gt;" />
-      <_LiteralAssemblyAttrDecls Include="extern alias %(LiteralAssemblyAttributeExternAlias.Identity);"
-                                 Condition="'%(LiteralAssemblyAttributeExternAlias.Identity)' != ''" />
-      <_LiteralAssemblyAttrDecls Include="[assembly: %(LiteralAssemblyAttribute.Identity)(%(LiteralAssemblyAttribute._Parameters))]"
-                                 Condition="'%(LiteralAssemblyAttribute.Identity)' != ''" />
-    </ItemGroup>
-
-    <WriteLinesToFile File="$(_LiteralAssemblyFile)" Encoding="UTF-8" Lines="@(_LiteralAssemblyAttrDecls)" Overwrite="true" />
-    <ItemGroup>
-      <FileWrites Include="$(_LiteralAssemblyFile)" />
-    </ItemGroup>
-    
-  </Target>
-
-  <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" Condition="'$(IsCodeGen)' != 'true'" />
-  <Import Project="$(MSBuildThisFileDirectory)\Packaging.targets" Condition="'$(BuildingStandalone)' == 'true'" />
+  <Import Project="$(HiveSourceDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" Condition="'$(IsCodeGen)' != 'true'" />
+  <Import Project="$(HiveToolsDirectory)Packaging.targets" Condition="'$(BuildingStandalone)' == 'true'" />
 
 </Project>

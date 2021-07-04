@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <UsingHivePluginSdk>true</UsingHivePluginSdk>
+    <MSBuildAllProjects Condition="'$(MSBuildToolsVersion)' != 'Current'">$(MSBuildAllProjects);$(MsBuildThisFileFullPath)</MSBuildAllProjects>
+
+    <HiveToolsDirectory>$(MSBuildThisFileDirectory)..\msbtools\</HiveToolsDirectory> <!-- in the package, relative to this file, aka /Sdk/ -->
+  </PropertyGroup>
+  
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" Condition=" '$(MicrosoftCommonPropsHasBeenImported)' != 'true' "/>
+
+  <PropertyGroup>
+    <ImportHiveDefaultTargets Condition="'$(ImportHiveDefaultTargets)' == ''">true</ImportHiveDefaultTargets>
+    <ImportInternalsVisibleToTargets Condition="'$(ImportInternalsVisibleToTargets)' == ''">true</ImportInternalsVisibleToTargets>
+    <ImportLiteralAssemblyAttributeTargets Condition="'$(ImportLiteralAssemblyAttributeTargets)' == ''">true</ImportLiteralAssemblyAttributeTargets>
+    <EnableHiveCodeGen Condition="'$(EnableHiveCodeGen)' == ''">true</EnableHiveCodeGen>
+    <UseHiveSharedProperties Condition="'$(UseHiveSharedProperties)' == ''">true</UseHiveSharedProperties>
+
+    <TargetFramework Condition="'$(TargetFramework)' == '' and '$(TargetFrameworks)' == ''">net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <Import Project="$(HiveToolsDirectory)SharedProps.props" Condition="'$(UseHiveSharedProperties)' == 'true'" />
+  
+</Project>

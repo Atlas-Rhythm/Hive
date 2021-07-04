@@ -2,36 +2,41 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <AnalysisLevel>5.0</AnalysisLevel>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-
     <IsCLSCompliant>true</IsCLSCompliant>
 
-    <RoslynVersion>3.10.0-3.final</RoslynVersion>
+    <!-- This is needed sometimes when packing single projects -->
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    
+    <HiveToolsDirectory>$(MSBuildThisFileDirectory)tools\</HiveToolsDirectory>
+    <HiveSourceDirectory>$(MSBuildThisFileDirectory)src\</HiveSourceDirectory>
+
+    <RoslynVersion>3.10.0</RoslynVersion>
     <MSBuildRequiredVersion>16.9.0</MSBuildRequiredVersion>
   </PropertyGroup>
 
+  <Import Project="$(HiveToolsDirectory)SharedProps.props"/>
+  <Import Project="$(HiveToolsDirectory)NuGetInfo.props" />
+
   <ItemGroup>
-    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="$(RoslynVersion)" />
+    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="$(RoslynVersion)" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="$(RoslynVersion)">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(IsCodeGen)' != 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" />
-    <ProjectReference Include="$(MSBuildThisFileDirectory)CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  <ItemGroup Condition="'$(IsCodeGen)' != 'true' And '$(NoAutoProjectRefs)' != 'true'">
+    <ProjectReference Include="$(HiveSourceDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" Condition="'$(IsAnalyzer)' != 'true'" />
+    <ProjectReference Include="$(HiveSourceDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" Condition="'$(IsAnalyzer)' == 'true'" PrivateAssets="all" />
+    <ProjectReference Include="$(HiveSourceDirectory)CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
-  
-  <ItemGroup Condition="'$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)Hive.Analyzers\Hive.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+
+  <ItemGroup Condition="'$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true' And '$(NoAutoProjectRefs)' != 'true'">
+    <ProjectReference Include="$(HiveSourceDirectory)Hive.Analyzers\Hive.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
-  
-  <ItemGroup Condition="'$(IsUtilities)' != 'true' And '$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)Hive.Utilities\Hive.Utilities.csproj" />
+
+  <ItemGroup Condition="'$(IsUtilities)' != 'true' And '$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true' And '$(NoAutoProjectRefs)' != 'true'">
+    <ProjectReference Include="$(HiveSourceDirectory)Hive.Utilities\Hive.Utilities.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Tests)' == 'true'">
@@ -48,7 +53,7 @@
     </PackageReference>
   </ItemGroup>
 
-  <Import Project="$(MSBuildThisFileDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.props" Condition="'$(IsCodeGen)' != 'true'" />
-  <Import Project="$(MSBuildThisFileDirectory)\Packaging.props" />
+  <Import Project="$(HiveSourceDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.props" Condition="'$(IsCodeGen)' != 'true'" />
+  <Import Project="$(HiveToolsDirectory)Packaging.props" />
 
 </Project>

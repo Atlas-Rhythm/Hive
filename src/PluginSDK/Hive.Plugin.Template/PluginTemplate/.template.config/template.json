@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "$Authors",
+  "classifications": [ "Hive", "Plugin" ],
+  "identity": "Hive.Plugin.Template",
+  "name": "Hive Plugin",
+  "description": "$Description",
+  "shortName": "hiveplug",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "PluginTemplate",
+
+  "primaryOutputs": [
+    {
+      "path": "PluginTemplate.csproj"
+    },
+    {
+      "path": "Startup.cs"
+    }
+  ],
+
+  "symbols": {
+    "TargetFrameworkOverride": {
+      "type": "parameter",
+      "description": "Overrides the default target framework.",
+      "replaces": "TargetFrameworkOverride",
+      "datatype": "string",
+      "defaultValue": ""
+    },
+    "ImportHiveBuildHelpers": {
+      "type": "parameter",
+      "description": "Enables the default SDK imported Hive build helpers, such as InternalsVisibleTo and LiteralAssemblyAttributes",
+      "replaces": "ImportHiveBuildHelpers",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "UseHiveCodeGen": {
+      "type": "parameter",
+      "description": "Enables the Hive code generators and analyzers.",
+      "replaces": "UseHiveCodeGen",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "SdkName": {
+      "type": "generated",
+      "generator": "constant",
+      "parameters": {
+        "value": "$SdkName" // <- filled in to the template during pack
+      },
+      "replaces": "SdkName"
+    },
+    "SdkVersion": {
+      "type": "generated",
+      "generator": "constant",
+      "parameters": {
+        "value": "$SdkVersion" // <- filled in to the template during pack
+      },
+      "replaces": "SdkVersion"
+    }
+  },
+
+  "postActions": [
+    {
+      "description": "Restore NuGet packages required by this project.",
+      "manualInstructions": [
+        { "text": "Run 'dotnet restore'" }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true,
+      "args": {
+        "files": [ "PluginTemplate.csproj" ]
+      }
+    }
+  ]
+}

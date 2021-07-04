@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.Build.NoTargets/3.0.4">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <PackageType>MSBuildSdk</PackageType>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+
+    <Description>Provides an easy-to-use SDK for writing Hive plugins.</Description>
+    <PackageTags>hive;plugin;plugins</PackageTags>
+
+    <!-- We do this to be consistent with everything else -->
+    <!--<GeneratePackageOnBuild>true</GeneratePackageOnBuild>-->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="Sdk\**" Pack="true" PackagePath="Sdk\" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <HiveTool Include="InternalsVisibleToItemGroup.targets" />
+    <HiveTool Include="LiteralAssemblyAttributeItemGroup.targets" />
+    <HiveTool Include="MSBuildVersionCheck.targets" />
+    <HiveTool Include="SharedProps.props" />
+    <HiveTool Include="SharedProps.targets" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <SdkReferencePackage Include="..\..\CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" />
+    <SdkReferencePackage Include="..\..\CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" />
+    <SdkNormalPackage Include="Hive" />
+    <SdkNormalPackage Include="Hive.Analyzers" />
+    <SdkNormalPackage Include="Hive.Dependencies" />
+    <SdkNormalPackage Include="Hive.Permissions" />
+    <SdkNormalPackage Include="Hive.Plugins" />
+    <SdkNormalPackage Include="Hive.Utilities" />
+    <SdkNormalPackage Include="Hive.Versioning" />
+  </ItemGroup>
+
+</Project>

@@ -5,6 +5,7 @@
 
     <IsCodeGen>true</IsCodeGen>
   </PropertyGroup>
+  
   <ItemGroup>
     <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
     <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
@@ -21,6 +22,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" PrivateAssets="all" Private="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="build\*" Pack="true" PackagePath="build\" />
   </ItemGroup>
   
 </Project>
