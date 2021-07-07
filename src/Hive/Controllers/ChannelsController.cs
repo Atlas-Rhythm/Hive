@@ -52,7 +52,7 @@ namespace Hive.Controllers
         {
             log.Debug("Getting channels...");
             // Get the user, do not need to capture context.
-            var user = await Request.GetHiveUser(authService).ConfigureAwait(false);
+            var user = await HttpContext.GetHiveUser(authService).ConfigureAwait(false);
             // If user is null, we can simply forward it anyways
             var queryResult = await channelService.RetrieveAllChannels(user).ConfigureAwait(false);
 
@@ -74,7 +74,7 @@ namespace Hive.Controllers
             log.Debug("Creating new channel...");
 
             // Get the user, do not need to capture context.
-            var user = await Request.GetHiveUser(authService).ConfigureAwait(false);
+            var user = await HttpContext.GetHiveUser(authService).ConfigureAwait(false);
 
             // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
             if (user is null) return new UnauthorizedResult();

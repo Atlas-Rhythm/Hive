@@ -144,7 +144,7 @@ namespace Hive
                 if (currentNode != null && currentNode.Restricted)
                 {
                     // Grab our Hive user from the request (Either cached, or forwarded to the auth service)
-                    var user = await httpContext.Request.GetHiveUser(auth).ConfigureAwait(false);
+                    var user = await httpContext.GetHiveUser(auth).ConfigureAwait(false);
 
                     // If the user is not authenticated, and trying to access a restricted endpoint, return 401 Unauthorized.
                     if (user == null)

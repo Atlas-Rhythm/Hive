@@ -51,7 +51,7 @@ namespace Hive.Controllers
         {
             log.Debug("Getting game versions...");
             // Get the user, do not need to capture context.
-            var user = await Request.GetHiveUser(proxyAuth).ConfigureAwait(false);
+            var user = await HttpContext.GetHiveUser(proxyAuth).ConfigureAwait(false);
 
             var queryResult = await gameVersionService.RetrieveAllVersions(user).ConfigureAwait(false);
 
@@ -73,7 +73,7 @@ namespace Hive.Controllers
             log.Debug("Creating a new game version...");
 
             // Get the user, do not need to capture context.
-            var user = await Request.GetHiveUser(proxyAuth).ConfigureAwait(false);
+            var user = await HttpContext.GetHiveUser(proxyAuth).ConfigureAwait(false);
 
             // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
             if (user is null) return new UnauthorizedResult();

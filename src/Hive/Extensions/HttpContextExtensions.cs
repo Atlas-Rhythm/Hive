@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Hive.Models;
 using Hive.Services;
@@ -10,9 +9,12 @@ namespace Hive.Extensions
     /// <summary>
     /// Extensions for an <see cref="HttpRequest"/>.
     /// </summary>
-    public static class HttpRequestExtensions
+    public static class HttpContextExtensions
     {
-        private static readonly Dictionary<HttpRequest, User?> cachedUsers = new();
+        /// <summary>
+        /// The key in <see cref="HttpContext.Items"/> where Hive stores a cached User attached to a given <see cref="HttpContext"/>.
+        /// </summary>
+        public const string HiveCachedUserKey = "HiveUser";
 
         /// <summary>
         /// Attempts to retrieve a cached <see cref="User"/> attached to the given <see cref="HttpRequest"/>.
@@ -21,12 +23,12 @@ namespace Hive.Extensions
         /// <param name="request">Request to retrieve/cache a <see cref="User"/> from.</param>
         /// <param name="authenticationService">Authentication service to forward uncached requests to.</param>
         /// <returns>The <see cref="User"/> attached to this context, if any.</returns>
-        // REVIEW: Would it be better to extend HttpContext or HttpRequest?
-        public static async Task<User?> GetHiveUser(this HttpRequest request, IProxyAuthenticationService authenticationService)
+        // REVIEW: Would it be better to extend HttpContext or HttpRequest? If the latter then I might have to use a private dictionary to cache users.
+        public static async Task<User?> GetHiveUser(this HttpContext context, IProxyAuthenticationService authenticationService)
         {
-            if (request is null)
+            if (context is null)
             {
-                throw new ArgumentNullException(nameof(request));
+                throw new ArgumentNullException(nameof(context));
             }
 
             if (authenticationService is null)
@@ -34,15 +36,16 @@ namespace Hive.Extensions
                 throw new ArgumentNullException(nameof(authenticationService));
             }
 
-            if (cachedUsers.TryGetValue(request, out var user))
+            if (context.Items.TryGetValue(HiveCachedUserKey, out var cachedObject))
             {
-                return user;
+                // REVIEW: Should I do a "cachedObject is User" check?
+                return cachedObject as User;
             }
 
             // If our context does not have a cached user, we forward to the authentication service.
-            user = await authenticationService.GetUser(request).ConfigureAwait(false);
+            var user = await authenticationService.GetUser(context.Request).ConfigureAwait(false);
 
-            cachedUsers.Add(request, user);
+            context.Items[HiveCachedUserKey] = user;
 
             return user;
         }
