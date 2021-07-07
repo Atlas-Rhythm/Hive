@@ -4,6 +4,7 @@ using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services.Common;
 using Hive.Utilities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
@@ -376,7 +377,14 @@ namespace Hive.Tests.Endpoints
                 .AddScoped<Controllers.ModsController>()
                 .AddAggregates();
 
-            return services.BuildServiceProvider().GetRequiredService<Controllers.ModsController>();
+            var controller = services.BuildServiceProvider().GetRequiredService<Controllers.ModsController>();
+
+            controller.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            return controller;
         }
 
         // I need to set up a "proper" Mod object so that the controller won't throw a fit
