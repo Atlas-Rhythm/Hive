@@ -50,7 +50,7 @@ namespace Hive.Controllers
         {
             log.Debug("Performing dependency resolution...");
             // Get the user, do not need to capture context
-            var user = await HttpContext.GetHiveUser(proxyAuth).ConfigureAwait(false);
+            var user = await Request.GetHiveUser(proxyAuth).ConfigureAwait(false);
 
             var queryResult = await dependencyResolverService.ResolveAsync(user, identifiers).ConfigureAwait(false);
 
