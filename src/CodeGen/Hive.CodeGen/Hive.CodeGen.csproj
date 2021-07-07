@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+
+    <IsCodeGen>true</IsCodeGen>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis" Version="$(RoslynVersion)" PrivateAssets="all" />
+    <PackageReference Include="System.Xml.XDocument" Version="4.*" PrivateAssets="all" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="IsResXToGenerate" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" PrivateAssets="all" Private="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="build\*" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+  
+</Project>

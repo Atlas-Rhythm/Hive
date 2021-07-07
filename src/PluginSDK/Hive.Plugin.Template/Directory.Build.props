@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <HiveSourceDirectory>$(MSBuildThisFileDirectory)..\..\</HiveSourceDirectory>
+    <HiveToolsDirectory>$(MSBuildThisFileDirectory)..\..\..\tools\</HiveToolsDirectory>
+    <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
+    <IncludeContentInPack>true</IncludeContentInPack>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <ContentTargetFolders>content</ContentTargetFolders>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+  </PropertyGroup>
+
+  <!-- This includes both NuGet info and package output properties -->
+  <Import Project="$(HiveToolsDirectory)NuGetInfo.props" />
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)\**" Exclude="*.csproj;obj\**;bin\**" />
+  </ItemGroup>
+  
+  <!-- Deliberately do not import parent Directory.Build.props -->
+</Project>
