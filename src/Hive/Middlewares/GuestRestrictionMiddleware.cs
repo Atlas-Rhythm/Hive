@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Hive.Extensions;
 using Hive.Services;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Builder;
@@ -142,11 +143,8 @@ namespace Hive
                 // If we have a valid node, we see whether or not it's restricted to authenticated users.
                 if (currentNode != null && currentNode.Restricted)
                 {
-                    // See if we can obtain user information from the request
-                    var user = await auth.GetUser(httpContext.Request).ConfigureAwait(false);
-
-                    // TODO: Let's see if we cant get our Controllers and Services to use our cached user
-                    httpContext.Items["HiveUser"] = user;
+                    // Grab our Hive user from the request (Either cached, or forwarded to the auth service)
+                    var user = await httpContext.GetHiveUser(auth).ConfigureAwait(false);
 
                     // If the user is not authenticated, and trying to access a restricted endpoint, return 401 Unauthorized.
                     if (user == null)
