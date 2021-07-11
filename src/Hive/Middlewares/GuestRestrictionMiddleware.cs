@@ -23,7 +23,7 @@ namespace Hive
         private const string wildcardToken = "*";
         private const char cascadingSuffix = '/';
         private const char explicitUnrestrictedPrefix = '!';
-        private const char queryParameterToken = '?';
+        private const string queryParameterToken = "?";
 
         private const string configurationKey = "RestrictedRoutes";
 
@@ -91,13 +91,16 @@ namespace Hive
                 // Grab the route the user is wanting to access
                 var route = httpContext.Request.Path.Value!
                     // Remove case insensitivity
-                    .ToUpperInvariant()
-                    // Ignore all query parameters
-                    .Split(queryParameterToken).First();
+                    .ToUpperInvariant();
 
-                // Split our route into the individual components
+                // Turn route into StringView components
                 var routeView = new StringView(route);
-                var routeComponents = routeView.Split(routeSeparator);
+                var routeComponents = routeView
+                    // Ignore query parameters
+                    .Split(queryParameterToken)
+                    .First()
+                    // Split route into individual components
+                    .Split(routeSeparator);
 
                 var currentNode = rootRestrictionNode;
                 Node? cascadingNode = null;
@@ -180,11 +183,12 @@ namespace Hive
             // We need to process our route a little bit before we decompose it into the node tree.
             var processedRoute = route
                 // Remove case sensitivity
-                .ToUpperInvariant()
-                // Ignore all query parameters
-                .Split(queryParameterToken).First();
+                .ToUpperInvariant();
 
-            var routeView = new StringView(processedRoute);
+            // Turn into StringView and ignore query parameters
+            var routeView = new StringView(processedRoute)
+                .Split(queryParameterToken)
+                .First();
 
             var isRestricted = true;
             var cascades = false;
@@ -203,8 +207,9 @@ namespace Hive
                 routeView = routeView[0..^1];
             }
 
-            // Split our route into the individual components
-            var routeComponents = routeView.Split(routeSeparator, true);
+            // Split route into individual components
+            var routeComponents = routeView.Split(routeSeparator);
+
             var currentNode = rootRestrictionNode;
             var count = routeComponents.Count();
 
