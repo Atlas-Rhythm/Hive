@@ -25,6 +25,8 @@ namespace Hive
         private const char explicitUnrestrictedPrefix = '!';
         private const char queryParameterToken = '?';
 
+        private const string configurationKey = "RestrictedRoutes";
+
         private static readonly JsonSerializerOptions serializerOptions = new()
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
@@ -62,7 +64,7 @@ namespace Hive
             rootRestrictionNode = new Node();
 
             // This configuration option is simply a list of routes ("/api/mod", "/api/upload", etc.)
-            var restrictedRoutes = configuration.GetSection("RestrictedRoutes").Get<List<string>>();
+            var restrictedRoutes = configuration.GetSection(configurationKey).Get<List<string>>();
 
             foreach (var route in restrictedRoutes)
             {
