@@ -20,10 +20,9 @@ namespace Hive.Extensions
         /// Attempts to retrieve a cached <see cref="User"/> attached to the given <see cref="HttpRequest"/>.
         /// If no users are cached, Hive will forward the request to the given <see cref="IProxyAuthenticationService"/>, and cache that result.
         /// </summary>
-        /// <param name="request">Request to retrieve/cache a <see cref="User"/> from.</param>
+        /// <param name="context">Request to retrieve/cache a <see cref="User"/> from.</param>
         /// <param name="authenticationService">Authentication service to forward uncached requests to.</param>
         /// <returns>The <see cref="User"/> attached to this context, if any.</returns>
-        // REVIEW: Would it be better to extend HttpContext or HttpRequest? If the latter then I might have to use a private dictionary to cache users.
         public static async Task<User?> GetHiveUser(this HttpContext context, IProxyAuthenticationService authenticationService)
         {
             if (context is null)
@@ -36,10 +35,9 @@ namespace Hive.Extensions
                 throw new ArgumentNullException(nameof(authenticationService));
             }
 
-            if (context.Items.TryGetValue(HiveCachedUserKey, out var cachedObject))
+            if (context.Items.TryGetValue(HiveCachedUserKey, out var cachedObject) && cachedObject is User cachedUser)
             {
-                // REVIEW: Should I do a "cachedObject is User" check?
-                return cachedObject as User;
+                return cachedUser;
             }
 
             // If our context does not have a cached user, we forward to the authentication service.
