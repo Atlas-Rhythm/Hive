@@ -6,30 +6,30 @@ For a complete configuration breakdown, please look at AspNetCoreRateLimit's doc
 Hive uses both Client and IP rate limiting.
 You can configure each rate limit system a number of ways; from per-endpoint buckets, to various whitelists, and even the status code to return.
 
-## `UseRateLimiting` - bool
+## `UseRateLimiting` - `bool`
 
 A global switch for the rate limit system. This is enabled by default.
 It is recommended to keep rate limiting on at all times, however the option is available, should you need it.
 
-## `ClientRateLimiting` - object
+## `ClientRateLimiting` - `object`
 
 This describes the rate limiting rules that will be enforced per client.
 By default, Hive uses the `User-Agent` header to determine clients.
 You can whitelist certain clients, as well as certain endpoints from ever being affected by client rate limiting.
 
-## `ClientRateLimitPolicies` - object
+## `ClientRateLimitPolicies` - `object`
 
 This describes advanced rules that will apply to specific client IDs.
 For example, you could have common web browsers have less restrictive limits.
 See the [Client rate limit configuration](https://github.com/stefanprodan/AspNetCoreRateLimit/wiki/ClientRateLimitMiddleware#setup) for more information.
 
-## `IpRateLimiting` - object
+## `IpRateLimiting` - `object`
 
 This describes the rate limiting rules that will be enforced per IP.
 You can whitelist specific IPs, like your local IP. You can also whitelist certain endpoints from ever being affected by IP rate limits.
 This also has support for proxies via the `RealIpHeader` option.
 
-## `IpRateLimitPolicies` - object
+## `IpRateLimitPolicies` - `object`
 
 This describes advanced rules that will apply to specific IPs.
 You can apply rules to specific addresses and ranges for both IPv4 and IPv6.
