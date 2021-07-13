@@ -2,6 +2,7 @@
 using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services.Common;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -31,18 +32,6 @@ namespace Hive.Tests.Endpoints
         })
         {
             this.helper = helper;
-        }
-
-        [Fact]
-        public async Task PermissionForbid()
-        {
-            var plugin = CreateDefaultPlugin();
-
-            var controller = CreateController("next(false)", plugin);
-            var res = await controller.GetChannels();
-            Assert.NotNull(res);
-            // Should forbid based off of a permission failure.
-            Assert.IsType<ForbidResult>(res.Result);
         }
 
         [Fact]
@@ -184,7 +173,14 @@ namespace Hive.Tests.Endpoints
             services.AddScoped<ChannelService>();
             services.AddScoped<Controllers.ChannelsController>();
 
-            return services.BuildServiceProvider().GetRequiredService<Controllers.ChannelsController>();
+            var controller = services.BuildServiceProvider().GetRequiredService<Controllers.ChannelsController>();
+
+            controller.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            return controller;
         }
     }
 }
