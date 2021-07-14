@@ -37,10 +37,9 @@ namespace Hive.Services
 
         /// <summary>
         /// This function is called once when a new user is to be created. This function allows for editing of additional data before the instance is created.
-        /// Hive default is to return the original data.
+        /// Hive default is to modify nothing.
         /// </summary>
         /// <param name="extraData">The original additional data to add to/remove from, if necessary</param>
-        /// <returns>The modified data</returns>
         void ExtraDataModification(Dictionary<string, object?> extraData) { }
     }
 

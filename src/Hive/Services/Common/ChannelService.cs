@@ -44,7 +44,9 @@ namespace Hive.Services.Common
         IEnumerable<Channel> GetChannelsFilter(User? user, [TakesReturnValue] IEnumerable<Channel> channels) => channels;
 
         /// <summary>
-        /// A hook that is called when a new <see cref="Channel"/> is successfully created and added to the database.
+        /// A hook that is called when a new <see cref="Channel"/> is successfully created and about to be added to the database.
+        /// Perform additional data edits, or any edits that you would like to persist to the database, here.
+        /// Hive default is to do nothing.
         /// </summary>
         /// <param name="newChannel">The channel that was just created.</param>
         void NewChannelCreated(Channel newChannel) { }

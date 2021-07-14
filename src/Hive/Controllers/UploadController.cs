@@ -109,7 +109,9 @@ namespace Hive.Controllers
         bool ValidateAndFixUploadedData(Mod mod, Dictionary<string, object?> originalAdditionalData, [ReturnLast] out object? validationFailureInfo);
 
         /// <summary>
-        /// A hook that is called when a mod has been fully uploaded and added to the database.
+        /// A hook that is called when a mod has been fully uploaded and about to be added to the database.
+        /// Perform additional data edits, or any edits that you would like to persist to the database, here.
+        /// Hive default is to do nothing.
         /// </summary>
         /// <param name="modData">The mod that was just uploaded.</param>
         void UploadFinished(Mod modData) { }
@@ -537,6 +539,8 @@ namespace Hive.Controllers
                 return new ForbidResult();
             }
 
+            // Additional data should be serialized to the DB, so we call this hook first.
+            plugins.UploadFinished(modObject);
             // ok, we're good to just go ahead and insert it into the database
             await using (var transaction = await database.Database.BeginTransactionAsync().ConfigureAwait(false))
             {
@@ -550,7 +554,6 @@ namespace Hive.Controllers
             }
 
             logger.Information("Upload {ID} complete: {Name} by {Author}", cookie.Substring(0, 16), localization.Name, modObject.Uploader.Username);
-            plugins.UploadFinished(modObject);
 
             return UploadResult.Finish();
         }
