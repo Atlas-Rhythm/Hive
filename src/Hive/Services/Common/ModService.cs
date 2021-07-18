@@ -67,18 +67,15 @@ namespace Hive.Services.Common
         private readonly PermissionsManager<PermissionContext> permissions;
 
         // Actions done on a list of mods
-        private const string GetModsActionName = "hive.mods.list";
         private const string FilterModsActionName = "hive.mods.filter";
 
         // Actions done on a singular mod
-        private const string GetModActionName = "hive.mod.get";
         private const string FilterModActionName = "hive.mod.filter";
         private const string MoveModActionName = "hive.mod.move";
 
         [ThreadStatic] private static PermissionActionParseState getModsParseState;
         [ThreadStatic] private static PermissionActionParseState moveModsParseState;
 
-        private static readonly HiveObjectQuery<IEnumerable<Mod>> forbiddenEnumerableResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
         private static readonly HiveObjectQuery<Mod> forbiddenModResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
         private static readonly HiveObjectQuery<Mod> notFoundModResponse = new(null, "Not Found", StatusCodes.Status404NotFound);
 
@@ -113,10 +110,6 @@ namespace Hive.Services.Common
         /// <returns>A wrapped collection of <see cref="Mod"/> objects, if successful.</returns>
         public async Task<HiveObjectQuery<IEnumerable<Mod>>> GetAllMods(User? user, string[]? channelIds = null, string? gameVersion = null, string? filterType = null)
         {
-            // iff a given user (or none) is allowed to access any mods. This should almost always be true.
-            if (!permissions.CanDo(GetModsActionName, new PermissionContext { User = user }, ref getModsParseState))
-                return forbiddenEnumerableResponse;
-
             // Combine plugins
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;
@@ -148,10 +141,6 @@ namespace Hive.Services.Common
         /// <returns>A wrapped <see cref="Mod"/> of the found mod, if successful.</returns>
         public async Task<HiveObjectQuery<Mod>> GetMod(User? user, string id, VersionRange? range = null, string? channelIds = null, string? gameVersion = null, string? filterType = null)
         {
-            // iff a given user (or none) is allowed to access any mods. This should almost always be true.
-            if (!permissions.CanDo(GetModActionName, new PermissionContext { User = user }, ref getModsParseState))
-                return forbiddenModResponse;
-
             // Combine plugins
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;

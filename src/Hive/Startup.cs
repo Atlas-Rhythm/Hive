@@ -113,6 +113,11 @@ namespace Hive
         /// <param name="env"></param>
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            if (Configuration.GetValue<bool>("RestrictEndpoints"))
+            {
+                _ = app.UseGuestRestrictionMiddleware();
+            }
+
             if (Configuration.GetValue<bool>("UseRateLimiting"))
             {
                 _ = app.UseClientRateLimiting()

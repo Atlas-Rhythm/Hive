@@ -287,7 +287,14 @@ namespace Hive.Tests.Endpoints
                 .AddScoped<Controllers.ResolveDependenciesController>()
                 .AddAggregates();
 
-            return services.BuildServiceProvider().GetRequiredService<Controllers.ResolveDependenciesController>();
+            var controller = services.BuildServiceProvider().GetRequiredService<Controllers.ResolveDependenciesController>();
+
+            controller.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            return controller;
         }
 
         // I need to set up a "proper" Mod object so that the controller won't throw a fit

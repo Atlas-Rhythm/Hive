@@ -1,4 +1,5 @@
-﻿using Hive.Models;
+﻿using Hive.Extensions;
+using Hive.Models;
 using Hive.Services;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Http;
@@ -49,7 +50,7 @@ namespace Hive.Controllers
         {
             log.Debug("Performing dependency resolution...");
             // Get the user, do not need to capture context
-            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+            var user = await HttpContext.GetHiveUser(proxyAuth).ConfigureAwait(false);
 
             var queryResult = await dependencyResolverService.ResolveAsync(user, identifiers).ConfigureAwait(false);
 

@@ -4,6 +4,7 @@ using Hive.Permissions;
 using Hive.Plugins;
 using Hive.Services.Common;
 using Hive.Utilities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
@@ -245,17 +246,6 @@ namespace Hive.Tests.Endpoints
         }
 
         [Fact]
-        public async Task AllModsForbid()
-        {
-            var controller = CreateController("next(false)", defaultPlugins); // By default, no one is allowed access.
-            var res = await controller.GetAllMods(); // Send the request
-
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
-            Assert.IsType<ForbidResult>(res.Result); // The above endpoint must be fail due to the permission rule.
-        }
-
-        [Fact]
         public async Task MoveModStandard()
         {
             var controller = CreateController("next(true)", defaultPlugins);
@@ -387,7 +377,14 @@ namespace Hive.Tests.Endpoints
                 .AddScoped<Controllers.ModsController>()
                 .AddAggregates();
 
-            return services.BuildServiceProvider().GetRequiredService<Controllers.ModsController>();
+            var controller = services.BuildServiceProvider().GetRequiredService<Controllers.ModsController>();
+
+            controller.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            return controller;
         }
 
         // I need to set up a "proper" Mod object so that the controller won't throw a fit

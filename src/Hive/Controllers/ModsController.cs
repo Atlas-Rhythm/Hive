@@ -61,7 +61,7 @@ namespace Hive.Controllers
         {
             log.Debug("Getting all mods...");
             // Get the user, do not need to capture context
-            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+            var user = await HttpContext.GetHiveUser(proxyAuth).ConfigureAwait(false);
 
             var queryResult = await modService.GetAllMods(user, channelIds, gameVersion, filterType).ConfigureAwait(false);
 
@@ -90,7 +90,7 @@ namespace Hive.Controllers
         {
             log.Debug("Getting a specific mod...");
             // Get the user, do not need to capture context
-            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+            var user = await HttpContext.GetHiveUser(proxyAuth).ConfigureAwait(false);
 
             var filteredRange = range != null ? new VersionRange(range) : null;
 
@@ -114,7 +114,7 @@ namespace Hive.Controllers
         {
             log.Debug("Getting the latest version of a specific mod...");
             // Get the user, do not need to capture context
-            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+            var user = await HttpContext.GetHiveUser(proxyAuth).ConfigureAwait(false);
 
             var queryResult = await modService.GetMod(user, id).ConfigureAwait(false);
 
@@ -138,9 +138,10 @@ namespace Hive.Controllers
         {
             log.Debug("Attempting to move a mod to a new channel...");
             // Get the user, do not need to capture context
-            var user = await proxyAuth.GetUser(Request).ConfigureAwait(false);
+            var user = await HttpContext.GetHiveUser(proxyAuth).ConfigureAwait(false);
 
             // This probably isn't something that the average Joe can do, so we return unauthorized if there is no user.
+            // While this can be argued redudant by the GuestRestrictionMiddleware, it's probably worth keeping as a sanity check.
             if (user is null) return new UnauthorizedResult();
 
             var queryResult = await modService.MoveMod(user, channelId, identifier).ConfigureAwait(false);
