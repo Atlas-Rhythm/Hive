@@ -4,8 +4,10 @@ using Hive.Plugins.Loading;
 using Hive.Versioning;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using NodaTime;
 using Serilog;
@@ -92,13 +94,29 @@ namespace Hive
                         .WithConfigurationKey("Plugins")
                         .WithApplicationConfigureRegistrar((sc, target, method)
                             => sc.AddSingleton<IStartupFilter>(sp => new CustomStartupFilter(sp, target, method)))
-                        .ConfigurePluginConfig((builder, plugin) =>
-                        {
-                            _ = builder
+                        .ConfigurePluginConfig((builder, plugin)
+                            => builder
                                 .AddJsonFile(Path.Combine(plugin.PluginDirectory.FullName, "pluginsettings.json"))
-                                .AddEnvironmentVariables("PLUGIN_" + plugin.Name.Replace(".", "_", StringComparison.Ordinal) + "__");
-                        })
+                                .AddEnvironmentVariables("PLUGIN_" + plugin.Name.Replace(".", "_", StringComparison.Ordinal) + "__"))
+                        .OnPluginLoaded((services, plugin)
+                            => GetApplicationPartManager(services).ApplicationParts.Add(new AssemblyPart(plugin.PluginAssembly)))
                 );
+
+        private static ApplicationPartManager GetApplicationPartManager(IServiceCollection services)
+        {
+            var manager = GetServiceInstanceFromCollection<ApplicationPartManager>(services);
+            if (manager is null)
+            {
+                manager = new ApplicationPartManager();
+                //   since PopulateDefaultParts is internal, we basically have to pray to God that this branch
+                // never executes, or that if it does, not having the defaults doesn't break anything
+                services.TryAddSingleton(manager);
+            }
+            return manager;
+        }
+
+        private static T? GetServiceInstanceFromCollection<T>(IServiceCollection services)
+            => (T?)(services.LastOrDefault(d => d.ServiceType == typeof(T))?.ImplementationInstance);
 
         private class CustomStartupFilter : IStartupFilter
         {

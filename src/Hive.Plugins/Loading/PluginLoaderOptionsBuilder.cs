@@ -13,6 +13,7 @@ namespace Hive.Plugins.Loading
         internal string ConfigurationKey = "PluginLoading";
         internal Action<IServiceCollection, object, MethodInfo> RegisterStartupFilter = (_, _, _) => { };
         internal Action<IConfigurationBuilder, PluginInstance> ConfigurePluginConfigCb = (_, _) => { };
+        internal Action<IServiceCollection, PluginInstance> OnPluginLoadedCb = (_, _) => { };
 
         internal PluginLoaderOptionsBuilder() { }
 
@@ -47,7 +48,7 @@ namespace Hive.Plugins.Loading
         {
             if (registrar is null)
                 throw new ArgumentNullException(nameof(registrar));
-            RegisterStartupFilter = registrar;
+            RegisterStartupFilter += registrar;
             return this;
         }
 
@@ -60,7 +61,25 @@ namespace Hive.Plugins.Loading
         {
             if (configure is null)
                 throw new ArgumentNullException(nameof(configure));
-            ConfigurePluginConfigCb = configure;
+            ConfigurePluginConfigCb += configure;
+            return this;
+        }
+
+
+        // This is needed to avoid referencing the target assembly for just a cref.
+#pragma warning disable CA1200 // Avoid using cref tags with a prefix
+        /// <summary>
+        /// Configures a callback to invoke when a plugin is loaded. This may be used to, for example,
+        /// register the plugin assembly as an <see cref="T:Microsoft.AspNetCore.Mvc.ApplicationParts.ApplicationPartManager"/>
+        /// </summary>
+        /// <param name="cb">The callback to call when a plugin is loaded.</param>
+        /// <returns>The <see langword="this"/> object, to allow for easy method chaining.</returns>
+#pragma warning restore CA1200 // Avoid using cref tags with a prefix
+        public PluginLoaderOptionsBuilder OnPluginLoaded(Action<IServiceCollection, PluginInstance> cb)
+        {
+            if (cb is null)
+                throw new ArgumentNullException(nameof(cb));
+            OnPluginLoadedCb += cb;
             return this;
         }
     }
