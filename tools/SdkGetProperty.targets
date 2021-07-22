@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Target Name="SdkGetProperty" Condition="'$(SdkPropertyToGet)' != ''" Returns="$(SdkGottenProperty)">
+    <ItemGroup>
+      <_SdkPropertyToGet Include="$(SdkPropertyToGet)" />
+    </ItemGroup>
+    <PropertyGroup>
+      <SdkGottenProperty>$(%(_SdkPropertyToGet.Identity))</SdkGottenProperty>
+    </PropertyGroup>
+  </Target>
+  
+</Project>
