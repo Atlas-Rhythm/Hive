@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using Hive.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -59,19 +58,13 @@ namespace Hive.Tests
 
         internal static HttpContext CreateMockRequest(Stream body)
         {
-            var requestMoq = new Mock<HttpRequest>();
-            requestMoq.SetupGet(r => r.Body).Returns(body);
-            requestMoq.SetupGet(r => r.Headers).Returns(new HeaderDictionary(
-                new Dictionary<string, StringValues>()
-                {
-                    { HeaderNames.Authorization, new StringValues("Bearer: test") }
-                })
-            );
+            // I've changed this from using Moq to the DefaultHttpContext as the GuestRestrictionMiddleware
+            // requires access to more advanced parts of an HttpContext that can't be replicated with Moq.
+            var context = new DefaultHttpContext();
+            context.Request.Headers.Add(HeaderNames.Authorization, new StringValues("Bearer: test"));
+            context.Request.Body = body;
 
-            var contextMoq = new Mock<HttpContext>();
-            contextMoq.SetupGet(c => c.Request).Returns(requestMoq.Object);
-
-            return contextMoq.Object;
+            return context;
         }
 
         internal static void AssertForbid(ActionResult result)

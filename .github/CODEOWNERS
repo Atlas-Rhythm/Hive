@@ -1,0 +1,53 @@
+
+
+*                                   @Atlas-Rhythm/hive-backend
+
+/api/                               @sc2ad
+
+/tools/                             @nike4613
+
+/src/CodeGen/                       @nike4613
+/src/PluginSDK/                     @nike4613
+/src/Hive.Analyzers/                @nike4613
+/src/Hive.Dependencies*/            @nike4613
+/src/Hive.Permissions*/             @nike4613
+/src/Hive.Plugins*/                 @nike4613
+/src/Hive.Utilities*/               @nike4613
+/src/Hive.Versioning*/              @nike4613
+
+/src/Hive/**/*Mod*                  @Caeden117
+/src/Hive/**/*GameVersion*          @Caeden117
+/src/Hive/**/*Dependenc*            @Caeden117
+/src/Hive/Extensions/               @Caeden117
+/src/Hive.Tests/**/*Mod*            @Caeden117
+/src/Hive.Tests/**/*GameVersion*    @Caeden117
+/src/Hive.Tests/**/*Dependenc*      @Caeden117
+
+/src/Hive/**/*Channel*              @sc2ad
+/src/Hive/**/*User*                 @sc2ad
+/src/Hive/**/*Auth*                 @sc2ad @Caeden117
+/src/Hive/Migrations/               @sc2ad
+/src/Hive/Models/                   @sc2ad
+/src/Hive/Services/                 @sc2ad
+/src/Hive.Tests/**/*Channel*        @sc2ad
+/src/Hive.Tests/**/*User*           @sc2ad
+/src/Hive.Tests/**/*Auth*           @sc2ad @Caeden117
+/src/Hive.Tests/*                   @sc2ad
+
+/src/Hive/Graphing/                 @Auros
+/src/Hive/Resources/GraphQL.resx    @Auros
+/src/Hive/HiveObjectQuery.cs        @Auros
+/src/Hive.Tests/Graphing/           @Auros
+
+/src/Hive/Permissions/              @nike4613
+/src/Hive/Logging/                  @nike4613
+
+/.github/                           @sc2ad
+/.github/workflows/                 @sc2ad @nike4613
+
+.editorconfig                       @nike4613
+
+*.targets                           @nike4613
+*.props                             @nike4613
+*.ps1                               @nike4613
+

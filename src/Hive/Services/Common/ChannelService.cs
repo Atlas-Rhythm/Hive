@@ -68,7 +68,6 @@ namespace Hive.Services.Common
         private static readonly HiveObjectQuery<IEnumerable<Channel>> forbiddenEnumerableResponse = new(StatusCodes.Status403Forbidden);
         private static readonly HiveObjectQuery<Channel> forbiddenSingularResponse = new(StatusCodes.Status403Forbidden);
 
-        private const string ListActionName = "hive.channels.list";
         private const string FilterActionName = "hive.channels.filter";
 
         private const string CreateActionName = "hive.channel.create";
@@ -99,11 +98,6 @@ namespace Hive.Services.Common
         /// <returns>A wrapped collection of <see cref="Channel"/>, if successful.</returns>
         public async Task<HiveObjectQuery<IEnumerable<Channel>>> RetrieveAllChannels(User? user)
         {
-            // hive.channel with a null channel in the context should be permissible
-            // iff a given user (or none) is allowed to view any channels. Thus, this should almost always be true
-            if (!permissions.CanDo(ListActionName, new PermissionContext { User = user }, ref channelsParseState))
-                return forbiddenEnumerableResponse;
-
             // Combine plugins
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;

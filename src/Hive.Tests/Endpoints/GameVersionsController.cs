@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 using static Hive.Tests.TestHelpers;
+using Microsoft.AspNetCore.Http;
 
 namespace Hive.Tests.Endpoints
 {
@@ -192,7 +193,14 @@ namespace Hive.Tests.Endpoints
                 .AddScoped<Controllers.GameVersionsController>()
                 .AddAggregates();
 
-            return services.BuildServiceProvider().GetRequiredService<Controllers.GameVersionsController>();
+            var controller = services.BuildServiceProvider().GetRequiredService<Controllers.GameVersionsController>();
+
+            controller.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            return controller;
         }
 
         private class DenyUserAccessPlugin : IGameVersionsPlugin

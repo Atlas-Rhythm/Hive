@@ -49,7 +49,7 @@
   
   <ItemGroup>
     <EmbeddedResource Update="Resources\GraphQL.resx" IsResXToGenerate="true" />
-    <EmbeddedResource Update="Resources\Resource.resx" IsResXToGenerate="true" />
+    <EmbeddedResource Update="Resources\SR.resx" IsResXToGenerate="true" />
   </ItemGroup>
 
 </Project>

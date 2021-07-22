@@ -67,7 +67,7 @@ namespace Hive
         public HiveObjectQuery(int statusCode, T value)
         {
             if (KindFromStatusCode(statusCode) != Kind.Value)
-                throw new ArgumentException(Resource.StatusCode_Value_Unnecessary, nameof(statusCode));
+                throw new ArgumentException(SR.StatusCode_Value_Unnecessary, nameof(statusCode));
             Value = value;
             StatusCode = statusCode;
         }
@@ -80,7 +80,7 @@ namespace Hive
         public HiveObjectQuery(int statusCode, string message)
         {
             if (KindFromStatusCode(statusCode) != Kind.Message)
-                throw new ArgumentException(Resource.StatusCode_Message_Unnecessary, nameof(statusCode));
+                throw new ArgumentException(SR.StatusCode_Message_Unnecessary, nameof(statusCode));
             Message = message;
             StatusCode = statusCode;
         }
@@ -92,7 +92,7 @@ namespace Hive
         public HiveObjectQuery(int statusCode)
         {
             if (KindFromStatusCode(statusCode) != Kind.None)
-                throw new ArgumentException(Resource.StatusCode_None_Unnecessary, nameof(statusCode));
+                throw new ArgumentException(SR.StatusCode_None_Unnecessary, nameof(statusCode));
             StatusCode = statusCode;
         }
 
