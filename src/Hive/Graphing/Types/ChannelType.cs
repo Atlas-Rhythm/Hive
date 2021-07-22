@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Types;
+using Hive.Extensions;
 using Hive.Models;
 using Hive.Services;
 using Hive.Services.Common;
@@ -40,7 +41,7 @@ namespace Hive.Graphing.Types
             (var modService, var http, var authService)
                 = ctx.RequestServices.GetRequiredServices<ModService, IHttpContextAccessor, IProxyAuthenticationService>();
 
-            var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
+            var user = await http.HttpContext!.GetHiveUser(authService).ConfigureAwait(false);
             var queryResult = await modService.GetAllMods(user, new[] { ctx.Source.Name }).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Types;
+using Hive.Extensions;
 using Hive.Models;
 using Hive.Services;
 using Hive.Services.Common;
@@ -74,7 +75,7 @@ namespace Hive.Graphing.Types
             (var channelService, var http, var authService)
                 = ctx.RequestServices.GetRequiredServices<ChannelService, IHttpContextAccessor, IProxyAuthenticationService>();
 
-            var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
+            var user = await http.HttpContext!.GetHiveUser(authService).ConfigureAwait(false);
             var queryResult = await channelService.GetChannel(ctx.GetArgument<string>("id"), user).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
@@ -86,7 +87,7 @@ namespace Hive.Graphing.Types
             (var channelService, var http, var authService)
                 = ctx.RequestServices.GetRequiredServices<ChannelService, IHttpContextAccessor, IProxyAuthenticationService>();
 
-            var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
+            var user = await http.HttpContext!.GetHiveUser(authService).ConfigureAwait(false);
             var queryResult = await channelService.RetrieveAllChannels(user).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
@@ -98,7 +99,7 @@ namespace Hive.Graphing.Types
             (var modService, var http, var authService)
                 = ctx.RequestServices.GetRequiredServices<ModService, IHttpContextAccessor, IProxyAuthenticationService>();
 
-            var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
+            var user = await http.HttpContext!.GetHiveUser(authService).ConfigureAwait(false);
             var queryResult = await modService.GetMod(user, ctx.GetArgument<string>("id")).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
@@ -114,7 +115,7 @@ namespace Hive.Graphing.Types
             var channels = ctx.GetArgument<IEnumerable<string>?>("channelIds");
             var gameVersion = ctx.GetArgument<string?>("gameVersion");
 
-            var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
+            var user = await http.HttpContext!.GetHiveUser(authService).ConfigureAwait(false);
             var queryResult = await modService.GetAllMods(user, channels?.ToArray(), gameVersion, filterType).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
@@ -126,7 +127,7 @@ namespace Hive.Graphing.Types
             (var versionService, var http, var authService)
                 = ctx.RequestServices.GetRequiredServices<GameVersionService, IHttpContextAccessor, IProxyAuthenticationService>();
 
-            var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
+            var user = await http.HttpContext!.GetHiveUser(authService).ConfigureAwait(false);
             var queryResult = await versionService.RetrieveAllVersions(user).ConfigureAwait(false);
             var version = ctx.GetArgument<string>("name");
 
@@ -139,7 +140,7 @@ namespace Hive.Graphing.Types
             (var versionService, var http, var authService)
                 = ctx.RequestServices.GetRequiredServices<GameVersionService, IHttpContextAccessor, IProxyAuthenticationService>();
 
-            var user = await authService.GetUser(http.HttpContext!.Request).ConfigureAwait(false);
+            var user = await http.HttpContext!.GetHiveUser(authService).ConfigureAwait(false);
             var queryResult = await versionService.RetrieveAllVersions(user).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
