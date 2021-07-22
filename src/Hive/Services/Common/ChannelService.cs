@@ -110,7 +110,7 @@ namespace Hive.Services.Common
         /// <returns></returns>
         public async Task<HiveObjectQuery<Channel>> GetChannel(string id, User? user)
         {
-            if (!permissions.CanDo(GetModActionName, new PermissionContext { User = user }, ref channelsParseState))
+            if (!permissions.CanDo(FilterActionName, new PermissionContext { User = user }, ref channelsParseState))
                 return forbiddenSingularResponse;
 
             log.Debug("Combining plugins...");
@@ -124,7 +124,7 @@ namespace Hive.Services.Common
             if (channel is null)
                 return forbiddenSingularResponse;
 
-            var hasPermission = permissions.CanDo(GetModActionName, new PermissionContext { Channel = channel, User = user }, ref channelsParseState)
+            var hasPermission = permissions.CanDo(FilterActionName, new PermissionContext { Channel = channel, User = user }, ref channelsParseState)
                 && combined.GetSpecificChannelAdditionalChecks(user, channel);
 
             return !hasPermission ? forbiddenSingularResponse : new HiveObjectQuery<Channel>(channel, null, StatusCodes.Status200OK);

@@ -15,18 +15,6 @@ namespace Hive.Tests
             public bool GetSpecificModAdditionalChecks(User? user, Mod contextMod) => contextMod.Channel.Name != "Beta";
         }
 
-        // This plugin will filter out a mod if it's in the denied channel. Super super basic but works.
-        public class DeniedModsFilterPlugin : IModsPlugin
-        {
-            public bool GetSpecificModAdditionalChecks(User? user, Mod contextMod) => contextMod.Channel.Name != "Denied";
-        }
-
-        // This plugin will filter out a mod if it's in the pending channel. Super super basic but works.
-        public class PendingModsFilterPlugin : IModsPlugin
-        {
-            public bool GetSpecificModAdditionalChecks(User? user, Mod contextMod) => contextMod.Channel.Name != "Pending";
-        }
-
         // This is taken from GameVersionsController to have a configurable permission rule.
         public class ModsRuleProvider : IRuleProvider
         {
@@ -47,14 +35,9 @@ namespace Hive.Tests
                         gotten = new Rule(nameString, "next(false)");
                         return true;
 
-                    case "hive.mod":
-                    case "hive.mods":
+                    default:
                         gotten = new Rule(nameString, permissionRule);
                         return true;
-
-                    default:
-                        gotten = null;
-                        return false;
                 }
             }
         }

@@ -21,6 +21,9 @@ namespace Hive.Graphing.Types
             Name = nameof(User);
             Description = Resources.GraphQL.User;
 
+            _ = Field(u => u.Username)
+                .Description(Resources.GraphQL.User_Username);
+
             foreach (var graph in customGraphs)
                 graph.Configure(this);
         }

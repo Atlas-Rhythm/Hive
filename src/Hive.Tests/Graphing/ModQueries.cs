@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-using System.Threading.Tasks;
-using GraphQL;
+﻿using System.Threading.Tasks;
 using GraphQL.Execution;
 using Hive.Graphing;
 using Hive.Models;
@@ -23,7 +21,7 @@ namespace Hive.Tests.Graphing
         public async Task PermissionForbidModByID()
         {
             var services = CreateProvider("next(false)", TestHelpers.CreateMockRequest(null!));
-            var result = await services.ExecuteGraphAsync("{ mod(id: \"uwu\") { readableID } }");
+            var result = await services.ExecuteGraphAsync("{ mod(id: \"lilac\") { readableID } }");
             Assert.NotNull(result);
             Assert.NotNull(result.Errors);
             Assert.NotEmpty(result.Errors);
@@ -81,8 +79,11 @@ namespace Hive.Tests.Graphing
             Assert.Equal("raftario best modder", mod.Uploader.Username);
         }
 
-        private ServiceProvider CreateProvider(string permissionRule, HttpContext context)
+        private ServiceProvider CreateProvider(string permissionRule, HttpContext? context)
         {
+            if (context is null)
+                context = new DefaultHttpContext();
+
             var services = DIHelper.ConfigureServices(Options, helper, new ModTestHelper.ModsRuleProvider(permissionRule));
 
             _ = services
