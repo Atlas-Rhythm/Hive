@@ -48,7 +48,7 @@ namespace Hive
         public ActionResult<TCast> Convert<TCast>(Func<T, TCast> conversionFunc)
         {
             return conversionFunc == null
-                ? throw new ArgumentNullException(nameof(conversionFunc), "No conversion function specified")
+                ? throw new ArgumentNullException(nameof(conversionFunc))
                 : ConvertInternal(conversionFunc);
         }
     }
