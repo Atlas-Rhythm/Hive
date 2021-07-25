@@ -22,8 +22,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-using Hive.Extensions;
-
 namespace Hive.Controllers
 {
     /// <summary>
@@ -122,7 +120,7 @@ namespace Hive.Controllers
         /// A hook that is called when a mod has been added to the database.
         /// Hive default is to do nothing.
         /// </summary>
-        /// <param name="modData">The mo that was just uploaded.</param>
+        /// <param name="modData">The mod that was just uploaded.</param>
         void UploadComplete(Mod modData) { }
     }
 

@@ -16,7 +16,6 @@ using Serilog.Exceptions;
 using Serilog.Exceptions.Core;
 using Serilog.Exceptions.EntityFrameworkCore.Destructurers;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -132,7 +131,7 @@ namespace Hive
                 => app =>
                 {
                     next(app);
-                    services.InjectVoidMethod(method, t => t == typeof(IApplicationBuilder) ? (object)app : null, null)(target);
+                    services.InjectVoidMethod(method, t => t == typeof(IApplicationBuilder) ? app : null, null)(target);
                 };
         }
 
