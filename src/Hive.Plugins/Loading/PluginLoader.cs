@@ -62,11 +62,14 @@ namespace Hive.Plugins.Loading
                     var plc = new PluginLoadContext(plugin);
                     var instance = new PluginInstance(plc);
 
+                    options.OnPluginLoadedCb(services, instance);
+
                     InitPlugin(instance, services, hostEnv);
                     _ = services.AddSingleton(instance);
                 }
                 catch (AggregateException e)
                 {
+                    // TODO: these exceptions should *ideally* also include the stack trace of the AggregateException
                     exceptions.AddRange(e.InnerExceptions.Select(e => (e, plugin.Name)));
                 }
                 catch (Exception e)
