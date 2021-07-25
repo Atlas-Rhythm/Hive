@@ -93,7 +93,8 @@ namespace Hive.Models.Serialized
         /// The additional data associated with this <see cref="Mod"/>.
         /// All properties are public and readonly for all people who get mods.
         /// </summary>
-        public Dictionary<string, object?> AdditionalData { get; private set; } = new();
+        [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "We want to set this via assignment, but only on construction.")]
+        public Dictionary<string, object?> AdditionalData { get; init; } = new();
 
         /// <summary>
         /// Serialize a <see cref="Mod"/> with an associated <see cref="Models.LocalizedModInfo"/> into a <see cref="SerializedMod"/>.

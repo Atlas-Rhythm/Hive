@@ -68,20 +68,16 @@ namespace Hive.Services.Common
         private readonly PermissionsManager<PermissionContext> permissions;
 
         // Actions done on a list of mods
-        private const string GetModsActionName = "hive.mods.list";
-
         private const string FilterModsActionName = "hive.mods.filter";
 
         // Actions done on a singular mod
-        private const string GetModActionName = "hive.mod.get";
-
         private const string FilterModActionName = "hive.mod.filter";
+
         private const string MoveModActionName = "hive.mod.move";
 
         [ThreadStatic] private static PermissionActionParseState getModsParseState;
         [ThreadStatic] private static PermissionActionParseState moveModsParseState;
 
-        private static readonly HiveObjectQuery<IEnumerable<Mod>> forbiddenEnumerableResponse = new(StatusCodes.Status403Forbidden);
         private static readonly HiveObjectQuery<Mod> forbiddenModResponse = new(StatusCodes.Status403Forbidden);
         private static readonly HiveObjectQuery<Mod> notFoundModResponse = new(StatusCodes.Status404NotFound, "Not Found");
 

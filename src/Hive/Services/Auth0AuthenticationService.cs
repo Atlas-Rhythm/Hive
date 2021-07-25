@@ -78,7 +78,12 @@ namespace Hive.Services
         /// <summary>
         /// Construct a <see cref="Auth0AuthenticationService"/> with DI.
         /// </summary>
-        public Auth0AuthenticationService([DisallowNull] ILogger log, IClock clock, IConfiguration configuration, HiveContext context, IAggregate<IUserCreationPlugin> userCreationPlugin)
+        public Auth0AuthenticationService(
+            [DisallowNull] ILogger log,
+            IClock clock,
+            IConfiguration configuration,
+            HiveContext context,
+            IAggregate<IUserCreationPlugin> userCreationPlugin)
         {
             if (log is null)
                 throw new ArgumentNullException(nameof(log));
