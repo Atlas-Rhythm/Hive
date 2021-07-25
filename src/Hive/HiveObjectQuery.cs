@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using System;
+using Hive.Resources;
 
 namespace Hive
 {

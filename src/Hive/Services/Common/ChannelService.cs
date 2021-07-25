@@ -128,7 +128,7 @@ namespace Hive.Services.Common
             var hasPermission = permissions.CanDo(FilterActionName, new PermissionContext { Channel = channel, User = user }, ref channelsParseState)
                 && combined.GetSpecificChannelAdditionalChecks(user, channel);
 
-            return !hasPermission ? forbiddenSingularResponse : new HiveObjectQuery<Channel>(channel, null, StatusCodes.Status200OK);
+            return !hasPermission ? forbiddenSingularResponse : new HiveObjectQuery<Channel>(StatusCodes.Status200OK, channel);
         }
 
         /// <summary>
