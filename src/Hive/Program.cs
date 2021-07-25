@@ -1,4 +1,3 @@
-using AspNetCoreRateLimit;
 using Hive.Models;
 using Hive.Plugins.Loading;
 using Hive.Versioning;
@@ -41,12 +40,6 @@ namespace Hive
             {
                 var services = scope.ServiceProvider;
                 var log = services.GetRequiredService<ILogger>();
-
-                var ipPolicyStore = services.GetService<IIpPolicyStore>();
-                if (ipPolicyStore != null) await ipPolicyStore.SeedAsync().ConfigureAwait(false);
-
-                var clientPolicyStore = services.GetService<IClientPolicyStore>();
-                if (clientPolicyStore != null) await clientPolicyStore.SeedAsync().ConfigureAwait(false);
 
                 try
                 {
