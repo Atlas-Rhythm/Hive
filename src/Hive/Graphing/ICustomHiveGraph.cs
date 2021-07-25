@@ -5,7 +5,7 @@ namespace Hive.Graphing
     /// <summary>
     /// An interface which provides structure for adding extra configuration to graph types.
     /// </summary>
-    public interface ICustomHiveGraph<T> where T : IObjectGraphType
+    public interface ICustomHiveGraph<T> where T : IGraphType
     {
         /// <summary>
         /// Called when a graph type is installing extra graph configurations.

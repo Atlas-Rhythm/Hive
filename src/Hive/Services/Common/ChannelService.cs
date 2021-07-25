@@ -50,6 +50,20 @@ namespace Hive.Services.Common
         /// </summary>
         /// <param name="newChannel">The channel that was just created.</param>
         void NewChannelCreated(Channel newChannel) { }
+
+        /// <summary>
+        /// Returns true if the specified user has access to view a particular channel, false otherwise.
+        /// This method is called for each channel the user wants to access.
+        /// <para>Hive default is to return true for each channel.</para>
+        /// </summary>
+        /// <remarks>
+        /// This method is called in a LINQ expression that is not tracked by EntityFramework,
+        /// so modifications done to the <see cref="Channel"/> object will not be reflected in the database.
+        /// </remarks>
+        /// <param name="user">User in context</param>
+        /// <param name="contextChannel">Channel in context</param>
+        [return: StopIfReturns(false)]
+        public bool GetSpecificChannelAdditionalChecks(User? user, Channel? contextChannel) => true;
     }
 
     internal class HiveChannelsControllerPlugin : IChannelsControllerPlugin { }
@@ -90,11 +104,39 @@ namespace Hive.Services.Common
         }
 
         /// <summary>
+        /// Gets a <see cref="Channel"/> from this instance.
+        /// </summary>
+        /// <param name="id">The name/id of the channel.</param>
+        /// <param name="user">The user for authenticating the query.</param>
+        /// <returns></returns>
+        public async Task<HiveObjectQuery<Channel>> GetChannel(string id, User? user)
+        {
+            if (!permissions.CanDo(FilterActionName, new PermissionContext { User = user }, ref channelsParseState))
+                return forbiddenSingularResponse;
+
+            log.Debug("Combining plugins...");
+            var combined = plugin.Instance;
+
+            if (!combined.GetChannelsAdditionalChecks(user))
+                return forbiddenSingularResponse;
+
+            var channel = await context.Channels.FindAsync(id).ConfigureAwait(false);
+
+            if (channel is null)
+                return forbiddenSingularResponse;
+
+            var hasPermission = permissions.CanDo(FilterActionName, new PermissionContext { Channel = channel, User = user }, ref channelsParseState)
+                && combined.GetSpecificChannelAdditionalChecks(user, channel);
+
+            return !hasPermission ? forbiddenSingularResponse : new HiveObjectQuery<Channel>(channel, null, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
         /// Gets all <see cref="Channel"/> objects available.
         /// This performs a permission check at: <c>hive.channels.list</c>.
         /// Furthermore, channels are further filtered by a permission check at: <c>hive.channels.filter</c>.
         /// </summary>
-        /// <param name="user">The users to associate with this request.</param>
+        /// <param name="user">The user to associate with this request.</param>
         /// <returns>A wrapped collection of <see cref="Channel"/>, if successful.</returns>
         public async Task<HiveObjectQuery<IEnumerable<Channel>>> RetrieveAllChannels(User? user)
         {

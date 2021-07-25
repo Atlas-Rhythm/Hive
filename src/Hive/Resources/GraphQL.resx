@@ -228,8 +228,26 @@
   <data name="Mod_Version" xml:space="preserve">
     <value>The SemVer version of the mod.</value>
   </data>
+  <data name="Query_Channels" xml:space="preserve">
+    <value>Get information about all the channels in this current instance.</value>
+  </data>
+  <data name="Query_GameVersions" xml:space="preserve">
+    <value>Get information about all the game versions in this current instance.</value>
+  </data>
+  <data name="Query_Mods" xml:space="preserve">
+    <value>Get information about mods in this current instance.</value>
+  </data>
   <data name="User" xml:space="preserve">
     <value>Represents an individual account on this Hive instance</value>
+  </data>
+  <data name="User_AuthoredFor" xml:space="preserve">
+    <value>The mods that this user authored for.</value>
+  </data>
+  <data name="User_ContributedOn" xml:space="preserve">
+    <value>The mods that this user contributed on.</value>
+  </data>
+  <data name="User_Uploaded" xml:space="preserve">
+    <value>The mods that this user has uploaded.</value>
   </data>
   <data name="User_Username" xml:space="preserve">
     <value>The username of the user.</value>

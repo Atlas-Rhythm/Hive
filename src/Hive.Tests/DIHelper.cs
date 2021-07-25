@@ -12,11 +12,16 @@ using Xunit.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using GraphQL;
+using System.Threading.Tasks;
+using Hive.Graphing;
 
 namespace Hive.Tests
 {
     public static class DIHelper
     {
+        internal static Dictionary<string, JsonElement> EmptyAdditionalSet => new();
         internal static JsonElement EmptyAdditionalData => JsonDocument.Parse("{}").RootElement.Clone();
 
         /// <summary>
@@ -89,6 +94,25 @@ namespace Hive.Tests
             mockRuleProvider.Setup(rules => rules.HasRuleChangedSince(It.IsAny<Rule>(), It.IsAny<Instant>())).Returns(false);
             mockRuleProvider.Setup(rules => rules.TryGetRule(It.IsAny<StringView>(), out It.Ref<Rule>.IsAny!)).Returns(false);
             return mockRuleProvider;
+        }
+
+        internal class TestAccessor : IHttpContextAccessor
+        {
+            public TestAccessor(HttpContext httpContext) => HttpContext = httpContext;
+
+            public HttpContext? HttpContext { get; set; }
+        }
+
+        internal static async Task<ExecutionResult> ExecuteGraphAsync(this ServiceProvider provider, string query)
+        {
+            var executer = provider.GetRequiredService<IDocumentExecuter>();
+            var schema = provider.GetRequiredService<HiveSchema>();
+            return await executer.ExecuteAsync(options =>
+            {
+                options.Query = query;
+                options.Schema = schema;
+                options.RequestServices = provider;
+            });
         }
     }
 }
