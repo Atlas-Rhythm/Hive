@@ -162,11 +162,10 @@ namespace Hive.Services.Common
             log.Debug("Creating a new Game Version...");
 
             // TODO: Pass the InputGameVersion into plugins before creating the GameVersion instance for further modification of additional data?
-            var version = new GameVersion()
+            var version = new GameVersion(gameVersion.AdditionalData)
             {
                 Name = gameVersion.Name,
-                CreationTime = clock.GetCurrentInstant(),
-                AdditionalData = gameVersion.AdditionalData
+                CreationTime = clock.GetCurrentInstant()
             };
 
             // Exit if there's already an existing version with the same name

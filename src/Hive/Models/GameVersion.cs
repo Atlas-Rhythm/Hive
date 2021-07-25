@@ -24,8 +24,7 @@ namespace Hive.Models
         /// Additional data associated with the GameVersion
         /// </summary>
         [Column(TypeName = "jsonb")]
-        [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "We want to allow plugins to do the same.")]
-        public Dictionary<string, object?> AdditionalData { get; set; } = new();
+        public Dictionary<string, object?> AdditionalData { get; private set; } = new();
 
         /// <summary>
         /// The <see cref="Instant"/> this GameVersion was created
@@ -49,6 +48,20 @@ namespace Hive.Models
         public Guid Guid { get; set; }
 
         #endregion DB Schema stuff
+
+        /// <summary>
+        /// Construct a game version with additional data
+        /// </summary>
+        /// <param name="extraData">The additional data to assign.</param>
+        public GameVersion(Dictionary<string, object?> extraData)
+        {
+            AdditionalData = extraData;
+        }
+
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        public GameVersion() { }
 
         /// <summary>
         /// Configure for EF

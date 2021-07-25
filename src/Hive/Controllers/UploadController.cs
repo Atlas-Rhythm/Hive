@@ -21,6 +21,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+
 using Hive.Extensions;
 
 namespace Hive.Controllers
@@ -116,6 +117,13 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="modData">The mod that was just uploaded.</param>
         void UploadFinished(Mod modData) { }
+
+        /// <summary>
+        /// A hook that is called when a mod has been added to the database.
+        /// Hive default is to do nothing.
+        /// </summary>
+        /// <param name="modData">The mo that was just uploaded.</param>
+        void UploadComplete(Mod modData) { }
     }
 
     internal class HiveDefaultUploadPlugin : IUploadPlugin
@@ -457,7 +465,7 @@ namespace Hive.Controllers
 
             #region Create modObject
 
-            var modObject = new Mod
+            var modObject = new Mod(finalMetadata.AdditionalData)
             {
                 ReadableID = finalMetadata.ID,
                 Version = finalMetadata.Version,
@@ -466,7 +474,6 @@ namespace Hive.Controllers
                 Uploader = user,
                 Dependencies = finalMetadata.Dependencies?.ToList() ?? new(), // if deps is null, default to empty list (it's allowed)
                 Conflicts = finalMetadata.ConflictsWith?.ToList() ?? new(),   // same as above
-                AdditionalData = finalMetadata.AdditionalData,
                 Links = finalMetadata.Links?.Select(t => (t.Item1, new Uri(t.Item2))).ToList() ?? new(), // defaults to empty list
                 Authors = new List<User>(), // both of these default to empty lists
                 Contributors = new List<User>(),

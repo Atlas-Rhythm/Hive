@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 using NodaTime;
 using Hive.Converters;
 using System.Text.Json.Serialization;
@@ -97,8 +96,7 @@ namespace Hive.Models
         /// </summary>
         /// <remarks>This data is publicly read-only. Be sure not to store sensitive information as additional data.</remarks>
         [Column(TypeName = "jsonb")]
-        [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "We want to allow plugins to do the same.")]
-        public Dictionary<string, object?> AdditionalData { get; set; } = new();
+        public Dictionary<string, object?> AdditionalData { get; private set; } = new();
 
         /// <summary>
         /// A collection of link pairs, with the name and url of each link. May be empty.
@@ -111,6 +109,20 @@ namespace Hive.Models
         /// The download link of the mod.
         /// </summary>
         public Uri DownloadLink { get; set; } = null!;
+
+        /// <summary>
+        /// Construct a mod with extra data.
+        /// </summary>
+        /// <param name="extraData"></param>
+        public Mod(Dictionary<string, object?> extraData)
+        {
+            AdditionalData = extraData;
+        }
+
+        /// <summary>
+        /// Default Constructor
+        /// </summary>
+        public Mod() { }
 
         /// <summary>
         /// Add a <see cref="GameVersion"/> as a supported version.

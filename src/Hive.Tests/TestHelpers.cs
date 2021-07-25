@@ -69,8 +69,8 @@ namespace Hive.Tests
 
         internal static void AssertForbid(ActionResult result)
         {
-            Assert.IsType<EmptyStatusCodeResponse>(result);
-            Assert.Equal(StatusCodes.Status403Forbidden, (result as EmptyStatusCodeResponse)!.StatusCode);
+            var res = Assert.IsType<EmptyStatusCodeResponse>(result);
+            Assert.Equal(StatusCodes.Status403Forbidden, res.StatusCode);
         }
     }
 }

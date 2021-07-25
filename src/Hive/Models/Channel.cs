@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Hive.Models
 {
@@ -21,8 +20,7 @@ namespace Hive.Models
         /// Additional data associated with the Channel
         /// </summary>
         [Column(TypeName = "jsonb")]
-        [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "We want to allow plugins to do the same.")]
-        public Dictionary<string, object?> AdditionalData { get; set; } = new();
+        public Dictionary<string, object?> AdditionalData { get; private set; } = new();
 
         /// <summary>
         /// Equality comparison
