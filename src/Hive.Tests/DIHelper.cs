@@ -107,11 +107,11 @@ namespace Hive.Tests
         {
             var executer = provider.GetRequiredService<IDocumentExecuter>();
             var schema = provider.GetRequiredService<HiveSchema>();
-            return await executer.ExecuteAsync(_ =>
+            return await executer.ExecuteAsync(options =>
             {
-                _.Query = query;
-                _.Schema = schema;
-                _.RequestServices = provider;
+                options.Query = query;
+                options.Schema = schema;
+                options.RequestServices = provider;
             });
         }
     }
