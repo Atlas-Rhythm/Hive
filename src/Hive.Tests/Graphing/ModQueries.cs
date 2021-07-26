@@ -25,8 +25,6 @@ namespace Hive.Tests.Graphing
             Assert.NotNull(result);
             Assert.NotNull(result.Errors);
             Assert.NotEmpty(result.Errors);
-            var error = result.Errors[0];
-            Assert.Equal("Forbidden", error.Message);
         }
 
         [Fact]
