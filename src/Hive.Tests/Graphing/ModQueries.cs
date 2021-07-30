@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Globalization;
+using System.Net;
+using System.Threading.Tasks;
 using GraphQL.Execution;
 using Hive.Graphing;
 using Hive.Models;
@@ -24,7 +26,9 @@ namespace Hive.Tests.Graphing
             var result = await services.ExecuteGraphAsync("{ mod(id: \"lilac\") { readableID } }");
             Assert.NotNull(result);
             Assert.NotNull(result.Errors);
-            Assert.NotEmpty(result.Errors);
+            var error = Assert.Single(result.Errors);
+            // Should have only one error, and the string code should be equivalent to the forbidden HttpStatusCode (as a number)
+            Assert.Equal(((int)HttpStatusCode.Forbidden).ToString(CultureInfo.InvariantCulture), error.Code);
         }
 
         [Fact]
@@ -35,12 +39,10 @@ namespace Hive.Tests.Graphing
             Assert.NotNull(result);
             Assert.Null(result.Errors);
             Assert.NotNull(result.Data);
-            Assert.IsType<RootExecutionNode>(result.Data);
-            var execution = (result.Data as RootExecutionNode)!;
+            var execution = Assert.IsType<RootExecutionNode>(result.Data);
             Assert.NotEmpty(execution.SubFields);
             Assert.Equal("mod", execution.SubFields[0].Name);
-            Assert.IsType<Mod>(execution.SubFields[0].Result);
-            var mod = (execution.SubFields[0].Result as Mod)!;
+            var mod = Assert.IsType<Mod>(execution.SubFields[0].Result);
             Assert.Equal("lilac", mod.ReadableID);
         }
 
