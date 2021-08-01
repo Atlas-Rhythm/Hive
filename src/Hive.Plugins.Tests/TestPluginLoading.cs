@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Hive.Plugins.Loading;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,8 @@ namespace Hive.Plugins.Tests
 {
     public class TestPluginLoading
     {
+        private record PreConfigureCallback(Func<IServiceProvider, Task> Method);
+
         private static IHostBuilder BuildLoadingHost(string cfgKey, Dictionary<string, string> cfgValues, Action<PluginLoaderOptionsBuilder>? optBuilder = null)
         {
             optBuilder ??= _ => { };
@@ -23,7 +26,8 @@ namespace Hive.Plugins.Tests
                     => optBuilder(builder
                         .WithConfigurationKey(cfgKey)
                         .WithApplicationConfigureRegistrar((services, target, method)
-                            => services.AddSingleton(new PluginRegistration(target, method)))));
+                            => services.AddSingleton(new PluginRegistration(target, method)))
+                    ));
         }
 
         private record PluginRegistration(object Target, MethodInfo Method)
@@ -227,6 +231,48 @@ namespace Hive.Plugins.Tests
             InitRegistrations(host.Services, pluginRegistrations);
 
             // we only have one test plugin that we are loading
+            Assert.Single(pluginInstances);
+            // that test plugin has only one startup class
+            Assert.Single(pluginRegistrations);
+
+            var firstRegistration = pluginRegistrations.First();
+            // the registration target is itself registered
+            Assert.Same(firstRegistration, host.Services.GetRequiredService(firstRegistration.GetType()));
+        }
+
+        [Fact]
+        public async Task TestPreConfigure()
+        {
+            var syncInvoked = false;
+            var asyncInvoked = false;
+
+            var host = BuildLoadingHost("Plugins", new()
+            {
+                { "Plugins:PluginPath", "plugins" },
+                { "Plugins:ImplicitlyLoadPlugins", "true" }
+            },
+                o => o.WithPreConfigureRegistrar((sc, cb)
+                    => sc.AddSingleton(new PreConfigureCallback(cb))))
+                .ConfigureServices(sc
+                    => sc.AddSingleton<Action>(() => syncInvoked = true)
+                        .AddSingleton<Func<Task>>(() => { asyncInvoked = true; return Task.CompletedTask; }))
+                .Build();
+
+            var pluginInstances = host.Services.GetRequiredService<IEnumerable<PluginInstance>>();
+            var pluginRegistrations = host.Services.GetRequiredService<IEnumerable<PluginRegistration>>();
+
+            Assert.False(syncInvoked);
+            Assert.False(asyncInvoked);
+
+            foreach (var reg in host.Services.GetServices<PreConfigureCallback>())
+                await reg.Method(host.Services);
+
+            Assert.True(syncInvoked);
+            Assert.True(asyncInvoked);
+
+            InitRegistrations(host.Services, pluginRegistrations);
+
+            // we only have one test plugin that we put in the dir
             Assert.Single(pluginInstances);
             // that test plugin has only one startup class
             Assert.Single(pluginRegistrations);

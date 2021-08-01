@@ -204,6 +204,12 @@
     <value>There is no file '{0}' in the plugin directory '{1}'; could not load the plugin.</value>
     <comment>{0} is the expected name of the plugin file, {1} is the path of the plugin directory</comment>
   </data>
+  <data name="PluginLoad_PreConfigAsyncMustBeAsync" xml:space="preserve">
+    <value>PreConfigureAsync methods must return either Task or ValueTask.</value>
+  </data>
+  <data name="PluginLoad_PreConfigMustReturnVoid" xml:space="preserve">
+    <value>PreConfigure methods must return void.</value>
+  </data>
   <data name="PluginStarupException_DefaultMessage" xml:space="preserve">
     <value>An error ocurred while initializing the plugin startup type '{0}'</value>
     <comment>{0} is the full type name that failed</comment>
