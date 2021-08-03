@@ -17,7 +17,7 @@ namespace Hive.Models.ReadOnly
         /// <summary>
         /// The additional data from the <see cref="Channel"/>.
         /// </summary>
-        public readonly Dictionary<string, object?> AdditionalData { get; }
+        public readonly ArbitraryAdditionalData AdditionalData { get; }
 
         /// <summary>
         /// Create a read-only version of a <see cref="Channel"/>.

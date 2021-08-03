@@ -81,6 +81,26 @@ namespace Hive.Models
             return data.Object;
         }
 
+        private const string nullStr = "null";
+
+        /// <summary>
+        /// Add a collection of serialized data.
+        /// </summary>
+        /// <param name="serializedData"></param>
+        /// <exception cref="ArgumentException">A key with the same name already exists.</exception>
+        public void AddSerialized(IDictionary<string, string?> serializedData)
+        {
+            if (serializedData is null)
+                throw new ArgumentNullException(nameof(serializedData));
+            foreach (var (k, v) in serializedData)
+            {
+                if (v is null)
+                    SerializedData.Add(k, nullStr);
+                else
+                    SerializedData.Add(k, v);
+            }
+        }
+
         /// <summary>
         /// Attempts to get the instance at a given key, deserializing to a <typeparamref name="T"/> if it exists.
         /// This function will serialize any pending instances before attempting to get the value at the provided key.

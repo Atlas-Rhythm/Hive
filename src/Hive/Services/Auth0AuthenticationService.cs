@@ -40,7 +40,7 @@ namespace Hive.Services
         /// Hive default is to modify nothing.
         /// </summary>
         /// <param name="extraData">The original additional data to add to/remove from, if necessary</param>
-        void ExtraDataModification(Dictionary<string, object?> extraData) { }
+        void ExtraDataModification(ArbitraryAdditionalData extraData) { }
     }
 
     internal class HiveUsernamePlugin : IUserCreationPlugin { }
@@ -178,8 +178,8 @@ namespace Hive.Services
                     {
                         Username = userCreationPlugin.Instance.ChooseUsername(auth0User.Nickname),
                         AlternativeId = auth0User.Sub,
-                        AdditionalData = auth0User.User_Metadata.ToDictionary(p => p.Key, p => (object?)p.Value)
                     };
+                    u.AdditionalData.AddSerialized(auth0User.User_Metadata.ToDictionary(p => p.Key, p => p.Value.ToString()));
 
                     while (await context.Users.AsNoTracking().ContainsAsync(u).ConfigureAwait(false))
                     {

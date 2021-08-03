@@ -106,7 +106,7 @@ namespace Hive.Controllers
         /// <param name="validationFailureInfo">An object containing information about the rejection, if any.</param>
         /// <returns><see langword="true"/> if the upload is valid, <see langword="false"/> otherwise.</returns>
         [return: StopIfReturns(false)]
-        bool ValidateAndFixUploadedData(Mod mod, Dictionary<string, object?> originalAdditionalData, [ReturnLast] out object? validationFailureInfo);
+        bool ValidateAndFixUploadedData(Mod mod, ArbitraryAdditionalData originalAdditionalData, [ReturnLast] out object? validationFailureInfo);
 
         /// <summary>
         /// A hook that is called when a mod has been fully uploaded and about to be added to the database.
@@ -127,7 +127,7 @@ namespace Hive.Controllers
     internal class HiveDefaultUploadPlugin : IUploadPlugin
     {
         [return: StopIfReturns(false)]
-        public bool ValidateAndFixUploadedData(Mod mod, Dictionary<string, object?> origAdditionalData, [ReturnLast] out object? validationFailureInfo)
+        public bool ValidateAndFixUploadedData(Mod mod, ArbitraryAdditionalData origAdditionalData, [ReturnLast] out object? validationFailureInfo)
         {
             validationFailureInfo = null;
             return true;

@@ -46,8 +46,7 @@ namespace Hive.Models
         /// Ideally, a conversion step would take place in order to convert the values of this dictionary into something more legible, perhaps some form of interface providable to plugins.
         /// </summary>
         [Column(TypeName = "jsonb")]
-        [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "We want to set it explicitly to our data from our Auth0 instance, and also allow plugins to do the same.")]
-        public Dictionary<string, object?> AdditionalData { get; set; } = new();
+        public ArbitraryAdditionalData AdditionalData { get; } = new();
 
         /// <summary>
         /// Configures for EF

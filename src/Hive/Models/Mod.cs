@@ -96,7 +96,7 @@ namespace Hive.Models
         /// </summary>
         /// <remarks>This data is publicly read-only. Be sure not to store sensitive information as additional data.</remarks>
         [Column(TypeName = "jsonb")]
-        public Dictionary<string, object?> AdditionalData { get; private set; } = new();
+        public ArbitraryAdditionalData AdditionalData { get; } = new();
 
         /// <summary>
         /// A collection of link pairs, with the name and url of each link. May be empty.
@@ -114,7 +114,7 @@ namespace Hive.Models
         /// Construct a mod with extra data.
         /// </summary>
         /// <param name="extraData"></param>
-        public Mod(Dictionary<string, object?> extraData)
+        public Mod(ArbitraryAdditionalData extraData)
         {
             AdditionalData = extraData;
         }

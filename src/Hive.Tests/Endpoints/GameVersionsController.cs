@@ -150,7 +150,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", defaultPlugins);
             controller.ControllerContext.HttpContext = CreateMockRequest(GenerateStreamFromString("1.13.2"));
 
-            var res = await controller.CreateGameVersion(new InputGameVersion("1.13.2", new Dictionary<string, object?>()));
+            var res = await controller.CreateGameVersion(new InputGameVersion("1.13.2", new ArbitraryAdditionalData()));
 
             Assert.NotNull(res); // Result must not be null.
             Assert.NotNull(res.Result);
@@ -168,7 +168,7 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(true)", defaultPlugins);
 
             // Whoops, we "forgot" to assign a user.
-            var res = await controller.CreateGameVersion(new InputGameVersion("1.13.3", new Dictionary<string, object?>()));
+            var res = await controller.CreateGameVersion(new InputGameVersion("1.13.3", new ArbitraryAdditionalData()));
 
             Assert.NotNull(res);
             // Should fail.

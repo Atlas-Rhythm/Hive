@@ -20,7 +20,7 @@ namespace Hive.Models
         /// Additional data associated with the Channel
         /// </summary>
         [Column(TypeName = "jsonb")]
-        public Dictionary<string, object?> AdditionalData { get; private set; } = new();
+        public ArbitraryAdditionalData AdditionalData { get; } = new();
 
         /// <summary>
         /// Equality comparison

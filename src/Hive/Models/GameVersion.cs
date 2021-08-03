@@ -24,7 +24,7 @@ namespace Hive.Models
         /// Additional data associated with the GameVersion
         /// </summary>
         [Column(TypeName = "jsonb")]
-        public Dictionary<string, object?> AdditionalData { get; private set; } = new();
+        public ArbitraryAdditionalData AdditionalData { get; } = new();
 
         /// <summary>
         /// The <see cref="Instant"/> this GameVersion was created
@@ -53,7 +53,7 @@ namespace Hive.Models
         /// Construct a game version with additional data
         /// </summary>
         /// <param name="extraData">The additional data to assign.</param>
-        public GameVersion(Dictionary<string, object?> extraData)
+        public GameVersion(ArbitraryAdditionalData extraData)
         {
             AdditionalData = extraData;
         }

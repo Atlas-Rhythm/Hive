@@ -26,8 +26,7 @@ namespace Hive.Models.Serialized
         /// <summary>
         /// Additional data associated with the GameVersion
         /// </summary>
-        [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "We want to set this via assignment, but only on construction.")]
-        public Dictionary<string, object?> AdditionalData { get; init; } = new();
+        public ArbitraryAdditionalData AdditionalData { get; init; } = new();
 
         /// <summary>
         /// Serialize a <see cref="GameVersion"/> into a <see cref="SerializedGameVersion"/>.
