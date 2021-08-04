@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
+using static Hive.Models.ArbitraryAdditionalData;
 
 namespace Hive.Models
 {
@@ -24,6 +25,7 @@ namespace Hive.Models
         /// Additional data associated with the GameVersion
         /// </summary>
         [Column(TypeName = "jsonb")]
+        [JsonConverter(typeof(ArbitraryAdditionalDataConverter))]
         public ArbitraryAdditionalData AdditionalData { get; } = new();
 
         /// <summary>

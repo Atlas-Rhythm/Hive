@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Hive.Converters;
 using NodaTime;
+using static Hive.Models.ArbitraryAdditionalData;
 
 namespace Hive.Models.Serialized
 {
@@ -26,6 +26,7 @@ namespace Hive.Models.Serialized
         /// <summary>
         /// Additional data associated with the GameVersion
         /// </summary>
+        [JsonConverter(typeof(ArbitraryAdditionalDataConverter))]
         public ArbitraryAdditionalData AdditionalData { get; init; } = new();
 
         /// <summary>

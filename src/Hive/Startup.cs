@@ -98,6 +98,7 @@ namespace Hive
 
             _ = services
                 .AddControllers()
+                .AddJsonOptions(opts => opts.JsonSerializerOptions.Converters.Add(ArbitraryAdditionalData.Converter))
                 .ConfigureApplicationPartManager(manager => manager.FeatureProviders.Add(conditionalFeature));
         }
 

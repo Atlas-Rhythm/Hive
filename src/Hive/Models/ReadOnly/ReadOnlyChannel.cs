@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
+using static Hive.Models.ArbitraryAdditionalData;
 
 namespace Hive.Models.ReadOnly
 {
@@ -17,6 +19,7 @@ namespace Hive.Models.ReadOnly
         /// <summary>
         /// The additional data from the <see cref="Channel"/>.
         /// </summary>
+        [JsonConverter(typeof(ArbitraryAdditionalDataConverter))]
         public readonly ArbitraryAdditionalData AdditionalData { get; }
 
         /// <summary>
