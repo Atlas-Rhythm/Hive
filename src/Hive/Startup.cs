@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using AspNetCoreRateLimit;
 using Hive.Controllers;
 using Hive.Extensions;
 using Hive.Graphing;
