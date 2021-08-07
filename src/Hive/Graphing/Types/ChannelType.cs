@@ -1,6 +1,13 @@
-﻿using Hive.Models;
-using GraphQL.Types;
+﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using GraphQL;
+using GraphQL.Types;
+using Hive.Extensions;
+using Hive.Models;
+using Hive.Services;
+using Hive.Services.Common;
+using Microsoft.AspNetCore.Http;
 
 namespace Hive.Graphing.Types
 {
@@ -15,7 +22,7 @@ namespace Hive.Graphing.Types
         public ChannelType(IEnumerable<ICustomHiveGraph<ChannelType>> customGraphs)
         {
             if (customGraphs is null)
-                throw new System.ArgumentNullException(nameof(customGraphs));
+                throw new ArgumentNullException(nameof(customGraphs));
 
             Name = nameof(Channel);
             Description = Resources.GraphQL.Channel;
@@ -23,8 +30,22 @@ namespace Hive.Graphing.Types
             _ = Field(c => c.Name)
                 .Description(Resources.GraphQL.Channel_Name);
 
+            _ = Field<ListGraphType<ModType>, IEnumerable<Mod>>().Name("mods").ResolveAsync(GetChannelMods);
+
             foreach (var graph in customGraphs)
                 graph.Configure(this);
+        }
+
+        private async Task<IEnumerable<Mod>> GetChannelMods(IResolveFieldContext<Channel> ctx)
+        {
+            (var modService, var http, var authService)
+                = ctx.RequestServices.GetRequiredServices<ModService, IHttpContextAccessor, IProxyAuthenticationService>();
+
+            var user = await http.HttpContext!.GetHiveUser(authService).ConfigureAwait(false);
+            var queryResult = await modService.GetAllMods(user, new[] { ctx.Source.Name }).ConfigureAwait(false);
+
+            ctx.Analyze(queryResult);
+            return queryResult.Value ?? Array.Empty<Mod>();
         }
     }
 }

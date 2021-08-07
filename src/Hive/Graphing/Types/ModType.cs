@@ -1,7 +1,7 @@
-﻿using Hive.Models;
-using GraphQL.Types;
+﻿using System;
 using System.Collections.Generic;
-using System;
+using GraphQL.Types;
+using Hive.Models;
 
 namespace Hive.Graphing.Types
 {
@@ -90,6 +90,27 @@ namespace Hive.Graphing.Types
 
             foreach (var graph in customGraphs)
                 graph.Configure(this);
+        }
+
+        /// <summary>
+        /// The different order filters for querying mods.
+        /// </summary>
+        public enum Filter
+        {
+            /// <summary>
+            /// Get all versions of a mod.
+            /// </summary>
+            All,
+
+            /// <summary>
+            /// Get the most recent version of a mod.
+            /// </summary>
+            Recent,
+
+            /// <summary>
+            /// Get the latest version of a mod.
+            /// </summary>
+            Latest
         }
     }
 }
