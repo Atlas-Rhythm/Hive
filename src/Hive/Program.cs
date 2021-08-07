@@ -44,6 +44,11 @@ namespace Hive
                 var services = scope.ServiceProvider;
                 var log = services.GetRequiredService<ILogger>();
 
+                // Make sure to run the registered plugin pre-configuration step
+                var preConfigures = services.GetServices<PluginPreConfigureRegistration>();
+                foreach (var prec in preConfigures)
+                    await prec.Method(services).ConfigureAwait(false);
+
                 var ipPolicyStore = services.GetService<IIpPolicyStore>();
                 if (ipPolicyStore != null) await ipPolicyStore.SeedAsync().ConfigureAwait(false);
 
@@ -94,6 +99,8 @@ namespace Hive
                         .WithConfigurationKey("Plugins")
                         .WithApplicationConfigureRegistrar((sc, target, method)
                             => sc.AddSingleton<IStartupFilter>(sp => new CustomStartupFilter(sp, target, method)))
+                        .WithPreConfigureRegistrar((sc, cb)
+                            => sc.AddSingleton(new PluginPreConfigureRegistration(cb)))
                         .ConfigurePluginConfig((builder, plugin)
                             => builder
                                 .AddJsonFile(Path.Combine(plugin.PluginDirectory.FullName, "pluginsettings.json"))
@@ -131,9 +138,11 @@ namespace Hive
                 => app =>
                 {
                     next(app);
-                    services.InjectVoidMethod(method, t => t == typeof(IApplicationBuilder) ? (object)app : null, null)(target);
+                    services.InjectVoidMethod(method, t => t == typeof(IApplicationBuilder) ? app : null, null)(target);
                 };
         }
+
+        private record PluginPreConfigureRegistration(Func<IServiceProvider, Task> Method);
 
         private static LoggerConfiguration LibraryTypes(this LoggerDestructuringConfiguration conf)
             => conf.AsScalar<Version>()

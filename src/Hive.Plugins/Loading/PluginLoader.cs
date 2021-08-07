@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Hive.Plugins.Resources;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -149,6 +150,40 @@ namespace Hive.Plugins.Loading
                     var configureServices = FindMethod(type, "ConfigureServices");
                     ConfigureWith(services, configureServices, instance);
 
+                    // register preconfigure methods
+                    foreach (var preConf in FindMethods(type, "PreConfigure"))
+                    {
+                        if (preConf.ReturnType != typeof(void))
+                        {
+                            throw new InvalidOperationException(SR.PluginLoad_PreConfigMustReturnVoid);
+                        }
+
+                        options.RegisterPreConfigure(services, sp =>
+                        {
+                            sp.InjectVoidMethod(preConf, null)(instance);
+                            return Task.CompletedTask;
+                        });
+                    }
+
+                    // register preconfigureasync methods
+                    foreach (var preConf in FindMethods(type, "PreConfigureAsync"))
+                    {
+                        if (preConf.ReturnType == typeof(Task))
+                        {
+                            options.RegisterPreConfigure(services,
+                                sp => (Task?)sp.InjectMethod(preConf, null)(instance) ?? Task.CompletedTask);
+                        }
+                        else if (preConf.ReturnType == typeof(ValueTask))
+                        {
+                            options.RegisterPreConfigure(services,
+                                sp => sp.InjectMethod(preConf, null)(instance) is ValueTask vt ? vt.AsTask() : Task.CompletedTask);
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException(SR.PluginLoad_PreConfigAsyncMustBeAsync);
+                        }
+                    }
+
                     var configure = FindMethod(type, "Configure");
                     if (configure is not null)
                     {
@@ -178,10 +213,13 @@ namespace Hive.Plugins.Loading
             }
         }
 
+        private static IEnumerable<MethodInfo> FindMethods(Type targetType, string methodName)
+            => targetType.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public)
+                .Where(m => m.Name == methodName);
+
         private static MethodInfo? FindMethod(Type targetType, string methodName)
         {
-            var methods = targetType.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public)
-                .Where(m => m.Name == methodName).ToList();
+            var methods = FindMethods(targetType, methodName).ToList();
             if (methods.Count > 1)
             {
                 throw new InvalidOperationException(SR.PluginLoad_MultipleOverloadsNotSupported.Format(methodName));
