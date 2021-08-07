@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
+using AspNetCoreRateLimit;
 using Hive.Controllers;
+using Hive.Extensions;
 using Hive.Graphing;
 using Hive.Models;
 using Hive.Permissions;
@@ -8,14 +10,12 @@ using Hive.Services;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NodaTime;
 using Serilog;
-using Hive.Extensions;
 
 namespace Hive
 {
@@ -72,12 +72,12 @@ namespace Hive
                 options.UseNpgsql(Configuration.GetConnectionString("Default"),
                     o => o.UseNodaTime().SetPostgresVersion(12, 0)));
 
+            _ = services.AddHttpContextAccessor();
             _ = services.AddScoped<ModService>()
                 .AddScoped<ChannelService>()
                 .AddScoped<GameVersionService>()
                 .AddScoped<DependencyResolverService>()
                 .AddAggregates()
-                .AddHiveQLTypes()
                 .AddHiveGraphQL();
 
             var conditionalFeature = new HiveConditionalControllerFeatureProvider()

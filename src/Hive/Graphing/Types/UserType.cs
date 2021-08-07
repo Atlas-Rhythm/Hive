@@ -1,7 +1,7 @@
-﻿using Hive.Models;
-using GraphQL.Types;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using GraphQL.Types;
+using Hive.Models;
 
 namespace Hive.Graphing.Types
 {
