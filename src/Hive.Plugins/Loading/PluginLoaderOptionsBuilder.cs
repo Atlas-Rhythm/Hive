@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +13,7 @@ namespace Hive.Plugins.Loading
     {
         internal string ConfigurationKey = "PluginLoading";
         internal Action<IServiceCollection, object, MethodInfo> RegisterStartupFilter = (_, _, _) => { };
+        internal Action<IServiceCollection, Func<IServiceProvider, Task>> RegisterPreConfigure = (_, _) => { };
         internal Action<IConfigurationBuilder, PluginInstance> ConfigurePluginConfigCb = (_, _) => { };
         internal Action<IServiceCollection, PluginInstance> OnPluginLoadedCb = (_, _) => { };
 
@@ -49,6 +51,23 @@ namespace Hive.Plugins.Loading
             if (registrar is null)
                 throw new ArgumentNullException(nameof(registrar));
             RegisterStartupFilter += registrar;
+            return this;
+        }
+
+        /// <summary>
+        /// Configures the callback to use to register plugins' <c>PreConfigure</c> and <c>PreConfigureAsync</c> methods.
+        /// </summary>
+        /// <remarks>
+        /// This architecture assumes an ASP.NET Core-like application, where pre-configure callbacks would be called in the
+        /// main application entry point, which is assumed to be <see langword="async"/>.
+        /// </remarks>
+        /// <param name="registrar">The delegate that will be used to register pre-configure methods.</param>
+        /// <returns>The <see langword="this"/> object, to allow for easy method chaining.</returns>
+        public PluginLoaderOptionsBuilder WithPreConfigureRegistrar(Action<IServiceCollection, Func<IServiceProvider, Task>> registrar)
+        {
+            if (registrar is null)
+                throw new ArgumentNullException(nameof(registrar));
+            RegisterPreConfigure += registrar;
             return this;
         }
 
