@@ -2,7 +2,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using static Hive.Models.ArbitraryAdditionalData;
 
 namespace Hive.Models
 {
@@ -21,7 +20,7 @@ namespace Hive.Models
         /// Additional data associated with the Channel
         /// </summary>
         [Column(TypeName = "jsonb")]
-        [JsonConverter(typeof(ArbitraryAdditionalDataConverter))]
+        [JsonConverter(typeof(ArbitraryAdditionalData.ArbitraryAdditionalDataConverter))]
         public ArbitraryAdditionalData AdditionalData { get; } = new();
 
         /// <summary>

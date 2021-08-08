@@ -9,7 +9,6 @@ using System.Text.Json.Serialization;
 using Hive.Versioning;
 using Version = Hive.Versioning.Version;
 using System.Diagnostics.CodeAnalysis;
-using static Hive.Models.ArbitraryAdditionalData;
 
 namespace Hive.Models
 {
@@ -97,7 +96,7 @@ namespace Hive.Models
         /// </summary>
         /// <remarks>This data is publicly read-only. Be sure not to store sensitive information as additional data.</remarks>
         [Column(TypeName = "jsonb")]
-        [JsonConverter(typeof(ArbitraryAdditionalDataConverter))]
+        [JsonConverter(typeof(ArbitraryAdditionalData.ArbitraryAdditionalDataConverter))]
         public ArbitraryAdditionalData AdditionalData { get; } = new();
 
         /// <summary>

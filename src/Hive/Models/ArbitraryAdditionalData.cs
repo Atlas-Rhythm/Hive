@@ -44,7 +44,7 @@ namespace Hive.Models
         /// The data that we deserialize into, which we then back-convert into InnerData instances in Data.
         /// This dictionary is only ever the ground truth for information that hasn't been added or gotten from previously.
         /// </summary>
-        private readonly Dictionary<string, string> serializedData = new();
+        private readonly Dictionary<string, JsonElement> serializedData = new();
 
         /// <summary>
         /// Gets the instance at a given key, deserializing to a <typeparamref name="T"/> instance.
@@ -67,23 +67,18 @@ namespace Hive.Models
         /// <returns></returns>
         public object? Get(string key, Type type, JsonSerializerOptions? opts = null) => !TryGetValue(key, out var obj, type, opts) ? throw new KeyNotFoundException() : obj;
 
-        private const string nullStr = "null";
-
         /// <summary>
         /// Add a collection of serialized data.
         /// </summary>
         /// <param name="serializedData"></param>
         /// <exception cref="ArgumentException">A key with the same name already exists.</exception>
-        public void AddSerialized(IDictionary<string, string?> serializedData)
+        public void AddSerialized(Dictionary<string, JsonElement> serializedData)
         {
             if (serializedData is null)
                 throw new ArgumentNullException(nameof(serializedData));
             foreach (var (k, v) in serializedData)
             {
-                if (v is null)
-                    this.serializedData.Add(k, nullStr);
-                else
-                    this.serializedData.Add(k, v);
+                this.serializedData.Add(k, v);
             }
         }
 
@@ -122,7 +117,7 @@ namespace Hive.Models
                     data = null;
                     return false;
                 }
-                data = JsonSerializer.Deserialize(serialized, type, opts);
+                data = JsonSerializer.Deserialize(serialized.GetRawText(), type, opts);
                 // If we have a value AND we do NOT have a value in our data, we deserialize and assign.
                 this.data.Add(key, new InnerData { Object = data, Type = type, Options = opts });
                 return true;
@@ -219,10 +214,7 @@ namespace Hive.Models
                         if (key is null)
                             // Keys cannot be null
                             throw new JsonException();
-                        var value = reader.GetString();
-                        // Values can be null, but are instead serialized as "null"
-                        if (value is null)
-                            throw new JsonException();
+                        var value = JsonSerializer.Deserialize<JsonElement>(ref reader, options);
                         data.serializedData.Add(key, value);
                     }
                 }
@@ -250,7 +242,8 @@ namespace Hive.Models
                 {
                     if (value.data.ContainsKey(key))
                         continue;
-                    writer.WriteString(key, v);
+                    writer.WritePropertyName(key);
+                    v.WriteTo(writer);
                 }
                 writer.WriteEndObject();
             }

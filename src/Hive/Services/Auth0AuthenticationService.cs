@@ -179,7 +179,7 @@ namespace Hive.Services
                         Username = userCreationPlugin.Instance.ChooseUsername(auth0User.Nickname),
                         AlternativeId = auth0User.Sub,
                     };
-                    u.AdditionalData.AddSerialized(auth0User.User_Metadata.ToDictionary(p => p.Key, p => p.Value.ToString()));
+                    u.AdditionalData.AddSerialized(auth0User.User_Metadata);
 
                     while (await context.Users.AsNoTracking().ContainsAsync(u).ConfigureAwait(false))
                     {

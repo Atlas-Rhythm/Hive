@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Hive.Controllers;
 using Microsoft.EntityFrameworkCore;
-using static Hive.Models.ArbitraryAdditionalData;
 
 namespace Hive.Models
 {
@@ -47,7 +45,7 @@ namespace Hive.Models
         /// Each of these can map to an arbitrary JSON object, so we map it like such.
         /// </summary>
         [Column(TypeName = "jsonb")]
-        [JsonConverter(typeof(ArbitraryAdditionalDataConverter))]
+        [JsonConverter(typeof(ArbitraryAdditionalData.ArbitraryAdditionalDataConverter))]
         public ArbitraryAdditionalData AdditionalData { get; } = new();
 
         /// <summary>
