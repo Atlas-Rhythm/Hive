@@ -127,11 +127,14 @@ namespace Hive.Models
             if (oldType.IsAssignableFrom(type))
             {
                 innerData.Type = type;
+                data = innerData.Object;
+                return true;
             }
             // Otherwise, if the new type is assignable from the old, then we don't error and cast accordingly.
             else if (oldType.IsAssignableTo(type))
             {
-                innerData.Options = opts;
+                // We only ever set the Options during construction, that is, first deserialization.
+                // Otherwise, we do not.
                 data = innerData.Object;
                 return true;
             }
@@ -162,6 +165,8 @@ namespace Hive.Models
             }
             this.data.Add(key, new InnerData { Object = data, Type = type, Options = opts });
         }
+
+        public void Set<T>(string key, T? data, JsonSerializerOptions? opts = null) => Set(key, typeof(T), data, opts);
 
         public void Set(string key, Type type, object? data, JsonSerializerOptions? opts = null)
         {
