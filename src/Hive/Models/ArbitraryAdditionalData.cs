@@ -47,52 +47,40 @@ namespace Hive.Models
         private readonly Dictionary<string, JsonElement> serializedData = new();
 
         /// <summary>
-        /// Gets the instance at a given key, deserializing to a <typeparamref name="T"/> instance.
+        /// Gets the instance at a given key, deserializing to a <typeparamref name="T"/> instance, if necessary.
         /// </summary>
         /// <typeparam name="T">The instance the value at this key should be</typeparam>
         /// <param name="key">The key to get from</param>
         /// <param name="opts">The optional deserialization options to use, if needed</param>
         /// <returns>The instance at this key</returns>
-        /// <exception cref="ArgumentNullException">The key is null.</exception>
-        /// <exception cref="KeyNotFoundException">The key does not exist.</exception>
-        /// <exception cref="InvalidCastException">The existing value could not be cast to the desired type.</exception>
+        /// <exception cref="ArgumentNullException">The key is null</exception>
+        /// <exception cref="KeyNotFoundException">The key does not exist</exception>
+        /// <exception cref="InvalidCastException">The existing value could not be cast to the desired type</exception>
         public T? Get<T>(string key, JsonSerializerOptions? opts = null) => (T?)Get(key, typeof(T), opts);
 
         /// <summary>
-        ///
+        /// Gets the instance at a given key, deserializing to the provided type, if necessary.
         /// </summary>
-        /// <param name="key"></param>
-        /// <param name="type"></param>
-        /// <param name="opts"></param>
-        /// <returns></returns>
+        /// <param name="key">The key to get from</param>
+        /// <param name="type">The type of the instance to get</param>
+        /// <param name="opts">The optional deserialization options to use, if needed</param>
+        /// <returns>The instance at this key</returns>
+        /// <exception cref="ArgumentNullException">The key is null</exception>
+        /// <exception cref="KeyNotFoundException">The key does not exist</exception>
+        /// <exception cref="InvalidCastException">The instance found could not be converted to the desired type</exception>
         public object? Get(string key, Type type, JsonSerializerOptions? opts = null) => !TryGetValue(key, out var obj, type, opts) ? throw new KeyNotFoundException() : obj;
 
         /// <summary>
-        /// Add a collection of serialized data.
-        /// </summary>
-        /// <param name="serializedData"></param>
-        /// <exception cref="ArgumentException">A key with the same name already exists.</exception>
-        public void AddSerialized(Dictionary<string, JsonElement> serializedData)
-        {
-            if (serializedData is null)
-                throw new ArgumentNullException(nameof(serializedData));
-            foreach (var (k, v) in serializedData)
-            {
-                this.serializedData.Add(k, v);
-            }
-        }
-
-        /// <summary>
-        /// Attempts to get the instance at a given key, deserializing to a <typeparamref name="T"/> if it exists.
+        /// Attempts to get the instance at a given key, deserializing to a <typeparamref name="T"/> if necessary.
         /// This function will serialize any pending instances before attempting to get the value at the provided key.
         /// </summary>
         /// <typeparam name="T">The instance the value at this key should be</typeparam>
         /// <param name="key">The key to get from</param>
-        /// <param name="data">The value to write to, if found</param>
+        /// <param name="data">The found value</param>
         /// <param name="opts">Optional deserialization options</param>
         /// <returns>true if the key is found, false otherwise</returns>
-        /// <exception cref="ArgumentNullException">The key is null.</exception>
-        /// <exception cref="JsonException">The instance could not be deserialized from the value at this key.</exception>
+        /// <exception cref="ArgumentNullException">The key is null</exception>
+        /// <exception cref="JsonException">The instance could not be deserialized from the value at this key</exception>
         public bool TryGetValue<T>(string key, out T? data, JsonSerializerOptions? opts = null)
         {
             if (TryGetValue(key, out var obj, typeof(T), opts))
@@ -104,6 +92,17 @@ namespace Hive.Models
             return false;
         }
 
+        /// <summary>
+        /// Attempts to get the instance at a given key, deserializing using the provided type if necessary.
+        /// </summary>
+        /// <param name="key">The key to get from</param>
+        /// <param name="data">The found value</param>
+        /// <param name="type">The type of the value to obtain</param>
+        /// <param name="opts">Optional deserialization options</param>
+        /// <returns>true if the key is found, false otherwise</returns>
+        /// <exception cref="ArgumentNullException">The key is null</exception>
+        /// <exception cref="JsonException">The instance could not be deserialized from the value at this key</exception>
+        /// <exception cref="InvalidCastException">The instance found could not be converted to the desired type</exception>
         public bool TryGetValue(string key, out object? data, Type type, JsonSerializerOptions? opts = null)
         {
             if (key is null)
@@ -143,15 +142,41 @@ namespace Hive.Models
         }
 
         /// <summary>
-        /// Creates a new value with the provided key. Assigning to existing keys is not permitted.
-        /// The value provided to this call is serialized lazily, on demand when serializing or performing a lookup.
+        /// Add a collection of serialized data.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="key"></param>
-        /// <param name="data"></param>
-        /// <param name="opts"></param>
+        /// <param name="serializedData">The data to add</param>
+        /// <exception cref="ArgumentNullException">The input data is null</exception>
+        /// <exception cref="ArgumentException">A key with the same name already exists</exception>
+        public void AddSerialized(IDictionary<string, JsonElement> serializedData)
+        {
+            if (serializedData is null)
+                throw new ArgumentNullException(nameof(serializedData));
+            foreach (var (k, v) in serializedData)
+            {
+                this.serializedData.Add(k, v);
+            }
+        }
+
+        /// <summary>
+        /// Creates a new value with the provided key and instance
+        /// </summary>
+        /// <typeparam name="T">The type of the value to add</typeparam>
+        /// <param name="key">The key to add the value at</param>
+        /// <param name="data">The data to add</param>
+        /// <param name="opts">Optional serialization options</param>
+        /// <exception cref="ArgumentNullException">The key is null</exception>
+        /// <exception cref="ArgumentException">A key with the same name already exists</exception>
         public void Add<T>(string key, T? data, JsonSerializerOptions? opts = null) => Add(key, typeof(T), data, opts);
 
+        /// <summary>
+        /// Creates a new value with the provided key, instance, and type
+        /// </summary>
+        /// <param name="key">The key to add the value at</param>
+        /// <param name="type">The type of the value to add</param>
+        /// <param name="data">The data to add</param>
+        /// <param name="opts">Optional serialization options</param>
+        /// <exception cref="ArgumentNullException">The key is null</exception>
+        /// <exception cref="ArgumentException">A key with the same name already exists</exception>
         public void Add(string key, Type type, object? data, JsonSerializerOptions? opts = null)
         {
             if (key is null)
@@ -166,8 +191,26 @@ namespace Hive.Models
             this.data.Add(key, new InnerData { Object = data, Type = type, Options = opts });
         }
 
+        /// <summary>
+        /// Assigns an existing value or creates a new value at the provided key
+        /// </summary>
+        /// <typeparam name="T">The type of the value to assign/add</typeparam>
+        /// <param name="key">The key to assign/add the value at</param>
+        /// <param name="data">The data to assign/add</param>
+        /// <param name="opts">Optional serialization options</param>
+        /// <exception cref="ArgumentNullException">The key is null</exception>
+        /// <exception cref="InvalidCastException">The instance found cannot be overwritten by the provided type</exception>
         public void Set<T>(string key, T? data, JsonSerializerOptions? opts = null) => Set(key, typeof(T), data, opts);
 
+        /// <summary>
+        /// Assigns an existing value or creates a new value at the provided key
+        /// </summary>
+        /// <param name="key">The key to assign/add the value at</param>
+        /// <param name="type">The type of the value to assign</param>
+        /// <param name="data">The data to assign/add</param>
+        /// <param name="opts">Optional serialization options</param>
+        /// <exception cref="ArgumentNullException">The key is null</exception>
+        /// <exception cref="InvalidCastException">The instance found cannot be overwritten by the provided type</exception>
         public void Set(string key, Type type, object? data, JsonSerializerOptions? opts = null)
         {
             if (key is null)
