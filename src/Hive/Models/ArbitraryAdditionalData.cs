@@ -56,6 +56,8 @@ namespace Hive.Models
         /// <exception cref="ArgumentNullException">The key is null</exception>
         /// <exception cref="KeyNotFoundException">The key does not exist</exception>
         /// <exception cref="InvalidCastException">The existing value could not be cast to the desired type</exception>
+        /// <exception cref="JsonException">The instance could not be deserialized from the value at this key, it is not valid json</exception>
+        /// <exception cref="NotSupportedException">The instance could not be deserialized from the value at this key, it is not supported</exception>
         public T? Get<T>(string key, JsonSerializerOptions? opts = null) => (T?)Get(key, typeof(T), opts);
 
         /// <summary>
@@ -68,6 +70,8 @@ namespace Hive.Models
         /// <exception cref="ArgumentNullException">The key is null</exception>
         /// <exception cref="KeyNotFoundException">The key does not exist</exception>
         /// <exception cref="InvalidCastException">The instance found could not be converted to the desired type</exception>
+        /// <exception cref="JsonException">The instance could not be deserialized from the value at this key, it is not valid json</exception>
+        /// <exception cref="NotSupportedException">The instance could not be deserialized from the value at this key, it is not supported</exception>
         public object? Get(string key, Type type, JsonSerializerOptions? opts = null) => !TryGetValue(key, out var obj, type, opts) ? throw new KeyNotFoundException() : obj;
 
         /// <summary>
@@ -80,7 +84,10 @@ namespace Hive.Models
         /// <param name="opts">Optional deserialization options</param>
         /// <returns>true if the key is found, false otherwise</returns>
         /// <exception cref="ArgumentNullException">The key is null</exception>
-        /// <exception cref="JsonException">The instance could not be deserialized from the value at this key</exception>
+        /// <exception cref="JsonException">The instance could not be deserialized from the value at this key, it is not valid json</exception>
+        /// <exception cref="NotSupportedException">The instance could not be deserialized from the value at this key, it is not supported</exception>
+        /// <exception cref="JsonException">The instance could not be deserialized from the value at this key, it is not valid json</exception>
+        /// <exception cref="NotSupportedException">The instance could not be deserialized from the value at this key, it is not supported</exception>
         public bool TryGetValue<T>(string key, out T? data, JsonSerializerOptions? opts = null)
         {
             if (TryGetValue(key, out var obj, typeof(T), opts))
@@ -103,6 +110,8 @@ namespace Hive.Models
         /// <exception cref="ArgumentNullException">The key is null</exception>
         /// <exception cref="JsonException">The instance could not be deserialized from the value at this key</exception>
         /// <exception cref="InvalidCastException">The instance found could not be converted to the desired type</exception>
+        /// <exception cref="JsonException">The instance could not be deserialized from the value at this key, it is not valid json</exception>
+        /// <exception cref="NotSupportedException">The instance could not be deserialized from the value at this key, it is not supported</exception>
         public bool TryGetValue(string key, out object? data, Type type, JsonSerializerOptions? opts = null)
         {
             if (key is null)
@@ -122,22 +131,15 @@ namespace Hive.Models
                 return true;
             }
             var oldType = innerData.Type;
-            // If the old type is assignable from the new one, the new one is more specific than the old one.
-            if (oldType.IsAssignableFrom(type))
+            // If the old type is assignable to the new type, then we know we deserialized something valid.
+            if (oldType.IsAssignableTo(type))
             {
-                innerData.Type = type;
                 data = innerData.Object;
                 return true;
             }
-            // Otherwise, if the new type is assignable from the old, then we don't error and cast accordingly.
-            else if (oldType.IsAssignableTo(type))
-            {
-                // We only ever set the Options during construction, that is, first deserialization.
-                // Otherwise, we do not.
-                data = innerData.Object;
-                return true;
-            }
-            // If neither, we fail
+            // Otherwise, we have a scenario where the old type is less specific than the new type.
+            // In such a case, we can either change the type to match, or just blatantly fail.
+            // Here, we shall blatantly fail.
             throw new InvalidCastException($"Most specific type: {oldType} is not convertible to desired type: {type}");
         }
 
