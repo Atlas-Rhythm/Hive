@@ -283,7 +283,8 @@ namespace Hive.Models
                 writer.WriteStartObject();
                 foreach (var (key, v) in value.data)
                 {
-                    writer.WriteString(key, JsonSerializer.Serialize(v.Object, v.Type, v.Options));
+                    writer.WritePropertyName(key);
+                    JsonSerializer.Serialize(writer, v.Object, v.Type, v.Options);
                 }
                 // After writing all guaranteed, known, instances, we need to check our serialized data and write any that haven't been written.
                 foreach (var (key, v) in value.serializedData)
