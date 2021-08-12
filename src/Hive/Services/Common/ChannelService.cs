@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
-using System.Text.Json;
 
 namespace Hive.Services.Common
 {
@@ -45,7 +44,9 @@ namespace Hive.Services.Common
         IEnumerable<Channel> GetChannelsFilter(User? user, [TakesReturnValue] IEnumerable<Channel> channels) => channels;
 
         /// <summary>
-        /// A hook that is called when a new <see cref="Channel"/> is successfully created and added to the database.
+        /// A hook that is called when a new <see cref="Channel"/> is successfully created and about to be added to the database.
+        /// Perform additional data edits, or any edits that you would like to persist to the database, here.
+        /// Hive default is to do nothing.
         /// </summary>
         /// <param name="newChannel">The channel that was just created.</param>
         void NewChannelCreated(Channel newChannel) { }
@@ -78,8 +79,8 @@ namespace Hive.Services.Common
         private readonly PermissionsManager<PermissionContext> permissions;
         private PermissionActionParseState channelsParseState;
 
-        private static readonly HiveObjectQuery<IEnumerable<Channel>> forbiddenEnumerableResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
-        private static readonly HiveObjectQuery<Channel> forbiddenSingularResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<IEnumerable<Channel>> forbiddenEnumerableResponse = new(StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<Channel> forbiddenSingularResponse = new(StatusCodes.Status403Forbidden);
 
         private const string FilterActionName = "hive.channels.filter";
 
@@ -127,7 +128,7 @@ namespace Hive.Services.Common
             var hasPermission = permissions.CanDo(FilterActionName, new PermissionContext { Channel = channel, User = user }, ref channelsParseState)
                 && combined.GetSpecificChannelAdditionalChecks(user, channel);
 
-            return !hasPermission ? forbiddenSingularResponse : new HiveObjectQuery<Channel>(channel, null, StatusCodes.Status200OK);
+            return !hasPermission ? forbiddenSingularResponse : new HiveObjectQuery<Channel>(StatusCodes.Status200OK, channel);
         }
 
         /// <summary>
@@ -163,7 +164,7 @@ namespace Hive.Services.Common
             filteredChannels = combined.GetChannelsFilter(user, filteredChannels);
             log.Debug("Remaining channels: {0}", filteredChannels.Count());
 
-            return new HiveObjectQuery<IEnumerable<Channel>>(filteredChannels, null, StatusCodes.Status200OK);
+            return new HiveObjectQuery<IEnumerable<Channel>>(StatusCodes.Status200OK, filteredChannels);
         }
 
         /// <summary>
@@ -197,23 +198,21 @@ namespace Hive.Services.Common
 
             log.Debug("Adding the new channel...");
 
-            // Set AdditionalData if it's undefined
-            if (newChannel.AdditionalData.ValueKind == JsonValueKind.Undefined)
-                newChannel.AdditionalData = JsonElementHelper.BlankObject;
-
             // Exit if there's already an existing channel with the same name
             var existingChannels = await context.Channels.ToListAsync().ConfigureAwait(false);
 
             if (existingChannels.Any(x => x.Name == newChannel.Name))
-                return new HiveObjectQuery<Channel>(null, "A channel with this name already exists.", StatusCodes.Status409Conflict);
+                return new HiveObjectQuery<Channel>(StatusCodes.Status409Conflict, "A channel with this name already exists.");
 
             // Call our hooks
+            newChannel.AdditionalData.Add("test", "data");
+            newChannel.AdditionalData.Add("test2", 32);
             combined.NewChannelCreated(newChannel);
 
             _ = await context.Channels.AddAsync(newChannel).ConfigureAwait(false);
             _ = await context.SaveChangesAsync().ConfigureAwait(false);
 
-            return new HiveObjectQuery<Channel>(newChannel, null, StatusCodes.Status200OK);
+            return new HiveObjectQuery<Channel>(StatusCodes.Status200OK, newChannel);
         }
     }
 }

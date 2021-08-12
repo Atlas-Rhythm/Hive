@@ -106,19 +106,28 @@ namespace Hive.Controllers
         /// <param name="validationFailureInfo">An object containing information about the rejection, if any.</param>
         /// <returns><see langword="true"/> if the upload is valid, <see langword="false"/> otherwise.</returns>
         [return: StopIfReturns(false)]
-        bool ValidateAndFixUploadedData(Mod mod, JsonElement originalAdditionalData, [ReturnLast] out object? validationFailureInfo);
+        bool ValidateAndFixUploadedData(Mod mod, ArbitraryAdditionalData originalAdditionalData, [ReturnLast] out object? validationFailureInfo);
 
         /// <summary>
-        /// A hook that is called when a mod has been fully uploaded and added to the database.
+        /// A hook that is called when a mod has been fully uploaded and about to be added to the database.
+        /// Perform additional data edits, or any edits that you would like to persist to the database, here.
+        /// Hive default is to do nothing.
         /// </summary>
         /// <param name="modData">The mod that was just uploaded.</param>
         void UploadFinished(Mod modData) { }
+
+        /// <summary>
+        /// A hook that is called when a mod has been added to the database.
+        /// Hive default is to do nothing.
+        /// </summary>
+        /// <param name="modData">The mod that was just uploaded.</param>
+        void UploadComplete(Mod modData) { }
     }
 
     internal class HiveDefaultUploadPlugin : IUploadPlugin
     {
         [return: StopIfReturns(false)]
-        public bool ValidateAndFixUploadedData(Mod mod, JsonElement origAdditionalData, [ReturnLast] out object? validationFailureInfo)
+        public bool ValidateAndFixUploadedData(Mod mod, ArbitraryAdditionalData origAdditionalData, [ReturnLast] out object? validationFailureInfo)
         {
             validationFailureInfo = null;
             return true;
@@ -378,7 +387,6 @@ namespace Hive.Controllers
             {
                 UploadedAt = nodaClock.GetCurrentInstant(),
                 Uploader = user,
-                AdditionalData = JsonDocument.Parse("{}").RootElement.Clone()
             };
 
             // the dataContext ref param allows the plugins to pass data around to avoid re-parsing, when possible
@@ -455,7 +463,7 @@ namespace Hive.Controllers
 
             #region Create modObject
 
-            var modObject = new Mod
+            var modObject = new Mod(finalMetadata.AdditionalData)
             {
                 ReadableID = finalMetadata.ID,
                 Version = finalMetadata.Version,
@@ -464,7 +472,6 @@ namespace Hive.Controllers
                 Uploader = user,
                 Dependencies = finalMetadata.Dependencies?.ToList() ?? new(), // if deps is null, default to empty list (it's allowed)
                 Conflicts = finalMetadata.ConflictsWith?.ToList() ?? new(),   // same as above
-                AdditionalData = finalMetadata.AdditionalData,
                 Links = finalMetadata.Links?.Select(t => (t.Item1, new Uri(t.Item2))).ToList() ?? new(), // defaults to empty list
                 Authors = new List<User>(), // both of these default to empty lists
                 Contributors = new List<User>(),
@@ -538,6 +545,8 @@ namespace Hive.Controllers
                 return new ForbidResult();
             }
 
+            // Additional data should be serialized to the DB, so we call this hook first.
+            plugins.UploadFinished(modObject);
             // ok, we're good to just go ahead and insert it into the database
             await using (var transaction = await database.Database.BeginTransactionAsync().ConfigureAwait(false))
             {
@@ -551,7 +560,6 @@ namespace Hive.Controllers
             }
 
             logger.Information("Upload {ID} complete: {Name} by {Author}", cookie.Substring(0, 16), localization.Name, modObject.Uploader.Username);
-            plugins.UploadFinished(modObject);
 
             return UploadResult.Finish();
         }

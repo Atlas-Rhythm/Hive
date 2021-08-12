@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Hive.Models
@@ -24,7 +23,9 @@ namespace Hive.Models
         /// <summary>
         /// Additional data associated with the GameVersion
         /// </summary>
-        public JsonElement AdditionalData { get; set; }
+        [Column(TypeName = "jsonb")]
+        [JsonConverter(typeof(ArbitraryAdditionalData.ArbitraryAdditionalDataConverter))]
+        public ArbitraryAdditionalData AdditionalData { get; } = new();
 
         /// <summary>
         /// The <see cref="Instant"/> this GameVersion was created
@@ -48,6 +49,20 @@ namespace Hive.Models
         public Guid Guid { get; set; }
 
         #endregion DB Schema stuff
+
+        /// <summary>
+        /// Construct a game version with additional data
+        /// </summary>
+        /// <param name="extraData">The additional data to assign.</param>
+        public GameVersion(ArbitraryAdditionalData extraData)
+        {
+            AdditionalData = extraData;
+        }
+
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        public GameVersion() { }
 
         /// <summary>
         /// Configure for EF

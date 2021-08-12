@@ -120,4 +120,13 @@
   <data name="RestrictionMiddleware_Unauthorized" xml:space="preserve">
     <value>You must be logged in to gain access.</value>
   </data>
+  <data name="StatusCode_Message_Unnecessary" xml:space="preserve">
+    <value>Do not provide this status code when also constructing this with a message parameter!</value>
+  </data>
+  <data name="StatusCode_None_Unnecessary" xml:space="preserve">
+    <value>Do not provide this status code when also constructing this with no parameters!</value>
+  </data>
+  <data name="StatusCode_Value_Unnecessary" xml:space="preserve">
+    <value>Do not provide this status code when also constructing this with a value parameter!</value>
+  </data>
 </root>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Hive.Models
 {
@@ -18,7 +19,9 @@ namespace Hive.Models
         /// <summary>
         /// Additional data associated with the Channel
         /// </summary>
-        public JsonElement AdditionalData { get; set; }
+        [Column(TypeName = "jsonb")]
+        [JsonConverter(typeof(ArbitraryAdditionalData.ArbitraryAdditionalDataConverter))]
+        public ArbitraryAdditionalData AdditionalData { get; } = new();
 
         /// <summary>
         /// Equality comparison

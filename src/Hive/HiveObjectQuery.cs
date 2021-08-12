@@ -1,22 +1,39 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Hive.Resources;
 
 namespace Hive
 {
     /// <summary>
     /// Represents a wrapper around a result with a message and status code. Used to signify successful or failed requests.
     /// </summary>
-    /// <param name="Value">The returned value from a query.</param>
-    /// <param name="Message">The message to return from a query.</param>
-    /// <param name="StatusCode">The status code of the result from a query.</param>
     /// <typeparam name="T">The type of the value to wrap.</typeparam>
-    public record HiveObjectQuery<T>(T? Value, string? Message, int StatusCode)
+    public record HiveObjectQuery<T>
     {
         /// <summary>
         /// Was this query successful?
         /// </summary>
         public bool Successful => StatusCode is >= StatusCodes.Status200OK and <= 299;
+
+        private enum Kind
+        {
+            None,
+            Value,
+            Message,
+        }
+
+        private static Kind KindFromStatusCode(int status) => status switch
+        {
+            StatusCodes.Status200OK => Kind.Value,
+            StatusCodes.Status204NoContent => Kind.None,
+            StatusCodes.Status400BadRequest => Kind.Message,
+            StatusCodes.Status401Unauthorized => Kind.Message,
+            StatusCodes.Status403Forbidden => Kind.None,
+            StatusCodes.Status404NotFound => Kind.Message,
+            StatusCodes.Status424FailedDependency => Kind.Value,
+            _ => Kind.Message
+        };
 
         private ActionResult<TImpl> ConvertInternal<TImpl>(Func<T, TImpl> conversionFunc)
         {
@@ -26,11 +43,62 @@ namespace Hive
                 StatusCodes.Status204NoContent => new NoContentResult(),
                 StatusCodes.Status400BadRequest => new BadRequestObjectResult(Message),
                 StatusCodes.Status401Unauthorized => new UnauthorizedObjectResult(Message),
-                StatusCodes.Status403Forbidden => new ForbidResult(),
+                StatusCodes.Status403Forbidden => new EmptyStatusCodeResponse(StatusCodes.Status403Forbidden),
                 StatusCodes.Status404NotFound => new NotFoundObjectResult(Message),
                 StatusCodes.Status424FailedDependency => new ObjectResult(conversionFunc.Invoke(Value!)) { StatusCode = StatusCode },
                 _ => new ObjectResult(Message) { StatusCode = StatusCode },
             };
+        }
+
+        /// <summary>
+        /// The returned value from a query, if it exists.
+        /// </summary>
+        public T? Value { get; }
+        /// <summary>
+        /// The message to return from a query, if it exists.
+        /// </summary>
+        public string? Message { get; }
+        /// <summary>
+        /// The status code of the result from a query.
+        /// </summary>
+        public int StatusCode { get; }
+
+        /// <summary>
+        /// Construct an instance with a status code and a value.
+        /// </summary>
+        /// <param name="statusCode">Status code to provide</param>
+        /// <param name="value">Value to provide</param>
+        /// <exception cref="ArgumentException">Will throw if the status code is not valid</exception>
+        public HiveObjectQuery(int statusCode, T value)
+        {
+            if (KindFromStatusCode(statusCode) != Kind.Value)
+                throw new ArgumentException(SR.StatusCode_Value_Unnecessary, nameof(statusCode));
+            Value = value;
+            StatusCode = statusCode;
+        }
+        /// <summary>
+        /// Construct an instance with a status code and a message.
+        /// </summary>
+        /// <param name="statusCode">Status code to provide</param>
+        /// <param name="message">Message to provide</param>
+        /// <exception cref="ArgumentException">Will throw if the status code is not valid</exception>
+        public HiveObjectQuery(int statusCode, string message)
+        {
+            if (KindFromStatusCode(statusCode) != Kind.Message)
+                throw new ArgumentException(SR.StatusCode_Message_Unnecessary, nameof(statusCode));
+            Message = message;
+            StatusCode = statusCode;
+        }
+        /// <summary>
+        /// Construct an instance with ONLY a status code.
+        /// </summary>
+        /// <param name="statusCode">Status code to provide</param>
+        /// <exception cref="ArgumentException">Will throw if the status code is not valid</exception>
+        public HiveObjectQuery(int statusCode)
+        {
+            if (KindFromStatusCode(statusCode) != Kind.None)
+                throw new ArgumentException(SR.StatusCode_None_Unnecessary, nameof(statusCode));
+            StatusCode = statusCode;
         }
 
         /// <summary>

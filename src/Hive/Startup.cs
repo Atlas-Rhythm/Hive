@@ -53,7 +53,7 @@ namespace Hive
                 .AddSingleton<IModsPlugin, HiveModsControllerPlugin>()
                 .AddSingleton<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>()
                 .AddSingleton<IUploadPlugin, HiveDefaultUploadPlugin>()
-                .AddSingleton<IUsernamePlugin, HiveUsernamePlugin>()
+                .AddSingleton<IUserCreationPlugin, HiveUsernamePlugin>()
                 .AddSingleton<IUserPlugin, HiveUserPlugin>()
                 .AddSingleton<SymmetricAlgorithm>(sp => Rijndael.Create()); // TODO: pick an algo
 
@@ -98,6 +98,7 @@ namespace Hive
 
             _ = services
                 .AddControllers()
+                .AddJsonOptions(opts => opts.JsonSerializerOptions.Converters.Add(ArbitraryAdditionalData.Converter))
                 .ConfigureApplicationPartManager(manager => manager.FeatureProviders.Add(conditionalFeature));
         }
 

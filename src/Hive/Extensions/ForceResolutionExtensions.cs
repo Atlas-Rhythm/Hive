@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Hive
+namespace Hive.Extensions
 {
     /// <summary>
     /// Extensions for DbSet

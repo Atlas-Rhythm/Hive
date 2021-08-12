@@ -46,7 +46,7 @@ namespace Hive.Services.Common
 
         private const string ActionName = "hive.resolve_dependencies";
 
-        private static readonly HiveObjectQuery<DependencyResolutionResult> forbiddenResponse = new(null, "Forbidden", StatusCodes.Status403Forbidden);
+        private static readonly HiveObjectQuery<DependencyResolutionResult> forbiddenResponse = new(StatusCodes.Status403Forbidden);
 
         /// <summary>
         /// Create a DependencyResolverService with DI.
@@ -85,13 +85,13 @@ namespace Hive.Services.Common
             // So... we somehow successfully deserialized the list of mod identifiers, only to find that it is null.
             if (identifiers == null)
             {
-                return new HiveObjectQuery<DependencyResolutionResult>(null, "Invalid identifiers.", StatusCodes.Status400BadRequest);
+                return new HiveObjectQuery<DependencyResolutionResult>(StatusCodes.Status400BadRequest, "Invalid identifiers.");
             }
 
             // I'm not gonna bother doing dependency resolution if there is nothing to resolve.
             if (!identifiers.Any())
             {
-                return new HiveObjectQuery<DependencyResolutionResult>(null, "No mods were provided; no dependency resolution can occur.", StatusCodes.Status400BadRequest);
+                return new HiveObjectQuery<DependencyResolutionResult>(StatusCodes.Status400BadRequest, "No mods were provided; no dependency resolution can occur.");
             }
 
             log.Debug("Finding mods from parsed identifiers...");
@@ -110,7 +110,7 @@ namespace Hive.Services.Common
 
                 if (mod is null)
                 {
-                    return new HiveObjectQuery<DependencyResolutionResult>(null, $"Could not find a Mod in that matches identifier \"{identifier}\".", StatusCodes.Status404NotFound);
+                    return new HiveObjectQuery<DependencyResolutionResult>(StatusCodes.Status404NotFound, $"Could not find a Mod in that matches identifier \"{identifier}\".");
                 }
 
                 mods.Add(mod);
@@ -147,12 +147,12 @@ namespace Hive.Services.Common
             if (result.MissingMods.Any() || result.ConflictingMods.Any() || result.VersionMismatches.Any())
             {
                 result.Message = "Dependency Resolution completed with some errors.";
-                return new HiveObjectQuery<DependencyResolutionResult>(result, result.Message, StatusCodes.Status424FailedDependency);
+                return new HiveObjectQuery<DependencyResolutionResult>(StatusCodes.Status424FailedDependency, result);
             }
 
             result.Message = "Dependency Resolution completed.";
 
-            return new HiveObjectQuery<DependencyResolutionResult>(result, null, StatusCodes.Status200OK);
+            return new HiveObjectQuery<DependencyResolutionResult>(StatusCodes.Status200OK, result);
         }
 
         // Helper function that handles certain dependency resolution exceptions.

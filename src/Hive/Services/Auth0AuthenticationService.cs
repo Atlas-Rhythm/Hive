@@ -15,14 +15,15 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Hive.Plugins.Aggregates;
+using Hive.Extensions;
 
 namespace Hive.Services
 {
     /// <summary>
-    /// Represents a plugin that chooses unique usernames until valid.
+    /// Represents a plugin that handles user creation.
     /// </summary>
     [Aggregable]
-    public interface IUsernamePlugin
+    public interface IUserCreationPlugin
     {
         /// <summary>
         /// This function is called once when a new user is to be created. This function should return the username conversion from the original username, if there should be one.
@@ -33,9 +34,16 @@ namespace Hive.Services
         /// <param name="originalUsername">The original username to convert, if necessary</param>
         /// <returns></returns>
         string ChooseUsername([TakesReturnValue] string originalUsername) => originalUsername;
+
+        /// <summary>
+        /// This function is called once when a new user is to be created. This function allows for editing of additional data before the instance is created.
+        /// Hive default is to modify nothing.
+        /// </summary>
+        /// <param name="extraData">The original additional data to add to/remove from, if necessary</param>
+        void ExtraDataModification(ArbitraryAdditionalData extraData) { }
     }
 
-    internal class HiveUsernamePlugin : IUsernamePlugin { }
+    internal class HiveUsernamePlugin : IUserCreationPlugin { }
 
     /// <summary>
     /// An authentication service for linking with Auth0.
@@ -52,7 +60,7 @@ namespace Hive.Services
         private readonly ILogger logger;
         private readonly IClock clock;
         private readonly HiveContext context;
-        private readonly IAggregate<IUsernamePlugin> usernamePlugin;
+        private readonly IAggregate<IUserCreationPlugin> userCreationPlugin;
 
         private string? managementToken;
         private Instant? managementExpireInstant;
@@ -70,7 +78,12 @@ namespace Hive.Services
         /// <summary>
         /// Construct a <see cref="Auth0AuthenticationService"/> with DI.
         /// </summary>
-        public Auth0AuthenticationService([DisallowNull] ILogger log, IClock clock, IConfiguration configuration, HiveContext context, IAggregate<IUsernamePlugin> usernamePlugin)
+        public Auth0AuthenticationService(
+            [DisallowNull] ILogger log,
+            IClock clock,
+            IConfiguration configuration,
+            HiveContext context,
+            IAggregate<IUserCreationPlugin> userCreationPlugin)
         {
             if (log is null)
                 throw new ArgumentNullException(nameof(log));
@@ -109,7 +122,7 @@ namespace Hive.Services
                 DefaultRequestVersion = new Version(2, 0),
                 Timeout = timeout,
             };
-            this.usernamePlugin = usernamePlugin;
+            this.userCreationPlugin = userCreationPlugin;
         }
 
         /// <inheritdoc/>
@@ -163,15 +176,17 @@ namespace Hive.Services
                     // Once accounts are linked, they have the same sub
                     var u = new User
                     {
-                        Username = usernamePlugin.Instance.ChooseUsername(auth0User.Nickname),
+                        Username = userCreationPlugin.Instance.ChooseUsername(auth0User.Nickname),
                         AlternativeId = auth0User.Sub,
-                        AdditionalData = auth0User.User_Metadata
                     };
+                    u.AdditionalData.AddSerialized(auth0User.User_Metadata);
 
                     while (await context.Users.AsNoTracking().ContainsAsync(u).ConfigureAwait(false))
                     {
                         u.Username += Guid.NewGuid();
                     }
+
+                    userCreationPlugin.Instance.ExtraDataModification(u.AdditionalData);
 
                     _ = await context.Users.AddAsync(u).ConfigureAwait(false);
                     _ = await context.SaveChangesAsync().ConfigureAwait(false);
