@@ -43,6 +43,11 @@ namespace Hive
                 var services = scope.ServiceProvider;
                 var log = services.GetRequiredService<ILogger>();
 
+                // Make sure to run the registered plugin pre-configuration step
+                var preConfigures = services.GetServices<PluginPreConfigureRegistration>();
+                foreach (var prec in preConfigures)
+                    await prec.Method(services).ConfigureAwait(false);
+
                 try
                 {
                     log.Debug("Configuring database");
