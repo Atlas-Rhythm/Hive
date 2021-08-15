@@ -1,4 +1,3 @@
-using AspNetCoreRateLimit;
 using Hive.Models;
 using Hive.Plugins.Loading;
 using Hive.Versioning;
@@ -48,12 +47,6 @@ namespace Hive
                 var preConfigures = services.GetServices<PluginPreConfigureRegistration>();
                 foreach (var prec in preConfigures)
                     await prec.Method(services).ConfigureAwait(false);
-
-                var ipPolicyStore = services.GetService<IIpPolicyStore>();
-                if (ipPolicyStore != null) await ipPolicyStore.SeedAsync().ConfigureAwait(false);
-
-                var clientPolicyStore = services.GetService<IClientPolicyStore>();
-                if (clientPolicyStore != null) await clientPolicyStore.SeedAsync().ConfigureAwait(false);
 
                 try
                 {
@@ -159,10 +152,10 @@ namespace Hive
             {
                 var emptyObject = JsonDocument.Parse("{}").RootElement.Clone();
 
-                var channel = new Channel { Name = "default", AdditionalData = emptyObject };
+                var channel = new Channel { Name = "default" };
                 _ = context.Channels.Add(channel);
 
-                var gameVersion = new GameVersion { Name = "1.0.0", AdditionalData = emptyObject, CreationTime = SystemClock.Instance.GetCurrentInstant() };
+                var gameVersion = new GameVersion { Name = "1.0.0", CreationTime = SystemClock.Instance.GetCurrentInstant() };
                 _ = context.GameVersions.Add(gameVersion);
 
                 var mod = new Mod
@@ -172,7 +165,6 @@ namespace Hive
                     UploadedAt = SystemClock.Instance.GetCurrentInstant(),
                     Uploader = new User { Username = "me" },
                     Channel = channel,
-                    AdditionalData = emptyObject,
                     DownloadLink = new Uri("file:///"),
                 };
                 var loc = new LocalizedModInfo

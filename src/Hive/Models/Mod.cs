@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 using NodaTime;
 using Hive.Converters;
 using System.Text.Json.Serialization;
@@ -96,8 +95,9 @@ namespace Hive.Models
         /// Represents extra data located within the mod.
         /// </summary>
         /// <remarks>This data is publicly read-only. Be sure not to store sensitive information as additional data.</remarks>
-        // this would be a JSON string, encoding arbitrary data (this should be some type that better represents that JSON data though)
-        public JsonElement AdditionalData { get; set; }
+        [Column(TypeName = "jsonb")]
+        [JsonConverter(typeof(ArbitraryAdditionalData.ArbitraryAdditionalDataConverter))]
+        public ArbitraryAdditionalData AdditionalData { get; } = new();
 
         /// <summary>
         /// A collection of link pairs, with the name and url of each link. May be empty.
@@ -110,6 +110,20 @@ namespace Hive.Models
         /// The download link of the mod.
         /// </summary>
         public Uri DownloadLink { get; set; } = null!;
+
+        /// <summary>
+        /// Construct a mod with extra data.
+        /// </summary>
+        /// <param name="extraData"></param>
+        public Mod(ArbitraryAdditionalData extraData)
+        {
+            AdditionalData = extraData;
+        }
+
+        /// <summary>
+        /// Default Constructor
+        /// </summary>
+        public Mod() { }
 
         /// <summary>
         /// Add a <see cref="GameVersion"/> as a supported version.

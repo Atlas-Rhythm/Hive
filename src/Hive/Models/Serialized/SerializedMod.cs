@@ -4,7 +4,6 @@ using System;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using Version = Hive.Versioning.Version;
 
@@ -92,7 +91,7 @@ namespace Hive.Models.Serialized
         /// The additional data associated with this <see cref="Mod"/>.
         /// All properties are public and readonly for all people who get mods.
         /// </summary>
-        public JsonElement AdditionalData { get; init; }
+        public ArbitraryAdditionalData AdditionalData { get; init; } = new();
 
         /// <summary>
         /// Serialize a <see cref="Mod"/> with an associated <see cref="Models.LocalizedModInfo"/> into a <see cref="SerializedMod"/>.

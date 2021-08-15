@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Hive.Models.ReadOnly
 {
@@ -17,7 +17,8 @@ namespace Hive.Models.ReadOnly
         /// <summary>
         /// The additional data from the <see cref="Channel"/>.
         /// </summary>
-        public readonly JsonElement? AdditionalData { get; }
+        [JsonConverter(typeof(ArbitraryAdditionalData.ArbitraryAdditionalDataConverter))]
+        public readonly ArbitraryAdditionalData AdditionalData { get; }
 
         /// <summary>
         /// Create a read-only version of a <see cref="Channel"/>.

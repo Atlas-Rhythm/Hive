@@ -40,8 +40,7 @@ namespace Hive.Tests.Endpoints
                 {
                     new Channel
                     {
-                        Name = "newly-uploaded",
-                        AdditionalData = DIHelper.EmptyAdditionalData
+                        Name = "newly-uploaded"
                     }
                 },
                 GameVersions = new[]
@@ -50,13 +49,11 @@ namespace Hive.Tests.Endpoints
                     {
                         Name = "1.12.1",
                         CreationTime = SystemClock.Instance.GetCurrentInstant(),
-                        AdditionalData = DIHelper.EmptyAdditionalData
                     },
                     new GameVersion
                     {
                         Name = "1.13.0",
                         CreationTime = SystemClock.Instance.GetCurrentInstant(),
-                        AdditionalData = DIHelper.EmptyAdditionalData
                     }
                 },
             })

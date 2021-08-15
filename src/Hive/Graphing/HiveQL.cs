@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using GraphQL;
 using GraphQL.Builders;
 using GraphQL.MicrosoftDI;
@@ -47,9 +48,14 @@ namespace Hive.Graphing
                 throw new ArgumentNullException(nameof(queryResult));
 
             if (!queryResult.Successful)
-                ctx.Errors.Add(new ExecutionError(queryResult.Message!));
+            {
+                var err = new ExecutionError(queryResult.Message)
+                {
+                    Code = queryResult.StatusCode.ToString(CultureInfo.InvariantCulture)
+                };
+                ctx.Errors.Add(err);
+            }
         }
-
 
         /// <summary>
         /// Generates basic mod filters.

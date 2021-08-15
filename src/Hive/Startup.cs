@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using AspNetCoreRateLimit;
 using Hive.Controllers;
 using Hive.Extensions;
 using Hive.Graphing;
@@ -51,7 +50,7 @@ namespace Hive
                 .AddSingleton<IModsPlugin, HiveModsControllerPlugin>()
                 .AddSingleton<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>()
                 .AddSingleton<IUploadPlugin, HiveDefaultUploadPlugin>()
-                .AddSingleton<IUsernamePlugin, HiveUsernamePlugin>()
+                .AddSingleton<IUserCreationPlugin, HiveUsernamePlugin>()
                 .AddSingleton<IUserPlugin, HiveUserPlugin>()
                 .AddSingleton<SymmetricAlgorithm>(sp => Rijndael.Create()); // TODO: pick an algo
 
@@ -78,24 +77,12 @@ namespace Hive
                 .AddAggregates()
                 .AddHiveGraphQL();
 
-            if (Configuration.GetValue<bool>("UseRateLimiting"))
-            {
-                _ = services.AddMemoryCache()
-                    .Configure<ClientRateLimitOptions>(Configuration.GetSection("ClientRateLimiting"))
-                    .Configure<ClientRateLimitPolicies>(Configuration.GetSection("ClientRateLimitPolicies"))
-                    .Configure<IpRateLimitOptions>(Configuration.GetSection("IpRateLimiting"))
-                    .Configure<IpRateLimitPolicies>(Configuration.GetSection("IpRateLimitPolicies"))
-                    .AddSingleton<IClientPolicyStore, MemoryCacheClientPolicyStore>()
-                    .AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>()
-                    .AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>()
-                    .AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
-            }
-
             var conditionalFeature = new HiveConditionalControllerFeatureProvider()
                 .RegisterCondition<Auth0Controller>(Configuration.GetSection("Auth0").Exists());
 
             _ = services
                 .AddControllers()
+                .AddJsonOptions(opts => opts.JsonSerializerOptions.Converters.Add(ArbitraryAdditionalData.Converter))
                 .ConfigureApplicationPartManager(manager => manager.FeatureProviders.Add(conditionalFeature));
         }
 
@@ -109,12 +96,6 @@ namespace Hive
             if (Configuration.GetValue<bool>("RestrictEndpoints"))
             {
                 _ = app.UseGuestRestrictionMiddleware();
-            }
-
-            if (Configuration.GetValue<bool>("UseRateLimiting"))
-            {
-                _ = app.UseClientRateLimiting()
-                    .UseIpRateLimiting();
             }
 
             if (env.IsDevelopment())

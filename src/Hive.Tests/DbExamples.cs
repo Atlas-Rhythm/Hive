@@ -16,22 +16,22 @@ namespace Hive.Tests
         {
             GenericUsers = new Dictionary<string, User>
             {
-                { "Eris", new User { Username = "Eris", AdditionalData = DIHelper.EmptyAdditionalSet } },
-                { "Auros", new User { Username = "Auros", AdditionalData = DIHelper.EmptyAdditionalSet } },
-                { "DaNike", new User { Username = "DaNike", AdditionalData = DIHelper.EmptyAdditionalSet } },
-                { "Umbranox", new User { Username = "Umbranox", AdditionalData = DIHelper.EmptyAdditionalSet } },
-                { "Caeden117", new User { Username = "Caeden117", AdditionalData = DIHelper.EmptyAdditionalSet } },
-                { "monkeymanboy", new User { Username = "monkeymanboy", AdditionalData = DIHelper.EmptyAdditionalSet } },
-                { "Toni Macaroni", new User { Username = "Toni Macaroni", AdditionalData = DIHelper.EmptyAdditionalSet } },
-                { "raftario", new User { Username = "raftario best modder", AdditionalData = DIHelper.EmptyAdditionalSet } },
+                { "Eris", new User { Username = "Eris" } },
+                { "Auros", new User { Username = "Auros" } },
+                { "DaNike", new User { Username = "DaNike" } },
+                { "Umbranox", new User { Username = "Umbranox" } },
+                { "Caeden117", new User { Username = "Caeden117" } },
+                { "monkeymanboy", new User { Username = "monkeymanboy" } },
+                { "Toni Macaroni", new User { Username = "Toni Macaroni" } },
+                { "raftario", new User { Username = "raftario best modder" } },
             };
 
             GenericChannels = new List<Channel>
             {
-                new Channel { Name = "Beta", AdditionalData = DIHelper.EmptyAdditionalData },
-                new Channel { Name = "Denied", AdditionalData = DIHelper.EmptyAdditionalData },
-                new Channel { Name = "Public", AdditionalData = DIHelper.EmptyAdditionalData },
-                new Channel { Name = "Pending", AdditionalData = DIHelper.EmptyAdditionalData },
+                new Channel { Name = "Beta" },
+                new Channel { Name = "Denied" },
+                new Channel { Name = "Public" },
+                new Channel { Name = "Pending" },
             };
 
             GenericMods = new List<Mod>
@@ -60,8 +60,7 @@ namespace Hive.Tests
                 UploadedAt = new NodaTime.Instant(),
                 Uploader = user,
                 Channel = GenericChannels.First(c => c.Name == channel),
-                DownloadLink = new Uri("https://github.com/Atlas-Rhythm/Hive"),
-                AdditionalData = DIHelper.EmptyAdditionalData
+                DownloadLink = new Uri("https://github.com/Atlas-Rhythm/Hive")
             };
 
             var info = new LocalizedModInfo()
