@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using AspNetCoreRateLimit;
 using Hive.Controllers;
 using Hive.Extensions;
 using Hive.Graphing;
@@ -80,19 +79,6 @@ namespace Hive
                 .AddAggregates()
                 .AddHiveGraphQL();
 
-            if (Configuration.GetValue<bool>("UseRateLimiting"))
-            {
-                _ = services.AddMemoryCache()
-                    .Configure<ClientRateLimitOptions>(Configuration.GetSection("ClientRateLimiting"))
-                    .Configure<ClientRateLimitPolicies>(Configuration.GetSection("ClientRateLimitPolicies"))
-                    .Configure<IpRateLimitOptions>(Configuration.GetSection("IpRateLimiting"))
-                    .Configure<IpRateLimitPolicies>(Configuration.GetSection("IpRateLimitPolicies"))
-                    .AddSingleton<IClientPolicyStore, MemoryCacheClientPolicyStore>()
-                    .AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>()
-                    .AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>()
-                    .AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
-            }
-
             var conditionalFeature = new HiveConditionalControllerFeatureProvider()
                 .RegisterCondition<Auth0Controller>(Configuration.GetSection("Auth0").Exists());
 
@@ -112,12 +98,6 @@ namespace Hive
             if (Configuration.GetValue<bool>("RestrictEndpoints"))
             {
                 _ = app.UseGuestRestrictionMiddleware();
-            }
-
-            if (Configuration.GetValue<bool>("UseRateLimiting"))
-            {
-                _ = app.UseClientRateLimiting()
-                    .UseIpRateLimiting();
             }
 
             if (env.IsDevelopment())

@@ -6,5 +6,4 @@ This is a quick landing page for Hive's configuration. Further documentation can
 
 - [Serilog](https://github.com/serilog/serilog-settings-configuration)
 - [Permissions System](Configuration/Permissions.md)
-- [Rate Limiting](Configuration/RateLimiting.md)
 - [Restricting Non-Authenticated Users](Configuration/GuestRestrictionMiddleware.md)
