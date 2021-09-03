@@ -1,117 +1,240 @@
-type Query {
-	channels: [Channel]
-	channel(
-		name: String!
-	): Channel
-	mods: [Mod]
-	mod(
-		id: ID!
-	): Mod
-	modsByUser(
-		userID: ID!
-	): [Mod]
-}
-
-type User {
-	userID: ID!
-	username: String!
-}
-
-type Channel {
-	name: String!
-	isPublic: Boolean!
-	additionalData: String!
-}
-
-type Mod {
-	id: ID!
-	version: String!
-	uploaderId: String!
-	authorIds: [String!]
-	contributorIds: [String!]
-	channelId: String!
-	links: [URL!]
-	downloadLink: String!
-	additionalData: String!
-	localizedData: LocalizedModData
-	dependencies: [ModIdentifier!]
-	conflicts: [ModIdentifier!]
-	gameVersions: [String!]
-}
-
-type LocalizedModData {
-	language: String!
-	name: String!
-	description: String!
-	changelog: String
-	credits: String
-}
-
-type GameVersion {
-	name: String!
-	additionalData: String!
-}
-
-type ModIdentifier {
-	name: String!
-	versionRange: String!
-}
-
-type URL {
-	name: String!
-	url: String!
-}
-
-type Response {
-	isSuccess: Boolean!
-}
-
-input PermissionInput {
-	user: ID!
-	permission: String
-}
-
-input ChannelInput {
-	name: String!
-	isPublic: Boolean!
-	additionalData: String
-}
-
-input ModInput {
-	contributors: [ID]
-	authors: [ID]
-	uploader: ID
-	channel: ID
-	links: [String]
-}
-
-type Mutation {
-	addPermission(
-		input: PermissionInput
-	): User
-	removePermission(
-		input: PermissionInput
-	): User
-	createChannel(
-		input: ChannelInput
-	): Channel
-	updateChannel(
-		id: ID!
-		input: ChannelInput
-	): Channel
-	deleteChannel(
-		id: ID!
-	): Response
-	updateMod(
-		id: ID!
-		input: ModInput
-	): Mod
-	deleteMod(
-		id: ID!
-	): Response
-}
-
 schema {
-	query: Query,
-	mutation: Mutation
+  query: HiveQuery
+}
+
+type HiveQuery {
+  """
+  A collection of mods that share a similar state.
+  """
+  channel(
+    """
+    The name of the channel.
+    """
+    id: ID
+  ): Channel
+
+  """
+  Get information about all the channels in this current instance.
+  """
+  channels: [Channel]
+
+  """
+  A mod is a modification or library uploaded in this instance.
+  """
+  mod(
+    """
+    The ID of the mod.
+    """
+    id: ID
+  ): Mod
+
+  """
+  Get information about mods in this current instance.
+  """
+  mods(
+    """
+    The filter
+    """
+    filter: Filter = LATEST
+
+    """
+    The ids for channels to look through
+    """
+    channelIds: [ID]
+
+    """
+    The game version of mods to look for.
+    """
+    gameVersion: String
+  ): [Mod]
+
+  """
+  A version of the game that the current Hive instance revolves around.
+  """
+  gameVersion(
+    """
+    The name of the version of the game.
+    """
+    name: ID
+  ): GameVersion
+
+  """
+  Get information about all the game versions in this current instance.
+  """
+  gameVersions: [GameVersion]
+}
+
+"""
+A collection of mods that share a similar state.
+"""
+type Channel {
+  """
+  The name of the channel.
+  """
+  name: String!
+  mods: [Mod]
+}
+
+"""
+A mod is a modification or library uploaded in this instance.
+"""
+type Mod {
+  """
+  The ID of the mod.
+  """
+  id: ID!
+
+  """
+  The human readable ID of the mod.
+  """
+  readableID: String!
+
+  """
+  The localized information of the mod.
+  """
+  localizations: [LocalizedModInfo]
+
+  """
+  The SemVer version of the mod.
+  """
+  version: String
+
+  """
+  The DateTime in UTC when the mod was originally uploaded.
+  """
+  uploadedAt: String
+
+  """
+  The DateTime in UTC when the mod was last edited.
+  """
+  editedAt: String
+
+  """
+  The user who uploaded the mod.
+  """
+  uploader: User
+
+  """
+  The authors of the mod. This is typically everyone who has added a significant amount to the mod.
+  """
+  authors: [User]
+
+  """
+  The contributors of the mod. This is typically anyone who has helped with creating the mod or invidiuals who helped with translation efforts.
+  """
+  contributors: [User]
+
+  """
+  The versions that this mod is supported for.
+  """
+  supportedVersions: [GameVersion]
+
+  """
+  The mods that are required for this mod to function properly.
+  """
+  dependencies: [ModReference]
+
+  """
+  The mods that are incompatible with this mod and will interfere with normal function.
+  """
+  conflicts: [ModReference]
+
+  """
+  The links associated with this mod.
+  """
+  links: [Link]
+
+  """
+  The download link of the mod.
+  """
+  downloadLink: String
+}
+
+"""
+A localized version of a mod.
+"""
+type LocalizedModInfo {
+  """
+  The name of the language.
+  """
+  name: String!
+
+  """
+  The description of the mod in the language of the localized mod info.
+  """
+  description: String!
+
+  """
+  The changelog of the mod in the language of the localized mod info.
+  """
+  changelog: String
+
+  """
+  The credits of the mod in the language of the localized mod info.
+  """
+  credits: String
+}
+
+"""
+Represents an individual account on this Hive instance
+"""
+type User {
+  """
+  The username of the user.
+  """
+  username: String!
+}
+
+"""
+A version of the game that the current Hive instance revolves around.
+"""
+type GameVersion {
+  """
+  The name of the version of the game.
+  """
+  name: String!
+
+  """
+  The DateTime in UTC at which the game version was created.
+  """
+  creationTime: String
+}
+
+"""
+A reference to a mod with a specific version range.
+"""
+type ModReference {
+  """
+  The ID of the mod that's being referenced.
+  """
+  modID: String!
+
+  """
+  The range of versions that the reference is corresponding to.
+  """
+  versionRange: String
+}
+
+"""
+A named reference to a web address.
+"""
+type Link {
+  """
+  The name of the source of the link.
+  """
+  name: String!
+
+  """
+  The URL of the link.
+  """
+  url: String
+}
+
+"""
+The different order filters for querying mods.
+"""
+enum Filter {
+  ALL
+  RECENT
+  LATEST
 }
