@@ -85,17 +85,8 @@ paths:
                           versions: ^1.0.0
                       conflictsWith: []
                       additionalData: {}
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '403':
           $ref: '#/components/responses/ForbiddenResponse'
-        '429':
-          $ref: '#/components/responses/RateLimitResponse'
       operationId: get-mods
       description: |-
         Gets all mods for a given channelId and channelIds to look within.
@@ -113,6 +104,8 @@ paths:
 
         Plugin permission check at rule: `hive.mods.list`
         Plugin filter call at rule: `hive.mods.filter`
+      tags:
+        - mods
   '/mod/{modId}':
     parameters:
       - schema:
@@ -122,7 +115,8 @@ paths:
         required: true
     get:
       summary: Gets a mod from the ID specified
-      tags: []
+      tags:
+        - mods
       responses:
         '200':
           description: OK
@@ -135,26 +129,10 @@ paths:
               schema:
                 type: object
                 properties: {}
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '403':
           $ref: '#/components/responses/ForbiddenResponse'
         '404':
           description: Not Found
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
-        '429':
-          $ref: '#/components/responses/RateLimitResponse'
       operationId: get-mod-modId
       parameters:
         - schema:
@@ -181,7 +159,7 @@ paths:
         Plugin filter check at rule: `hive.mod.filter`
       security:
         - Auth0AuthToken: []
-  /mod/upload:
+  /upload:
     parameters: []
     post:
       summary: Upload a mod
@@ -210,13 +188,6 @@ paths:
                   - type
                   - data
                   - actionCookie
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '400':
           description: 'Bad Request. Returned if the file is too big or if there is no file uploaded, or if a plugin denied the upload.'
           content:
@@ -231,25 +202,14 @@ paths:
                       - Error
                     default: Error
                   error:
-                    type:
-                      - object
-                      - string
+                    type: object
                 required:
                   - type
                   - error
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '401':
           $ref: '#/components/responses/ForbiddenResponse'
         '403':
           $ref: '#/components/responses/UnauthorizedResponse'
-        '429':
-          $ref: '#/components/responses/RateLimitResponse'
       description: |-
         Performs the first step of an upload. This performs the following steps:
 
@@ -268,10 +228,14 @@ paths:
               type: object
               properties: {}
         description: The mod file to upload. Valid files are dictated by plugins.
+      tags:
+        - mods
+        - creation
   /game/versions:
     get:
       summary: Returns all game versions
-      tags: []
+      tags:
+        - game-versions
       responses:
         '200':
           description: OK
@@ -287,17 +251,8 @@ paths:
                     - name: v1.13.0
                       creationTime: '2019-08-24T14:15:22Z'
                       additionalData: {}
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '403':
           $ref: '#/components/responses/ForbiddenResponse'
-        '429':
-          $ref: '#/components/responses/RateLimitResponse'
       operationId: get-game-versions
       description: |-
         Gets all game versions that are publicly available.
@@ -331,33 +286,12 @@ paths:
                 required:
                   - message
                   - additionalMods
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '400':
           description: 'Bad Request, invalid data was provided.'
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '403':
           $ref: '#/components/responses/ForbiddenResponse'
         '404':
           description: Not Found
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '424':
           description: Failed Dependency (WebDAV)
           content:
@@ -391,15 +325,6 @@ paths:
                   - conflicts
                   - versionMismatching
                   - additionalMods
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
-        '429':
-          $ref: '#/components/responses/RateLimitResponse'
       description: |-
         Returns a list of mods that should be installed to resolve all dependencies.
         If the dependencies cannot be resolved, returns a non-200 status code and an empty array.
@@ -417,6 +342,9 @@ paths:
         description: Mods to resolve
       security:
         - Auth0AuthToken: []
+      tags:
+        - mods
+        - dependencies
   '/mod/move/{channelId}':
     parameters:
       - schema:
@@ -433,37 +361,14 @@ paths:
       responses:
         '200':
           description: OK
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '400':
           description: Bad Request
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '401':
           $ref: '#/components/responses/UnauthorizedResponse'
         '403':
           $ref: '#/components/responses/ForbiddenResponse'
         '404':
           description: Not Found. There was no mod found with the given ID and version.
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
-        '429':
-          $ref: '#/components/responses/RateLimitResponse'
       requestBody:
         content:
           application/json:
@@ -483,10 +388,14 @@ paths:
         Moves a specific ModIdentifier to the provided channelId.
 
         Plugins permission check at rule: `hive.mod.move`
+      tags:
+        - mods
+        - movement
   /channels:
     get:
       summary: 'Gets all publicly viewable channels, or all channels viewable by the given user'
-      tags: []
+      tags:
+        - channels
       security:
         - Auth0AuthToken: []
       responses:
@@ -504,21 +413,8 @@ paths:
                   value:
                     - name: public
                       additionalData: {}
-            application/xml:
-              schema:
-                type: object
-                properties: {}
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '403':
           $ref: '#/components/responses/ForbiddenResponse'
-        '429':
-          $ref: '#/components/responses/RateLimitResponse'
       operationId: get-channels
       description: |-
         Gets all channels that are publicly viewable.
@@ -538,7 +434,8 @@ paths:
         description: The mod ID to get the latest for
     get:
       summary: Get a mod's latest version
-      tags: []
+      tags:
+        - mods
       responses:
         '200':
           description: OK
@@ -547,34 +444,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Mod'
               examples: {}
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '403':
           $ref: '#/components/responses/ForbiddenResponse'
         '404':
           description: Not Found
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
-        '429':
-          $ref: '#/components/responses/RateLimitResponse'
       operationId: get-mod-modId-latest
       description: 'Returns the latest mod with the provided ID. This is equivalent to calling: /mod/{modId}?range=*'
       parameters: []
       security:
         - Auth0AuthToken: []
-  /mod/upload/finish:
+  /upload/finish:
     post:
-      summary: ''
+      summary: Finish an upload request
       operationId: post-mod-upload-finish
       responses:
         '200':
@@ -591,41 +472,18 @@ paths:
                       - Success
                 required:
                   - type
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '400':
           description: Bad Request
           content:
             application/json:
               schema:
                 type: string
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '401':
           $ref: '#/components/responses/UnauthorizedResponse'
         '403':
           $ref: '#/components/responses/ForbiddenResponse'
         '410':
           description: 'Gone, you performed the second stage of the upload too long after the first stage.'
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
-        '429':
-          $ref: '#/components/responses/RateLimitResponse'
       description: |-
         The final stage of an upload. Completes an upload by providing the final metadata of the mod.
 
@@ -647,9 +505,12 @@ paths:
         description: The final mod metadata to upload and the cookie returned in response to a successful completion of the first upload step.
       security:
         - Auth0AuthToken: []
+      tags:
+        - mods
+        - creation
   /channels/new:
     post:
-      summary: ''
+      summary: Makes a new channel
       operationId: post-channels-new
       responses:
         '200':
@@ -663,19 +524,10 @@ paths:
                   value:
                     name: beta
                     additionalData: {}
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '401':
           $ref: '#/components/responses/UnauthorizedResponse'
         '403':
           $ref: '#/components/responses/ForbiddenResponse'
-        '429':
-          $ref: '#/components/responses/RateLimitResponse'
       description: |-
         Adds the provided channel to the collection of all channels. Must be performed by a logged in user, will return an Unauthorized if not.
 
@@ -695,9 +547,12 @@ paths:
                   name: beta
                   additionalData: {}
         description: The new Channel object to add.
+      tags:
+        - channels
+        - creation
   /game/versions/new:
     post:
-      summary: ''
+      summary: Makes a new game version
       operationId: post-game-versions-new
       responses:
         '200':
@@ -712,19 +567,10 @@ paths:
                     name: string
                     creationTime: '2019-08-24T14:15:22Z'
                     additionalData: {}
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
         '401':
           $ref: '#/components/responses/UnauthorizedResponse'
         '403':
           $ref: '#/components/responses/ForbiddenResponse'
-        '429':
-          $ref: '#/components/responses/RateLimitResponse'
       description: |-
         Adds the provided game version to the collection of all game versions. Must be performed by a logged in user, will return an Unauthorized if not.
 
@@ -744,66 +590,39 @@ paths:
         description: The input game version to provide.
       security:
         - Auth0AuthToken: []
+      tags:
+        - game-versions
+        - creation
   /auth0/get_data:
     get:
       summary: Your GET endpoint
-      tags: []
+      tags:
+        - auth0
       responses:
         '200':
           description: OK
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Auth0ReturnData'
         '404':
           description: Not Found
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
-        '429':
-          $ref: '#/components/responses/RateLimitResponse'
       operationId: get-auth0-get_data
       description: 'Returns data useful for authentication with Auth0, if this instance of Hive has been configured to use Auth0. If this instance does not use Auth0, this endpoint will return a 404.'
   /auth0/callback:
     get:
       summary: Your GET endpoint
-      tags: []
+      tags:
+        - auth0
       responses:
         '200':
           description: OK
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Auth0TokenResponse'
         '404':
           description: Not Found
-          headers:
-            x-rate-limit-limit:
-              $ref: '#/components/parameters/x-rate-limit-limit'
-            x-rate-limit-remaining:
-              $ref: '#/components/parameters/x-rate-limit-remaining'
-            x-rate-limit-reset:
-              $ref: '#/components/parameters/x-rate-limit-reset'
-        '429':
-          $ref: '#/components/responses/RateLimitResponse'
       operationId: get-auth0-callback
       description: 'Performs the authentication step of the Auth0 workflow. If the Hive instance was not configured to use Auth0, this endpoint will return a 404.'
       parameters:
@@ -829,6 +648,8 @@ paths:
             application/json:
               schema:
                 type: string
+        '400':
+          description: Bad Request. Username cannot contain whitespace or be null/empty.
         '401':
           $ref: '#/components/responses/UnauthorizedResponse'
       description: |-
@@ -840,6 +661,8 @@ paths:
         If the rename completes successfully, will return the changed username.
 
         Plugin permission check at: `hive.user.rename`
+      tags:
+        - user
 components:
   schemas:
     Channel:
@@ -1138,62 +961,21 @@ components:
           examples:
             Forbidden Response:
               value: forbidden
-      headers:
-        x-rate-limit-limit:
-          $ref: '#/components/parameters/x-rate-limit-limit'
-        x-rate-limit-remaining:
-          $ref: '#/components/parameters/x-rate-limit-remaining'
-        x-rate-limit-reset:
-          $ref: '#/components/parameters/x-rate-limit-reset'
+      headers: {}
     UnauthorizedResponse:
       description: Not authorized.
       content:
         text/plain:
           schema:
             type: string
-      headers:
-        x-rate-limit-limit:
-          $ref: '#/components/parameters/x-rate-limit-limit'
-        x-rate-limit-remaining:
-          $ref: '#/components/parameters/x-rate-limit-remaining'
-        x-rate-limit-reset:
-          $ref: '#/components/parameters/x-rate-limit-reset'
-    RateLimitResponse:
-      description: Response returned when you have triggered a rate limit (status code 429).
-      content:
-        text/plain:
-          schema:
-            type: string
-      headers:
-        retry-after:
-          schema:
-            type: integer
-            minimum: 0
-          description: Seconds until you may try again
-  parameters:
-    x-rate-limit-limit:
-      name: x-rate-limit-limit
-      in: header
-      required: false
-      schema:
-        type: string
-        example: 10s
-      description: 'The frequency for rate limits, if enabled.'
-    x-rate-limit-remaining:
-      name: x-rate-limit-remaining
-      in: header
-      required: false
-      schema:
-        type: integer
-        minimum: 0
-        example: 10
-      description: 'The number of requests remaining in this period of time, if enabled.'
-    x-rate-limit-reset:
-      name: x-rate-limit-reset
-      in: header
-      required: false
-      schema:
-        type: string
-        example: '2021-02-28T09:02:30.4598838Z'
-        format: date-time
-      description: 'The timestamp until your requests have been reset, if enabled.'
+      headers: {}
+  parameters: {}
+tags:
+  - name: auth0
+  - name: channels
+  - name: creation
+  - name: dependencies
+  - name: game-versions
+  - name: mods
+  - name: movement
+  - name: user
