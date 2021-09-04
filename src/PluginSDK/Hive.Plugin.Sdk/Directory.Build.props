@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <HiveSourceDirectory>$(MSBuildThisFileDirectory)..\..\</HiveSourceDirectory>
+    <HiveToolsDirectory>$(MSBuildThisFileDirectory)..\..\..\tools\</HiveToolsDirectory>
+    <NugetHiveToolsDir>msbtools\</NugetHiveToolsDir>
+    <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
+  </PropertyGroup>
+
+  <!-- This includes both NuGet info and package output properties -->
+  <Import Project="$(HiveToolsDirectory)NuGetInfo.props" />
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)\*" Exclude="*.csproj" />
+  </ItemGroup>
+  
+  <!-- Deliberately do not import parent Directory.Build.props -->
+</Project>

@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Deliberately do not import parent Directory.Build.targets -->
+
+  <Import Project="$(HiveToolsDirectory)SdkGetProperty.targets" />
+    
+  <PropertyGroup>
+    <BeforePack>$(BeforePack);PackHiveTools;BuildPackageReferenceList</BeforePack>
+  </PropertyGroup>
+  
+  <Target Name="PackHiveTools">
+    <ItemGroup Condition="'@(HiveTool)' != ''">
+      <None Include="$(HiveToolsDirectory)%(HiveTool.Identity)" Pack="true" PackagePath="$(NugetHiveToolsDir)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="_BuildNormalSdkRefPkgs" BeforeTargets="BuildPackageReferenceList">
+    <ItemGroup>
+      <SdkReferencePackage Include="$(HiveSourceDirectory)%(SdkNormalPackage.Identity)\%(SdkNormalPackage.Identity).*proj"
+                           Condition="'@(SdkNormalPackage)' != ''" />
+    </ItemGroup>
+  </Target>
+  
+  <Target Name="_GetPackageInformation" Returns="@(PackageInfo)">
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=PackageId"
+             Projects="$(_PackageProject)">
+      <Output TaskParameter="TargetOutputs" ItemName="_PkgId" />
+    </MSBuild>
+
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=PackageVersion"
+             Projects="$(_PackageProject)">
+      <Output TaskParameter="TargetOutputs" ItemName="_PkgVer" />
+    </MSBuild>
+    
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=IsRoslynExtension"
+             Projects="$(_PackageProject)">
+      <Output TaskParameter="TargetOutputs" ItemName="_PkgRoslyn" />
+    </MSBuild>
+    
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=IsCodeGen"
+             Projects="$(_PackageProject)">
+      <Output TaskParameter="TargetOutputs" ItemName="_PkgCodegen" />
+    </MSBuild>
+    
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=IsAnalyzer"
+             Projects="$(_PackageProject)">
+      <Output TaskParameter="TargetOutputs" ItemName="_PkgAnalyzer" />
+    </MSBuild>
+
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=RoslynVersion"
+             Projects="$(_PackageProject)">
+      <Output TaskParameter="TargetOutputs" ItemName="_PkgRoslynVer" />
+    </MSBuild>
+    
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=MSBuildRequiredVersion"
+             Projects="$(_PackageProject)">
+      <Output TaskParameter="TargetOutputs" ItemName="_PkgMsbuildVer" />
+    </MSBuild>
+
+    <ItemGroup>
+      <PackageInfo Include="$(_PackageProject)">
+        <PackageId>@(_PkgId)</PackageId>
+        <Version>@(_PkgVer)</Version>
+        <IsRoslynExtension>@(_PkgRoslyn)</IsRoslynExtension>
+        <IsCodeGen>@(_PkgCodegen)</IsCodeGen>
+        <IsAnalyzer>@(_PkgAnalyzer)</IsAnalyzer>
+        <RoslynVersion>@(_PkgRoslynVer)</RoslynVersion>
+        <MSBuildVersion>@(_PkgMsbuildVer)</MSBuildVersion>
+      </PackageInfo>
+    </ItemGroup>
+    <ItemGroup>
+      <PackageInfo>
+        <IsRoslynExtension Condition="'%(IsRoslynExtension)' == ''">false</IsRoslynExtension>
+        <IsCodeGen Condition="'%(IsCodeGen)' == ''">false</IsCodeGen>
+        <IsAnalyzer Condition="'%(IsAnalyzer)' == ''">false</IsAnalyzer>
+      </PackageInfo>
+    </ItemGroup>
+  </Target>
+
+  <PropertyGroup>
+    <_GeneratedPropsFile>$(IntermediateOutputPath)Packages.proj</_GeneratedPropsFile>
+    <_CodegenPropsFile>$(IntermediateOutputPath)CodeGen.props</_CodegenPropsFile>
+  </PropertyGroup>
+  
+  <Target Name="BuildPackageReferenceList">
+    <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="_GetPackageInformation"
+             Properties="_PackageProject=%(SdkReferencePackage.Identity)">
+      <Output TaskParameter="TargetOutputs" ItemName="_PackageInfo" />
+    </MSBuild>
+
+    <Message Importance="normal" Text="%(_PackageInfo.Identity) (%(PackageId),%(Version),r:%(IsRoslynExtension),cg:%(IsCodeGen),a:%(IsAnalyzer))" />
+
+    <!-- Generate the project file for the PackageReferences -->
+    <ItemGroup>
+      <_PackageInfo>
+        <ConditionProp></ConditionProp>
+        <ExtraProps> Private="false" ExcludeAssets="buildTransitive"</ExtraProps>
+        <ConditionProp Condition="'%(IsRoslynExtension)' == 'true'"> Condition="'%24(EnableHiveAnalyzers)' != 'false'"</ConditionProp>
+        <ExtraProps Condition="'%(IsRoslynExtension)' == 'true'"> PrivateAssets="all" IncludeAssets="all"</ExtraProps>
+      </_PackageInfo>
+    </ItemGroup>
+
+    <ItemGroup>
+      <_PackageInfo>
+        <Props>Include="%(PackageId)" Version="%(Version)"%(ConditionProp)%(ExtraProps) IsImplicitlyDefined="true"</Props>
+      </_PackageInfo>
+    </ItemGroup>
+
+    <Message Importance="normal" Text="%(_PackageInfo.Props)" />
+
+    <ItemGroup>
+      <_RefPropsLines Include="&lt;Project&gt;" />
+      <_RefPropsLines Include="%09&lt;ItemGroup&gt;" />
+      <_RefPropsLines Include="%09%09&lt;PackageReference $([MSBuild]::Escape('%(_PackageInfo.Props)')) /&gt;" Condition="'@(_PackageInfo)' != ''" />
+      <_RefPropsLines Include="%09&lt;/ItemGroup&gt;" />
+      <_RefPropsLines Include="&lt;/Project&gt;" />
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(_GeneratedPropsFile)" Encoding="UTF-8" Lines="@(_RefPropsLines)" Overwrite="true" />
+    <ItemGroup>
+      <FileWrites Include="$(_GeneratedPropsFile)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="$(_GeneratedPropsFile)" Pack="true" PackagePath="Sdk\tools\" />
+    </ItemGroup>
+    
+    <!-- Generate the properties file for CodeGen props -->
+    <ItemGroup>
+      <_PkgVersionReqs Include="%(_PackageInfo.MSBuildVersion),%(RoslynVersion)">
+        <MSBuildVersion>%(MSBuildVersion)</MSBuildVersion>
+        <RoslynVersion>%(RoslynVersion)</RoslynVersion>
+      </_PkgVersionReqs>
+    </ItemGroup>
+    
+    <RemoveDuplicates Inputs="@(_PkgVersionReqs)">
+      <Output TaskParameter="Filtered" ItemName="_PkgVersionReq" />
+    </RemoveDuplicates>
+
+    <Message Importance="normal" Text="Version reqs: %(_PkgVersionReq.MSBuildVersion),%(RoslynVersion)" />
+
+    <ItemGroup>
+      <_CGPropsLines Include="&lt;Project&gt;" />
+      <_CGPropsLines Include="%09&lt;PropertyGroup&gt;" />
+      <_CGPropsLines Include="%09%09&lt;HiveCodeGenMSBuildVersion&gt;%(_PkgVersionReq.MSBuildVersion)&lt;/HiveCodeGenMSBuildVersion&gt;" />
+      <_CGPropsLines Include="%09%09&lt;HiveCodeGenRoslynVersion&gt;%(_PkgVersionReq.RoslynVersion)&lt;/HiveCodeGenRoslynVersion&gt;" />
+      <_CGPropsLines Include="%09&lt;/PropertyGroup&gt;" />
+      <_CGPropsLines Include="&lt;/Project&gt;" />
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(_CodegenPropsFile)" Encoding="UTF-8" Lines="@(_CGPropsLines)" Overwrite="true" />
+    <ItemGroup>
+      <FileWrites Include="$(_CodegenPropsFile)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="$(_CodegenPropsFile)" Pack="true" PackagePath="Sdk\tools\" />
+    </ItemGroup>
+  
+  </Target>
+  
+</Project>
