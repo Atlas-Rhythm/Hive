@@ -6,9 +6,10 @@
 
     <!-- This is needed sometimes when packing single projects -->
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
-    
-    <HiveToolsDirectory>$(MSBuildThisFileDirectory)tools\</HiveToolsDirectory>
-    <HiveSourceDirectory>$(MSBuildThisFileDirectory)src\</HiveSourceDirectory>
+
+    <HiveRootDirectory>$(MSBuildThisFileDirectory)</HiveRootDirectory>
+    <HiveToolsDirectory>$(HiveRootDirectory)tools\</HiveToolsDirectory>
+    <HiveSourceDirectory>$(HiveRootDirectory)src\</HiveSourceDirectory>
 
     <RoslynVersion>3.10.0</RoslynVersion>
     <MSBuildRequiredVersion>16.9.0</MSBuildRequiredVersion>
@@ -55,5 +56,6 @@
 
   <Import Project="$(HiveSourceDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.props" Condition="'$(IsCodeGen)' != 'true'" />
   <Import Project="$(HiveToolsDirectory)Packaging.props" />
+  <Import Project="$(HiveToolsDirectory)VSDocEditing.props" />
 
 </Project>

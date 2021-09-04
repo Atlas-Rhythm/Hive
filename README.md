@@ -26,14 +26,15 @@ not work if you're not running the latest preview.
 
 ### Permission Rules
 
-The permission system is a key component to Hive. Hive uses highly configurable rules to determine access for various components in Hive. [Check out the dedicated documentation page for further information.](https://github.com/Atlas-Rhythm/Hive/blob/master/Hive.Permissions/docs/Usage.md).
+The permission system is a key component to Hive. Hive uses highly configurable rules to determine access for various components in Hive.
+[Check out the dedicated documentation page for further information.](docs/Hive.Permissions/Usage.md).
 
 ### Plugins
 
-- Plugins are loaded in a fashion TBD (most likely filesystem)
+See the documentation for [`Hive.Plugins`](docs/Hive.Plugins/) for information about writing and using plugins.
 
 ## Configuration
 
 Configuration is done from Hive's `appsettings.json` file, located in the root of its directory.
 
-For configuration documentation, [see the dedicated documentation page.](https://github.com/Atlas-Rhythm/Hive/blob/master/Hive/docs/Configuration.md)
+For configuration documentation, [see the dedicated documentation page.](docs/Hive/Configuration.md)

@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <HiveDocsDirectory>$(HiveRootDirectory)docs\</HiveDocsDirectory>
+    <HiveProjectDocsDirectory>$(HiveDocsDirectory)$(MSBuildProjectName)\</HiveProjectDocsDirectory>
+  </PropertyGroup>
+    
+  <ItemGroup>
+    <None Include="$(HiveProjectDocsDirectory)**\*.md">
+      <Link>docs\$([MSBuild]::MakeRelative('$(HiveProjectDocsDirectory)', '%(FullPath)'))</Link>
+    </None>
+    <None Include="$(HiveToolsDirectory)\VSDocReadme.md">
+      <Link>docs\_VSReadme.md</Link>
+    </None>
+  </ItemGroup>
+
+</Project>
