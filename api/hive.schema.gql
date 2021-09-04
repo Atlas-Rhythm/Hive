@@ -155,22 +155,27 @@ A localized version of a mod.
 """
 type LocalizedModInfo {
   """
-  The name of the language.
+  The localized name of the mod.
   """
   name: String!
 
   """
-  The description of the mod in the language of the localized mod info.
+  The language the mod is localized in.
+  """
+  language: String!
+
+  """
+  The localized description of the mod.
   """
   description: String!
 
   """
-  The changelog of the mod in the language of the localized mod info.
+  The localized changelog of the mod.
   """
   changelog: String
 
   """
-  The credits of the mod in the language of the localized mod info.
+  The localized credits of the mod.
   """
   credits: String
 }

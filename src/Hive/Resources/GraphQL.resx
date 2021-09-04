@@ -154,16 +154,19 @@
     <value>A localized version of a mod.</value>
   </data>
   <data name="LocalizedModInfo_Changelog" xml:space="preserve">
-    <value>The changelog of the mod in the language of the localized mod info.</value>
+    <value>The localized changelog of the mod.</value>
   </data>
   <data name="LocalizedModInfo_Credits" xml:space="preserve">
-    <value>The credits of the mod in the language of the localized mod info.</value>
+    <value>The localized credits of the mod.</value>
   </data>
   <data name="LocalizedModInfo_Description" xml:space="preserve">
-    <value>The description of the mod in the language of the localized mod info.</value>
+    <value>The localized description of the mod.</value>
+  </data>
+  <data name="LocalizedModInfo_Language" xml:space="preserve">
+    <value>The language the mod is localized in.</value>
   </data>
   <data name="LocalizedModInfo_Name" xml:space="preserve">
-    <value>The name of the language.</value>
+    <value>The localized name of the mod.</value>
   </data>
   <data name="LocalizedModInfo_OwningMod" xml:space="preserve">
     <value>The mod that the localized mod info is localizing.</value>

@@ -24,6 +24,9 @@ namespace Hive.Graphing.Types
             _ = Field(lmi => lmi.Name)
                 .Description(Resources.GraphQL.LocalizedModInfo_Name);
 
+            _ = Field(lmi => lmi.Language)
+                .Description(Resources.GraphQL.LocalizedModInfo_Language);
+
             _ = Field(lmi => lmi.Description)
                 .Description(Resources.GraphQL.LocalizedModInfo_Description);
 
