@@ -9,19 +9,20 @@
   </PropertyGroup>
   
   <Target Name="PrivateAllProjectReferences" BeforeTargets="Restore;GenerateRestoreGraphFile;_LoadRestoreGraphEntryPoints">
-    <Message Importance="high" Text="Privating all references" />
-    <Message Importance="high" Text="@(ProjectReference->'%(Identity) :: %(PrivateAssets) :: %(Private)')" />
     <ItemGroup>
       <ProjectReference>
         <PrivateAssets>all</PrivateAssets>
         <Private>true</Private>
       </ProjectReference>
-      <PackageReference>
+      <PackageReference Condition="'$(DoNotMergeNugetPackages)' != 'true'">
         <PrivateAssets>all</PrivateAssets>
         <Private>true</Private>
       </PackageReference>
+      <PackageReference Condition="'$(DoNotMergeNugetPackages)' == 'true'">
+        <PrivateAssets>none</PrivateAssets>
+        <Private>false</Private>
+      </PackageReference>
     </ItemGroup>
-    <Message Importance="high" Text="@(ProjectReference->'%(Identity) :: %(PrivateAssets) :: %(Private)')" />
   </Target>
   
   <!-- This is mostly pulled from the SDK files  -->
@@ -92,15 +93,12 @@
           AfterTargets="CoreCompile"
           BeforeTargets="ILRepacker"
           DependsOnTargets="ComputeILLinkProps">
-    <!--Inputs="@(IntermediateAssembly);@(ReferenceCopyLocalPaths)"
-    Outputs="@(IntermediateAssembly->'$(ILLinkOutputDir)%(Filename)%(Extension)');@(ReferenceCopyLocalPaths->'$(ILLinkOutputDir)%(Filename)%(Extension)')"-->
-
-    <Message Importance="normal" Text="ILLinkLib @(IntermediateAssembly)" />
-    <Message Importance="low" Text="copylocal @(ReferenceCopyLocalPaths)" />
-
+    
     <ItemGroup>
       <_LinkInputAssemblies Include="@(IntermediateAssembly)" />
-      <_LinkInputAssemblies Include="@(ReferenceCopyLocalPaths)" />
+      <_LinkInputAssemblies Include="@(ReferenceCopyLocalPaths)" Condition="'$(DoNotMergeNugetPackages)' != 'true'" />
+      <_LinkInputAssemblies Include="%(ReferenceCopyLocalPaths.Identity)"
+                            Condition="'$(DoNotMergeNugetPackages)' == 'true' and '%(ReferenceCopyLocalPaths.NuGetPackageId)' == ''" />
     </ItemGroup>
 
     <!-- When running from Desktop MSBuild, DOTNET_HOST_PATH is not set.
@@ -111,6 +109,10 @@
       <_DotNetHostFileName Condition=" '$(OS)' == 'Windows_NT' ">dotnet.exe</_DotNetHostFileName>
     </PropertyGroup>
 
+    <Message Importance="high" Text="%(_LinkInputAssemblies.Identity)" />
+    
+    <Delete Files="$(ILLinkOutputDir)**\*" />
+    
     <ILLink AssemblyPaths="@(_LinkInputAssemblies)"
             ReferenceAssemblyPaths="@(ReferencePath)"
             RootAssemblyNames="$(AssemblyName)"
