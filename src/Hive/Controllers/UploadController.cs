@@ -423,7 +423,7 @@ namespace Hive.Controllers
         /// <summary>
         /// The final stage of the upload flow. Completes an upload by providing the final metadata of the mod.
         /// </summary>
-        /// <param name="finalMetadata">The final mod metadata to upload.</param>
+        /// <param name="finalMetadataJson">A JSON string which represents the final mod metadata to upload.</param>
         /// <param name="cookie">The cookie returned in the response to the first stage.</param>
         /// <returns>An <see cref="UploadResult"/> repersenting the upload operation. If it completes normally with a
         /// <see cref="ResultType"/> of <see cref="ResultType.Success"/>, the upload was successful.</returns>
@@ -434,8 +434,10 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status410Gone)]
         // ^^^ returned when the object associated with the upload was deleted automatically. Basically, "You took too long"
-        public async Task<ActionResult<UploadResult>> CompleteUpload([FromForm] SerializedMod finalMetadata, [FromForm] string cookie)
+        public async Task<ActionResult<UploadResult>> CompleteUpload([FromForm] string finalMetadataJson, [FromForm] string cookie)
         {
+            var finalMetadata = JsonSerializer.Deserialize<SerializedMod>(finalMetadataJson);
+
             if (finalMetadata is null || cookie is null)
                 return BadRequest();
 
