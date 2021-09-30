@@ -57,6 +57,7 @@
 
   <Import Project="$(HiveSourceDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.props" Condition="'$(IsCodeGen)' != 'true'" />
   <Import Project="$(HiveToolsDirectory)Packaging.props" />
+
   <Import Project="$(HiveToolsDirectory)VSDocEditing.props" />
 
 </Project>

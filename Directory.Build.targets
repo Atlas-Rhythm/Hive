@@ -2,7 +2,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Import Project="$(HiveToolsDirectory)SharedProps.targets"/>
-  <Import Project="$(HiveToolsDirectory)Artifacts.targets" />
   
   <PropertyGroup>
     <NeutralLanguage>en-US</NeutralLanguage>
@@ -38,6 +37,6 @@
   <Import Project="$(HiveToolsDirectory)SdkGetProperty.targets" />
   
   <Import Project="$(HiveSourceDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" Condition="'$(IsCodeGen)' != 'true'" />
-  <Import Project="$(HiveToolsDirectory)Packaging.targets" Condition="'$(BuildingStandalone)' == 'true'" />
+  <Import Project="$(HiveToolsDirectory)Packaging.targets" Condition="'$(BuildingStandalone)' == 'true' and '$(DoesBuildStandalone)' == 'true'" />
 
 </Project>

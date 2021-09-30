@@ -1,20 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" InitialTargets="WarnOnBuildBadBuildStandalone">
 
   <PropertyGroup>
     <DoesBuildStandalone Condition="'$(DoesBuildStandalone)' == ''">false</DoesBuildStandalone>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(DoesBuildStandalone)' == 'true'">
-    <BuildingStandalone>false</BuildingStandalone>
-    <BuildingStandalone Condition="'$(BuildStandalone)' == '$(MSBuildProjectName)'">true</BuildingStandalone>
   </PropertyGroup>
 
   <Target Name="WarnOnBuildBadBuildStandalone" BeforeTargets="CoreCompile"
           Condition="'$(DoesBuildStandalone)' != 'true' and '$(BuildStandalone)' == '$(MSBuildProjectName)'">
     <Warning Text="Specified project does not have standalone build enabled. Use -p:DoesBuildStandalone=true to override." />
   </Target>
-
+  
+  <PropertyGroup>
+    <BuildingStandalone>false</BuildingStandalone>
+    <BuildingStandalone Condition="'$(BuildStandalone)' == '$(MSBuildProjectName)'">true</BuildingStandalone>
+  </PropertyGroup>
+    
   <PropertyGroup Condition="'$(BuildingStandalone)' == 'true'">
     
     <ILRepackTargetsFile>$(MSBuildThisFileDirectory)_EmptyProjectForILRepack.targets</ILRepackTargetsFile>
@@ -30,5 +30,5 @@
     <AllowRepackDuplicateType Include="System.Runtime.CompilerServices.IsByRefLikeAttribute" />
     <AllowRepackDuplicateType Include="System.Runtime.CompilerServices.IsReadOnlyAttribute" />
   </ItemGroup>
-  
+
 </Project>

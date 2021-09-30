@@ -93,6 +93,8 @@
           AfterTargets="CoreCompile"
           BeforeTargets="ILRepacker"
           DependsOnTargets="ComputeILLinkProps">
+
+    <Message Importance="high" Text="$(OutpuPath) $(IntermediateOutputPath) $(OutputSubName)" />
     
     <ItemGroup>
       <_LinkInputAssemblies Include="@(IntermediateAssembly)" />
@@ -108,8 +110,6 @@
       <_DotNetHostFileName>dotnet</_DotNetHostFileName>
       <_DotNetHostFileName Condition=" '$(OS)' == 'Windows_NT' ">dotnet.exe</_DotNetHostFileName>
     </PropertyGroup>
-
-    <Message Importance="high" Text="%(_LinkInputAssemblies.Identity)" />
     
     <Delete Files="$(ILLinkOutputDir)**\*" />
     
