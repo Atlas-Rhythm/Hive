@@ -22,6 +22,7 @@
     <CopyLocalLockFileAssemblies Condition="'$(DoNotMergeNugetPackages)' != 'true'">true</CopyLocalLockFileAssemblies>
     <BaseIntermediateOutputPath>$(BaseIntermediateOutputPath)standalone\</BaseIntermediateOutputPath>
     <BaseOutputPath>$(BaseOutputPath)standalone\</BaseOutputPath>
+    <PackageId>$(PackageId).Standalone</PackageId>
     
   </PropertyGroup>
   

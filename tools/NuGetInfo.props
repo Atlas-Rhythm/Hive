@@ -2,6 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     
   <PropertyGroup>
+    <PackageId>$(MSBuildProjectName)</PackageId>
     <VersionPrefix>0.1.0</VersionPrefix>
     <DevVersionSuffix>dev.local</DevVersionSuffix>
     <DevVersionSuffix Condition="'$(DevVersionNumber)' != ''">$(DevVersionSuffix).$(DevVersionNumber)</DevVersionSuffix>

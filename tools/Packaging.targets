@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <!-- TODO: make dotnet packs with this output packages without references -->
-  
+
   <PropertyGroup>
     <CoreCompileDependsOn>PrivateAllProjectReferences;$(CoreCompileDependsOn)</CoreCompileDependsOn>
     <BeforePack>PrivateAllProjectReferences;$(BeforePack)</BeforePack>
