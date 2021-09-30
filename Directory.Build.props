@@ -17,6 +17,7 @@
 
   <Import Project="$(HiveToolsDirectory)SharedProps.props"/>
   <Import Project="$(HiveToolsDirectory)NuGetInfo.props" />
+  <Import Project="$(HiveToolsDirectory)Artifacts.props" />
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="$(RoslynVersion)" PrivateAssets="all" />

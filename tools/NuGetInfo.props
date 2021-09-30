@@ -11,9 +11,5 @@
     <Authors></Authors>
     <!-- TODO: complete this a bit more -->
   </PropertyGroup>
-
-  <PropertyGroup>
-    <PackageOutputPath>$(MSBuildThisFileDirectory)..\artifacts\packages\$(Configuration)\</PackageOutputPath>
-  </PropertyGroup>
   
 </Project>

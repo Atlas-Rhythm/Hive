@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    
+	<PropertyGroup>
+		<HiveArtifactsPath>$(MSBuildThisFileDirectory)..\artifacts\</HiveArtifactsPath>
+		<PackageOutputPath>$(HiveArtifactsPath)packages\$(Configuration)\</PackageOutputPath>
+		<BaseIntermediateOutputPath>$(HiveArtifactsPath)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+		<BaseOutputPath>$(HiveArtifactsPath)bin\$(MSBuildProjectName)\</BaseOutputPath>
+	</PropertyGroup>
+  
+</Project>
