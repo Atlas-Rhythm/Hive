@@ -5,12 +5,12 @@
   <Import Project="$(HiveToolsDirectory)SdkGetProperty.targets" />
     
   <PropertyGroup>
-    <BeforePack>$(BeforePack);PackHiveTools;BuildPackageReferenceList</BeforePack>
+    <GetPackageContentsDependsOn>$(GetPackageContentsDependsOn);PackHiveTools;BuildPackageReferenceList</GetPackageContentsDependsOn>
   </PropertyGroup>
   
   <Target Name="PackHiveTools">
     <ItemGroup Condition="'@(HiveTool)' != ''">
-      <None Include="$(HiveToolsDirectory)%(HiveTool.Identity)" Pack="true" PackagePath="$(NugetHiveToolsDir)" />
+      <PackageFile Include="$(HiveToolsDirectory)%(HiveTool.Identity)" PackFolder="$(NugetHiveToolsDir)" />
     </ItemGroup>
   </Target>
 
@@ -27,7 +27,7 @@
       <Output TaskParameter="TargetOutputs" ItemName="_PkgId" />
     </MSBuild>
 
-    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=PackageVersion"
+    <MSBuild Targets="GetPackageVersion"
              Projects="$(_PackageProject)">
       <Output TaskParameter="TargetOutputs" ItemName="_PkgVer" />
     </MSBuild>
@@ -122,7 +122,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Include="$(_GeneratedPropsFile)" Pack="true" PackagePath="Sdk\tools\" />
+      <_FinalPropsFiles Include="$(_GeneratedPropsFile)" />
     </ItemGroup>
     
     <!-- Generate the properties file for CodeGen props -->
@@ -154,7 +154,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Include="$(_CodegenPropsFile)" Pack="true" PackagePath="Sdk\tools\" />
+      <_FinalPropsFiles Include="$(_CodegenPropsFile)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageFile Include="%(_FinalPropsFiles.Identity)" PackagePath="Sdk\tools\%(Filename)%(Extension)" />
     </ItemGroup>
   
   </Target>

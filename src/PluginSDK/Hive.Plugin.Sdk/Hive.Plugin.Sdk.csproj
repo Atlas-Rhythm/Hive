@@ -6,7 +6,7 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
 
     <Description>Provides an easy-to-use SDK for writing Hive plugins.</Description>
-    <PackageTags>hive;plugin;plugins</PackageTags>
+    <PackageTags>$(PackageTags);plugin;plugins</PackageTags>
 
     <!-- We do this to be consistent with everything else -->
     <!--<GeneratePackageOnBuild>true</GeneratePackageOnBuild>-->
@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="Sdk\**" Pack="true" PackagePath="Sdk\" />
+    <None Include="Sdk\**" Pack="true" PackagePath="Sdk\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
   
   <ItemGroup>
