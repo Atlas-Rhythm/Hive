@@ -50,4 +50,4 @@ jobs:
         run: dotnet test --no-restore -c Release -clp:NoSummary
       - name: Pack
         shell: pwsh
-        run: .\buildPackages.ps1 -c Release -clp:NoSummary
+        run: .\buildPackages.ps1 -c Release
