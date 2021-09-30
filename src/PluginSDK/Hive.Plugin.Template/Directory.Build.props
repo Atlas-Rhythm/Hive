@@ -8,6 +8,7 @@
     <IncludeContentInPack>true</IncludeContentInPack>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <ContentTargetFolders>content</ContentTargetFolders>
+    <BuildOutputFrameworkSpecific>false</BuildOutputFrameworkSpecific>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
   </PropertyGroup>
@@ -19,6 +20,7 @@
 
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)\**" Exclude="*.csproj;obj\**;bin\**" />
+    <PackFolderKind Update="Content" FrameworkSpecific="false" />
   </ItemGroup>
   
   <!-- Deliberately do not import parent Directory.Build.props -->

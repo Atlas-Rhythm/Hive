@@ -4,6 +4,7 @@
   <PropertyGroup>
     <PackageId>$(MSBuildProjectName)</PackageId>
     <VersionPrefix>0.1.0</VersionPrefix>
+    <PackageTags>hive;mods</PackageTags>
     <DevVersionSuffix>dev.local</DevVersionSuffix>
     <DevVersionSuffix Condition="'$(DevVersionNumber)' != ''">$(DevVersionSuffix).$(DevVersionNumber)</DevVersionSuffix>
     <VersionSuffix Condition="'$(VersionSuffix)' == '' and '$(BuildRelease)' != 'true'">$(DevVersionSuffix)</VersionSuffix>
@@ -12,5 +13,12 @@
     <Authors></Authors>
     <!-- TODO: complete this a bit more -->
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NuGetizer" Version="0.7.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
   
 </Project>
