@@ -12,8 +12,10 @@
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
   </PropertyGroup>
 
-  <!-- This includes both NuGet info and package output properties -->
+  <!-- This includes NuGet info -->
   <Import Project="$(HiveToolsDirectory)NuGetInfo.props" />
+  <!-- This includes output locations  -->
+  <Import Project="$(HiveToolsDirectory)Artifacts.props" />
 
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)\**" Exclude="*.csproj;obj\**;bin\**" />
