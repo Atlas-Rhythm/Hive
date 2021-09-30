@@ -1,6 +1,33 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <Target Name="SelectProjectFiles" BeforeTargets="InferPackageContents">
+    <ItemGroup Label="BuildOutput Inference">
+
+      <_InferredProjectOutput Include="$(TargetRefPath);
+                                     @(DocumentationProjectOutputGroupOutput -> '%(FinalOutputPath)')">
+        <PackFolder>$(PackFolder)</PackFolder>
+        <FrameworkSpecific>$(BuildOutputFrameworkSpecific)</FrameworkSpecific>
+      </_InferredProjectOutput>
+
+      <_InferredPackageFile Include="@(_InferredProjectOutput -> Distinct())" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <!-- 
+				PackageId metadata on all PackageFile items means we can tell appart which ones came from which dependencies 
+				NOTE: if PackageId is empty, we won't generate a manifest and it means the files need to be packed with the
+				current project.
+			-->
+      <PackageFile Include="@(_InferredPackageFile)">
+        <Source>Implicit</Source>
+        <PackageId Condition="'$(IsPackable)' == 'true'">$(PackageId)</PackageId>
+        <Platform>$(Platform)</Platform>
+        <TargetFrameworkMoniker Condition="'$(IsPackagingProject)' != 'true'">$(TargetFrameworkMoniker)</TargetFrameworkMoniker>
+      </PackageFile>
+    </ItemGroup>
+  </Target>
+
   <Import Project="$([MSBuild]::GetPathOfFileAbove('$(MSBuildThisFile)', '$(MSBuildThisFileDirectory)..\'))" />
   
 </Project>

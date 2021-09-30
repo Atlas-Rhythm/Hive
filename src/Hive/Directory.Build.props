@@ -4,17 +4,21 @@
   <!-- All of this is specifically so that we can pack just the reference assembly, since I can't come up with a better way to do it -->
   
   <Import Project="$([MSBuild]::GetPathOfFileAbove('$(MSBuildThisFile)', '$(MSBuildThisFileDirectory)..\'))" />
-
-  <!-- TODO: make this actually pack just the reference assembly -->
   
   <PropertyGroup>
     <PackageId>Hive.ReferenceAssembly</PackageId>
 
+    <Description>
+      $(Description)
+      
+      THIS PACKAGE CONTAINS ONLY A REFERENCE ASSEMBLY. IT CANNOT BE USED TO RUN HIVE.
+    </Description>
+    
     <IsPackable>true</IsPackable>
-    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
-    <!--<IncludeBuildOutput>true</IncludeBuildOutput>-->
+    <ProduceReferenceAssemblies>true</ProduceReferenceAssemblies>
+    <PackBuildOutput>false</PackBuildOutput>
     <IncludeContentInPack>false</IncludeContentInPack>
-    <!--<BuildOutputTargetFolder>ref</BuildOutputTargetFolder>--> <!-- fuck it, nuget doesn't like this -->
+    <PackFolder>ref/$(TargetFramework)</PackFolder>
   </PropertyGroup>
-  
+
 </Project>

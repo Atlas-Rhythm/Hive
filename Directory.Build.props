@@ -34,11 +34,11 @@
   <ItemGroup Condition="'$(IsCodeGen)' != 'true' And '$(NoAutoProjectRefs)' != 'true'">
     <ProjectReference Include="$(HiveSourceDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" Condition="'$(IsAnalyzer)' != 'true'" />
     <ProjectReference Include="$(HiveSourceDirectory)CodeGen\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" Condition="'$(IsAnalyzer)' == 'true'" PrivateAssets="all" />
-    <ProjectReference Include="$(HiveSourceDirectory)CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="$(HiveSourceDirectory)CodeGen\Hive.CodeGen\Hive.CodeGen.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" Pack="false" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true' And '$(NoAutoProjectRefs)' != 'true'">
-    <ProjectReference Include="$(HiveSourceDirectory)Hive.Analyzers\Hive.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="$(HiveSourceDirectory)Hive.Analyzers\Hive.Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" Pack="false" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsUtilities)' != 'true' And '$(IsCodeGen)' != 'true' And '$(IsAnalyzer)' != 'true' And '$(NoAutoProjectRefs)' != 'true'">
