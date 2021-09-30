@@ -4,6 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DoNotMergeNugetPackages>true</DoNotMergeNugetPackages>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,7 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="5.0.1" />
+    <PackageReference Update="FSharp.Core" Version="5.0.2" />
   </ItemGroup>
 
+  <Target Name="_GetFrameworkAssemblyReferences" />
+  
 </Project>
