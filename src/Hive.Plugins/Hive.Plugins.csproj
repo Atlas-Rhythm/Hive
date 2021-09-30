@@ -5,6 +5,7 @@
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DoNotMergeNugetPackages>true</DoNotMergeNugetPackages>
+    <DoesBuildStandalone>true</DoesBuildStandalone>
   </PropertyGroup>
   
   <ItemGroup>
