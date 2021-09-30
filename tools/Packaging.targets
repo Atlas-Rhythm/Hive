@@ -3,27 +3,23 @@
 
   <!-- TODO: make dotnet packs with this output packages without references -->
 
-  <PropertyGroup>
-    <CoreCompileDependsOn>PrivateAllProjectReferences;$(CoreCompileDependsOn)</CoreCompileDependsOn>
-    <BeforePack>PrivateAllProjectReferences;$(BeforePack)</BeforePack>
-  </PropertyGroup>
-  
-  <Target Name="PrivateAllProjectReferences" BeforeTargets="Restore;GenerateRestoreGraphFile;_LoadRestoreGraphEntryPoints">
-    <ItemGroup>
-      <ProjectReference>
-        <PrivateAssets>all</PrivateAssets>
-        <Private>true</Private>
-      </ProjectReference>
-      <PackageReference Condition="'$(DoNotMergeNugetPackages)' != 'true'">
-        <PrivateAssets>all</PrivateAssets>
-        <Private>true</Private>
-      </PackageReference>
-      <PackageReference Condition="'$(DoNotMergeNugetPackages)' == 'true'">
-        <PrivateAssets>none</PrivateAssets>
-        <Private>false</Private>
-      </PackageReference>
-    </ItemGroup>
-  </Target>
+  <ItemDefinitionGroup>
+    <ProjectReference>
+      <PrivateAssets>all</PrivateAssets>
+      <Private>true</Private>
+      <Pack>false</Pack>
+    </ProjectReference>
+    <PackageReference Condition="'$(DoNotMergeNugetPackages)' != 'true'">
+      <PrivateAssets>all</PrivateAssets>
+      <Private>true</Private>
+      <Pack>false</Pack>
+    </PackageReference>
+    <PackageReference Condition="'$(DoNotMergeNugetPackages)' == 'true'">
+      <PrivateAssets>none</PrivateAssets>
+      <Private>false</Private>
+      <Pack>true</Pack>
+    </PackageReference>
+  </ItemDefinitionGroup>
   
   <!-- This is mostly pulled from the SDK files  -->
   <Target Name="ComputeILLinkProps">
@@ -93,8 +89,6 @@
           AfterTargets="CoreCompile"
           BeforeTargets="ILRepacker"
           DependsOnTargets="ComputeILLinkProps">
-
-    <Message Importance="high" Text="$(OutpuPath) $(IntermediateOutputPath) $(OutputSubName)" />
     
     <ItemGroup>
       <_LinkInputAssemblies Include="@(IntermediateAssembly)" />
