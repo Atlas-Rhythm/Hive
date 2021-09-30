@@ -58,6 +58,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{C6CF4A49-70F0-47B5-993D-A782197BE815}"
 	ProjectSection(SolutionItems) = preProject
 		tools\_EmptyProjectForILRepack.targets = tools\_EmptyProjectForILRepack.targets
+		tools\Artifacts.targets = tools\Artifacts.targets
 		tools\Artifacts.props = tools\Artifacts.props
 		tools\InternalsVisibleToItemGroup.targets = tools\InternalsVisibleToItemGroup.targets
 		tools\LiteralAssemblyAttributeItemGroup.targets = tools\LiteralAssemblyAttributeItemGroup.targets

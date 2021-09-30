@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" InitialTargets="SetRealOutputPath">
+
+  <Target Name="SetRealOutputPath">
+    <PropertyGroup>
+      <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)\$(OutputSubName)\</IntermediateOutputPath>
+      <OutputPath>$(BaseOutputPath)$(Configuration)\$(OutputSubName)\</OutputPath>
+    </PropertyGroup>
+  </Target>
+  
+</Project>

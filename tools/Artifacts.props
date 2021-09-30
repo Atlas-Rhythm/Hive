@@ -6,6 +6,8 @@
 		<PackageOutputPath>$(HiveArtifactsPath)packages\$(Configuration)\</PackageOutputPath>
 		<BaseIntermediateOutputPath>$(HiveArtifactsPath)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
 		<BaseOutputPath>$(HiveArtifactsPath)bin\$(MSBuildProjectName)\</BaseOutputPath>
+
+    <OutputSubName>$(TargetFramework)</OutputSubName>
 	</PropertyGroup>
   
 </Project>
