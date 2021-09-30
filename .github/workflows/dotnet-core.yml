@@ -48,3 +48,6 @@ jobs:
         run: dotnet build --no-restore -c Release -clp:NoSummary
       - name: Test
         run: dotnet test --no-restore -c Release -clp:NoSummary
+      - name: Pack
+        shell: pwsh
+        run: .\buildPackages.ps1 -c Release -clp:NoSummary
