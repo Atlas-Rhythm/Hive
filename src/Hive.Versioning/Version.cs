@@ -6,7 +6,6 @@ using System.Linq;
 using Hive.Utilities;
 using static Hive.Versioning.ParseHelpers;
 using Hive.Versioning.Resources;
-using System.Runtime.CompilerServices;
 
 #if !NETSTANDARD2_0
 using StringPart = System.ReadOnlySpan<char>;
@@ -203,13 +202,8 @@ namespace Hive.Versioning
         /// <param name="a">The first version to compare.</param>
         /// <param name="b">The second version to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is greater than <paramref name="b"/>, <see langword="false"/></returns>
-        public static bool operator >(Version a, Version b)
-        {
-            if (a is null) throw new ArgumentNullException(nameof(a));
-            if (b is null) throw new ArgumentNullException(nameof(b));
-
-            return a.CompareTo(b) > 0;
-        }
+        public static bool operator >(Version? a, Version? b)
+            => a is not null && a.CompareTo(b) > 0;
 
         /// <summary>
         /// Checks if <paramref name="a"/> is less than <paramref name="b"/>.
@@ -217,13 +211,8 @@ namespace Hive.Versioning
         /// <param name="a">The first version to compare.</param>
         /// <param name="b">The second version to compare.</param>
         /// <returns><see langword="true"/> if <paramref name="a"/> is less than <paramref name="b"/>, <see langword="false"/></returns>
-        public static bool operator <(Version a, Version b)
-        {
-            if (a is null) throw new ArgumentNullException(nameof(a));
-            if (b is null) throw new ArgumentNullException(nameof(b));
-
-            return a.CompareTo(b) < 0;
-        }
+        public static bool operator <(Version? a, Version? b)
+            => (a is not null || b is not null) && (a is null || a.CompareTo(b) < 0);
 
         /// <summary>
         /// Checks if <paramref name="a"/> is greater than or equal to <paramref name="b"/>.
@@ -293,14 +282,6 @@ namespace Hive.Versioning
             && Major == other.Major && Minor == other.Minor && Patch == other.Patch
             && prereleaseIds.Length == other.prereleaseIds.Length
             && prereleaseIds.Zip(other.prereleaseIds, (a, b) => a == b).All(a => a);
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Assert([DoesNotReturnIf(false)] bool value)
-        {
-            if (!value)
-                throw new InvalidOperationException(SR.AssertionFailed);
-        }
 
         /// <summary>
         /// Compares this version to another version according to the SemVer specification.

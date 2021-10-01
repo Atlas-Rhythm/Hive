@@ -105,10 +105,10 @@ namespace Hive.Versioning
                     default: throw new InvalidOperationException();
                 }
             }
-            else if (additionalComparer != null)
-                comparer = additionalComparer;
             else
-                comparer = other.additionalComparer;
+            {
+                comparer = additionalComparer != null ? additionalComparer : other.additionalComparer;
+            }
 
             var allSubranges = new Subrange[subranges.Length + other.subranges.Length + (subrange != null ? 1 : 0)];
             Array.Copy(subranges, allSubranges, subranges.Length);
@@ -313,6 +313,8 @@ namespace Hive.Versioning
         /// <returns><see langword="true"/> if <paramref name="version"/> matches, <see langword="false"/> otherwise.</returns>
         public bool Matches(Version version)
         {
+            if (version is null) throw new ArgumentNullException(nameof(version));
+
             if (additionalComparer?.Matches(version) ?? false)
                 return true;
             foreach (var range in subranges)
