@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+  hive:
+    image: hive:latest
+    restart: unless-stopped
+    environment:
+      - ConnectionStrings__Default=User ID=postgres;Password=please-change-me;Host=db;Port=5432;Database=hive;Pooling=true;
+    depends_on:
+      - db
+    # volumes:
+    #  - /path/to/hive/plugins:/app/plugins
+  db:
+    image: postgres:12.8
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=hive
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=please-change-me
+    ports:
+      - "21034:5432" # 21034 is the exposed port
