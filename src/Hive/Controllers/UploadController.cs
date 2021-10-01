@@ -232,6 +232,7 @@ namespace Hive.Controllers
             /// The type of result that this structure represents.
             /// </summary>
             [JsonPropertyName("type")]
+            [JsonConverter(typeof(JsonStringEnumConverter))]
             public ResultType Type { get; init; }
 
             /// <summary>
