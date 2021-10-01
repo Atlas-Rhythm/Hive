@@ -1,8 +1,8 @@
-﻿#if !NETSTANDARD2_1
-namespace System.Diagnostics.CodeAnalysis
+﻿namespace System.Diagnostics.CodeAnalysis
 {
     // Effectively the Microsoft implementation for when it doesn't exist for my convenience
 
+#if !NETSTANDARD2_1
     /// <summary>
     /// Specifies that when a method returns <see cref="ReturnValue"/>,
     /// the parameter may be <see langword="null"/> even if the corresponding type disallows it.
@@ -72,5 +72,5 @@ namespace System.Diagnostics.CodeAnalysis
         /// </summary>
         public bool ParameterValue { get; }
     }
-}
 #endif
+}

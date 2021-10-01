@@ -6,6 +6,7 @@ using System.Linq;
 using Hive.Utilities;
 using static Hive.Versioning.ParseHelpers;
 using Hive.Versioning.Resources;
+using System.Runtime.CompilerServices;
 
 #if !NETSTANDARD2_0
 using StringPart = System.ReadOnlySpan<char>;
@@ -293,6 +294,14 @@ namespace Hive.Versioning
             && prereleaseIds.Length == other.prereleaseIds.Length
             && prereleaseIds.Zip(other.prereleaseIds, (a, b) => a == b).All(a => a);
 
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void Assert([DoesNotReturnIf(false)] bool value)
+        {
+            if (!value)
+                throw new InvalidOperationException(SR.AssertionFailed);
+        }
+
         /// <summary>
         /// Compares this version to another version according to the SemVer specification.
         /// </summary>
@@ -303,11 +312,7 @@ namespace Hive.Versioning
         {
             if (other is null) return 1;
 
-            var val = Major.CompareTo(other.Major);
-            if (val != 0) return val;
-            val = Minor.CompareTo(other.Minor);
-            if (val != 0) return val;
-            val = Patch.CompareTo(other.Patch);
+            var val = CompareNumericOnly(other);
             if (val != 0) return val;
 
             if (prereleaseIds.Length != 0 && other.prereleaseIds.Length == 0)
@@ -349,6 +354,20 @@ namespace Hive.Versioning
                 return 1;
             if (prereleaseIds.Length < other.prereleaseIds.Length)
                 return -1;
+            return 0;
+        }
+
+        internal int CompareNumericOnly(Version? other)
+        {
+            if (other is null) return 1;
+
+            var val = Major.CompareTo(other.Major);
+            if (val != 0) return val;
+            val = Minor.CompareTo(other.Minor);
+            if (val != 0) return val;
+            val = Patch.CompareTo(other.Patch);
+            if (val != 0) return val;
+
             return 0;
         }
 

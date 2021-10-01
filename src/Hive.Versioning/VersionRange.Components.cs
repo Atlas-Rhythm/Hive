@@ -34,8 +34,11 @@ namespace Hive.Versioning
             GreaterEqual = Greater | ExactEqual,
             Less = 4,
             LessEqual = Less | ExactEqual,
+            PreRelease = 8,
+            PreReleaseGreaterEqual = GreaterEqual | PreRelease,
+            PreReleaseLess = Less | PreRelease,
 
-            _All = ExactEqual | Greater | Less,
+            _All = ExactEqual | Greater | Less | PreRelease,
         }
 
         internal enum CombineResult
@@ -70,8 +73,11 @@ namespace Hive.Versioning
                     ComparisonType.Less => ver < CompareTo,
                     ComparisonType.GreaterEqual => ver >= CompareTo,
                     ComparisonType.LessEqual => ver <= CompareTo,
+                    ComparisonType.PreReleaseGreaterEqual => ver >= CompareTo || ver.CompareNumericOnly(CompareTo) == 0,
+                    ComparisonType.PreReleaseLess => ver < CompareTo && ver.CompareNumericOnly(CompareTo) != 0,
                     ComparisonType.None => throw new NotImplementedException(),
                     ComparisonType._All => throw new NotImplementedException(),
+                    ComparisonType.PreRelease => throw new NotImplementedException(),
                     _ => throw new InvalidOperationException(),
                 };
 
@@ -115,6 +121,9 @@ namespace Hive.Versioning
                         range = new Subrange(new VersionComparer(CompareTo, ComparisonType.Less), new VersionComparer(CompareTo, ComparisonType.Greater));
                         return CombineResult.OneSubrange;
 
+                    case ComparisonType.PreRelease:
+                    case ComparisonType.PreReleaseGreaterEqual:
+                    case ComparisonType.PreReleaseLess:
                     case ComparisonType.None:
                     case ComparisonType.Greater:
                     case ComparisonType.GreaterEqual:
@@ -130,9 +139,12 @@ namespace Hive.Versioning
                                 ComparisonType.GreaterEqual => ComparisonType.Less,
                                 ComparisonType.Less => ComparisonType.GreaterEqual,
                                 ComparisonType.LessEqual => ComparisonType.Greater,
+                                ComparisonType.PreReleaseGreaterEqual => ComparisonType.PreReleaseLess,
+                                ComparisonType.PreReleaseLess => ComparisonType.PreReleaseGreaterEqual,
                                 ComparisonType.None => throw new NotImplementedException(),
                                 ComparisonType.ExactEqual => throw new NotImplementedException(),
                                 ComparisonType._All => throw new NotImplementedException(),
+                                ComparisonType.PreRelease => throw new NotImplementedException(),
                                 _ => throw new InvalidOperationException()
                             });
                         return CombineResult.OneComparer;
@@ -725,6 +737,7 @@ namespace Hive.Versioning
             /// </summary>
             private static bool TestExactMeeting(in VersionComparer a, in VersionComparer b)
                 => a.CompareTo == b.CompareTo
+                && (a.Type & ComparisonType.PreRelease) == (b.Type & ComparisonType.PreRelease) // they both treat prereleases the same
                 && (a.Type & b.Type & ~ComparisonType.ExactEqual) == ComparisonType.None  // they have opposite directions
                 && ((a.Type ^ b.Type) & ComparisonType.ExactEqual) != ComparisonType.None; // there is exactly one equal between them
 
@@ -772,6 +785,8 @@ namespace Hive.Versioning
                 type = ComparisonType.None;
 
                 var copy = text;
+                if (TryTake(ref text, '~'))
+                    type |= ComparisonType.PreRelease;
                 if (TryTake(ref text, '>'))
                     type |= ComparisonType.Greater;
                 else if (TryTake(ref text, '<'))
@@ -779,7 +794,7 @@ namespace Hive.Versioning
                 if (TryTake(ref text, '='))
                     type |= ComparisonType.ExactEqual;
 
-                if (type == ComparisonType.None)
+                if (!CheckCompareType(type))
                 {
                     text = copy;
                     return false;
@@ -788,10 +803,21 @@ namespace Hive.Versioning
                 return true;
             }
 
+            private static bool CheckCompareType(ComparisonType type)
+                => type is ComparisonType.ExactEqual
+                or ComparisonType.Greater
+                or ComparisonType.GreaterEqual
+                or ComparisonType.Less
+                or ComparisonType.LessEqual
+                or ComparisonType.PreReleaseGreaterEqual
+                or ComparisonType.PreReleaseLess;
+
             public StringBuilder ToString(StringBuilder sb)
             {
                 if (Type == ComparisonType.None) return sb.Append("default");
 
+                if ((Type & ComparisonType.PreRelease) != ComparisonType.None)
+                    _ = sb.Append('~');
                 if ((Type & ComparisonType.Greater) != ComparisonType.None)
                     _ = sb.Append('>');
                 if ((Type & ComparisonType.Less) != ComparisonType.None)
@@ -891,7 +917,9 @@ namespace Hive.Versioning
                 else
                     upper = new Version(0, 0, lower.Patch + 1);
 
-                range = new Subrange(new VersionComparer(lower, ComparisonType.GreaterEqual), new VersionComparer(upper, ComparisonType.Less));
+                // caret ranges want the upper bound to exclude prereleases
+                range = new Subrange(new VersionComparer(lower, ComparisonType.GreaterEqual),
+                    new VersionComparer(upper, ComparisonType.PreReleaseLess));
                 return true;
             }
 
@@ -921,7 +949,8 @@ namespace Hive.Versioning
                     return false;
                 }
 
-                range = new(new(lowVersion, ComparisonType.GreaterEqual), new(highVersion, ComparisonType.LessEqual));
+                range = new(new(lowVersion, ComparisonType.GreaterEqual),
+                    new(highVersion, ComparisonType.LessEqual));
                 return true;
             }
 
@@ -954,7 +983,9 @@ namespace Hive.Versioning
                     // we now have a star range
                     var versionBase = new Version(majorNum, 0, 0);
                     var versionUpper = new Version(majorNum + 1, 0, 0);
-                    range = new Subrange(new VersionComparer(versionBase, ComparisonType.GreaterEqual), new VersionComparer(versionUpper, ComparisonType.Less));
+                    // the range shouldn't include prereleases of the upper bound
+                    range = new Subrange(new VersionComparer(versionBase, ComparisonType.GreaterEqual),
+                        new VersionComparer(versionUpper, ComparisonType.PreReleaseLess));
                     return true;
                 }
 
@@ -978,13 +1009,15 @@ namespace Hive.Versioning
                 // we now have a star range
                 var versionBase2 = new Version(majorNum, minorNum, 0);
                 var versionUpper2 = new Version(majorNum, minorNum + 1, 0);
-                range = new Subrange(new VersionComparer(versionBase2, ComparisonType.GreaterEqual), new VersionComparer(versionUpper2, ComparisonType.Less));
+                // the range shouldn't include prereleases of the upper bound
+                range = new Subrange(new VersionComparer(versionBase2, ComparisonType.GreaterEqual),
+                    new VersionComparer(versionUpper2, ComparisonType.PreReleaseLess));
                 return true;
             }
 
             public StringBuilder ToString(StringBuilder sb)
             {
-                if (LowerBound.Type == ComparisonType.GreaterEqual && UpperBound.Type == ComparisonType.Less)
+                if (LowerBound.Type == ComparisonType.GreaterEqual && UpperBound.Type == ComparisonType.PreReleaseLess)
                 {
                     var lower = LowerBound.CompareTo;
                     var upper = UpperBound.CompareTo;
