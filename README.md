@@ -12,7 +12,7 @@ A general backend project for modding communities.
 ### PostgreSQL
 
 - PostgreSQL >= 12.0
-- Add a connection string with the name `Default` to your project secrets of Hive. This should be used for connecting to 
+- Add a connection string with the name `Default` to your project secrets of Hive. This should be used for connecting to
   Hive's specific database.
   - Example: `User ID=postgres;Password=postgres;Host=localhost;Port=5432;Database=postgres;Pooling=true;`
 - Add a connection string (without a database) to the name `Test` to your project secrets of Hive. This is used in Hive.Tests for creating test databases.
@@ -38,3 +38,15 @@ See the documentation for [`Hive.Plugins`](docs/Hive.Plugins/) for information a
 Configuration is done from Hive's `appsettings.json` file, located in the root of its directory.
 
 For configuration documentation, [see the dedicated documentation page.](docs/Hive/Configuration.md)
+
+## Docker
+
+Running on Docker is relatively straightforward but takes some extra configuration.
+
+Pull the `docker-compose.yml` file from the root of the repo.
+
+Update the password fields in `docker-compose.yml`, as well as any other setting you would like to change.
+
+Run the compose file with `docker-compose up`.
+
+Plugins are loaded by mapping a volume with a host machine. See the commented out line in the compose file example.
