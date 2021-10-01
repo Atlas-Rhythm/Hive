@@ -3,12 +3,8 @@
   <!-- Deliberately do not import parent Directory.Build.targets -->
   
   <Import Project="$(HiveToolsDirectory)SdkGetProperty.targets" />
-
-  <PropertyGroup>
-    <BeforePack>$(BeforePack);BuildContentTemplates</BeforePack>
-  </PropertyGroup>
   
-  <Target Name="BuildContentTemplates">
+  <Target Name="BuildContentTemplates" BeforeTargets="_CollectInferenceCandidates">
     <!-- Get SDK Information -->
     <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=PackageId"
              Projects="$(SdkProject)">
@@ -32,6 +28,8 @@
              Properties="SdkPackageId=$(_SdkName);SdkVersion=$(_SdkVersion);_ContentTemplate=%(ContentTemplate.Identity)">
       <Output TaskParameter="TargetOutputs" ItemName="Content" />
     </MSBuild>
+
+    <Message Importance="high" Text="C: @(Content->'%(BuildAction)')" />
   </Target>
 
   <PropertyGroup>
@@ -39,7 +37,7 @@
   </PropertyGroup>
   
   <Target Name="_ProcessContentTemplate" Returns="@(_FileOut)">
-    <Message Importance="normal" Text="CT: $(_ContentTemplate)" />
+    <Message Importance="high" Text="CT: $(_ContentTemplate)" />
     <ReadLinesFromFile File="$(_ContentTemplate)">
       <Output TaskParameter="Lines" ItemName="_FileLines" />
     </ReadLinesFromFile>
@@ -55,7 +53,7 @@
     <ItemGroup>
       <_FileIn Include="$(_ContentTemplate)" />
       <_FileOut Include="$(_ContentTemplateOutputPath)%(_FileIn.RelativeDir)%(Filename)%(Extension)"
-                PackagePath="$(ContentTargetFolders)\%(RelativeDir)%(Filename)%(Extension)" />
+                PackFolder="$(ContentTargetFolders)\%(_FileIn.RelativeDir)" />
       <FileWrites Include="@(_FileOut)" />
     </ItemGroup>
     <MakeDir Directories="%(_FileOut.Directory)" />

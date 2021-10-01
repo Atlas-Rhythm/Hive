@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="PluginTemplate\*" />
+    <Content Include="PluginTemplate\*" FrameworkSpecific="false" PackFolder="$(ContentTargetFolders)\" />
     <ContentTemplate Include="PluginTemplate\.template.config\template.json" />
   </ItemGroup>
   

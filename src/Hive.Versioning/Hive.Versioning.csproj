@@ -5,6 +5,7 @@
     
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <VersionPrefix>0.1.0</VersionPrefix>
+    <DoesBuildStandalone>true</DoesBuildStandalone>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -24,10 +24,17 @@
 
   <Target Name="MoveTestPlugin" AfterTargets="AfterBuild">
     <MakeDir Directories="$(OutputPath)plugins\Hive.Plugins.Tests.TestPlugin" />
+    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=OutputPath;TargetFramework=$(TargetFramework)"
+             Projects="..\Hive.Plugins.Tests.TestPlugin\Hive.Plugins.Tests.TestPlugin.csproj">
+      <Output TaskParameter="TargetOutputs" ItemName="_TestPlugOutputPath" />
+    </MSBuild>
+    <PropertyGroup>
+      <_TestPlugOutputPath>@(_TestPlugOutputPath)</_TestPlugOutputPath>
+    </PropertyGroup>
     <ItemGroup>
-      <FilesToMove Include="$(MSBuildThisFileDirectory)\..\Hive.Plugins.Tests.TestPlugin\bin\$(Configuration)\$(TargetFramework)\*" />
+      <FilesToMove Include="$(_TestPlugOutputPath)*" />
     </ItemGroup>
     <Copy SourceFiles="@(FilesToMove)" DestinationFolder="$(OutputPath)plugins\Hive.Plugins.Tests.TestPlugin" />
   </Target>
-  
+
 </Project>

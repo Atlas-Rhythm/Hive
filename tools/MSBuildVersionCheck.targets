@@ -11,7 +11,7 @@
   <Target Name="EnsureSupportedMSBuildVersion"
           BeforeTargets="CoreCompile"
           Condition="'$(MSBuildRequiredVersion)' != ''">
-    <Error Code="HB0001" ContinueOnError="false" Text="MSBuild version is too old to build this project; currently $(MSBuildVersion) needs at least $(MSBuildRequiredVersion)"
+    <Error Code="HB0001" ContinueOnError="false" Text="MSBuild version is too old to build this project; currently $(MSBuildVersion), needs at least $(MSBuildRequiredVersion)"
            Condition="$([MSBuild]::VersionLessThan('$(MSBuildVersion)', '$(MSBuildRequiredVersion)'))" />
   </Target>
   

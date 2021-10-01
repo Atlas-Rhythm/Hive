@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis" Version="$(RoslynVersion)" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis" Version="$(RoslynVersion)" />
     <PackageReference Include="System.Xml.XDocument" Version="4.*" PrivateAssets="all" />
   </ItemGroup>
   
@@ -21,11 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" PrivateAssets="all" Private="true" />
+    <ProjectReference Include="..\Hive.CodeGen.Attributes\Hive.CodeGen.Attributes.csproj" />
   </ItemGroup>
-
+  
   <ItemGroup>
-    <None Include="build\*" Pack="true" PackagePath="build\" />
+    <PackageFile Include="build\*" />
   </ItemGroup>
   
 </Project>

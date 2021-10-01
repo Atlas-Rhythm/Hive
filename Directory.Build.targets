@@ -15,19 +15,26 @@
     <When Condition="'$(IsRoslynExtension)' == 'true'">
       <PropertyGroup>
         <IncludeBuildOutput>false</IncludeBuildOutput>
-        <BeforePack>$(BeforePack);AddAnalyzerAssembly</BeforePack>
         <NoWarn>$(NoWarn);NU5128</NoWarn>
       </PropertyGroup>
       
       <ItemGroup>
         <PackageReference Update="NETStandard.Library" PrivateAssets="all" />
+        <PackageReference Update="Microsoft.CodeAnalysis" Pack="false" />
       </ItemGroup>
     </When>
   </Choose>
 
-  <Target Name="AddAnalyzerAssembly" Condition="'$(IsRoslynExtension)' == 'true'">
+  <Target Name="SetAnalyzerPackProps" BeforeTargets="InferPackageContents"
+          Condition="'$(IsRoslynExtension)' == 'true'">
+    <PropertyGroup>
+      <PackFrameworkReferences>false</PackFrameworkReferences>
+      <BuildOutputFrameworkSpecific>false</BuildOutputFrameworkSpecific>
+      <PackFolder>analyzers/dotnet/cs</PackFolder>
+    </PropertyGroup>
     <ItemGroup>
-      <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+      <PackageFile Include="$(HiveToolsDirectory)analyzers\install.ps1" PackagePath="/tools/install.ps1" />
+      <PackageFile Include="$(HiveToolsDirectory)analyzers\uninstall.ps1" PackagePath="/tools/uninstall.ps1" />
     </ItemGroup>
   </Target>
 
@@ -37,6 +44,6 @@
   <Import Project="$(HiveToolsDirectory)SdkGetProperty.targets" />
   
   <Import Project="$(HiveSourceDirectory)\CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets" Condition="'$(IsCodeGen)' != 'true'" />
-  <Import Project="$(HiveToolsDirectory)Packaging.targets" Condition="'$(BuildingStandalone)' == 'true'" />
+  <Import Project="$(HiveToolsDirectory)Packaging.targets" Condition="'$(BuildingStandalone)' == 'true' and '$(DoesBuildStandalone)' == 'true'" />
 
 </Project>
