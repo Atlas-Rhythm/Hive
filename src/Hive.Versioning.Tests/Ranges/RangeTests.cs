@@ -374,6 +374,7 @@ namespace Hive.Versioning.Tests.Ranges
         [Theory]
         [InlineData(">= 1.0.0 <4.0.0", "^1.0.0", "^1.0.0")]
         [InlineData(">= 1.0.1 <4.0.0", "^1.0.0", "^1.0.1")]
+        [InlineData("^1.0.0", "<1.0.0 || ~>=2.0.0", "z")]
         public void TestConjunction(string Sa, string Sb, string Sexpect)
         {
             Assert.True(VersionRange.TryParse(Sa, out var a));

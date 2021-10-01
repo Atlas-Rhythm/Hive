@@ -39,6 +39,7 @@ namespace Hive.Versioning
             PreReleaseLess = Less | PreRelease,
 
             _All = ExactEqual | Greater | Less | PreRelease,
+            _DirectionMask = Greater | Less,
         }
 
         internal enum CombineResult
@@ -78,6 +79,7 @@ namespace Hive.Versioning
                     ComparisonType.None => throw new NotImplementedException(),
                     ComparisonType._All => throw new NotImplementedException(),
                     ComparisonType.PreRelease => throw new NotImplementedException(),
+                    ComparisonType._DirectionMask => throw new NotImplementedException(),
                     _ => throw new InvalidOperationException(),
                 };
 
@@ -130,6 +132,7 @@ namespace Hive.Versioning
                     case ComparisonType.Less:
                     case ComparisonType.LessEqual:
                     case ComparisonType._All:
+                    case ComparisonType._DirectionMask:
                     default:
                         range = default;
                         comparer = new VersionComparer(CompareTo,
@@ -145,6 +148,7 @@ namespace Hive.Versioning
                                 ComparisonType.ExactEqual => throw new NotImplementedException(),
                                 ComparisonType._All => throw new NotImplementedException(),
                                 ComparisonType.PreRelease => throw new NotImplementedException(),
+                                ComparisonType._DirectionMask => throw new NotImplementedException(),
                                 _ => throw new InvalidOperationException()
                             });
                         return CombineResult.OneComparer;
@@ -738,7 +742,7 @@ namespace Hive.Versioning
             private static bool TestExactMeeting(in VersionComparer a, in VersionComparer b)
                 => a.CompareTo == b.CompareTo
                 && (a.Type & ComparisonType.PreRelease) == (b.Type & ComparisonType.PreRelease) // they both treat prereleases the same
-                && (a.Type & b.Type & ~ComparisonType.ExactEqual) == ComparisonType.None  // they have opposite directions
+                && (a.Type & b.Type & ComparisonType._DirectionMask) == ComparisonType.None  // they have opposite directions
                 && ((a.Type ^ b.Type) & ComparisonType.ExactEqual) != ComparisonType.None; // there is exactly one equal between them
 
             public bool Equals(Subrange other)
