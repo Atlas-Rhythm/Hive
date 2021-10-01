@@ -4,7 +4,6 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
-using static Hive.Versioning.ParseHelpers;
 
 #if !NETSTANDARD2_0
 using StringPart = System.ReadOnlySpan<char>;
@@ -33,7 +32,7 @@ namespace Hive.Versioning
         {
             text = text.Trim();
 
-            if (!TryParse(ref text, out var ranges, out additionalComparer) || text.Length > 0)
+            if (!RangeParser.TryParse(ref text, out var ranges, out additionalComparer) || text.Length > 0)
                 throw new ArgumentException(SR.Range_InputInvalid, nameof(text));
 
             (ranges, additionalComparer) = FixupRangeList(ranges, additionalComparer);
@@ -325,12 +324,10 @@ namespace Hive.Versioning
             return false;
         }
 
-        private static readonly Subrange[] EverythingSubranges = new[] { Subrange.Everything };
-
         /// <summary>
         /// The <see cref="VersionRange"/> that matches all <see cref="Version"/>s.
         /// </summary>
-        public static VersionRange Everything { get; } = new VersionRange(EverythingSubranges, null);
+        public static VersionRange Everything { get; } = new VersionRange(RangeParser.EverythingSubranges, null);
 
         /// <summary>
         /// The <see cref="VersionRange"/> that matches no <see cref="Version"/>s.
@@ -411,7 +408,7 @@ namespace Hive.Versioning
                     case CombineResult.Everything:
                         // if any combo is everything, we can skip all the ceremony and make our result everything
                         ab.Clear();
-                        return (EverythingSubranges, null);
+                        return (RangeParser.EverythingSubranges, null);
 
                     default: throw new InvalidOperationException();
                 }
@@ -474,7 +471,7 @@ namespace Hive.Versioning
                         if (comparer.Value.Matches(current.LowerBound))
                         { // if we match the lower bound, then these two match everything
                             //ab.Clear();
-                            returnResult = (EverythingSubranges, null);
+                            returnResult = (RangeParser.EverythingSubranges, null);
                             return CombineWithComparerResult.ReturnEarly;
                         }
                         else if (comparer.Value.Matches(current.UpperBound))
@@ -492,7 +489,7 @@ namespace Hive.Versioning
                     {
                         if (comparer.Value.Matches(current.UpperBound))
                         { // if we match the upper bound, then these two match everything
-                            returnResult = (EverythingSubranges, null);
+                            returnResult = (RangeParser.EverythingSubranges, null);
                             return CombineWithComparerResult.ReturnEarly;
                         }
                         else if (comparer.Value.Matches(current.LowerBound))
@@ -668,7 +665,7 @@ namespace Hive.Versioning
 
         private static bool TryParse(ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out VersionRange range)
         {
-            if (!TryParse(ref text, out var srs, out var compare))
+            if (!RangeParser.TryParse(ref text, out var srs, out var compare))
             {
                 range = null;
                 return false;
@@ -680,7 +677,7 @@ namespace Hive.Versioning
             }
 
             // check for our everything range array as a minor optimization
-            if (srs == EverythingSubranges)
+            if (srs == RangeParser.EverythingSubranges)
             {
                 range = Everything;
                 return true;
@@ -696,117 +693,5 @@ namespace Hive.Versioning
             return true;
         }
 
-        #region Parser
-
-        [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
-        private static bool TryParse(ref StringPart text, [MaybeNullWhen(false)] out Subrange[] sranges, out VersionComparer? comparer)
-        {
-            sranges = null;
-            comparer = null;
-
-            // check for the "everything" range first, which is just a star
-            if (TryTake(ref text, '*'))
-            {
-                sranges = EverythingSubranges;
-                return true;
-            }
-
-            // then check for the "nothing" range, which is z or Z
-            if (TryTake(ref text, 'z') || TryTake(ref text, 'Z'))
-            {
-                sranges = Array.Empty<Subrange>();
-                return true;
-            }
-
-            if (!TryReadComponent(ref text, out var range, out var compare))
-                return false;
-
-            using var ab = new ArrayBuilder<Subrange>();
-
-            StringPart restoreTo;
-            do
-            {
-                restoreTo = text;
-
-                if (range != null)
-                    ab.Add(range.Value);
-                if (compare != null)
-                {
-                    if (comparer != null)
-                    {
-                        var res = comparer.Value.TryDisjunction(compare.Value, out var newComparer, out var sr);
-                        switch (res)
-                        {
-                            case CombineResult.OneComparer:
-                                comparer = newComparer;
-                                break;
-
-                            case CombineResult.Everything:
-                            case CombineResult.OneSubrange:
-                                ab.Add(sr);
-                                comparer = null;
-                                break;
-
-                            case CombineResult.Unrepresentable:
-                                // one of them is an ExactEqual comparer
-                                if (comparer.Value.Type == ComparisonType.ExactEqual)
-                                {
-                                    ab.Add(comparer.Value.ToExactEqualSubrange());
-                                    comparer = compare;
-                                }
-                                else if (compare.Value.Type == ComparisonType.ExactEqual)
-                                    ab.Add(compare.Value.ToExactEqualSubrange());
-                                else if (comparer.Value.Type == compare.Value.Type)
-                                    comparer = null;
-                                break;
-
-                            default: throw new InvalidOperationException();
-                        }
-                    }
-                    else if (compare.Value.Type == ComparisonType.ExactEqual)
-                    {
-                        ab.Add(compare.Value.ToExactEqualSubrange());
-                    }
-                    else
-                        comparer = compare;
-                }
-
-                text = text.TrimStart();
-                if (!TryTake(ref text, '|') || !TryTake(ref text, '|'))
-                {
-                    text = restoreTo;
-                    sranges = ab.ToArray();
-                    return true;
-                }
-                text = text.TrimStart();
-            }
-            while (TryReadComponent(ref text, out range, out compare));
-
-            text = restoreTo;
-            sranges = ab.ToArray();
-            return true;
-        }
-
-        private static bool TryReadComponent(ref StringPart text, out Subrange? range, out VersionComparer? compare)
-        {
-            if (Subrange.TryParse(ref text, false, out var sr))
-            {
-                range = sr;
-                compare = null;
-                return true;
-            }
-
-            if (VersionComparer.TryParse(ref text, out var comp))
-            {
-                range = null;
-                compare = comp;
-                return true;
-            }
-
-            range = null;
-            compare = null;
-            return false;
-        }
-        #endregion Parser
     }
 }

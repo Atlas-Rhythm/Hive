@@ -148,7 +148,7 @@ namespace Hive.Versioning.Tests.Ranges
             var expect = valid ? CreateComparer(verS, typeS) : default;
 
             StringPart text = input;
-            Assert.Equal(valid, VersionComparer.TryParse(ref text, out var comparer));
+            Assert.Equal(valid, RangeParser.TryParseComparer(ref text, out var comparer));
             if (valid)
             {
                 Assert.Equal(expect.Type, comparer.Type);
