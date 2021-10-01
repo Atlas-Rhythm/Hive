@@ -40,6 +40,24 @@
             The range matches only the <see cref="T:Hive.Versioning.Version"/> that it is specified with.
           </description>
         </item>
+        <item>
+          <term>
+            <c>~&lt;</c>
+          </term>
+          <description>
+            The unbounded range matches any <see cref="T:Hive.Versioning.Version"/> less than its specified <see cref="T:Hive.Versioning.Version"/>, excluding
+            prereleases of its specified <see cref="T:Hive.Versioning.Version"/>.
+          </description>
+        </item>
+        <item>
+          <term>
+            <c>~&gt;=</c>
+          </term>
+          <description>
+            The unbounded range matches any <see cref="T:Hive.Versioning.Version"/> greater than or equal to its specified <see cref="T:Hive.Versioning.Version"/>,
+            including any prereleases of its specified <see cref="T:Hive.Versioning.Version"/>.
+          </description>
+        </item>
       </list>
       <para>Note that unbounded ranges using the <c>=</c> comparison operator cannot be part of a bounded region.</para>
       <para>Additionally, there are the following shorthand comparison operators that expand to bounded regions:</para>
@@ -48,8 +66,8 @@
           <term><c>^</c></term>
           <description>
             The bounded range matches all versions greater than or equal to its specified <see cref="T:Hive.Versioning.Version"/> and less than the next major incremented
-            version. For example, <c>^1.5.4</c> would be equivalent to the bounded range <c>&gt;=1.5.4 &lt;2.0.0</c>, while <c>^0.4.2</c> would be equivalent
-            to <c>&gt;=0.4.2 &lt;0.5.0</c>.
+            version. For example, <c>^1.5.4</c> would be equivalent to the bounded range <c>&gt;=1.5.4 ~&lt;2.0.0</c>, while <c>^0.4.2</c> would be equivalent
+            to <c>&gt;=0.4.2 ~&lt;0.5.0</c>.
           </description>
         </item>
       </list>
@@ -77,10 +95,10 @@
         except the singular <c>*</c>, any <c>*</c> may also be an <c>x</c> or <c>X</c>.
       </para>
       <para>
-        A bounded regioon may also be specified using hyphen syntax, though it is generally not recommended, as it is not always clear to a reader
+        A bounded region may also be specified using hyphen syntax, though it is generally not recommended, as it is not always clear to a reader
         what exactly is meant, and is remarkably easy to mess up. The syntax for this is <c>1.2.3 - 4.5.6</c>, of course substituting <c>1.2.3</c>
-        and <c>4.5.6</c> with any valid version. The space before is <b>required</b>. This is important. the space <i>after the first version,
-        before the hyphen, is</i> <b>required</b>. This is because <c>1.2.3-4.5.6</c> is a valid, and <i>complete</i>, version, causing the parser
+        and <c>4.5.6</c> with any valid version. The space before is <b>required</b>. This is important. The space <i>after the first version,
+        before the hyphen</i>, is <b>required</b>. This is because <c>1.2.3-4.5.6</c> is a valid, and <i>complete</i>, version, causing the parser
         to try to read the first version in the hyphen range, then hit the end of input instead of a hyphen and back out, eventually rejecting the
         range altogether, because <b>a version by itself is not a valid version range</b>. <c>1.2.3- 4.5.6</c> is also not valid, because it
         is an <i>incomplete</i> version followed by a complete, simple version. Since incomplete versions are rejected, it means that this attempts
