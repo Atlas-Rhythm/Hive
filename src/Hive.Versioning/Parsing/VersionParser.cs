@@ -21,18 +21,23 @@ namespace Hive.Versioning
 
         ECoreVersionNumber,
         ECoreVersionDot,
+        FCoreVersion,
 
         EPrerelease,
         EPrereleaseId,
         EPrereleaseIdDot,
+        FPrerelease,
 
         EBuild,
         EBuildId,
         EBuildIdDot,
+        FBuild,
 
         EAlphaNumericId,
+        FAlphaNumericId,
         ENumericId,
         EValidNumericId,
+        FValidNumericId,
 
         ExtraInput,
     }
@@ -122,6 +127,7 @@ namespace Hive.Versioning
                 return false;
             }
 
+            errors.Report(VersionParseAction.FCoreVersion, copy);
             return true;
         }
 
@@ -139,6 +145,7 @@ namespace Hive.Versioning
                     if (!TryTake(ref text, '.'))
                     { // exit condition
                         prereleaseIds = ab.ToArray();
+                        errors.Report(VersionParseAction.FPrerelease, copy);
                         return true;
                     }
                 }
@@ -175,6 +182,7 @@ namespace Hive.Versioning
                     if (!TryTake(ref text, '.'))
                     { // exit condition
                         buildIds = ab.ToArray();
+                        errors.Report(VersionParseAction.FBuild, copy);
                         return true;
                     }
                 }
@@ -195,6 +203,7 @@ namespace Hive.Versioning
 
         private static bool TryReadAlphaNumId(ref ErrorState errors, ref StringPart text, out StringPart id, bool skipNonDigitCheck = false)
         {
+            var copy = text;
             if (text.Length == 0)
             {
                 id = default;
@@ -244,6 +253,8 @@ namespace Hive.Versioning
 
             if (!hasNonDigit)
                 errors.Report(VersionParseAction.EAlphaNumericId, text);
+            else
+                errors.Report(VersionParseAction.FAlphaNumericId, copy);
             return hasNonDigit;
         }
 
@@ -255,10 +266,11 @@ namespace Hive.Versioning
                 if (!ulong.TryParse(id.ToString(), out num))
                 {
                     text = copy;
-                    errors.Report(VersionParseAction.EValidNumericId, text);
+                    errors.Report(VersionParseAction.EValidNumericId, copy);
                     return false;
                 }
 
+                errors.Report(VersionParseAction.FValidNumericId, copy);
                 return true;
             }
 
