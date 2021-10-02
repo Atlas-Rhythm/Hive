@@ -14,6 +14,11 @@ using StringPart = Hive.Utilities.StringView;
 
 namespace Hive.Versioning
 {
+#pragma warning disable IDE0065 // Misplaced using directive
+    // Having this inside the namespace makes it *far* shorter
+    using ErrorState = ParserErrorState<AnyParseAction>;
+#pragma warning restore IDE0065 // Misplaced using directive
+
     /// <summary>
     /// An arbitrary range of <see cref="Version"/>s, capable of matching any possible set of <see cref="Version"/>s.
     /// </summary>
@@ -32,8 +37,9 @@ namespace Hive.Versioning
         {
             text = text.Trim();
 
-            if (!RangeParser.TryParse(ref text, out var ranges, out additionalComparer) || text.Length > 0)
-                throw new ArgumentException(SR.Range_InputInvalid, nameof(text));
+            using var errors = new ErrorState(text);
+            if (!TryParseComponents(errors, ref text, true, out var ranges, out additionalComparer) || text.Length > 0)
+                throw BuildError(errors, nameof(text));
 
             (ranges, additionalComparer) = FixupRangeList(ranges, additionalComparer);
             subranges = ranges;
@@ -615,6 +621,7 @@ namespace Hive.Versioning
         /// <returns><see langword="true"/> if <paramref name="b"/> and <paramref name="b"/> are not equivalent, <see langword="false"/> otherwise.</returns>
         public static bool operator !=(VersionRange? a, VersionRange? b) => !(a == b);
 
+        #region Parsing methods
         /// <summary>
         /// Parses a string as a <see cref="VersionRange"/>.
         /// </summary>
@@ -627,8 +634,9 @@ namespace Hive.Versioning
         /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid <see cref="VersionRange"/>.</exception>
         public static VersionRange Parse(StringPart text)
         {
-            if (!TryParse(text, out var range))
-                throw new ArgumentException(SR.Range_InputInvalid, nameof(text));
+            using var errors = new ErrorState(text); // we do want error info
+            if (!TryParse(errors, text, out var range))
+                throw BuildError(errors, nameof(text));
             return range;
         }
 
@@ -645,7 +653,13 @@ namespace Hive.Versioning
         public static bool TryParse(StringPart text, [MaybeNullWhen(false)] out VersionRange range)
         {
             text = text.Trim();
-            return TryParse(ref text, true, out range) && text.Length == 0;
+            return TryParse(default, ref text, true, out range) && text.Length == 0; // don't report errors
+        }
+
+        public static bool TryParse(in ErrorState errors, StringPart text, [MaybeNullWhen(false)] out VersionRange range)
+        {
+            text = text.Trim();
+            return TryParse(errors, ref text, true, out range) && text.Length == 0; // report errors
         }
 
         /// <summary>
@@ -661,20 +675,18 @@ namespace Hive.Versioning
         /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
         [CLSCompliant(false)]
         public static bool TryParse(ref StringPart text, [MaybeNullWhen(false)] out VersionRange range)
-            => TryParse(ref text, false, out range);
+            => TryParse(default, ref text, false, out range); // don't do error reporting
 
-        private static bool TryParse(ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out VersionRange range)
+        [CLSCompliant(false)]
+        public static bool TryParse(in ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out VersionRange range)
+            => TryParse(errors, ref text, false, out range);
+
+        private static bool TryParse(in ErrorState errors, ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out VersionRange range)
         {
-            if (!RangeParser.TryParse(ref text, out var srs, out var compare))
-            {
-                range = null;
+            range = null;
+
+            if (!TryParseComponents(errors, ref text, checkLength, out var srs, out var compare))
                 return false;
-            }
-            if (checkLength && text.Length > 0)
-            {
-                range = null;
-                return false;
-            }
 
             // check for our everything range array as a minor optimization
             if (srs == RangeParser.EverythingSubranges)
@@ -693,5 +705,26 @@ namespace Hive.Versioning
             return true;
         }
 
+        private static bool TryParseComponents(in ErrorState errors, ref StringPart text, bool checkLength,
+            [MaybeNullWhen(false)] out Subrange[] sranges, out VersionComparer? comparer)
+        {
+            if (!RangeParser.TryParse(errors, ref text, out sranges, out comparer))
+            {
+                return false;
+            }
+            if (checkLength && text.Length > 0)
+            {
+                errors.Report(new(RangeParseAction.ExtraInput), text);
+                return false;
+            }
+
+            return true;
+        }
+        #endregion
+
+        private static Exception BuildError(in ErrorState errors, string argumentName)
+        {
+            return new ArgumentException(SR.Range_InputInvalid, argumentName);
+        }
     }
 }

@@ -387,7 +387,7 @@ namespace Hive.Versioning
         public static bool TryParse(in ErrorState errors, StringPart text, [MaybeNullWhen(false)] out Version version)
         {
             text = text.Trim();
-            return TryParse(ref text, true, out version) && text.Length == 0;
+            return TryParse(errors, ref text, true, out version) && text.Length == 0;
         }
 
         /// <summary>
@@ -409,13 +409,7 @@ namespace Hive.Versioning
             => TryParse(errors, ref text, false, out version);
 
         private static bool TryParse(ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out Version version)
-        {
-            using var errors = new ErrorState(); // we don't want error reporting
-
-            if (!TryParse(errors, ref text, checkLength, out version))
-                return false;
-            return true;
-        }
+            => TryParse(default, ref text, checkLength, out version); // don't do error reporting
 
         private static bool TryParse(in ErrorState errors, ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out Version version)
         {

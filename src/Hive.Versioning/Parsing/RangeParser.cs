@@ -37,6 +37,8 @@ namespace Hive.Versioning
         ComparerVersion,
 
         Component,
+
+        ExtraInput = VersionParseAction.ExtraInput,
     }
 
     public struct AnyParseAction
