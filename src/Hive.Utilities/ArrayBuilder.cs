@@ -77,6 +77,7 @@ namespace Hive.Utilities
             if (array != null && amount <= array.Length) return;
 
             var newSize = array is not null ? array.Length * 2 : 8;
+            newSize = Math.Max(newSize, 8);
             while (amount > newSize)
                 newSize *= 2;
             Resize(newSize);

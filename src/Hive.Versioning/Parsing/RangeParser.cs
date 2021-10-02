@@ -406,7 +406,7 @@ namespace Hive.Versioning
                 text = copy;
                 return false;
             }
-            errors.Dispose();
+            verErrors.Dispose();
 
             range = new(new(lowVersion, ComparisonType.GreaterEqual),
                 new(highVersion, ComparisonType.LessEqual));

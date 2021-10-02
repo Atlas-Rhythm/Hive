@@ -487,5 +487,17 @@ namespace Hive.Versioning.Tests.Ranges
 
             Assert.Equal(expect, range.Matches(version));
         }
+
+        [Theory]
+        [InlineData("1.2.3-4.5.6", false)]
+        [InlineData("1.2.3- 4.5.6", false)]
+        [InlineData("1.2.3 -4.5.6", true)]
+        [InlineData("1.2.3 - 4.5.6", true)]
+        public void TestParseHyphenRanges(string Srange, bool valid)
+        {
+            var errors = new ParserErrorState<AnyParseAction>(Srange);
+            Assert.Equal(valid, VersionRange.TryParse(ref errors, Srange, out _));
+            errors.Dispose();
+        }
     }
 }
