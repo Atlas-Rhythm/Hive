@@ -276,7 +276,9 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData("1.2.", false)]
         public void TestParserValidation(string text, bool valid)
         {
-            Assert.Equal(valid, VersionRange.TryParse(text, out _));
+            var errors = new ParserErrorState<AnyParseAction>(text);
+            Assert.Equal(valid, VersionRange.TryParse(ref errors, text, out _));
+            errors.Dispose();
         }
 
         [Theory]

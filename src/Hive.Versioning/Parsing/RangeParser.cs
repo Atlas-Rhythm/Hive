@@ -25,22 +25,27 @@ namespace Hive.Versioning
         EStarRange1 = RangeParser.RangeFlag,
         EStarRange2,
         EStarRange3,
+        FStarRange,
 
         EHyphenVersion,
         EHyphenVersion2,
         EHyphen,
+        FHyphenRange,
 
         ECaret,
         ECaretVersion,
+        FCaretRange,
 
         ESubrange,
         ESubrange2,
         EOrderedSubrange,
         EClosedSubrange,
+        FSubrange,
 
         ECompareType,
         EComparer,
         EComparerVersion,
+        FComparer,
 
         EComponent,
 
@@ -51,13 +56,16 @@ namespace Hive.Versioning
     {
         public RangeParseAction Value { get; }
         public VersionParseAction VersionAction => (VersionParseAction)Value;
-        public bool IsVersionAction => (Value & RangeParser.RangeFlag) == RangeParser.RangeFlag;
+        public bool IsVersionAction => (Value & RangeParser.RangeFlag) != RangeParser.RangeFlag;
 
         public AnyParseAction(RangeParseAction action) => Value = action;
         public AnyParseAction(VersionParseAction action) => Value = (RangeParseAction)action;
 
         internal static readonly Func<VersionParseAction, AnyParseAction> Convert
             = action => new(action);
+
+        /// <inheritdoc/>
+        public override string ToString() => IsVersionAction ? VersionAction.ToString() : Value.ToString();
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)
@@ -220,6 +228,7 @@ namespace Hive.Versioning
             verErrors.Dispose();
 
             comparer = new VersionComparer(version, compareType);
+            errors.Report(new(RangeParseAction.FComparer), copy);
             return true;
         }
 
@@ -298,8 +307,8 @@ namespace Hive.Versioning
             if (lower.Type == ComparisonType.ExactEqual || upper.Type == ComparisonType.ExactEqual
              || (lower.Type & ~ComparisonType.ExactEqual) == (upper.Type & ~ComparisonType.ExactEqual))
             { // if the bounds point the same direction, the subrange is invalid
-                errors.Report(new(RangeParseAction.EClosedSubrange), text);
                 text = copy;
+                errors.Report(new(RangeParseAction.EClosedSubrange), text);
                 subrange = default;
                 return false;
             }
@@ -308,12 +317,13 @@ namespace Hive.Versioning
 
             if (!allowOutward && !subrange.IsInward)
             { // reject outward-facing subranges for consistency on the outside
-                errors.Report(new(RangeParseAction.EClosedSubrange), text);
                 text = copy;
+                errors.Report(new(RangeParseAction.EClosedSubrange), text);
                 subrange = default;
                 return false;
             }
 
+            errors.Report(new(RangeParseAction.FSubrange), copy);
             return true;
         }
 
@@ -356,6 +366,7 @@ namespace Hive.Versioning
             // caret ranges want the upper bound to exclude prereleases
             range = new Subrange(new VersionComparer(lower, ComparisonType.GreaterEqual),
                 new VersionComparer(upper, ComparisonType.PreReleaseLess));
+            errors.Report(new(RangeParseAction.FCaretRange), copy);
             return true;
         }
 
@@ -399,6 +410,7 @@ namespace Hive.Versioning
 
             range = new(new(lowVersion, ComparisonType.GreaterEqual),
                 new(highVersion, ComparisonType.LessEqual));
+            errors.Report(new(RangeParseAction.FHyphenRange), copy);
             return true;
         }
 
@@ -426,14 +438,14 @@ namespace Hive.Versioning
             // at this point, we *know* that we have a star range
             if (TryTakePlaceholder(ref text))
             {
-                copy = text;
+                var copy2 = text;
                 // try to read another star
                 if (!TryTake(ref text, '.')
                     || !TryTakePlaceholder(ref text))
                 {
-                    // if we can't, that's fine, just rewind to copy
+                    // if we can't, that's fine, just rewind to copy2
                     // this might be something else
-                    text = copy;
+                    text = copy2;
                 }
 
                 // we now have a star range
@@ -445,6 +457,7 @@ namespace Hive.Versioning
 
                 // make sure we pull in parse errors
                 errors.FromState(ref verErrors, AnyParseAction.Convert);
+                errors.Report(new(RangeParseAction.FStarRange), copy);
                 return true;
             }
 
@@ -478,6 +491,7 @@ namespace Hive.Versioning
 
             // make sure we pull in parse errors
             errors.FromState(ref verErrors, AnyParseAction.Convert);
+            errors.Report(new(RangeParseAction.FStarRange), copy);
             return true;
         }
     }
