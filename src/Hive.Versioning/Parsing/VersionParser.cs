@@ -19,17 +19,20 @@ namespace Hive.Versioning
     {
         None,
 
-        CoreVersionNumber,
-        CoreVersionDot,
-        Prerelease,
-        Build,
-        PrereleaseId,
-        PrereleaseIdDot,
-        BuildId,
-        BuildIdDot,
-        AlphaNumericId,
-        NumericId,
-        ValidNumericId,
+        ECoreVersionNumber,
+        ECoreVersionDot,
+
+        EPrerelease,
+        EPrereleaseId,
+        EPrereleaseIdDot,
+
+        EBuild,
+        EBuildId,
+        EBuildIdDot,
+
+        EAlphaNumericId,
+        ENumericId,
+        EValidNumericId,
 
         ExtraInput,
     }
@@ -57,7 +60,7 @@ namespace Hive.Versioning
             {
                 if (!TryParsePreRelease(ref errors, ref text, out prereleaseIds))
                 {
-                    errors.Report(VersionParseAction.Prerelease, text);
+                    errors.Report(VersionParseAction.EPrerelease, text);
                     return false;
                 }
             }
@@ -70,7 +73,7 @@ namespace Hive.Versioning
             {
                 if (!TryParseBuild(ref errors, ref text, out buildIds))
                 {
-                    errors.Report(VersionParseAction.Build, text);
+                    errors.Report(VersionParseAction.EBuild, text);
                     return false;
                 }
             }
@@ -90,31 +93,31 @@ namespace Hive.Versioning
             var copy = text;
             if (!TryParseNumId(ref errors, ref text, out major))
             {
-                errors.Report(VersionParseAction.CoreVersionNumber, text);
+                errors.Report(VersionParseAction.ECoreVersionNumber, text);
                 text = copy;
                 return false;
             }
             if (!TryTake(ref text, '.'))
             {
-                errors.Report(VersionParseAction.CoreVersionDot, text);
+                errors.Report(VersionParseAction.ECoreVersionDot, text);
                 text = copy;
                 return false;
             }
             if (!TryParseNumId(ref errors, ref text, out minor))
             {
-                errors.Report(VersionParseAction.CoreVersionNumber, text);
+                errors.Report(VersionParseAction.ECoreVersionNumber, text);
                 text = copy;
                 return false;
             }
             if (!TryTake(ref text, '.'))
             {
-                errors.Report(VersionParseAction.CoreVersionDot, text);
+                errors.Report(VersionParseAction.ECoreVersionDot, text);
                 text = copy;
                 return false;
             }
             if (!TryParseNumId(ref errors, ref text, out patch))
             {
-                errors.Report(VersionParseAction.CoreVersionNumber, text);
+                errors.Report(VersionParseAction.ECoreVersionNumber, text);
                 text = copy;
                 return false;
             }
@@ -142,12 +145,12 @@ namespace Hive.Versioning
                 while (TryReadPreReleaseId(ref errors, ref text, out id));
 
                 ab.Clear();
-                errors.Report(VersionParseAction.PrereleaseIdDot, text);
+                errors.Report(VersionParseAction.EPrereleaseIdDot, text);
                 text = copy;
                 return false;
             }
 
-            errors.Report(VersionParseAction.PrereleaseId, text);
+            errors.Report(VersionParseAction.EPrereleaseId, text);
             return false;
         }
 
@@ -178,12 +181,12 @@ namespace Hive.Versioning
                 while (TryReadBuildId(ref errors, ref text, out id));
 
                 ab.Clear();
-                errors.Report(VersionParseAction.BuildIdDot, text);
+                errors.Report(VersionParseAction.EBuildIdDot, text);
                 text = copy;
                 return false;
             }
 
-            errors.Report(VersionParseAction.BuildId, text);
+            errors.Report(VersionParseAction.EBuildId, text);
             return false;
         }
 
@@ -195,7 +198,7 @@ namespace Hive.Versioning
             if (text.Length == 0)
             {
                 id = default;
-                errors.Report(VersionParseAction.AlphaNumericId, text);
+                errors.Report(VersionParseAction.EAlphaNumericId, text);
                 return false;
             }
 
@@ -218,7 +221,7 @@ namespace Hive.Versioning
 
             if (len <= 0)
             {
-                errors.Report(VersionParseAction.AlphaNumericId, text);
+                errors.Report(VersionParseAction.EAlphaNumericId, text);
                 return false;
             }
 
@@ -240,7 +243,7 @@ namespace Hive.Versioning
             }
 
             if (!hasNonDigit)
-                errors.Report(VersionParseAction.AlphaNumericId, text);
+                errors.Report(VersionParseAction.EAlphaNumericId, text);
             return hasNonDigit;
         }
 
@@ -252,7 +255,7 @@ namespace Hive.Versioning
                 if (!ulong.TryParse(id.ToString(), out num))
                 {
                     text = copy;
-                    errors.Report(VersionParseAction.ValidNumericId, text);
+                    errors.Report(VersionParseAction.EValidNumericId, text);
                     return false;
                 }
 
@@ -275,7 +278,7 @@ namespace Hive.Versioning
             if (text.Length == 0)
             {
                 id = default;
-                errors.Report(VersionParseAction.NumericId, text);
+                errors.Report(VersionParseAction.ENumericId, text);
                 return false;
             }
 
@@ -304,7 +307,7 @@ namespace Hive.Versioning
 
             // or this isn't a numeric id
             id = default;
-            errors.Report(VersionParseAction.NumericId, text);
+            errors.Report(VersionParseAction.ENumericId, text);
             return false;
         }
     }
