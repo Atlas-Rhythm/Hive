@@ -81,8 +81,11 @@ namespace Hive.Versioning
             /// value matches.
             /// </remarks>
             public bool Matches(in VersionComparer other)
-                => Matches(other.CompareTo)
-                || (Type == other.Type && CompareTo == other.CompareTo);
+                => (Matches(other.CompareTo)
+                || (Type == other.Type && CompareTo == other.CompareTo)
+                || (Type == ComparisonType.Less && other.Type == ComparisonType.PreReleaseGreaterEqual && CompareTo.CompareNumericOnly(other.CompareTo) == 0))
+                && !(Type == ComparisonType.PreReleaseLess && other.Type == ComparisonType.GreaterEqual && CompareTo.CompareNumericOnly(other.CompareTo) == 0)
+                ;
 
             /// <summary>
             /// Converts this <see cref="ComparisonType.ExactEqual"/> <see cref="VersionComparer"/> to an equivalent <see cref="Subrange"/>.

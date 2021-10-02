@@ -337,8 +337,7 @@ namespace Hive.Versioning
                 return false;
             }
 
-            // make sure we pull in versions
-            errors.FromState(verErrors, AnyParseAction.Convert);
+            // if we don't fail to read a version, its info is just gonna make processing harder
 
             Version upper;
             if (lower.Major != 0)
@@ -391,8 +390,6 @@ namespace Hive.Versioning
                 return false;
             }
 
-            // make sure we always pull in parse errors so we have a full listing of what happened
-            errors.FromState(verErrors, AnyParseAction.Convert);
             range = new(new(lowVersion, ComparisonType.GreaterEqual),
                 new(highVersion, ComparisonType.LessEqual));
             return true;
