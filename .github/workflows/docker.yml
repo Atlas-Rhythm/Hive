@@ -3,7 +3,7 @@ name: Docker Upload
 on:
   push:
     branches:
-      - auros/docker
+      - master
 
 env:
   REGISTRY: ghcr.io
