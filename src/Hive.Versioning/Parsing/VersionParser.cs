@@ -10,11 +10,33 @@ using StringPart = Hive.Utilities.StringView;
 
 namespace Hive.Versioning
 {
+#pragma warning disable IDE0065 // Misplaced using directive
+    // Having this inside the namespace makes it *far* shorter
+    using ErrorState = ParserErrorState<VersionParseAction>;
+#pragma warning restore IDE0065 // Misplaced using directive
+
+    public enum VersionParseAction
+    {
+        CoreVersionNumber,
+        CoreVersionDot,
+        Prerelease,
+        Build,
+        PrereleaseId,
+        PrereleaseIdDot,
+        BuildId,
+        BuildIdDot,
+        AlphaNumericId,
+        NumericId,
+        ValidNumericId,
+
+        ExtraInput,
+    }
+
     internal static class VersionParser
     {
-        #region Parser
 
         public static bool TryParseInternal(
+            in ErrorState errors,
             ref StringPart text,
             out ulong major,
             out ulong minor,
@@ -26,13 +48,16 @@ namespace Hive.Versioning
             prereleaseIds = null;
             buildIds = null;
 
-            if (!TryParseCore(ref text, out major, out minor, out patch))
+            if (!TryParseCore(errors, ref text, out major, out minor, out patch))
                 return false;
 
             if (TryTake(ref text, '-'))
             {
-                if (!TryParsePreRelease(ref text, out prereleaseIds))
+                if (!TryParsePreRelease(errors, ref text, out prereleaseIds))
+                {
+                    errors.Report(VersionParseAction.Prerelease, text);
                     return false;
+                }
             }
             else
             {
@@ -41,8 +66,11 @@ namespace Hive.Versioning
 
             if (TryTake(ref text, '+'))
             {
-                if (!TryParseBuild(ref text, out buildIds))
+                if (!TryParseBuild(errors, ref text, out buildIds))
+                {
+                    errors.Report(VersionParseAction.Build, text);
                     return false;
+                }
             }
             else
             {
@@ -52,34 +80,39 @@ namespace Hive.Versioning
             return true;
         }
 
-        private static bool TryParseCore(ref StringPart text, out ulong major, out ulong minor, out ulong patch)
+        private static bool TryParseCore(in ErrorState errors, ref StringPart text, out ulong major, out ulong minor, out ulong patch)
         {
             minor = 0;
             patch = 0;
 
             var copy = text;
-            if (!TryParseNumId(ref text, out major))
+            if (!TryParseNumId(errors, ref text, out major))
             {
+                errors.Report(VersionParseAction.CoreVersionNumber, text);
                 text = copy;
                 return false;
             }
             if (!TryTake(ref text, '.'))
             {
+                errors.Report(VersionParseAction.CoreVersionDot, text);
                 text = copy;
                 return false;
             }
-            if (!TryParseNumId(ref text, out minor))
+            if (!TryParseNumId(errors, ref text, out minor))
             {
+                errors.Report(VersionParseAction.CoreVersionNumber, text);
                 text = copy;
                 return false;
             }
             if (!TryTake(ref text, '.'))
             {
+                errors.Report(VersionParseAction.CoreVersionDot, text);
                 text = copy;
                 return false;
             }
-            if (!TryParseNumId(ref text, out patch))
+            if (!TryParseNumId(errors, ref text, out patch))
             {
+                errors.Report(VersionParseAction.CoreVersionNumber, text);
                 text = copy;
                 return false;
             }
@@ -87,12 +120,12 @@ namespace Hive.Versioning
             return true;
         }
 
-        private static bool TryParsePreRelease(ref StringPart text, [MaybeNullWhen(false)] out string[] prereleaseIds)
+        private static bool TryParsePreRelease(in ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out string[] prereleaseIds)
         {
             prereleaseIds = null;
 
             var copy = text;
-            if (TryReadPreReleaseId(ref text, out var id))
+            if (TryReadPreReleaseId(errors, ref text, out var id))
             {
                 using var ab = new ArrayBuilder<string>(4);
                 do
@@ -104,29 +137,31 @@ namespace Hive.Versioning
                         return true;
                     }
                 }
-                while (TryReadPreReleaseId(ref text, out id));
+                while (TryReadPreReleaseId(errors, ref text, out id));
 
                 ab.Clear();
+                errors.Report(VersionParseAction.PrereleaseIdDot, text);
                 text = copy;
                 return false;
             }
 
+            errors.Report(VersionParseAction.PrereleaseId, text);
             return false;
         }
 
-        private static bool TryReadPreReleaseId(ref StringPart text, out StringPart id)
+        private static bool TryReadPreReleaseId(in ErrorState errors, ref StringPart text, out StringPart id)
         {
-            if (TryReadAlphaNumId(ref text, out id)) return true;
-            if (TryReadNumId(ref text, out id)) return true;
+            if (TryReadAlphaNumId(errors, ref text, out id)) return true;
+            if (TryReadNumId(errors, ref text, out id)) return true;
             return false;
         }
 
-        private static bool TryParseBuild(ref StringPart text, [MaybeNullWhen(false)] out string[] buildIds)
+        private static bool TryParseBuild(in ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out string[] buildIds)
         {
             buildIds = null;
 
             var copy = text;
-            if (TryReadBuildId(ref text, out var id))
+            if (TryReadBuildId(errors, ref text, out var id))
             {
                 using var ab = new ArrayBuilder<string>(4);
                 do
@@ -138,24 +173,27 @@ namespace Hive.Versioning
                         return true;
                     }
                 }
-                while (TryReadBuildId(ref text, out id));
+                while (TryReadBuildId(errors, ref text, out id));
 
                 ab.Clear();
+                errors.Report(VersionParseAction.BuildIdDot, text);
                 text = copy;
                 return false;
             }
 
+            errors.Report(VersionParseAction.BuildId, text);
             return false;
         }
 
-        private static bool TryReadBuildId(ref StringPart text, out StringPart id)
-            => TryReadAlphaNumId(ref text, out id, true);
+        private static bool TryReadBuildId(in ErrorState errors, ref StringPart text, out StringPart id)
+            => TryReadAlphaNumId(errors, ref text, out id, true);
 
-        private static bool TryReadAlphaNumId(ref StringPart text, out StringPart id, bool skipNonDigitCheck = false)
+        private static bool TryReadAlphaNumId(in ErrorState errors, ref StringPart text, out StringPart id, bool skipNonDigitCheck = false)
         {
             if (text.Length == 0)
             {
                 id = default;
+                errors.Report(VersionParseAction.AlphaNumericId, text);
                 return false;
             }
 
@@ -176,7 +214,11 @@ namespace Hive.Versioning
 
             id = text.Slice(0, len);
 
-            if (len <= 0) return false;
+            if (len <= 0)
+            {
+                errors.Report(VersionParseAction.AlphaNumericId, text);
+                return false;
+            }
 
             if (skipNonDigitCheck)
             {
@@ -195,17 +237,20 @@ namespace Hive.Versioning
                 }
             }
 
+            if (!hasNonDigit)
+                errors.Report(VersionParseAction.AlphaNumericId, text);
             return hasNonDigit;
         }
 
-        internal static bool TryParseNumId(ref StringPart text, out ulong num)
+        internal static bool TryParseNumId(in ErrorState errors, ref StringPart text, out ulong num)
         {
             var copy = text;
-            if (TryReadNumId(ref text, out var id))
+            if (TryReadNumId(errors, ref text, out var id))
             {
                 if (!ulong.TryParse(id.ToString(), out num))
                 {
                     text = copy;
+                    errors.Report(VersionParseAction.ValidNumericId, text);
                     return false;
                 }
 
@@ -216,7 +261,7 @@ namespace Hive.Versioning
             return false;
         }
 
-        private static bool TryReadNumId(ref StringPart text, out StringPart id)
+        private static bool TryReadNumId(in ErrorState errors, ref StringPart text, out StringPart id)
         {
             var copy = text;
             if (TryTake(ref text, '0')) // we can take a single 0
@@ -228,6 +273,7 @@ namespace Hive.Versioning
             if (text.Length == 0)
             {
                 id = default;
+                errors.Report(VersionParseAction.NumericId, text);
                 return false;
             }
 
@@ -256,8 +302,8 @@ namespace Hive.Versioning
 
             // or this isn't a numeric id
             id = default;
+            errors.Report(VersionParseAction.NumericId, text);
             return false;
         }
-        #endregion Parser
     }
 }

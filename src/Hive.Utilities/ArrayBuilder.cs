@@ -139,6 +139,13 @@ namespace Hive.Utilities
         }
 
         /// <summary>
+        /// Gets the item at the specified index in the builder.
+        /// </summary>
+        /// <param name="i">The index of the item to get.</param>
+        /// <returns>The item at that index.</returns>
+        public T this[int i] => array[i];
+
+        /// <summary>
         /// Gets this builder as an array.
         /// </summary>
         /// <returns>The array that represents this builder.</returns>

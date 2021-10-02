@@ -14,6 +14,11 @@ using StringPart = Hive.Utilities.StringView;
 
 namespace Hive.Versioning
 {
+#pragma warning disable IDE0065 // Misplaced using directive
+    // Having this inside the namespace makes it *far* shorter
+    using ErrorState = ParserErrorState<VersionParseAction>;
+#pragma warning restore IDE0065 // Misplaced using directive
+
     /// <summary>
     /// A version that meets the Semantic Versioning specification.
     /// </summary>
@@ -45,8 +50,9 @@ namespace Hive.Versioning
             if (text.Length < 5)
                 throw new ArgumentException(SR.Version_InputTooShort, nameof(text));
 
-            if (!VersionParser.TryParseInternal(ref text, out major, out minor, out patch, out var preIds, out var buildIds) || text.Length > 0)
-                throw new ArgumentException(SR.Version_InputInvalid, nameof(text));
+            using var errors = new ErrorState(text); // we do want error reporting
+            if (!TryParseComponents(errors, ref text, true, out major, out minor, out patch, out var preIds, out var buildIds) || text.Length > 0)
+                throw BuildError(errors, nameof(text));
 
             prereleaseIds = preIds;
             this.buildIds = buildIds;
@@ -351,6 +357,7 @@ namespace Hive.Versioning
             return 0;
         }
 
+        #region Parse methods
         /// <summary>
         /// Parses a sequence of characters into a <see cref="Version"/> object.
         /// </summary>
@@ -359,8 +366,9 @@ namespace Hive.Versioning
         /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid SemVer version.</exception>
         public static Version Parse(StringPart text)
         {
+            using var errors = new ErrorState(text); // we *do* want error reporting
             if (!TryParse(text, out var ver))
-                throw new ArgumentException(SR.Version_InputInvalid, nameof(text));
+                throw BuildError(errors, nameof(text));
             return ver;
         }
 
@@ -371,6 +379,12 @@ namespace Hive.Versioning
         /// <param name="version">The parsed version, if the input is valid.</param>
         /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
         public static bool TryParse(StringPart text, [MaybeNullWhen(false)] out Version version)
+        {
+            text = text.Trim();
+            return TryParse(ref text, true, out version) && text.Length == 0;
+        }
+
+        public static bool TryParse(in ErrorState errors, StringPart text, [MaybeNullWhen(false)] out Version version)
         {
             text = text.Trim();
             return TryParse(ref text, true, out version) && text.Length == 0;
@@ -390,18 +404,54 @@ namespace Hive.Versioning
         public static bool TryParse(ref StringPart text, [MaybeNullWhen(false)] out Version version)
             => TryParse(ref text, false, out version);
 
+        [CLSCompliant(false)]
+        public static bool TryParse(in ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out Version version)
+            => TryParse(errors, ref text, false, out version);
+
         private static bool TryParse(ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out Version version)
+        {
+            using var errors = new ErrorState(); // we don't want error reporting
+
+            if (!TryParse(errors, ref text, checkLength, out version))
+                return false;
+            return true;
+        }
+
+        private static bool TryParse(in ErrorState errors, ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out Version version)
         {
             version = null;
 
-            if (!VersionParser.TryParseInternal(ref text, out var maj, out var min, out var pat, out var pre, out var build))
-                return false;
-            if (checkLength && text.Length > 0)
+            if (!TryParseComponents(errors, ref text, checkLength, out var maj, out var min, out var pat, out var pre, out var build))
                 return false;
 
             version = new Version(maj, min, pat, pre, build);
             return true;
         }
 
+        private static bool TryParseComponents(
+            in ErrorState errors,
+            ref StringPart text,
+            bool checkLength,
+            out ulong major,
+            out ulong minor,
+            out ulong patch,
+            [MaybeNullWhen(false)] out string[] prereleaseIds,
+            [MaybeNullWhen(false)] out string[] buildIds)
+        {
+            if (!VersionParser.TryParseInternal(errors, ref text, out major, out minor, out patch, out prereleaseIds, out buildIds))
+                return false;
+            if (checkLength && text.Length > 0)
+            {
+                errors.Report(VersionParseAction.ExtraInput, text);
+                return false;
+            }
+            return true;
+        }
+        #endregion
+
+        private static Exception BuildError(in ErrorState errors, string argumentName)
+        {
+            return new ArgumentException(SR.Version_InputInvalid, argumentName);
+        }
     }
 }
