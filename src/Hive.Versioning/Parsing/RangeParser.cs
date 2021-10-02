@@ -20,6 +20,8 @@ namespace Hive.Versioning
 
     public enum RangeParseAction
     {
+        None,
+
         StarRange = RangeParser.RangeFlag,
 
         HyphenVersion,
@@ -41,7 +43,7 @@ namespace Hive.Versioning
         ExtraInput = VersionParseAction.ExtraInput,
     }
 
-    public struct AnyParseAction
+    public struct AnyParseAction : IEquatable<AnyParseAction>
     {
         public RangeParseAction Value { get; }
         public VersionParseAction VersionAction => (VersionParseAction)Value;
@@ -52,6 +54,21 @@ namespace Hive.Versioning
 
         internal static readonly Func<VersionParseAction, AnyParseAction> Convert
             = action => new(action);
+
+        /// <inheritdoc/>
+        public override bool Equals(object? obj)
+            => obj is AnyParseAction action && Equals(action);
+        /// <inheritdoc/>
+        public bool Equals(AnyParseAction other)
+            => Value == other.Value && VersionAction == other.VersionAction && IsVersionAction == other.IsVersionAction;
+        /// <inheritdoc/>
+        public override int GetHashCode()
+            => HashCode.Combine(Value, VersionAction, IsVersionAction);
+
+        public static bool operator ==(AnyParseAction left, AnyParseAction right)
+            => left.Equals(right);
+        public static bool operator !=(AnyParseAction left, AnyParseAction right)
+            => !(left == right);
     }
 
     internal static class RangeParser

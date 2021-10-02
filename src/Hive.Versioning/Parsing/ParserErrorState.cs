@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Hive.Utilities;
 
 #if !NETSTANDARD2_0
@@ -9,6 +10,36 @@ using StringPart = Hive.Utilities.StringView;
 
 namespace Hive.Versioning
 {
+
+    public struct ActionErrorReport<TAction> : IEquatable<ActionErrorReport<TAction>>
+        where TAction : struct
+    {
+        public TAction Action { get; }
+        public long TextOffset { get; }
+
+        public ActionErrorReport(TAction action, long offset)
+            => (Action, TextOffset) = (action, offset);
+
+        public static bool operator ==(ActionErrorReport<TAction> left, ActionErrorReport<TAction> right)
+            => left.Equals(right);
+
+        public static bool operator !=(ActionErrorReport<TAction> left, ActionErrorReport<TAction> right)
+            => !(left == right);
+
+        /// <inheritdoc/>
+        public override bool Equals(object? obj)
+            => obj is ActionErrorReport<TAction> report
+            && Equals(report);
+
+        public bool Equals(ActionErrorReport<TAction> other)
+            => EqualityComparer<TAction>.Default.Equals(Action, other.Action)
+            && TextOffset == other.TextOffset;
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+            => HashCode.Combine(Action, TextOffset);
+    }
+
     public ref struct ParserErrorState<TAction>
         where TAction : struct
     {
@@ -23,17 +54,7 @@ namespace Hive.Versioning
             reports = default;
         }
 
-        public struct ActionErrorReport
-        {
-            public TAction Action { get; }
-
-            public long TextOffset { get; }
-
-            public ActionErrorReport(TAction action, long offset)
-                => (Action, TextOffset) = (action, offset);
-        }
-
-        private readonly ArrayBuilder<ActionErrorReport> reports;
+        private readonly ArrayBuilder<ActionErrorReport<TAction>> reports;
 
         private long GetTextOffset(in StringPart location)
 #if !NETSTANDARD2_0
@@ -66,6 +87,8 @@ namespace Hive.Versioning
         public void FromState<TAction2>(in ParserErrorState<TAction2> state, Func<TAction2, TAction> convert)
             where TAction2 : struct
         {
+            if (convert is null)
+                throw new ArgumentNullException(nameof(convert));
             for (var i = 0; i < state.reports.Count; i++)
             {
                 Report(convert(state.reports[i].Action), state.reports[i].TextOffset);

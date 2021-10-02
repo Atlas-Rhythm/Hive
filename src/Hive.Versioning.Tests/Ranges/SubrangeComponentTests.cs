@@ -16,14 +16,14 @@ namespace Hive.Versioning.Tests.Ranges
         private static VersionComparer ParseComparer(string input)
         {
             StringPart text = input;
-            Assert.True(RangeParser.TryParseComparer(ref text, out var comparer));
+            Assert.True(RangeParser.TryParseComparer(default, ref text, out var comparer));
             return comparer;
         }
 
         private static Subrange ParseSubrange(string input, bool valid = true)
         {
             StringPart text = input;
-            Assert.Equal(valid, RangeParser.TryParseSubrange(ref text, true, out var range));
+            Assert.Equal(valid, RangeParser.TryParseSubrange(default, ref text, true, out var range));
             return range;
         }
 

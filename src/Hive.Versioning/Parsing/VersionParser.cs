@@ -17,6 +17,8 @@ namespace Hive.Versioning
 
     public enum VersionParseAction
     {
+        None,
+
         CoreVersionNumber,
         CoreVersionDot,
         Prerelease,
