@@ -79,7 +79,7 @@ namespace Hive.Versioning
         internal static readonly Subrange[] EverythingSubranges = new[] { Subrange.Everything };
 
         [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
-        internal static bool TryParse(in ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out Subrange[] sranges, out VersionComparer? comparer)
+        internal static bool TryParse(ref ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out Subrange[] sranges, out VersionComparer? comparer)
         {
             sranges = null;
             comparer = null;
@@ -98,7 +98,7 @@ namespace Hive.Versioning
                 return true;
             }
 
-            if (!TryReadComponent(errors, ref text, out var range, out var compare))
+            if (!TryReadComponent(ref errors, ref text, out var range, out var compare))
                 return false;
 
             using var ab = new ArrayBuilder<Subrange>();
@@ -160,23 +160,23 @@ namespace Hive.Versioning
                 }
                 text = text.TrimStart();
             }
-            while (TryReadComponent(errors, ref text, out range, out compare));
+            while (TryReadComponent(ref errors, ref text, out range, out compare));
 
             text = restoreTo;
             sranges = ab.ToArray();
             return true;
         }
 
-        private static bool TryReadComponent(in ErrorState errors, ref StringPart text, out Subrange? range, out VersionComparer? compare)
+        private static bool TryReadComponent(ref ErrorState errors, ref StringPart text, out Subrange? range, out VersionComparer? compare)
         {
-            if (TryParseSubrange(errors, ref text, false, out var sr))
+            if (TryParseSubrange(ref errors, ref text, false, out var sr))
             {
                 range = sr;
                 compare = null;
                 return true;
             }
 
-            if (TryParseComparer(errors, ref text, out var comp))
+            if (TryParseComparer(ref errors, ref text, out var comp))
             {
                 range = null;
                 compare = comp;
@@ -189,36 +189,37 @@ namespace Hive.Versioning
             return false;
         }
 
-        public static bool TryParseComparer(in ErrorState errors, ref StringPart text, out VersionComparer comparer)
+        public static bool TryParseComparer(ref ErrorState errors, ref StringPart text, out VersionComparer comparer)
         {
             var copy = text;
-            if (!TryReadCompareType(errors, ref text, out var compareType))
+            if (!TryReadCompareType(ref errors, ref text, out var compareType))
             {
                 errors.Report(new(RangeParseAction.Comparer), text);
                 comparer = default;
                 return false;
             }
 
-            using var verErrors = new VersionErrorState()
+            var verErrors = new VersionErrorState()
             {
                 ReportErrors = errors.ReportErrors,
                 InputText = errors.InputText,
             };
             text = text.TrimStart();
-            if (!Version.TryParse(verErrors, ref text, out var version))
+            if (!Version.TryParse(ref verErrors, ref text, out var version))
             {
-                errors.FromState(verErrors, AnyParseAction.Convert);
+                errors.FromState(ref verErrors, AnyParseAction.Convert);
                 errors.Report(new(RangeParseAction.ComparerVersion), text);
                 text = copy;
                 comparer = default;
                 return false;
             }
+            verErrors.Dispose();
 
             comparer = new VersionComparer(version, compareType);
             return true;
         }
 
-        private static bool TryReadCompareType(in ErrorState errors, ref StringPart text, out ComparisonType type)
+        private static bool TryReadCompareType(ref ErrorState errors, ref StringPart text, out ComparisonType type)
         {
             type = ComparisonType.None;
 
@@ -251,22 +252,22 @@ namespace Hive.Versioning
             or ComparisonType.PreReleaseGreaterEqual
             or ComparisonType.PreReleaseLess;
 
-        public static bool TryParseSubrange(in ErrorState errors, ref StringPart text, bool allowOutward, out Subrange subrange)
+        public static bool TryParseSubrange(ref ErrorState errors, ref StringPart text, bool allowOutward, out Subrange subrange)
         {
             var copy = text;
 
             // first we check for a star range
-            if (TryReadStarRange(errors, ref text, out subrange)) return true;
+            if (TryReadStarRange(ref errors, ref text, out subrange)) return true;
             // then we check for a hyphen range
-            if (TryReadHyphenRange(errors, ref text, out subrange)) return true;
+            if (TryReadHyphenRange(ref errors, ref text, out subrange)) return true;
 
             //---EVERYTHING AFTER THIS POINT HAS A SPECIAL FIRST CHARACTER---\\
 
             // then we check for a ^ range
-            if (TryReadCaretRange(errors, ref text, out subrange)) return true;
+            if (TryReadCaretRange(ref errors, ref text, out subrange)) return true;
 
             // otherwise we just try read two VersionComparers in a row
-            if (!TryParseComparer(errors, ref text, out var lower))
+            if (!TryParseComparer(ref errors, ref text, out var lower))
             {
                 errors.Report(new(RangeParseAction.Subrange), text);
                 text = copy;
@@ -274,7 +275,7 @@ namespace Hive.Versioning
                 return false;
             }
             text = text.TrimStart();
-            if (!TryParseComparer(errors, ref text, out var upper))
+            if (!TryParseComparer(ref errors, ref text, out var upper))
             {
                 errors.Report(new(RangeParseAction.Subrange), text);
                 text = copy;
@@ -312,7 +313,7 @@ namespace Hive.Versioning
             return true;
         }
 
-        private static bool TryReadCaretRange(in ErrorState errors, ref StringPart text, out Subrange range)
+        private static bool TryReadCaretRange(ref ErrorState errors, ref StringPart text, out Subrange range)
         {
             var copy = text;
             if (!TryTake(ref text, '^'))
@@ -322,20 +323,21 @@ namespace Hive.Versioning
                 return false;
             }
 
-            using var verErrors = new VersionErrorState()
+            text = text.TrimStart();
+            var verErrors = new VersionErrorState()
             {
                 ReportErrors = errors.ReportErrors,
                 InputText = errors.InputText,
             };
-            text = text.TrimStart();
-            if (!Version.TryParse(verErrors, ref text, out var lower))
+            if (!Version.TryParse(ref verErrors, ref text, out var lower))
             {
-                errors.FromState(verErrors, AnyParseAction.Convert);
+                errors.FromState(ref verErrors, AnyParseAction.Convert);
                 errors.Report(new(RangeParseAction.CaretVersion), text);
                 text = copy;
                 range = default;
                 return false;
             }
+            verErrors.Dispose();
 
             // if we don't fail to read a version, its info is just gonna make processing harder
 
@@ -353,17 +355,17 @@ namespace Hive.Versioning
             return true;
         }
 
-        private static bool TryReadHyphenRange(in ErrorState errors, ref StringPart text, out Subrange range)
+        private static bool TryReadHyphenRange(ref ErrorState errors, ref StringPart text, out Subrange range)
         {
-            using var verErrors = new VersionErrorState()
+            var copy = text;
+            var verErrors = new VersionErrorState()
             {
                 ReportErrors = errors.ReportErrors,
                 InputText = errors.InputText,
             };
-            var copy = text;
-            if (!Version.TryParse(verErrors, ref text, out var lowVersion))
+            if (!Version.TryParse(ref verErrors, ref text, out var lowVersion))
             {
-                errors.FromState(verErrors, AnyParseAction.Convert);
+                errors.FromState(ref verErrors, AnyParseAction.Convert);
                 errors.Report(new(RangeParseAction.HyphenVersion), text);
                 range = default;
                 text = copy;
@@ -373,7 +375,7 @@ namespace Hive.Versioning
             text = text.TrimStart();
             if (!TryTake(ref text, '-'))
             {
-                errors.FromState(verErrors, AnyParseAction.Convert);
+                errors.FromState(ref verErrors, AnyParseAction.Convert);
                 errors.Report(new(RangeParseAction.Hyphen), text);
                 range = default;
                 text = copy;
@@ -381,32 +383,33 @@ namespace Hive.Versioning
             }
             text = text.TrimStart();
 
-            if (!Version.TryParse(verErrors, ref text, out var highVersion))
+            if (!Version.TryParse(ref verErrors, ref text, out var highVersion))
             {
-                errors.FromState(verErrors, AnyParseAction.Convert);
+                errors.FromState(ref verErrors, AnyParseAction.Convert);
                 errors.Report(new(RangeParseAction.HyphenVersion), text);
                 range = default;
                 text = copy;
                 return false;
             }
+            errors.Dispose();
 
             range = new(new(lowVersion, ComparisonType.GreaterEqual),
                 new(highVersion, ComparisonType.LessEqual));
             return true;
         }
 
-        private static bool TryReadStarRange(in ErrorState errors, ref StringPart text, out Subrange range)
+        private static bool TryReadStarRange(ref ErrorState errors, ref StringPart text, out Subrange range)
         {
             var copy = text;
 
-            using var verErrors = new VersionErrorState()
+            var verErrors = new VersionErrorState()
             {
                 ReportErrors = errors.ReportErrors,
                 InputText = errors.InputText,
             };
-            if (!VersionParser.TryParseNumId(verErrors, ref text, out var majorNum) || !TryTake(ref text, '.'))
+            if (!VersionParser.TryParseNumId(ref verErrors, ref text, out var majorNum) || !TryTake(ref text, '.'))
             {
-                errors.FromState(verErrors, AnyParseAction.Convert);
+                errors.FromState(ref verErrors, AnyParseAction.Convert);
                 errors.Report(new(RangeParseAction.StarRange), text);
                 text = copy;
                 range = default;
@@ -437,15 +440,15 @@ namespace Hive.Versioning
                     new VersionComparer(versionUpper, ComparisonType.PreReleaseLess));
 
                 // make sure we pull in parse errors
-                errors.FromState(verErrors, AnyParseAction.Convert);
+                errors.FromState(ref verErrors, AnyParseAction.Convert);
                 return true;
             }
 
             // try to read the second number
-            if (!VersionParser.TryParseNumId(verErrors, ref text, out var minorNum) || !TryTake(ref text, '.'))
+            if (!VersionParser.TryParseNumId(ref verErrors, ref text, out var minorNum) || !TryTake(ref text, '.'))
             {
                 // if we can't read the last bit then rewind and exit
-                errors.FromState(verErrors, AnyParseAction.Convert);
+                errors.FromState(ref verErrors, AnyParseAction.Convert);
                 errors.Report(new(RangeParseAction.StarRange), text);
                 text = copy;
                 range = default;
@@ -455,7 +458,7 @@ namespace Hive.Versioning
             // if our last thing isn't a star, then this isn't a star range
             if (!TryTakePlaceholder(ref text))
             {
-                errors.FromState(verErrors, AnyParseAction.Convert);
+                errors.FromState(ref verErrors, AnyParseAction.Convert);
                 errors.Report(new(RangeParseAction.StarRange), text);
                 text = copy;
                 range = default;
@@ -470,7 +473,7 @@ namespace Hive.Versioning
                 new VersionComparer(versionUpper2, ComparisonType.PreReleaseLess));
 
             // make sure we pull in parse errors
-            errors.FromState(verErrors, AnyParseAction.Convert);
+            errors.FromState(ref verErrors, AnyParseAction.Convert);
             return true;
         }
     }

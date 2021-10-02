@@ -50,9 +50,10 @@ namespace Hive.Versioning
             if (text.Length < 5)
                 throw new ArgumentException(SR.Version_InputTooShort, nameof(text));
 
-            using var errors = new ErrorState(text); // we do want error reporting
-            if (!TryParseComponents(errors, ref text, true, out major, out minor, out patch, out var preIds, out var buildIds) || text.Length > 0)
-                throw BuildError(errors, nameof(text));
+            var errors = new ErrorState(text); // we do want error reporting
+            if (!TryParseComponents(ref errors, ref text, true, out major, out minor, out patch, out var preIds, out var buildIds) || text.Length > 0)
+                throw BuildError(ref errors, nameof(text));
+            errors.Dispose();
 
             prereleaseIds = preIds;
             this.buildIds = buildIds;
@@ -366,9 +367,10 @@ namespace Hive.Versioning
         /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid SemVer version.</exception>
         public static Version Parse(StringPart text)
         {
-            using var errors = new ErrorState(text); // we *do* want error reporting
-            if (!TryParse(text, out var ver))
-                throw BuildError(errors, nameof(text));
+            var errors = new ErrorState(text); // we *do* want error reporting
+            if (!TryParse(ref errors, text, out var ver))
+                throw BuildError(ref errors, nameof(text));
+            errors.Dispose();
             return ver;
         }
 
@@ -384,10 +386,10 @@ namespace Hive.Versioning
             return TryParse(ref text, true, out version) && text.Length == 0;
         }
 
-        public static bool TryParse(in ErrorState errors, StringPart text, [MaybeNullWhen(false)] out Version version)
+        public static bool TryParse(ref ErrorState errors, StringPart text, [MaybeNullWhen(false)] out Version version)
         {
             text = text.Trim();
-            return TryParse(errors, ref text, true, out version) && text.Length == 0;
+            return TryParse(ref errors, ref text, true, out version) && text.Length == 0;
         }
 
         /// <summary>
@@ -405,17 +407,20 @@ namespace Hive.Versioning
             => TryParse(ref text, false, out version);
 
         [CLSCompliant(false)]
-        public static bool TryParse(in ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out Version version)
-            => TryParse(errors, ref text, false, out version);
+        public static bool TryParse(ref ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out Version version)
+            => TryParse(ref errors, ref text, false, out version);
 
         private static bool TryParse(ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out Version version)
-            => TryParse(default, ref text, checkLength, out version); // don't do error reporting
+        {
+            var errors = new ErrorState();
+            return TryParse(ref errors, ref text, checkLength, out version); // don't do error reporting
+        }
 
-        private static bool TryParse(in ErrorState errors, ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out Version version)
+        private static bool TryParse(ref ErrorState errors, ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out Version version)
         {
             version = null;
 
-            if (!TryParseComponents(errors, ref text, checkLength, out var maj, out var min, out var pat, out var pre, out var build))
+            if (!TryParseComponents(ref errors, ref text, checkLength, out var maj, out var min, out var pat, out var pre, out var build))
                 return false;
 
             version = new Version(maj, min, pat, pre, build);
@@ -423,7 +428,7 @@ namespace Hive.Versioning
         }
 
         private static bool TryParseComponents(
-            in ErrorState errors,
+            ref ErrorState errors,
             ref StringPart text,
             bool checkLength,
             out ulong major,
@@ -432,7 +437,7 @@ namespace Hive.Versioning
             [MaybeNullWhen(false)] out string[] prereleaseIds,
             [MaybeNullWhen(false)] out string[] buildIds)
         {
-            if (!VersionParser.TryParseInternal(errors, ref text, out major, out minor, out patch, out prereleaseIds, out buildIds))
+            if (!VersionParser.TryParseInternal(ref errors, ref text, out major, out minor, out patch, out prereleaseIds, out buildIds))
                 return false;
             if (checkLength && text.Length > 0)
             {
@@ -443,8 +448,10 @@ namespace Hive.Versioning
         }
         #endregion
 
-        private static Exception BuildError(in ErrorState errors, string argumentName)
+        private static Exception BuildError(ref ErrorState errors, string argumentName)
         {
+            // TODO: implement
+            errors.Dispose();
             return new ArgumentException(SR.Version_InputInvalid, argumentName);
         }
     }

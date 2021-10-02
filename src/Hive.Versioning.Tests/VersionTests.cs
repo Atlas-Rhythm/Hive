@@ -138,7 +138,9 @@ namespace Hive.Versioning.Tests
         //[InlineData("22222222222222222222210.2.3\x0a")] // same as above
         public void SemverInvalid(string text)
         {
-            Assert.False(Version.TryParse(text, out var ver));
+            var errors = new ParserErrorState<VersionParseAction>(text);
+            Assert.False(Version.TryParse(ref errors, text, out var ver));
+            errors.Dispose();
             _ = ver;
 
             fixture.Validate(false, text, ver);

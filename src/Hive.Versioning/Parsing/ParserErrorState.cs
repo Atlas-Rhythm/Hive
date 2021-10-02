@@ -84,7 +84,7 @@ namespace Hive.Versioning
         }
 
         // TODO: can I do this in a better way than via a pesistent delegate?
-        public void FromState<TAction2>(in ParserErrorState<TAction2> state, Func<TAction2, TAction> convert)
+        public void FromState<TAction2>(ref ParserErrorState<TAction2> state, Func<TAction2, TAction> convert)
             where TAction2 : struct
         {
             if (convert is null)
@@ -93,6 +93,7 @@ namespace Hive.Versioning
             {
                 Report(convert(state.reports[i].Action), state.reports[i].TextOffset);
             }
+            state.Dispose();
         }
 
         public void Dispose()
