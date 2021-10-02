@@ -20,6 +20,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -106,7 +107,13 @@ namespace Hive.Tests.Endpoints
                 Dependencies = ImmutableList.Create(new ModReference("bsipa", new VersionRange("^4.0.0"))),
             };
 
-            var result2 = await controller.CompleteUpload(data, result1.Value.ActionCookie!);
+            var jsonString = JsonSerializer.Serialize(data, new()
+            {
+                // We need to explicitly include fields for some ValueTuples to serialize properly
+                IncludeFields = true
+            });
+
+            var result2 = await controller.CompleteUpload(jsonString, result1.Value.ActionCookie!);
 
             Assert.NotNull(result2);
             Assert.Null(result2.Result);
