@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Text.RegularExpressions;
+using Hive.Versioning.Parsing;
 using Xunit;
 
 namespace Hive.Versioning.Tests

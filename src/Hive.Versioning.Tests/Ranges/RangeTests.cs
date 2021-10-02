@@ -1,4 +1,5 @@
 ﻿using Xunit;
+using Hive.Versioning.Parsing;
 
 namespace Hive.Versioning.Tests.Ranges
 {

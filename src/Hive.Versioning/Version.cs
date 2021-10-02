@@ -5,6 +5,7 @@ using System.Text;
 using System.Linq;
 using Hive.Utilities;
 using Hive.Versioning.Resources;
+using Hive.Versioning.Parsing;
 
 #if !NETSTANDARD2_0
 using StringPart = System.ReadOnlySpan<char>;

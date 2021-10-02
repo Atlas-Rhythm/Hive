@@ -1,5 +1,6 @@
 ﻿using System;
 using Xunit;
+using Hive.Versioning.Parsing;
 using static Hive.Versioning.VersionRange;
 
 #if !NETCOREAPP3_1

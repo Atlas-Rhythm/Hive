@@ -1,4 +1,5 @@
 ﻿using System;
+using Hive.Versioning.Parsing;
 using Xunit;
 using static Hive.Versioning.VersionRange;
 

@@ -8,9 +8,8 @@ using StringPart = System.ReadOnlySpan<char>;
 using StringPart = Hive.Utilities.StringView;
 #endif
 
-namespace Hive.Versioning
+namespace Hive.Versioning.Parsing
 {
-
     public struct ActionErrorReport<TAction> : IEquatable<ActionErrorReport<TAction>>
         where TAction : struct
     {

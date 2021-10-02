@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using Hive.Utilities;
-using static Hive.Versioning.ParseHelpers;
+using static Hive.Versioning.Parsing.ParseHelpers;
 #if !NETSTANDARD2_0
 using StringPart = System.ReadOnlySpan<char>;
 #else
 using StringPart = Hive.Utilities.StringView;
 #endif
 
-namespace Hive.Versioning
+namespace Hive.Versioning.Parsing
 {
 #pragma warning disable IDE0065 // Misplaced using directive
     // Having this inside the namespace makes it *far* shorter
