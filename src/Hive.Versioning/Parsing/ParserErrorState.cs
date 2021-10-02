@@ -54,7 +54,7 @@ namespace Hive.Versioning
             reports = default;
         }
 
-        private readonly ArrayBuilder<ActionErrorReport<TAction>> reports;
+        private ArrayBuilder<ActionErrorReport<TAction>> reports;
 
         private long GetTextOffset(in StringPart location)
 #if !NETSTANDARD2_0
@@ -63,7 +63,11 @@ namespace Hive.Versioning
             {
                 fixed (char* istart = InputText)
                 fixed (char* iloc = location)
+                {
+                    if (iloc == null)
+                        return InputText.Length; // this happens when location is empty
                     return iloc - istart;
+                }
             }
         }
 #else
@@ -87,6 +91,8 @@ namespace Hive.Versioning
         public void FromState<TAction2>(ref ParserErrorState<TAction2> state, Func<TAction2, TAction> convert)
             where TAction2 : struct
         {
+            if (!ReportErrors) return;
+
             if (convert is null)
                 throw new ArgumentNullException(nameof(convert));
             for (var i = 0; i < state.reports.Count; i++)
@@ -98,6 +104,8 @@ namespace Hive.Versioning
 
         public void Dispose()
         {
+            if (!ReportErrors) return;
+
             reports.Dispose();
         }
 
