@@ -437,7 +437,11 @@ namespace Hive.Controllers
         // ^^^ returned when the object associated with the upload was deleted automatically. Basically, "You took too long"
         public async Task<ActionResult<UploadResult>> CompleteUpload([FromForm] string finalMetadataJson, [FromForm] string cookie)
         {
-            var finalMetadata = JsonSerializer.Deserialize<SerializedMod>(finalMetadataJson);
+            var finalMetadata = JsonSerializer.Deserialize<SerializedMod>(finalMetadataJson, new()
+            {
+                // We need to explicitly include fields for some ValueTuples to deserialize properly
+                IncludeFields = true,
+            });
 
             if (finalMetadata is null || cookie is null)
                 return BadRequest();
