@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-#if NETSTANDARD2_0
 using System.Text;
-#endif
 
 namespace Hive.Utilities
 {
@@ -36,6 +34,18 @@ namespace Hive.Utilities
             return sb;
         }
 #endif
+
+        /// <summary>
+        /// Appends a <see cref="StringView"/> to a <see cref="StringBuilder"/>.
+        /// </summary>
+        /// <param name="sb">The string builder to append to.</param>
+        /// <param name="text">The string view to append.</param>
+        /// <returns>The given string builder.</returns>
+        public static StringBuilder Append(this StringBuilder sb, StringView text)
+        {
+            if (sb is null) throw new ArgumentNullException(nameof(sb));
+            return sb.Append(text.BaseString, text.Start, text.Length);
+        }
 
         /// <summary>
         /// Filters the provided sequence to contain only the non-null values in a null-safe way.

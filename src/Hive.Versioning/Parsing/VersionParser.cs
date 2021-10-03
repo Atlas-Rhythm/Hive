@@ -47,10 +47,6 @@ namespace Hive.Versioning.Parsing
         /// </summary>
         EPrereleaseId,
         /// <summary>
-        /// Did not find a prerelease ID dot.
-        /// </summary>
-        EPrereleaseIdDot,
-        /// <summary>
         /// Found a prerelease clause.
         /// </summary>
         FPrerelease,
@@ -89,6 +85,10 @@ namespace Hive.Versioning.Parsing
         /// Did not find a valid numeric ID.
         /// </summary>
         EValidNumericId,
+        /// <summary>
+        /// Found a numeric ID.
+        /// </summary>
+        FNumericId,
         /// <summary>
         /// Found a valid numeric ID.
         /// </summary>
@@ -210,7 +210,7 @@ namespace Hive.Versioning.Parsing
                 while (TryReadPreReleaseId(ref errors, ref text, out id));
 
                 ab.Clear();
-                errors.Report(VersionParseAction.EPrereleaseIdDot, text);
+                errors.Report(VersionParseAction.EPrereleaseId, text);
                 text = copy;
                 return false;
             }
@@ -221,8 +221,13 @@ namespace Hive.Versioning.Parsing
 
         private static bool TryReadPreReleaseId(ref ErrorState errors, ref StringPart text, out StringPart id)
         {
+            var copy = text;
             if (TryReadAlphaNumId(ref errors, ref text, out id)) return true;
-            if (TryReadNumId(ref errors, ref text, out id)) return true;
+            if (TryReadNumId(ref errors, ref text, out id))
+            {
+                errors.Report(VersionParseAction.FNumericId, copy);
+                return true;
+            }
             return false;
         }
 
@@ -294,6 +299,7 @@ namespace Hive.Versioning.Parsing
 
             if (skipNonDigitCheck)
             {
+                errors.Report(VersionParseAction.FAlphaNumericId, text);
                 text = text.Slice(len);
                 return true;
             }

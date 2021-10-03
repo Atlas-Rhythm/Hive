@@ -96,6 +96,7 @@ namespace Hive.Versioning.Parsing
             ReportErrors = true;
             InputText = text;
             reports = default;
+            reports.Reserve(16);
         }
 
         private ArrayBuilder<ActionErrorReport<TAction>> reports;
@@ -161,6 +162,12 @@ namespace Hive.Versioning.Parsing
             }
             state.Dispose();
         }
+
+        /// <summary>
+        /// Gets all current error reports.
+        /// </summary>
+        /// <returns>An array of all error reports stored in this error state.</returns>
+        public ActionErrorReport<TAction>[] ToArray() => reports.ToArray();
 
         /// <summary>
         /// Disposes and cleans up the memory used by this instance.

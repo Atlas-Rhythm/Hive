@@ -1,10 +1,16 @@
 ﻿using Xunit;
 using Hive.Versioning.Parsing;
+using Xunit.Abstractions;
 
 namespace Hive.Versioning.Tests.Ranges
 {
     public class RangeTests
     {
+        private readonly ITestOutputHelper output;
+
+        public RangeTests(ITestOutputHelper output)
+            => this.output = output;
+
         [Theory]
         [InlineData(">=1.0.0", true)]
         [InlineData(">1.0.0", true)]
@@ -279,6 +285,8 @@ namespace Hive.Versioning.Tests.Ranges
         {
             var errors = new ParserErrorState<AnyParseAction>(text);
             Assert.Equal(valid, VersionRange.TryParse(ref errors, text, out _));
+            var message = ErrorMessages.GetVersionRangeErrorMessage(ref errors);
+            output.WriteLine(message);
             errors.Dispose();
         }
 

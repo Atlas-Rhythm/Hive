@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using Hive.Versioning.Parsing;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Hive.Versioning.Tests
 {
@@ -40,8 +41,10 @@ namespace Hive.Versioning.Tests
     public class VersionTests : IClassFixture<VersionTestFixture>
     {
         private readonly VersionTestFixture fixture;
+        private readonly ITestOutputHelper output;
 
-        public VersionTests(VersionTestFixture fix) => fixture = fix;
+        public VersionTests(VersionTestFixture fix, ITestOutputHelper output)
+            => (fixture, this.output) = (fix, output);
 
         [Theory]
         [InlineData("0.0.4")]
@@ -141,6 +144,8 @@ namespace Hive.Versioning.Tests
         {
             var errors = new ParserErrorState<VersionParseAction>(text);
             Assert.False(Version.TryParse(ref errors, text, out var ver));
+            var message = ErrorMessages.GetVersionErrorMessage(ref errors);
+            output.WriteLine(message);
             errors.Dispose();
             _ = ver;
 
