@@ -15,30 +15,88 @@ namespace Hive.Versioning.Parsing
     using ErrorState = ParserErrorState<VersionParseAction>;
 #pragma warning restore IDE0065 // Misplaced using directive
 
+    /// <summary>
+    /// The parse actions for version parsing.
+    /// </summary>
     public enum VersionParseAction
     {
+        /// <summary>
+        /// No action.
+        /// </summary>
         None,
 
+        /// <summary>
+        /// Did not find a core version number.
+        /// </summary>
         ECoreVersionNumber,
+        /// <summary>
+        /// Did not find a core version dot.
+        /// </summary>
         ECoreVersionDot,
+        /// <summary>
+        /// Found a core version.
+        /// </summary>
         FCoreVersion,
 
+        /// <summary>
+        /// Did not find a prerelease clause.
+        /// </summary>
         EPrerelease,
+        /// <summary>
+        /// Did not find a prerelease ID.
+        /// </summary>
         EPrereleaseId,
+        /// <summary>
+        /// Did not find a prerelease ID dot.
+        /// </summary>
         EPrereleaseIdDot,
+        /// <summary>
+        /// Found a prerelease clause.
+        /// </summary>
         FPrerelease,
 
+        /// <summary>
+        /// Did not find a build clause.
+        /// </summary>
         EBuild,
+        /// <summary>
+        /// Did not find a build ID.
+        /// </summary>
         EBuildId,
+        /// <summary>
+        /// Did not find a build ID dot.
+        /// </summary>
         EBuildIdDot,
+        /// <summary>
+        /// Found a build clause.
+        /// </summary>
         FBuild,
 
+        /// <summary>
+        /// Did not find an alphanumeric ID.
+        /// </summary>
         EAlphaNumericId,
+        /// <summary>
+        /// Found an alphanumeric ID.
+        /// </summary>
         FAlphaNumericId,
+
+        /// <summary>
+        /// Did not find a numeric ID.
+        /// </summary>
         ENumericId,
+        /// <summary>
+        /// Did not find a valid numeric ID.
+        /// </summary>
         EValidNumericId,
+        /// <summary>
+        /// Found a valid numeric ID.
+        /// </summary>
         FValidNumericId,
 
+        /// <summary>
+        /// There was extra input after the version.
+        /// </summary>
         ExtraInput,
     }
 

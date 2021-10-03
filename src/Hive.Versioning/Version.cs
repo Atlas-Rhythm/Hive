@@ -387,6 +387,13 @@ namespace Hive.Versioning
             return TryParse(ref text, true, out version) && text.Length == 0;
         }
 
+        /// <summary>
+        /// Attempts to parse a sequence of characters into a version object, optionally recording error information.
+        /// </summary>
+        /// <param name="errors">The error state object to write error information to.</param>
+        /// <param name="text">The sequence of characters to parse.</param>
+        /// <param name="version">The parsed version, if the input is valid.</param>
+        /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
         public static bool TryParse(ref ErrorState errors, StringPart text, [MaybeNullWhen(false)] out Version version)
         {
             text = text.Trim();
@@ -398,7 +405,7 @@ namespace Hive.Versioning
         /// </summary>
         /// <remarks>
         /// When this method returns, <paramref name="text"/> will begin after the end of the parsed version, if it is present, or
-        /// what it initially contained if no version is present and this returns <see langword="false"/>
+        /// what it initially contained if no version is present and this returns <see langword="false"/>.
         /// </remarks>
         /// <param name="text">The sequence of characters to parse.</param>
         /// <param name="version">The parsed version, if the input is valid.</param>
@@ -407,6 +414,18 @@ namespace Hive.Versioning
         public static bool TryParse(ref StringPart text, [MaybeNullWhen(false)] out Version version)
             => TryParse(ref text, false, out version);
 
+        /// <summary>
+        /// Attempts to parse a sequence of characters into a version object, as part of a larger parse, possibly keeping track
+        /// of error information.
+        /// </summary>
+        /// <remarks>
+        /// When this method returns, <paramref name="text"/> will begin after the end of the parsed version, if it is present, or
+        /// what it initially contained if no version is present and this returns <see langword="false"/>.
+        /// </remarks>
+        /// <param name="errors">The error state object to write error information to.</param>
+        /// <param name="text">The sequence of characters to parse.</param>
+        /// <param name="version">The parsed version, if the input is valid.</param>
+        /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
         [CLSCompliant(false)]
         public static bool TryParse(ref ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out Version version)
             => TryParse(ref errors, ref text, false, out version);

@@ -660,6 +660,17 @@ namespace Hive.Versioning
             return TryParse(ref errors, ref text, true, out range) && text.Length == 0; // don't report errors
         }
 
+        /// <summary>
+        /// Attempts to parse a whole string as a <see cref="VersionRange"/>, optionally recording error information.
+        /// </summary>
+        /// <remarks>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
+        /// </remarks>
+        /// <param name="errors">The error state object to write error information to.</param>
+        /// <param name="text">The string to try to parse.</param>
+        /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
+        /// <seealso cref="TryParse(ref ErrorState, ref StringPart, out VersionRange)"/>
         public static bool TryParse(ref ErrorState errors, StringPart text, [MaybeNullWhen(false)] out VersionRange range)
         {
             text = text.Trim();
@@ -684,6 +695,18 @@ namespace Hive.Versioning
             return TryParse(ref errors, ref text, false, out range); // don't do error reporting
         }
 
+        /// <summary>
+        /// Attempts to parse a <see cref="VersionRange"/> from the start of the string, optionally recording error information.
+        /// </summary>
+        /// <remarks>
+        /// <para>When this returns <see langword="true"/>, <paramref name="text"/> will begin immediately after the parsed <see cref="VersionRange"/>.
+        /// When this returns <see langword="false"/>, <paramref name="text"/> will remain unchanged.</para>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
+        /// </remarks>
+        /// <param name="errors">The error state object to write error information to.</param>
+        /// <param name="text">The string to try to parse.</param>
+        /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
         [CLSCompliant(false)]
         public static bool TryParse(ref ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out VersionRange range)
             => TryParse(ref errors, ref text, false, out range);

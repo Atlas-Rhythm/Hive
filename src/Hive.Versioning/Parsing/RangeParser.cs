@@ -18,47 +18,139 @@ namespace Hive.Versioning.Parsing
     using VersionErrorState = ParserErrorState<VersionParseAction>;
 #pragma warning restore IDE0065 // Misplaced using directive
 
+    /// <summary>
+    /// The parse actions for version range parsing.
+    /// </summary>
     public enum RangeParseAction
     {
+        /// <summary>
+        /// No action.
+        /// </summary>
         None,
 
+        /// <summary>
+        /// Did not find the first number in a star range.
+        /// </summary>
         EStarRange1 = RangeParser.RangeFlag,
+        /// <summary>
+        /// Did not find the second number in a star range.
+        /// </summary>
         EStarRange2,
+        /// <summary>
+        /// Did not find the third star in a star range.
+        /// </summary>
         EStarRange3,
+        /// <summary>
+        /// Found a star range.
+        /// </summary>
         FStarRange,
 
+        /// <summary>
+        /// Did not find the first version in a hyphen range.
+        /// </summary>
         EHyphenVersion,
+        /// <summary>
+        /// Did not find the second version in a hyphen range.
+        /// </summary>
         EHyphenVersion2,
+        /// <summary>
+        /// Did not find the hyphen in a hyphen range.
+        /// </summary>
         EHyphen,
+        /// <summary>
+        /// Found a hyphen range.
+        /// </summary>
         FHyphenRange,
 
+        /// <summary>
+        /// Did not find a caret for a caret range.
+        /// </summary>
         ECaret,
+        /// <summary>
+        /// Did not find the version in a caret version.
+        /// </summary>
         ECaretVersion,
+        /// <summary>
+        /// Found a caret range.
+        /// </summary>
         FCaretRange,
 
-        ESubrange,
+        /// <summary>
+        /// Did not find the first comparer in a subrange.
+        /// </summary>
+        ESubrange1,
+        /// <summary>
+        /// Did not find the second comparer in a subrange.
+        /// </summary>
         ESubrange2,
+        /// <summary>
+        /// The found subrange was not ordered correctly.
+        /// </summary>
         EOrderedSubrange,
+        /// <summary>
+        /// The found subrange was not closed.
+        /// </summary>
         EClosedSubrange,
+        /// <summary>
+        /// Found a subrange.
+        /// </summary>
         FSubrange,
 
+        /// <summary>
+        /// Did not find a comparer type.
+        /// </summary>
         ECompareType,
+        /// <summary>
+        /// Did not find a comparer.
+        /// </summary>
         EComparer,
+        /// <summary>
+        /// Did not find a comparer after a comparer type.
+        /// </summary>
         EComparerVersion,
+        /// <summary>
+        /// Found a comparer.
+        /// </summary>
         FComparer,
 
+        /// <summary>
+        /// Did not find a component.
+        /// </summary>
         EComponent,
 
+        /// <summary>
+        /// There was extra input after the range.
+        /// </summary>
         ExtraInput = VersionParseAction.ExtraInput,
     }
 
+    /// <summary>
+    /// A parse action that can be either a <see cref="RangeParseAction"/> or a <see cref="VersionParseAction"/>.
+    /// </summary>
     public struct AnyParseAction : IEquatable<AnyParseAction>
     {
+        /// <summary>
+        /// The value of this action, as a <see cref="RangeParseAction"/>.
+        /// </summary>
         public RangeParseAction Value { get; }
+        /// <summary>
+        /// The value of this action, as a <see cref="VersionParseAction"/>.
+        /// </summary>
         public VersionParseAction VersionAction => (VersionParseAction)Value;
+        /// <summary>
+        /// Gets whether this is a <see cref="VersionParseAction"/> or not.
+        /// </summary>
         public bool IsVersionAction => (Value & RangeParser.RangeFlag) != RangeParser.RangeFlag;
 
+        /// <summary>
+        /// Constructs an <see cref="AnyParseAction"/> from a <see cref="RangeParseAction"/>.
+        /// </summary>
+        /// <param name="action">The <see cref="RangeParseAction"/> to construct it with.</param>
         public AnyParseAction(RangeParseAction action) => Value = action;
+        /// <summary>
+        /// Constructs an <see cref="AnyParseAction"/> from a <see cref="VersionParseAction"/>.
+        /// </summary>
+        /// <param name="action">The <see cref="VersionParseAction"/> to construct it with.</param>
         public AnyParseAction(VersionParseAction action) => Value = (RangeParseAction)action;
 
         internal static readonly Func<VersionParseAction, AnyParseAction> Convert
@@ -77,8 +169,21 @@ namespace Hive.Versioning.Parsing
         public override int GetHashCode()
             => HashCode.Combine(Value, VersionAction, IsVersionAction);
 
+        /// <summary>
+        /// Compares two <see cref="AnyParseAction"/>s for equality.
+        /// </summary>
+        /// <param name="left">The firrst parse action to compare.</param>
+        /// <param name="right">The second parse action to compare.</param>
+        /// <returns><see langword="true"/> if the actions are equivalent, <see langword="false"/> otherwise.</returns>
         public static bool operator ==(AnyParseAction left, AnyParseAction right)
             => left.Equals(right);
+
+        /// <summary>
+        /// Compares two <see cref="AnyParseAction"/>s for inequality.
+        /// </summary>
+        /// <param name="left">The firrst parse action to compare.</param>
+        /// <param name="right">The second parse action to compare.</param>
+        /// <returns><see langword="true"/> if the actions are not equivalent, <see langword="false"/> otherwise.</returns>
         public static bool operator !=(AnyParseAction left, AnyParseAction right)
             => !(left == right);
     }
@@ -282,7 +387,7 @@ namespace Hive.Versioning.Parsing
             // otherwise we just try read two VersionComparers in a row
             if (!TryParseComparer(ref errors, ref text, out var lower))
             {
-                errors.Report(new(RangeParseAction.ESubrange), text);
+                errors.Report(new(RangeParseAction.ESubrange1), text);
                 text = copy;
                 subrange = default;
                 return false;
