@@ -91,6 +91,7 @@ namespace Hive.Models.Serialized
         /// The additional data associated with this <see cref="Mod"/>.
         /// All properties are public and readonly for all people who get mods.
         /// </summary>
+        [JsonConverter(typeof(ArbitraryAdditionalData.ArbitraryAdditionalDataConverter))]
         public ArbitraryAdditionalData AdditionalData { get; init; } = new();
 
         /// <summary>
