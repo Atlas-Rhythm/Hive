@@ -1,0 +1,34 @@
+# This file is NOT designed to use exact.
+# Please change the passwords and configure it as needed.
+
+# Any appsettings.json or plugin-based configurations can be made in
+# the [environment] property in the [hive] service can be added by using
+# "__" (two underscores) for each property.
+
+
+version: "3.9"
+services:
+  hive:
+    image: ghcr.io/atlas-rhythm/hive:master
+    restart: unless-stopped
+    environment:
+      # Do not change the Host or Port unless you know what you are doing.
+      # Make sure that Database matches POSTGRES_DB in the [db] service environment.
+      # Make sure that User ID matches POSTGRES_USER in the [db] service environment.
+      # Make sure that Password matches POSTGRES_PASSWORD in the [db] service environment.
+      - ConnectionStrings__Default=User ID=postgres;Password=please-change-me;Host=db;Port=5432;Database=hive;Pooling=true;
+    depends_on:
+      - db
+    ports:
+      # 21034 is the port that Hive can be accessed from the host machine. You are free to change it to something that works for you.
+      - "21034:80"
+
+    # volumes:
+    #  - /path/to/hive/plugins:/app/plugins
+  db:
+    image: postgres:12.8
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=hive
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=please-change-me
