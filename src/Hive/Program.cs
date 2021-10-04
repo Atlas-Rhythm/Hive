@@ -1,3 +1,4 @@
+using DryIoc.Microsoft.DependencyInjection;
 using Hive.Models;
 using Hive.Plugins.Loading;
 using Hive.Versioning;
@@ -25,15 +26,8 @@ using Version = Hive.Versioning.Version;
 
 namespace Hive
 {
-    /// <summary>
-    ///
-    /// </summary>
     public static class Program
     {
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="args"></param>
         public static async Task Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
@@ -70,13 +64,9 @@ namespace Hive
             await host.RunAsync().ConfigureAwait(false);
         }
 
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .UseServiceProviderFactory(new DryIocServiceProviderFactory())
                 .UseSerilog((host, services, logger) => logger
                     .ReadFrom.Configuration(host.Configuration)
                     .Destructure.LibraryTypes()
