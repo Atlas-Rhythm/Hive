@@ -1,3 +1,4 @@
+using System;
 using System.Security.Cryptography;
 using DryIoc;
 using Hive.Controllers;
@@ -58,6 +59,13 @@ namespace Hive
 
         public void ConfigureContainer(IContainer container)
         {
+            container.Register<ILogger>(Reuse.Transient,
+                Made.Of(
+                    r => ServiceInfo.Of<ILogger>(),
+                    l => l.ForContext(Arg.Index<Type>(0)),
+                    r => r.Parent.ImplementationType),
+                setup: Setup.With(condition: r => r.Parent.ImplementationType is not null));
+
             container.RegisterInstance<IClock>(SystemClock.Instance);
             container.Register<Permissions.Logging.ILogger, Logging.PermissionsProxy>();
             container.Register(Made.Of(() => new PermissionsManager<PermissionContext>(Arg.Of<IRuleProvider>(), Arg.Of<Permissions.Logging.ILogger>(), ".")), Reuse.Singleton);
@@ -78,7 +86,7 @@ namespace Hive
             container.Register<ChannelService>(Reuse.Scoped);
             container.Register<GameVersionService>(Reuse.Scoped);
             container.Register<DependencyResolverService>(Reuse.Scoped);
-            container.Register(typeof(IAggregate<>), typeof(Aggregate<>));
+            container.Register(typeof(IAggregate<>), typeof(Aggregate<>), Reuse.Singleton);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
