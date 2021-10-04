@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using DryIoc;
 using GraphQL;
 using GraphQL.Builders;
-using GraphQL.MicrosoftDI;
 using GraphQL.Server;
 using GraphQL.Types;
 using Hive.Graphing.Types;
@@ -24,7 +24,7 @@ namespace Hive.Graphing
         /// <returns></returns>
         public static IServiceCollection AddHiveGraphQL(this IServiceCollection services)
         {
-            _ = services.AddSingleton(services => new HiveSchema(new SelfActivatingServiceProvider(services)));
+            //_ = services.AddSingleton(services => new HiveSchema(new SelfActivatingServiceProvider(services)));
             _ = services.AddGraphQL((options, provider) =>
             {
                 var logger = provider.GetRequiredService<Serilog.ILogger>();
@@ -32,6 +32,9 @@ namespace Hive.Graphing
             }).AddSystemTextJson();
             return services;
         }
+
+        public static void RegisterHiveGraphQL(this IRegistrator container)
+            => container.Register<HiveSchema>(Reuse.Scoped);
 
         /// <summary>
         /// Analyzes and fills out any errors in an object query.

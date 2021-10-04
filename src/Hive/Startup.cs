@@ -87,6 +87,8 @@ namespace Hive
             container.Register<GameVersionService>(Reuse.Scoped);
             container.Register<DependencyResolverService>(Reuse.Scoped);
             container.Register(typeof(IAggregate<>), typeof(Aggregate<>), Reuse.Singleton);
+
+            container.RegisterHiveGraphQL();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
