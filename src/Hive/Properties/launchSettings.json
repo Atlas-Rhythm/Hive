@@ -11,7 +11,7 @@
   "profiles": {
     "Hive": {
       "commandName": "Project",
-      "workingDirectory": "..\\..\\artifacts\\bin\\Hive\\Debug",
+      "workingDirectory": "..\\..\\artifacts\\bin\\Hive\\Debug\\net5.0",
       "launchBrowser": true,
       "launchUrl": "api/channels",
       "environmentVariables": {

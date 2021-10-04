@@ -14,9 +14,16 @@ namespace PluginTemplate
         public Startup(IConfiguration config)
             => Configuration = config;
 
+        /*
         public void ConfigureServices(IServiceCollection services)
         {
-            // TODO: Register your services to the IServiceCollection
+            // TODO: Use this only for other libraries which use MSDI for injection
+        }
+        */
+
+        public void ConfigureContainer(IContainer container)
+        {
+            // TODO: Register your services in the IContainer
         }
 
         public /*async Task*/ void PreConfigure/*Async*/()
