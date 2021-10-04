@@ -51,3 +51,6 @@
 *.props                             @nike4613
 *.ps1                               @nike4613
 
+.dockerignore                       @Auros
+Dockerfile                          @Auros
+docker-compose.yml                  @Auros

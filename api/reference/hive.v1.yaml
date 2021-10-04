@@ -495,12 +495,14 @@ paths:
               type: object
               additionalProperties: false
               properties:
-                finalMetadata:
-                  $ref: '#/components/schemas/Mod'
+                finalMetadataJson:
+                  type: string
+                  description: A JSON string which represents the final metadata of the mod.
                 cookie:
                   type: string
+                  description: The action cookie from the first stage of uploading.
               required:
-                - finalMetadata
+                - finalMetadataJson
                 - cookie
         description: The final mod metadata to upload and the cookie returned in response to a successful completion of the first upload step.
       security:
