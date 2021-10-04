@@ -21,6 +21,12 @@ namespace Hive.Plugins.Tests.TestPlugin
             _ = services;
         }
 
+        public void ConfigureContainer(object? container)
+        {
+            _ = Configuration;
+            _ = container;
+        }
+
         public void PreConfigure(IEnumerable<Action> preConfigCbs)
         {
             if (preConfigCbs is null)

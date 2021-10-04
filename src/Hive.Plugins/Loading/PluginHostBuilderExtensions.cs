@@ -23,15 +23,18 @@ namespace Hive.Plugins.Loading
             if (configureOptions is null)
                 throw new ArgumentNullException(nameof(builder));
 
+            var configurator = new ContainerConfigurator();
+
             return builder.ConfigureServices((ctx, services) =>
                 {
                     var builder = new PluginLoaderOptionsBuilder();
                     configureOptions(builder);
 
                     var config = ctx.Configuration.GetSection(builder.ConfigurationKey);
-                    var loader = new PluginLoader(config, builder);
+                    var loader = new PluginLoader(config, builder, configurator);
                     loader.LoadPlugins(services, ctx.HostingEnvironment);
-                });
+                })
+                .ConfigureContainer<object>(configurator.Run);
         }
     }
 }
