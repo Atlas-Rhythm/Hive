@@ -62,12 +62,17 @@ namespace Hive.Tests.Endpoints
             this.helper = helper;
         }
 
+        private class EmptyServiceProvider : IServiceProvider
+        {
+            public object? GetService(Type serviceType) => null;
+        }
+
         [Fact]
         public void EnsureIUploadPluginValid()
         {
             var emptyPlugin = new HiveDefaultUploadPlugin();
 
-            var aggregate = new Aggregate<IUploadPlugin>(new[] { emptyPlugin });
+            var aggregate = new Aggregate<IUploadPlugin>(new[] { emptyPlugin }, new EmptyServiceProvider());
 
             _ = aggregate.Instance;
         }

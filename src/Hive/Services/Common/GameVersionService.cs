@@ -16,7 +16,7 @@ namespace Hive.Services.Common
     /// <summary>
     /// A class for plugins that allow modifications of <see cref="GameVersionsController"/>
     /// </summary>
-    [Aggregable]
+    [Aggregable(Default = typeof(HiveGameVersionsControllerPlugin))]
     public interface IGameVersionsPlugin
     {
         /// <summary>

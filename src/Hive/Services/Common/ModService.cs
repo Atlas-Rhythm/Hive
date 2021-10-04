@@ -19,7 +19,7 @@ namespace Hive.Services.Common
     /// <summary>
     /// A class for plugins that allow modifications of <see cref="ModsController"/>
     /// </summary>
-    [Aggregable]
+    [Aggregable(Default = typeof(HiveModsControllerPlugin))]
     public interface IModsPlugin
     {
         /// <summary>

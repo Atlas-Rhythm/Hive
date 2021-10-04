@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Hive.Plugins.Aggregates
 {
@@ -13,9 +14,10 @@ namespace Hive.Plugins.Aggregates
         /// Creates an aggregate instance from the provided enumerable of <typeparamref name="T"/>.
         /// </summary>
         /// <param name="aggregate">The collection to create the aggregation with.</param>
-        public Aggregate(IEnumerable<T> aggregate)
+        /// <param name="services">The service provider to use to construct the default implementation, if any.</param>
+        public Aggregate(IEnumerable<T> aggregate, IServiceProvider services)
         {
-            Instance = AggregatedInstanceGenerator<T>.Create(aggregate);
+            Instance = AggregatedInstanceGenerator<T>.Create(aggregate, services);
         }
 
         /// <inheritdoc/>

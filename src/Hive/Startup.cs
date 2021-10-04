@@ -1,15 +1,12 @@
 using System.Security.Cryptography;
 using DryIoc;
 using Hive.Controllers;
-using Hive.Extensions;
 using Hive.Graphing;
 using Hive.Models;
 using Hive.Permissions;
-using Hive.Plugins;
 using Hive.Plugins.Aggregates;
 using Hive.Services;
 using Hive.Services.Common;
-using Hive.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -82,15 +79,6 @@ namespace Hive
             container.Register<GameVersionService>(Reuse.Scoped);
             container.Register<DependencyResolverService>(Reuse.Scoped);
             container.Register(typeof(IAggregate<>), typeof(Aggregate<>));
-
-            // TODO: make this less repetitive and dumb
-            container.Register<IChannelsControllerPlugin, HiveChannelsControllerPlugin>(Reuse.Singleton);
-            container.Register<IGameVersionsPlugin, HiveGameVersionsControllerPlugin>(Reuse.Singleton);
-            container.Register<IModsPlugin, HiveModsControllerPlugin>();
-            container.Register<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>(Reuse.Singleton);
-            container.Register<IUploadPlugin, HiveDefaultUploadPlugin>(Reuse.Singleton);
-            container.Register<IUserCreationPlugin, HiveUsernamePlugin>(Reuse.Singleton);
-            container.Register<IUserPlugin, HiveUserPlugin>(Reuse.Singleton);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

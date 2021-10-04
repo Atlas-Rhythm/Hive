@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using Hive.Plugins.Aggregates;
 using Hive.Plugins.Resources;
+using Microsoft.Extensions.DependencyInjection;
 
 [assembly: InternalsVisibleTo(AggregatedInstanceGenerator.AssemblyName)]
 
@@ -18,6 +19,7 @@ namespace Hive.Plugins.Aggregates
         private static IEnumerable<(MethodInfo Method, Type DelegateType)>? implOrder;
         private static Func<Delegate[], IEnumerable<object>, object>? creator;
         private static Delegate[]? methodImpls;
+        private static AggregableAttribute? attribute;
 
         private static void LazySetup()
         {
@@ -27,14 +29,20 @@ namespace Hive.Plugins.Aggregates
                 (implOrder, creator) = AggregatedInstanceGenerator.CreateAggregatedInstance(typeof(T));
             }
 
+            attribute = typeof(T).GetCustomAttribute<AggregableAttribute>();
+
             methodImpls = implOrder
                 .Select(t => AggregatedMethodGenerator.Generate(typeof(T), t.Method, t.DelegateType))
                 .ToArray();
         }
 
-        internal static T Create(IEnumerable<T> impls)
+        internal static T Create(IEnumerable<T> impls, IServiceProvider services)
         {
             if (creator == null) LazySetup();
+            if (!impls.Any() && attribute?.Default is { } defaultType)
+            {
+                impls = new[] { (T)ActivatorUtilities.GetServiceOrCreateInstance(services, defaultType) };
+            }
             return (T)creator!(methodImpls!, impls);
         }
     }

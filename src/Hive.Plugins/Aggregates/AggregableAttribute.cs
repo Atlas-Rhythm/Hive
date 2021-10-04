@@ -8,5 +8,6 @@ namespace Hive.Plugins.Aggregates
     [AttributeUsage(AttributeTargets.Interface, AllowMultiple = false, Inherited = false)]
     public sealed class AggregableAttribute : Attribute
     {
+        public Type? Default { get; set; }
     }
 }

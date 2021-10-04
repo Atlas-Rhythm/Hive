@@ -27,7 +27,7 @@ namespace Hive.Controllers
     /// <summary>
     /// A plugin for the mod upload flow.
     /// </summary>
-    [Aggregable]
+    [Aggregable(Default = typeof(HiveDefaultUploadPlugin))]
     public interface IUploadPlugin
     {
         /// <summary>
