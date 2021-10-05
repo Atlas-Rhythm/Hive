@@ -1,7 +1,6 @@
 ﻿using DryIoc;
 using Hive.Models;
 using Hive.Permissions;
-using Hive.Plugins;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

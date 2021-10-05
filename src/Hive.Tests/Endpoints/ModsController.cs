@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using DryIoc;
 using Hive.Models;
 using Hive.Models.Serialized;
-using Hive.Plugins;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

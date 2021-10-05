@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using Xunit.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using GraphQL;
@@ -18,7 +17,6 @@ using System.Threading.Tasks;
 using Hive.Graphing;
 using DryIoc;
 using DryIoc.Microsoft.DependencyInjection;
-using static Hive.Tests.ModTestHelper;
 using Hive.Plugins.Aggregates;
 
 namespace Hive.Tests
