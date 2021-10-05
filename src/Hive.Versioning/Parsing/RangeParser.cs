@@ -80,10 +80,6 @@ namespace Hive.Versioning.Parsing
         /// </summary>
         ESubrange1,
         /// <summary>
-        /// Did not find the second comparer in a subrange.
-        /// </summary>
-        ESubrange2,
-        /// <summary>
         /// The found subrange was not ordered correctly.
         /// </summary>
         EOrderedSubrange,
@@ -117,6 +113,19 @@ namespace Hive.Versioning.Parsing
         /// Did not find a component.
         /// </summary>
         EComponent,
+        /// <summary>
+        /// Found a range component.
+        /// </summary>
+        FComponent,
+
+        /// <summary>
+        /// Found an everything range.
+        /// </summary>
+        FStar,
+        /// <summary>
+        /// Found a nothing range.
+        /// </summary>
+        FZero,
 
         /// <summary>
         /// There was extra input after the range.
@@ -201,10 +210,12 @@ namespace Hive.Versioning.Parsing
             sranges = null;
             comparer = null;
 
+            var copy = text;
             // check for the "everything" range first, which is just a star
             if (TryTake(ref text, '*'))
             {
                 sranges = EverythingSubranges;
+                errors.Report(new(RangeParseAction.FStar), copy);
                 return true;
             }
 
@@ -212,10 +223,11 @@ namespace Hive.Versioning.Parsing
             if (TryTake(ref text, 'z') || TryTake(ref text, 'Z'))
             {
                 sranges = Array.Empty<Subrange>();
+                errors.Report(new(RangeParseAction.FZero), copy);
                 return true;
             }
 
-            if (!TryReadComponent(ref errors, ref text, out var range, out var compare))
+            if (!TryReadComponent(ref errors, ref text, false, out var range, out var compare))
                 return false;
 
             using var ab = new ArrayBuilder<Subrange>();
@@ -277,33 +289,11 @@ namespace Hive.Versioning.Parsing
                 }
                 text = text.TrimStart();
             }
-            while (TryReadComponent(ref errors, ref text, out range, out compare));
+            while (TryReadComponent(ref errors, ref text, false, out range, out compare));
 
             text = restoreTo;
             sranges = ab.ToArray();
             return true;
-        }
-
-        private static bool TryReadComponent(ref ErrorState errors, ref StringPart text, out Subrange? range, out VersionComparer? compare)
-        {
-            if (TryParseSubrange(ref errors, ref text, false, out var sr))
-            {
-                range = sr;
-                compare = null;
-                return true;
-            }
-
-            if (TryParseComparer(ref errors, ref text, out var comp))
-            {
-                range = null;
-                compare = comp;
-                return true;
-            }
-
-            errors.Report(new(RangeParseAction.EComponent), text);
-            range = null;
-            compare = null;
-            return false;
         }
 
         public static bool TryParseComparer(ref ErrorState errors, ref StringPart text, out VersionComparer comparer)
@@ -370,66 +360,105 @@ namespace Hive.Versioning.Parsing
             or ComparisonType.PreReleaseGreaterEqual
             or ComparisonType.PreReleaseLess;
 
-        public static bool TryParseSubrange(ref ErrorState errors, ref StringPart text, bool allowOutward, out Subrange subrange)
+        public static bool TryReadComponent(ref ErrorState errors, ref StringPart text, bool allowOutward,
+            out Subrange? nrange, out VersionComparer? ncompare)
         {
             var copy = text;
 
-            // first we check for a star range
-            if (TryReadStarRange(ref errors, ref text, out subrange)) return true;
-            // then we check for a hyphen range
-            if (TryReadHyphenRange(ref errors, ref text, out subrange)) return true;
+            nrange = null;
+            ncompare = null;
 
-            //---EVERYTHING AFTER THIS POINT HAS A SPECIAL FIRST CHARACTER---\\
-
-            // then we check for a ^ range
-            if (TryReadCaretRange(ref errors, ref text, out subrange)) return true;
-
-            // otherwise we just try read two VersionComparers in a row
-            if (!TryParseComparer(ref errors, ref text, out var lower))
+            switch (text[0])
             {
-                errors.Report(new(RangeParseAction.ESubrange1), text);
-                text = copy;
-                subrange = default;
-                return false;
-            }
-            text = text.TrimStart();
-            if (!TryParseComparer(ref errors, ref text, out var upper))
-            {
-                errors.Report(new(RangeParseAction.ESubrange2), text);
-                text = copy;
-                subrange = default;
-                return false;
-            }
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                case var c when char.IsDigit(c):
+                    // first we check for a star range
+                    if (TryReadStarRange(ref errors, ref text, out var subrange))
+                    {
+                        nrange = subrange;
+                        errors.Report(new(RangeParseAction.FComponent), copy);
+                        return true;
+                    }
+                    // then we check for a hyphen range
+                    if (TryReadHyphenRange(ref errors, ref text, out subrange))
+                    {
+                        nrange = subrange;
+                        errors.Report(new(RangeParseAction.FComponent), copy);
+                        return true;
+                    }
 
-            if (lower.CompareTo > upper.CompareTo)
-            {
-                errors.Report(new(RangeParseAction.EOrderedSubrange), text);
-                text = copy;
-                subrange = default;
-                return false;
+                    errors.Report(new(RangeParseAction.EComponent), text);
+                    return false;
+
+                //---EVERYTHING AFTER THIS POINT HAS A SPECIAL FIRST CHARACTER---\\
+                case '^':
+                    // then we check for a ^ range
+                    if (TryReadCaretRange(ref errors, ref text, out subrange))
+                    {
+                        nrange = subrange;
+                        errors.Report(new(RangeParseAction.FComponent), copy);
+                        return true;
+                    }
+
+                    errors.Report(new(RangeParseAction.EComponent), text);
+                    return false;
+
+                default:
+                    // otherwise we just try read two VersionComparers in a row
+                    if (!TryParseComparer(ref errors, ref text, out var lower))
+                    {
+                        errors.Report(new(RangeParseAction.ESubrange1), text);
+                        text = copy;
+                        return false;
+                    }
+                    text = text.TrimStart();
+                    var copy2 = text;
+                    if (!TryParseComparer(ref errors, ref text, out var upper))
+                    {
+                        errors.Report(new(RangeParseAction.FComponent), copy);
+                        text = copy2;
+                        ncompare = lower;
+                        return true;
+                    }
+
+                    if (lower.CompareTo > upper.CompareTo)
+                    {
+                        errors.Report(new(RangeParseAction.EOrderedSubrange), text);
+                        text = copy;
+                        return false;
+                    }
+
+                    if (lower.Type == ComparisonType.ExactEqual || upper.Type == ComparisonType.ExactEqual
+                     || (lower.Type & ~ComparisonType.ExactEqual) == (upper.Type & ~ComparisonType.ExactEqual))
+                    { // if the bounds point the same direction, the subrange is invalid
+                        text = copy;
+                        errors.Report(new(RangeParseAction.EClosedSubrange), text);
+                        return false;
+                    }
+
+                    subrange = new Subrange(lower, upper);
+
+                    if (!allowOutward && !subrange.IsInward)
+                    { // reject outward-facing subranges for consistency on the outside
+                        text = copy;
+                        errors.Report(new(RangeParseAction.EClosedSubrange), text);
+                        return false;
+                    }
+
+                    nrange = subrange;
+                    errors.Report(new(RangeParseAction.FSubrange), copy);
+                    errors.Report(new(RangeParseAction.FComponent), copy);
+                    return true;
             }
-
-            if (lower.Type == ComparisonType.ExactEqual || upper.Type == ComparisonType.ExactEqual
-             || (lower.Type & ~ComparisonType.ExactEqual) == (upper.Type & ~ComparisonType.ExactEqual))
-            { // if the bounds point the same direction, the subrange is invalid
-                text = copy;
-                errors.Report(new(RangeParseAction.EClosedSubrange), text);
-                subrange = default;
-                return false;
-            }
-
-            subrange = new Subrange(lower, upper);
-
-            if (!allowOutward && !subrange.IsInward)
-            { // reject outward-facing subranges for consistency on the outside
-                text = copy;
-                errors.Report(new(RangeParseAction.EClosedSubrange), text);
-                subrange = default;
-                return false;
-            }
-
-            errors.Report(new(RangeParseAction.FSubrange), copy);
-            return true;
         }
 
         private static bool TryReadCaretRange(ref ErrorState errors, ref StringPart text, out Subrange range)

@@ -26,8 +26,9 @@ namespace Hive.Versioning.Tests.Ranges
         {
             StringPart text = input;
             var errors = new ParserErrorState<AnyParseAction>();
-            Assert.Equal(valid, RangeParser.TryParseSubrange(ref errors, ref text, true, out var range));
-            return range;
+            Assert.Equal(valid, RangeParser.TryReadComponent(ref errors, ref text, true, out var range, out _)
+                && range is not null);
+            return range ?? default;
         }
 
         private static Subrange CreateSubrange(string lower, string upper)
