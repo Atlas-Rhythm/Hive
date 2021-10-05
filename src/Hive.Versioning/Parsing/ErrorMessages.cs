@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Hive.Versioning.Resources;
 
 #if !NETSTANDARD2_0
 using StringPart = System.ReadOnlySpan<char>;
@@ -17,6 +18,9 @@ namespace Hive.Versioning.Parsing
 
             var reports = errors.ToArray();
 
+            if (reports.Length > 128) // arbitrary limit
+                return SR.Version_InputInvalid; // generic error message for when we don't want to spend time generating long ass messages
+
             foreach (var report in reports)
             {
                 FormatMessageAtPosition(sb, errors.InputText, report.TextOffset, report.Action.ToString());
@@ -30,6 +34,9 @@ namespace Hive.Versioning.Parsing
             var sb = new StringBuilder();
 
             var reports = errors.ToArray();
+
+            if (reports.Length > 128) // arbitrary limit
+                return SR.Range_InputInvalid; // generic error message for when we don't want to spend time generating long ass messages
 
             foreach (var report in reports)
             {
