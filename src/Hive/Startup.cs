@@ -20,26 +20,12 @@ using Serilog;
 
 namespace Hive
 {
-    /// <summary>
-    ///
-    /// </summary>
-    public class Startup
+    internal class Startup
     {
-        /// <summary>
-        /// Startup constructor with configuration
-        /// </summary>
-        /// <param name="configuration"></param>
         public Startup(IConfiguration configuration) => Configuration = configuration;
 
-        /// <summary>
-        /// Configuration instance
-        /// </summary>
         public IConfiguration Configuration { get; }
 
-        /// <summary>
-        /// This method gets called by the runtime. Use this method to add services to the container.
-        /// </summary>
-        /// <param name="services"></param>
         public void ConfigureServices(IServiceCollection services)
         {
             _ = services.AddDbContext<HiveContext>(options =>

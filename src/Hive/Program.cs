@@ -26,7 +26,7 @@ using Version = Hive.Versioning.Version;
 
 namespace Hive
 {
-    public static class Program
+    internal static class Program
     {
         public static async Task Main(string[] args)
         {
