@@ -16,6 +16,10 @@ using Microsoft.AspNetCore.Http;
 using GraphQL;
 using System.Threading.Tasks;
 using Hive.Graphing;
+using DryIoc;
+using DryIoc.Microsoft.DependencyInjection;
+using static Hive.Tests.ModTestHelper;
+using Hive.Plugins.Aggregates;
 
 namespace Hive.Tests
 {
@@ -34,37 +38,43 @@ namespace Hive.Tests
         /// <param name="builtIns">The built in functions to provide to the <see cref="PermissionsManager{TContext}"/>.</param>
         /// <param name="context">Additional data to explicitly add to the database.</param>
         /// <returns>The created <see cref="ServiceCollection"/></returns>
-        internal static IServiceCollection ConfigureServices(
+        internal static IContainer ConfigureServices(
             DbContextOptions<HiveContext> options,
+            Action<IServiceCollection> configureServices,
             ITestOutputHelper? outputHelper = null,
             IRuleProvider? ruleProvider = null,
             List<(string, Delegate)>? builtIns = null,
             PartialContext? context = null
             )
         {
+            var container = new Container(Rules.MicrosoftDependencyInjectionRules);
+            container.Use<IServiceScopeFactory>(r => new DryIocServiceScopeFactory(r));
+
             var services = new ServiceCollection();
+            configureServices(services);
+            container.Populate(services);
+
             // Initial services
-            services.AddSingleton<ILogger>(sp => new LoggerConfiguration().WriteTo.Debug().CreateLogger())
-                .AddSingleton<IProxyAuthenticationService>(sp => new MockAuthenticationService())
-                .AddSingleton<IClock>(SystemClock.Instance);
+            container.RegisterInstance<ILogger>(new LoggerConfiguration().WriteTo.Debug().CreateLogger());
+            container.RegisterInstance<IClock>(SystemClock.Instance);
+            container.Register<IProxyAuthenticationService, MockAuthenticationService>(Reuse.Singleton);
+            container.Register(typeof(IAggregate<>), typeof(Aggregate<>));
             if (outputHelper != null)
-                services.AddSingleton<Permissions.Logging.ILogger>(sp => new TestOutputWrapper(outputHelper));
+                container.Register<Permissions.Logging.ILogger, TestOutputWrapper>(Reuse.Singleton, Parameters.Of.Type(_ => outputHelper));
 
             // Rule provider
             if (ruleProvider is null)
             {
                 var mockRuleProvider = CreateRuleProvider();
-                services.AddSingleton((sp) => mockRuleProvider.Object);
+                container.RegisterInstance(mockRuleProvider.Object);
             }
             else
-                services.AddSingleton((sp) => ruleProvider);
+                container.RegisterInstance(ruleProvider);
 
             // Permissions Manager
-            if (builtIns is null)
-                builtIns = new List<(string, Delegate)>();
-            services.AddSingleton(sp =>
-                new PermissionsManager<PermissionContext>(sp.GetRequiredService<IRuleProvider>(), sp.GetService<Permissions.Logging.ILogger>(), ".", builtIns)
-            );
+            builtIns ??= new List<(string, Delegate)>();
+            container.Register<PermissionsManager<PermissionContext>>(Reuse.Singleton, Made.Of(()
+                => new PermissionsManager<PermissionContext>(Arg.Of<IRuleProvider>(), Arg.Of<Permissions.Logging.ILogger>(), ".", builtIns)));
 
             // Context and DB
             // Using the created DB, create exactly one singleton object that lives on it.
@@ -76,8 +86,9 @@ namespace Hive.Tests
             }
             // This singleton SHOULD be properly initialized to operate with the test DB.
             // There should only ever be one per service collection, so this checks out.
-            services.AddSingleton(sp => dbContext);
-            return services;
+            container.RegisterInstance(dbContext);
+
+            return container;
         }
 
         /// <summary>
@@ -103,15 +114,15 @@ namespace Hive.Tests
             public HttpContext? HttpContext { get; set; }
         }
 
-        internal static async Task<ExecutionResult> ExecuteGraphAsync(this ServiceProvider provider, string query)
+        internal static async Task<ExecutionResult> ExecuteGraphAsync(this IServiceProvider services, string query)
         {
-            var executer = provider.GetRequiredService<IDocumentExecuter>();
-            var schema = provider.GetRequiredService<HiveSchema>();
+            var executer = services.GetRequiredService<IDocumentExecuter>();
+            var schema = services.GetRequiredService<HiveSchema>();
             return await executer.ExecuteAsync(options =>
             {
                 options.Query = query;
                 options.Schema = schema;
-                options.RequestServices = provider;
+                options.RequestServices = services;
             });
         }
     }

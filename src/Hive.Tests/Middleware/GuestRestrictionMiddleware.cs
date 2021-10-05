@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using DryIoc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -153,16 +154,18 @@ namespace Hive.Tests.Middleware
                 configurationKVPs.Add($"RestrictedRoutes:{i}", restrictedEndpoints[i]);
             }
 
-            var services = DIHelper.ConfigureServices(Options, helper);
+            var container = DIHelper.ConfigureServices(Options, _ => { }, helper);
 
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(configurationKVPs);
 
-            services.AddSingleton<IConfiguration>(configuration.Build())
-                .AddSingleton(requestDelegate)
-                .AddScoped<Hive.GuestRestrictionMiddleware>();
+            container.RegisterInstance<IConfiguration>(configuration.Build());
+            container.RegisterInstance(requestDelegate);
+            container.Register<Hive.GuestRestrictionMiddleware>(Reuse.Scoped);
 
-            return services.BuildServiceProvider().GetRequiredService<Hive.GuestRestrictionMiddleware>();
+            var scope = container.CreateScope();
+
+            return scope.ServiceProvider.GetRequiredService<Hive.GuestRestrictionMiddleware>();
         }
     }
 }

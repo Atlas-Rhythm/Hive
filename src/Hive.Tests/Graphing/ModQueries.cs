@@ -1,10 +1,14 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using System.Net;
 using System.Threading.Tasks;
+using DryIoc;
+using DryIoc.Microsoft.DependencyInjection;
 using GraphQL.Execution;
 using Hive.Graphing;
 using Hive.Models;
 using Hive.Plugins;
+using Hive.Plugins.Aggregates;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +27,8 @@ namespace Hive.Tests.Graphing
         public async Task PermissionForbidModByID()
         {
             var services = CreateProvider("next(false)", TestHelpers.CreateMockRequest(null!));
-            var result = await services.ExecuteGraphAsync("{ mod(id: \"lilac\") { readableID } }");
+            using var scope = services.CreateScope();
+            var result = await scope.ServiceProvider.ExecuteGraphAsync("{ mod(id: \"lilac\") { readableID } }");
             Assert.NotNull(result);
             Assert.NotNull(result.Errors);
             var error = Assert.Single(result.Errors);
@@ -35,7 +40,8 @@ namespace Hive.Tests.Graphing
         public async Task SpecificModWithIDOnly()
         {
             var services = CreateProvider("next(true)", TestHelpers.CreateMockRequest(null!));
-            var result = await services.ExecuteGraphAsync("{ mod(id: \"lilac\") { readableID } }");
+            using var scope = services.CreateScope();
+            var result = await scope.ServiceProvider.ExecuteGraphAsync("{ mod(id: \"lilac\") { readableID } }");
             Assert.NotNull(result);
             Assert.Null(result.Errors);
             Assert.NotNull(result.Data);
@@ -50,7 +56,8 @@ namespace Hive.Tests.Graphing
         public async Task SpecificModWithAllStandardSerializableFields()
         {
             var services = CreateProvider("next(true)", TestHelpers.CreateMockRequest(null!));
-            var result = await services.ExecuteGraphAsync(
+            using var scope = services.CreateScope();
+            var result = await scope.ServiceProvider.ExecuteGraphAsync(
                 @"{
                     mod(id: ""lilac"") {
                     authors { username }
@@ -79,27 +86,22 @@ namespace Hive.Tests.Graphing
             Assert.Equal("raftario best modder", mod.Uploader.Username);
         }
 
-        private ServiceProvider CreateProvider(string permissionRule, HttpContext? context)
+        private IContainer CreateProvider(string permissionRule, HttpContext? context)
         {
             if (context is null)
                 context = new DefaultHttpContext();
 
-            var services = DIHelper.ConfigureServices(Options, helper, new ModTestHelper.ModsRuleProvider(permissionRule));
+            var container = DIHelper.ConfigureServices(Options, s
+                => s.AddHiveGraphQL(), helper, new ModTestHelper.ModsRuleProvider(permissionRule));
 
-            _ = services
-                .AddTransient<IChannelsControllerPlugin, HiveChannelsControllerPlugin>()
-                .AddSingleton<IHttpContextAccessor, DIHelper.TestAccessor>(sp => new DIHelper.TestAccessor(context))
-                .AddTransient<IResolveDependenciesPlugin, HiveResolveDependenciesControllerPlugin>()
-                .AddTransient<IGameVersionsPlugin, HiveGameVersionsControllerPlugin>()
-                .AddTransient<IModsPlugin, HiveModsControllerPlugin>()
-                .AddScoped<DependencyResolverService>()
-                .AddScoped<GameVersionService>()
-                .AddScoped<ChannelService>()
-                .AddScoped<ModService>()
-                .AddAggregates()
-                .AddHiveGraphQL();
+            container.RegisterInstance<IHttpContextAccessor>(new DIHelper.TestAccessor(context));
+            container.Register<DependencyResolverService>(Reuse.Scoped);
+            container.Register<GameVersionService>(Reuse.Scoped);
+            container.Register<ChannelService>(Reuse.Scoped);
+            container.Register<ModService>(Reuse.Scoped);
+            container.RegisterHiveGraphQL();
 
-            return services.BuildServiceProvider();
+            return container;
         }
     }
 }

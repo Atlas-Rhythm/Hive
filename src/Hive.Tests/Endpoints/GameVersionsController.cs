@@ -1,4 +1,5 @@
-﻿using Hive.Models;
+﻿using DryIoc;
+using Hive.Models;
 using Hive.Models.Serialized;
 using Hive.Permissions;
 using Hive.Plugins;
@@ -177,8 +178,9 @@ namespace Hive.Tests.Endpoints
 
         private Controllers.GameVersionsController CreateController(string permissionRule, IEnumerable<IGameVersionsPlugin> plugins)
         {
-            var services = DIHelper.ConfigureServices(
+            var container = DIHelper.ConfigureServices(
                 Options,
+                _ => { },
                 helper,
                 new GameVersionRuleProvider(permissionRule),
                 new List<(string, Delegate)>
@@ -187,13 +189,13 @@ namespace Hive.Tests.Endpoints
                     ("isNotBeta", new Func<string, bool>(s => !s.Contains("beta", StringComparison.InvariantCultureIgnoreCase)))
                 });
 
-            services
-                .AddTransient(sp => plugins)
-                .AddScoped<GameVersionService>()
-                .AddScoped<Controllers.GameVersionsController>()
-                .AddAggregates();
+            container.RegisterInstance(plugins);
+            container.Register<GameVersionService>(Reuse.Scoped);
+            container.Register<Controllers.GameVersionsController>(Reuse.Scoped);
 
-            var controller = services.BuildServiceProvider().GetRequiredService<Controllers.GameVersionsController>();
+            var scope = container.CreateScope();
+
+            var controller = scope.ServiceProvider.GetRequiredService<Controllers.GameVersionsController>();
 
             controller.ControllerContext = new ControllerContext()
             {

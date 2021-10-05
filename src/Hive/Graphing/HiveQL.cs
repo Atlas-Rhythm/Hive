@@ -24,7 +24,6 @@ namespace Hive.Graphing
         /// <returns></returns>
         public static IServiceCollection AddHiveGraphQL(this IServiceCollection services)
         {
-            //_ = services.AddSingleton(services => new HiveSchema(new SelfActivatingServiceProvider(services)));
             _ = services.AddGraphQL((options, provider) =>
             {
                 var logger = provider.GetRequiredService<Serilog.ILogger>();
