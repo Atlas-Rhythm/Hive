@@ -23,7 +23,7 @@ namespace Hive.Versioning.Parsing
 
             foreach (var report in reports)
             {
-                FormatMessageAtPosition(sb, errors.InputText, report.TextOffset, report.Action.ToString());
+                FormatMessageAtPosition(sb, errors.InputText, report.TextOffset, report.Length, report.Action.ToString());
             }
 
             return sb.ToString();
@@ -40,18 +40,20 @@ namespace Hive.Versioning.Parsing
 
             foreach (var report in reports)
             {
-                FormatMessageAtPosition(sb, errors.InputText, report.TextOffset, report.Action.ToString());
+                FormatMessageAtPosition(sb, errors.InputText, report.TextOffset, report.Length, report.Action.ToString());
             }
 
             return sb.ToString();
         }
 
-        private static void FormatMessageAtPosition(StringBuilder builder, StringPart text, long position, string message)
+        private static void FormatMessageAtPosition(StringBuilder builder, StringPart text, long position, long len, string message)
         {
             _ = builder
                 .Append(text).AppendLine()
-                .Append(' ', (int)position).Append("^ ")
-                .AppendLine(message);
+                .Append(' ', (int)position).Append('^');
+            if (len > 0)
+                _ = builder.Append('~', (int)len - 1);
+            _ = builder.Append(' ').AppendLine(message);
         }
     }
 }

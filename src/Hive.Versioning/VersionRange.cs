@@ -744,7 +744,7 @@ namespace Hive.Versioning
             }
             if (checkLength && text.Length > 0)
             {
-                errors.Report(new(RangeParseAction.ExtraInput), text);
+                errors.Report(new(RangeParseAction.ExtraInput), text, text.Length);
                 return false;
             }
 

@@ -25,14 +25,19 @@ namespace Hive.Versioning.Parsing
         /// The offset into the input text that the error was reported at.
         /// </summary>
         public long TextOffset { get; }
+        /// <summary>
+        /// The length of input text associated with this error.
+        /// </summary>
+        public long Length { get; }
 
         /// <summary>
         /// Constructs an <see cref="ActionErrorReport{TAction}"/> from an action and text position.
         /// </summary>
         /// <param name="action">The action being reported.</param>
         /// <param name="offset">The position in the text.</param>
-        public ActionErrorReport(TAction action, long offset)
-            => (Action, TextOffset) = (action, offset);
+        /// <param name="length">The length of the section of text associated with the action.</param>
+        public ActionErrorReport(TAction action, long offset, long length)
+            => (Action, TextOffset, Length) = (action, offset, length);
 
         /// <summary>
         /// Compares two <see cref="ActionErrorReport{TAction}"/>s for equality.
@@ -60,11 +65,12 @@ namespace Hive.Versioning.Parsing
         /// <inheritdoc/>
         public bool Equals(ActionErrorReport<TAction> other)
             => EqualityComparer<TAction>.Default.Equals(Action, other.Action)
-            && TextOffset == other.TextOffset;
+            && TextOffset == other.TextOffset
+            && Length == other.Length;
 
         /// <inheritdoc/>
         public override int GetHashCode()
-            => HashCode.Combine(Action, TextOffset);
+            => HashCode.Combine(Action, TextOffset, Length);
     }
 
     /// <summary>
@@ -101,44 +107,58 @@ namespace Hive.Versioning.Parsing
 
         private ArrayBuilder<ActionErrorReport<TAction>> reports;
 
-        private long GetTextOffset(in StringPart location)
+        private static long GetTextOffset(in StringPart start, in StringPart end)
 #if !NETSTANDARD2_0
         {
             unsafe
             {
-                fixed (char* istart = InputText)
-                fixed (char* iloc = location)
+                fixed (char* istart = start)
+                fixed (char* iloc = end)
                 {
                     if (iloc == null)
-                        return InputText.Length; // this happens when location is empty
+                        return start.Length; // this happens when location is empty
                     return iloc - istart;
                 }
             }
         }
 #else
-            => location.Start - InputText.Start;
+            => end.Start - start.Start;
 #endif
         /// <summary>
         /// Reports a parser error.
         /// </summary>
         /// <param name="action">The error action.</param>
         /// <param name="textLocation">The substring of the input text that starts at the error location.</param>
-        public void Report(TAction action, in StringPart textLocation)
+        /// <param name="endTextLocation">A substring of the input text that starts after the end of the error segment.</param>
+        public void Report(TAction action, in StringPart textLocation, in StringPart endTextLocation)
         {
             if (!ReportErrors) return;
 
-            reports.Add(new(action, GetTextOffset(textLocation)));
+            reports.Add(new(action, GetTextOffset(InputText, textLocation), GetTextOffset(textLocation, endTextLocation)));
+        }
+        /// <summary>
+        /// Reports a parser error.
+        /// </summary>
+        /// <param name="action">The error action.</param>
+        /// <param name="textLocation">The substring of the input text that starts at the error location.</param>
+        /// <param name="length">The length of the region associated with the action.</param>
+        public void Report(TAction action, in StringPart textLocation, long length)
+        {
+            if (!ReportErrors) return;
+
+            reports.Add(new(action, GetTextOffset(InputText, textLocation), length));
         }
         /// <summary>
         /// Reports a parser error.
         /// </summary>
         /// <param name="action">The error action.</param>
         /// <param name="textLocation">The offset into the string that the error ocurred.</param>
-        public void Report(TAction action, long textLocation)
+        /// <param name="length">The length of the region associated with the action.</param>
+        public void Report(TAction action, long textLocation, long length)
         {
             if (!ReportErrors) return;
 
-            reports.Add(new(action, textLocation));
+            reports.Add(new(action, textLocation, length));
         }
 
         /// <summary>
@@ -158,7 +178,7 @@ namespace Hive.Versioning.Parsing
                 throw new ArgumentNullException(nameof(convert));
             for (var i = 0; i < state.reports.Count; i++)
             {
-                Report(convert(state.reports[i].Action), state.reports[i].TextOffset);
+                Report(convert(state.reports[i].Action), state.reports[i].TextOffset, state.reports[i].Length);
             }
             state.Dispose();
         }

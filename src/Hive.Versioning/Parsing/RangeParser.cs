@@ -215,7 +215,7 @@ namespace Hive.Versioning.Parsing
             if (TryTake(ref text, '*'))
             {
                 sranges = EverythingSubranges;
-                errors.Report(new(RangeParseAction.FStar), copy);
+                errors.Report(new(RangeParseAction.FStar), copy, text);
                 return true;
             }
 
@@ -223,7 +223,7 @@ namespace Hive.Versioning.Parsing
             if (TryTake(ref text, 'z') || TryTake(ref text, 'Z'))
             {
                 sranges = Array.Empty<Subrange>();
-                errors.Report(new(RangeParseAction.FZero), copy);
+                errors.Report(new(RangeParseAction.FZero), copy, text);
                 return true;
             }
 
@@ -301,7 +301,7 @@ namespace Hive.Versioning.Parsing
             var copy = text;
             if (!TryReadCompareType(ref errors, ref text, out var compareType))
             {
-                errors.Report(new(RangeParseAction.EComparer), text);
+                errors.Report(new(RangeParseAction.EComparer), text, text);
                 comparer = default;
                 return false;
             }
@@ -315,7 +315,7 @@ namespace Hive.Versioning.Parsing
             if (!Version.TryParse(ref verErrors, ref text, out var version))
             {
                 errors.FromState(ref verErrors, AnyParseAction.Convert);
-                errors.Report(new(RangeParseAction.EComparerVersion), text);
+                errors.Report(new(RangeParseAction.EComparerVersion), text, text);
                 text = copy;
                 comparer = default;
                 return false;
@@ -323,7 +323,7 @@ namespace Hive.Versioning.Parsing
             verErrors.Dispose();
 
             comparer = new VersionComparer(version, compareType);
-            errors.Report(new(RangeParseAction.FComparer), copy);
+            errors.Report(new(RangeParseAction.FComparer), copy, text);
             return true;
         }
 
@@ -343,8 +343,8 @@ namespace Hive.Versioning.Parsing
 
             if (!CheckCompareType(type))
             {
+                errors.Report(new(RangeParseAction.ECompareType), copy, text);
                 text = copy;
-                errors.Report(new(RangeParseAction.ECompareType), text);
                 return false;
             }
 
@@ -385,18 +385,18 @@ namespace Hive.Versioning.Parsing
                     if (TryReadStarRange(ref errors, ref text, out var subrange))
                     {
                         nrange = subrange;
-                        errors.Report(new(RangeParseAction.FComponent), copy);
+                        errors.Report(new(RangeParseAction.FComponent), copy, text);
                         return true;
                     }
                     // then we check for a hyphen range
                     if (TryReadHyphenRange(ref errors, ref text, out subrange))
                     {
                         nrange = subrange;
-                        errors.Report(new(RangeParseAction.FComponent), copy);
+                        errors.Report(new(RangeParseAction.FComponent), copy, text);
                         return true;
                     }
 
-                    errors.Report(new(RangeParseAction.EComponent), text);
+                    errors.Report(new(RangeParseAction.EComponent), text, text);
                     return false;
 
                 //---EVERYTHING AFTER THIS POINT HAS A SPECIAL FIRST CHARACTER---\\
@@ -405,34 +405,34 @@ namespace Hive.Versioning.Parsing
                     if (TryReadCaretRange(ref errors, ref text, out subrange))
                     {
                         nrange = subrange;
-                        errors.Report(new(RangeParseAction.FComponent), copy);
+                        errors.Report(new(RangeParseAction.FComponent), copy, text);
                         return true;
                     }
 
-                    errors.Report(new(RangeParseAction.EComponent), text);
+                    errors.Report(new(RangeParseAction.EComponent), text, text);
                     return false;
 
                 default:
                     // otherwise we just try read two VersionComparers in a row
                     if (!TryParseComparer(ref errors, ref text, out var lower))
                     {
-                        errors.Report(new(RangeParseAction.ESubrange1), text);
+                        errors.Report(new(RangeParseAction.ESubrange1), copy, text);
                         text = copy;
                         return false;
                     }
-                    text = text.TrimStart();
                     var copy2 = text;
+                    text = text.TrimStart();
                     if (!TryParseComparer(ref errors, ref text, out var upper))
                     {
-                        errors.Report(new(RangeParseAction.FComponent), copy);
                         text = copy2;
+                        errors.Report(new(RangeParseAction.FComponent), copy, text);
                         ncompare = lower;
                         return true;
                     }
 
                     if (lower.CompareTo > upper.CompareTo)
                     {
-                        errors.Report(new(RangeParseAction.EOrderedSubrange), text);
+                        errors.Report(new(RangeParseAction.EOrderedSubrange), copy, text);
                         text = copy;
                         return false;
                     }
@@ -440,8 +440,8 @@ namespace Hive.Versioning.Parsing
                     if (lower.Type == ComparisonType.ExactEqual || upper.Type == ComparisonType.ExactEqual
                      || (lower.Type & ~ComparisonType.ExactEqual) == (upper.Type & ~ComparisonType.ExactEqual))
                     { // if the bounds point the same direction, the subrange is invalid
+                        errors.Report(new(RangeParseAction.EClosedSubrange), copy, text);
                         text = copy;
-                        errors.Report(new(RangeParseAction.EClosedSubrange), text);
                         return false;
                     }
 
@@ -449,14 +449,14 @@ namespace Hive.Versioning.Parsing
 
                     if (!allowOutward && !subrange.IsInward)
                     { // reject outward-facing subranges for consistency on the outside
+                        errors.Report(new(RangeParseAction.EClosedSubrange), copy, text);
                         text = copy;
-                        errors.Report(new(RangeParseAction.EClosedSubrange), text);
                         return false;
                     }
 
                     nrange = subrange;
-                    errors.Report(new(RangeParseAction.FSubrange), copy);
-                    errors.Report(new(RangeParseAction.FComponent), copy);
+                    errors.Report(new(RangeParseAction.FSubrange), copy, text);
+                    errors.Report(new(RangeParseAction.FComponent), copy, text);
                     return true;
             }
         }
@@ -466,7 +466,7 @@ namespace Hive.Versioning.Parsing
             var copy = text;
             if (!TryTake(ref text, '^'))
             {
-                errors.Report(new(RangeParseAction.ECaret), text);
+                errors.Report(new(RangeParseAction.ECaret), text, text);
                 range = default;
                 return false;
             }
@@ -480,7 +480,7 @@ namespace Hive.Versioning.Parsing
             if (!Version.TryParse(ref verErrors, ref text, out var lower))
             {
                 errors.FromState(ref verErrors, AnyParseAction.Convert);
-                errors.Report(new(RangeParseAction.ECaretVersion), text);
+                errors.Report(new(RangeParseAction.ECaretVersion), text, text);
                 text = copy;
                 range = default;
                 return false;
@@ -500,7 +500,7 @@ namespace Hive.Versioning.Parsing
             // caret ranges want the upper bound to exclude prereleases
             range = new Subrange(new VersionComparer(lower, ComparisonType.GreaterEqual),
                 new VersionComparer(upper, ComparisonType.PreReleaseLess));
-            errors.Report(new(RangeParseAction.FCaretRange), copy);
+            errors.Report(new(RangeParseAction.FCaretRange), copy, text);
             return true;
         }
 
@@ -515,7 +515,7 @@ namespace Hive.Versioning.Parsing
             if (!Version.TryParse(ref verErrors, ref text, out var lowVersion))
             {
                 errors.FromState(ref verErrors, AnyParseAction.Convert);
-                errors.Report(new(RangeParseAction.EHyphenVersion), text);
+                errors.Report(new(RangeParseAction.EHyphenVersion), text, text);
                 range = default;
                 text = copy;
                 return false;
@@ -525,7 +525,7 @@ namespace Hive.Versioning.Parsing
             if (!TryTake(ref text, '-'))
             {
                 errors.FromState(ref verErrors, AnyParseAction.Convert);
-                errors.Report(new(RangeParseAction.EHyphen), text);
+                errors.Report(new(RangeParseAction.EHyphen), text, text);
                 range = default;
                 text = copy;
                 return false;
@@ -535,7 +535,7 @@ namespace Hive.Versioning.Parsing
             if (!Version.TryParse(ref verErrors, ref text, out var highVersion))
             {
                 errors.FromState(ref verErrors, AnyParseAction.Convert);
-                errors.Report(new(RangeParseAction.EHyphenVersion2), text);
+                errors.Report(new(RangeParseAction.EHyphenVersion2), text, text);
                 range = default;
                 text = copy;
                 return false;
@@ -544,7 +544,7 @@ namespace Hive.Versioning.Parsing
 
             range = new(new(lowVersion, ComparisonType.GreaterEqual),
                 new(highVersion, ComparisonType.LessEqual));
-            errors.Report(new(RangeParseAction.FHyphenRange), copy);
+            errors.Report(new(RangeParseAction.FHyphenRange), copy, text);
             return true;
         }
 
@@ -560,7 +560,7 @@ namespace Hive.Versioning.Parsing
             if (!VersionParser.TryParseNumId(ref verErrors, ref text, out var majorNum) || !TryTake(ref text, '.'))
             {
                 errors.FromState(ref verErrors, AnyParseAction.Convert);
-                errors.Report(new(RangeParseAction.EStarRange1), text);
+                errors.Report(new(RangeParseAction.EStarRange1), text, text);
                 text = copy;
                 range = default;
                 return false;
@@ -591,7 +591,7 @@ namespace Hive.Versioning.Parsing
 
                 // make sure we pull in parse errors
                 errors.FromState(ref verErrors, AnyParseAction.Convert);
-                errors.Report(new(RangeParseAction.FStarRange), copy);
+                errors.Report(new(RangeParseAction.FStarRange), copy, text);
                 return true;
             }
 
@@ -600,7 +600,7 @@ namespace Hive.Versioning.Parsing
             {
                 // if we can't read the last bit then rewind and exit
                 errors.FromState(ref verErrors, AnyParseAction.Convert);
-                errors.Report(new(RangeParseAction.EStarRange2), text);
+                errors.Report(new(RangeParseAction.EStarRange2), text, text);
                 text = copy;
                 range = default;
                 return false;
@@ -610,7 +610,7 @@ namespace Hive.Versioning.Parsing
             if (!TryTakePlaceholder(ref text))
             {
                 errors.FromState(ref verErrors, AnyParseAction.Convert);
-                errors.Report(new(RangeParseAction.EStarRange3), text);
+                errors.Report(new(RangeParseAction.EStarRange3), text, text);
                 text = copy;
                 range = default;
                 return false;
@@ -625,7 +625,7 @@ namespace Hive.Versioning.Parsing
 
             // make sure we pull in parse errors
             errors.FromState(ref verErrors, AnyParseAction.Convert);
-            errors.Report(new(RangeParseAction.FStarRange), copy);
+            errors.Report(new(RangeParseAction.FStarRange), copy, text);
             return true;
         }
     }

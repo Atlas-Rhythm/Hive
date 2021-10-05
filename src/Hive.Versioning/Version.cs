@@ -461,7 +461,7 @@ namespace Hive.Versioning
                 return false;
             if (checkLength && text.Length > 0)
             {
-                errors.Report(VersionParseAction.ExtraInput, text);
+                errors.Report(VersionParseAction.ExtraInput, text, text.Length);
                 return false;
             }
             return true;
