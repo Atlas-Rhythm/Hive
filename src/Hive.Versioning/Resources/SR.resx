@@ -120,6 +120,12 @@
   <data name="AssertionFailed" xml:space="preserve">
     <value />
   </data>
+  <data name="ExtraInputAtEnd" xml:space="preserve">
+    <value>Input had extra (non-whitespace) characters at the end.</value>
+  </data>
+  <data name="ParsingSuccessful" xml:space="preserve">
+    <value>Parsing successful.</value>
+  </data>
   <data name="Range_InputInvalid" xml:space="preserve">
     <value>Input is not a valid VersionRange</value>
   </data>
