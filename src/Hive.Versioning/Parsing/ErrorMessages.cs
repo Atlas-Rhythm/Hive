@@ -2,6 +2,7 @@
 using Hive.Versioning.Resources;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 #if !NETSTANDARD2_0
 using StringPart = System.ReadOnlySpan<char>;
@@ -39,42 +40,11 @@ namespace Hive.Versioning.Parsing
                 switch (report.Action)
                 {
                     case VersionParseAction.ExtraInput:
+                        // This could potentially mean a *lot* of things
                         return ExtraInputMesage(text, report);
 
                     case VersionParseAction.ECoreVersionDot:
-                        {
-                            var vnumCount = 0;
-                            var pos = range.Start - 1;
-                            while (pos >= 0 && reports[pos].Action == VersionParseAction.FValidNumericId)
-                            {
-                                vnumCount++;
-                                pos--;
-                            }
-
-                            if (vnumCount is < 1 or > 2)
-                                return FormatMessageAtPosition(text, report.TextOffset, report.Length,
-                                    SR.WhatHow.Format( // this resource should accurately describe the situation
-                                        SR.UnexpectedFValidNumericIdCount.Format(vnumCount)
-                                    ));
-
-                            var message = vnumCount switch
-                            {
-                                1 => SR.Version_ExpectMinorNumber,
-                                2 => SR.Version_ExpectPatchNumber,
-                                _ => throw new InvalidOperationException()
-                            };
-
-                            var suggestion =
-                                text.Slice((int)ourTextStart, (int)(report.TextOffset - ourTextStart)).ToString()
-                                + vnumCount switch
-                                {
-                                    1 => ".0.0",
-                                    2 => ".0",
-                                    _ => throw new InvalidOperationException()
-                                };
-
-                            return FormatMessageAtPosition(text, report.TextOffset, report.Length, SR.Suggestion.Format(message, suggestion));
-                        }
+                        return ProcessVersionECoreVersionDot(text, reports, range, ourTextStart, report);
 
                     default:
                         break;
@@ -89,6 +59,96 @@ namespace Hive.Versioning.Parsing
             }
 
             return sb.ToString();
+        }
+
+        private static string ProcessVersionECoreVersionDot(StringPart text,
+            IReadOnlyList<ActionErrorReport<VersionParseAction>> reports,
+            (int Start, int Length) range,
+            long ourTextStart,
+            ActionErrorReport<VersionParseAction> report)
+        {
+            var vnumCount = 0;
+            var pos = range.Start - 1;
+            while (pos >= 0 && reports[pos].Action == VersionParseAction.FValidNumericId)
+            {
+                vnumCount++;
+                pos--;
+            }
+
+            if (vnumCount is < 1 or > 2)
+                return FormatMessageAtPosition(text, report.TextOffset, report.Length,
+                    SR.WhatHow.Format( // this resource should accurately describe the situation
+                        SR.UnexpectedFValidNumericIdCount.Format(vnumCount)
+                    ));
+
+            // so there are actually 2 things that this could potentially mean
+            // 1. it could mean exactly what you think; the input was lacking in some parts of the versoin
+            // OR 2. it coult mean that the input had leading zeroes.
+
+            // in order to check for number 2, we look at the immediately preceeding FValidNumericId and check if it is just `0`.
+            if (TryMatchLeadingZeroNumId(text, (int)ourTextStart, reports, range.Start, out var lzMsg, out var lzSuggest))
+                return FormatMessageAtPosition(text, report.TextOffset, report.Length, SR.Suggestion.Format(lzMsg, lzSuggest));
+
+            // if we get here, we're processing no. 1
+            var message = vnumCount switch
+            {
+                1 => SR.Version_ExpectMinorNumber,
+                2 => SR.Version_ExpectPatchNumber,
+                _ => throw new InvalidOperationException()
+            };
+
+            // for the suggestion, lets trim out the rest as well
+            // NOTE: like in TryMatchLeadingZeroNumId, this may contain the rest of a version that this is processing inside of. Is that fine?
+
+            var part1 = text.Slice((int)ourTextStart, (int)(report.TextOffset - ourTextStart));
+            var part2 = text.Slice((int)report.TextOffset);
+            var suggestion =
+                part1.ToString() + vnumCount switch
+                {
+                    1 => ".0.0",
+                    2 => ".0",
+                    _ => throw new InvalidOperationException()
+                } + part2.ToString();
+
+            return FormatMessageAtPosition(text, report.TextOffset, report.Length, SR.Suggestion.Format(message, suggestion));
+        }
+
+        private static bool TryMatchLeadingZeroNumId(in StringPart text, int ownStart, IReadOnlyList<ActionErrorReport<VersionParseAction>> reports, int eindex,
+            [MaybeNullWhen(false)] out string message, [MaybeNullWhen(false)] out string suggest)
+        {
+            message = suggest = null;
+            if (eindex < 1) return false;
+
+            var freport = reports[eindex - 1];
+            var ereport = reports[eindex];
+            if (freport.Action != VersionParseAction.FValidNumericId)
+                return false;
+            if (freport.Length != 1)
+                return false;
+
+            if (text[(int)freport.TextOffset] != '0')
+                return false;
+
+            if (text[(int)ereport.TextOffset] is < '0' or > '9')
+                return false; // we need to actually continue with more digits
+
+            // now we've matched it
+            message = SR.NumIdsDoNotHaveLeadingZeroes;
+
+            // find first nonzero digit, or last actual digit
+            var offs = (int)ereport.TextOffset;
+            while (text[offs] == '0' && offs < text.Length) offs++;
+            if (offs >= text.Length || text[offs] is < '0' or > '9') // we hit the end or ended up at a non-digit
+                offs--; // so we back up to find the last zero
+
+            // now we trim to the start of freport for the first half
+            var part1 = text.Slice(ownStart, (int)freport.TextOffset - ownStart);
+            // then from offs to the end of the string (though this will consume the rest of a range, if we're processing that)
+            // TODO: is there a sane way to guess the end of a version, even if in a range?
+            var part2 = text.Slice(offs);
+            // then our suggestion is just the two parts concatenated
+            suggest = part1.ToString() + part2.ToString();
+            return true;
         }
 
         public static string GetVersionRangeErrorMessage(ref ParserErrorState<AnyParseAction> errors)

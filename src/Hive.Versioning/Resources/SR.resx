@@ -123,6 +123,9 @@
   <data name="ExtraInputAtEnd" xml:space="preserve">
     <value>Input had extra (non-whitespace) characters at the end.</value>
   </data>
+  <data name="NumIdsDoNotHaveLeadingZeroes" xml:space="preserve">
+    <value>Numbers cannot have leading zeroes.</value>
+  </data>
   <data name="ParsingSuccessful" xml:space="preserve">
     <value>Parsing successful.</value>
   </data>
