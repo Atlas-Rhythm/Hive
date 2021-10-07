@@ -129,10 +129,31 @@
   <data name="Range_InputInvalid" xml:space="preserve">
     <value>Input is not a valid VersionRange</value>
   </data>
+  <data name="Suggestion" xml:space="preserve">
+    <value>{0} Did you mean '{1}'?</value>
+    <comment>{0} is the prefix text, {1} is the suggested text</comment>
+  </data>
+  <data name="UnexpectedFValidNumericIdCount" xml:space="preserve">
+    <value>Unexpected FValidNumericIdCount in main version {0}.</value>
+    <comment>{0} is the number of FValidNumericIds found</comment>
+  </data>
+  <data name="Version_ExpectMajorNumber" xml:space="preserve">
+    <value>Expected major version number.</value>
+  </data>
+  <data name="Version_ExpectMinorNumber" xml:space="preserve">
+    <value>Expected minor version number.</value>
+  </data>
+  <data name="Version_ExpectPatchNumber" xml:space="preserve">
+    <value>Expected patch version number.</value>
+  </data>
   <data name="Version_InputInvalid" xml:space="preserve">
     <value>Input was not a valid SemVer version</value>
   </data>
   <data name="Version_InputTooShort" xml:space="preserve">
     <value>Input too short to be a SemVer version</value>
+  </data>
+  <data name="WhatHow" xml:space="preserve">
+    <value>What? How? {0}</value>
+    <comment>{0} is specific error text</comment>
   </data>
 </root>

@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Hive.Versioning.Resources;
 using System;
+using System.Collections.Generic;
 
 #if !NETSTANDARD2_0
 using StringPart = System.ReadOnlySpan<char>;
@@ -20,19 +21,71 @@ namespace Hive.Versioning.Parsing
             if (reports.Length > 128) // arbitrary limit
                 return SR.Version_InputInvalid; // generic error message for when we don't want to spend time generating long ass messages
 
+            return ProcessVersionErrorMessage(errors.InputText, reports);
+        }
+
+        private static string ProcessVersionErrorMessage(in StringPart text, IReadOnlyList<ActionErrorReport<VersionParseAction>> reports)
+        {
             var range = ScanForErrorRange(reports, VersionIsError);
 
             if (range.Length == 0)
                 return SR.ParsingSuccessful;
 
-            if (range.Length == 1 && reports[range.Start].Action == VersionParseAction.ExtraInput)
-                return ExtraInputMesage(errors.InputText, reports, range.Start);
+            var ourTextStart = reports[0].TextOffset;
+
+            if (range.Length == 1)
+            {
+                var report = reports[range.Start];
+                switch (report.Action)
+                {
+                    case VersionParseAction.ExtraInput:
+                        return ExtraInputMesage(text, report);
+
+                    case VersionParseAction.ECoreVersionDot:
+                        {
+                            var vnumCount = 0;
+                            var pos = range.Start - 1;
+                            while (pos >= 0 && reports[pos].Action == VersionParseAction.FValidNumericId)
+                            {
+                                vnumCount++;
+                                pos--;
+                            }
+
+                            if (vnumCount is < 1 or > 2)
+                                return FormatMessageAtPosition(text, report.TextOffset, report.Length,
+                                    SR.WhatHow.Format( // this resource should accurately describe the situation
+                                        SR.UnexpectedFValidNumericIdCount.Format(vnumCount)
+                                    ));
+
+                            var message = vnumCount switch
+                            {
+                                1 => SR.Version_ExpectMinorNumber,
+                                2 => SR.Version_ExpectPatchNumber,
+                                _ => throw new InvalidOperationException()
+                            };
+
+                            var suggestion =
+                                text.Slice((int)ourTextStart, (int)(report.TextOffset - ourTextStart)).ToString()
+                                + vnumCount switch
+                                {
+                                    1 => ".0.0",
+                                    2 => ".0",
+                                    _ => throw new InvalidOperationException()
+                                };
+
+                            return FormatMessageAtPosition(text, report.TextOffset, report.Length, SR.Suggestion.Format(message, suggestion));
+                        }
+
+                    default:
+                        break;
+                }
+            }
 
             var sb = new StringBuilder();
 
             foreach (var report in reports)
             {
-                FormatMessageAtPosition(sb, errors.InputText, report.TextOffset, report.Length, report.Action.ToString());
+                FormatMessageAtPosition(sb, text, report.TextOffset, report.Length, report.Action.ToString());
             }
 
             return sb.ToString();
@@ -51,7 +104,7 @@ namespace Hive.Versioning.Parsing
                 return SR.ParsingSuccessful;
 
             if (range.Length == 1 && reports[range.Start].Action.Value == RangeParseAction.ExtraInput)
-                return ExtraInputMesage(errors.InputText, reports, range.Start);
+                return ExtraInputMesage(errors.InputText, reports[range.Start]);
 
             var sb = new StringBuilder();
 
@@ -63,19 +116,18 @@ namespace Hive.Versioning.Parsing
             return sb.ToString();
         }
 
-        private static string ExtraInputMesage<T>(in StringPart text, ActionErrorReport<T>[] reports, int index)
+        private static string ExtraInputMesage<T>(in StringPart text, ActionErrorReport<T> report)
             where T : struct
         {
             var strb = new StringBuilder();
-            var report = reports[index];
             FormatMessageAtPosition(strb, text, report.TextOffset, report.Length, SR.ExtraInputAtEnd);
             return strb.ToString();
         }
 
-        private static (int Start, int Length) ScanForErrorRange<T>(ActionErrorReport<T>[] reports, Func<T, bool> checkIsError)
+        private static (int Start, int Length) ScanForErrorRange<T>(IReadOnlyList<ActionErrorReport<T>> reports, Func<T, bool> checkIsError)
             where T : struct
         {
-            var end = reports.Length - 1;
+            var end = reports.Count - 1;
             var position = end;
 
             while (position >= 0 && checkIsError(reports[position].Action))
@@ -139,6 +191,13 @@ namespace Hive.Versioning.Parsing
                 RangeParseAction.ExtraInput => true,
                 _ => false,
             };
+
+        private static string FormatMessageAtPosition(StringPart text, long position, long len, string message)
+        {
+            var sb = new StringBuilder();
+            FormatMessageAtPosition(sb, text, position, len, message);
+            return sb.ToString();
+        }
 
         private static void FormatMessageAtPosition(StringBuilder builder, StringPart text, long position, long len, string message)
         {
