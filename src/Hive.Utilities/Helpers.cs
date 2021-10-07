@@ -41,6 +41,14 @@ namespace Hive.Utilities
             }
         }
 
+        /// <summary>
+        /// Gets an infinite <see cref="IEnumerable{T}"/> of <see langword="int"/> of every value, starting at zero.
+        /// </summary>
+        /// <remarks>
+        /// This is typically intended for using with <see cref="Enumerable.Zip{TFirst, TSecond, TResult}(IEnumerable{TFirst}, IEnumerable{TSecond}, Func{TFirst, TSecond, TResult})"/>
+        /// to associate indicies with elements in a sequence.
+        /// </remarks>
+        /// <returns>An enumerable containing every index.</returns>
         public static IEnumerable<int> Indexes()
         {
             for (var i = 0; ; i++)

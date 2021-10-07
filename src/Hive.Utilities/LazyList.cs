@@ -6,6 +6,11 @@ using System.Threading;
 
 namespace Hive.Utilities
 {
+    /// <summary>
+    /// A read only list which is populated lazily from an <see cref="IEnumerable{T}"/>, as elements
+    /// are needed.
+    /// </summary>
+    /// <typeparam name="T">The element type of the list.</typeparam>
     public class LazyList<T> : IReadOnlyList<T>, IDisposable
     {
         private readonly List<T> cacheList = new();
@@ -14,6 +19,10 @@ namespace Hive.Utilities
         private bool completed;
         private bool disposedValue;
 
+        /// <summary>
+        /// Constructs a new <see cref="LazyList{T}"/> with the specified sequence.
+        /// </summary>
+        /// <param name="src">The sequence to build this list from.</param>
         public LazyList(IEnumerable<T> src)
             => source = src;
 
@@ -44,6 +53,7 @@ namespace Hive.Utilities
             }
         }
 
+        /// <inheritdoc/>
         public T this[int index]
         {
             get
@@ -54,6 +64,12 @@ namespace Hive.Utilities
             }
         }
 
+        /// <summary>
+        /// Attempts to get the count of items in the collection without
+        /// fully enumerating the input sequence.
+        /// </summary>
+        /// <value><see langword="null"/> if the length of the collection cannot be
+        /// determined without enumeration, otherwise the length of the collection.</value>
         public int? NoEnumerateCount
         {
             get
@@ -68,6 +84,7 @@ namespace Hive.Utilities
             }
         }
 
+        /// <inheritdoc/>
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public int Count
         {
@@ -81,10 +98,17 @@ namespace Hive.Utilities
             }
         }
 
+        /// <summary>
+        /// Gets an enumerator for this list.
+        /// </summary>
+        /// <returns>An enumerator for this list.</returns>
         public Enumerator GetEnumerator() => new(this);
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
+        /// <summary>
+        /// The enumerator type for <see cref="LazyList{T}"/>.
+        /// </summary>
         public sealed class Enumerator : IEnumerator<T>
         {
             private readonly LazyList<T> list;
@@ -93,9 +117,11 @@ namespace Hive.Utilities
             internal Enumerator(LazyList<T> list)
                 => this.list = list;
 
+            /// <inheritdoc/>
             public T Current => list[index];
             object? IEnumerator.Current => Current;
 
+            /// <inheritdoc/>
             public bool MoveNext()
             {
                 index++;
@@ -104,10 +130,16 @@ namespace Hive.Utilities
                 return !(nec is { } val) || index < val;
             }
 
+            /// <inheritdoc/>
             public void Reset() => index = -1;
+            /// <inheritdoc/>
             public void Dispose() { }
         }
 
+        /// <summary>
+        /// Disposes the resources held by this object.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/> if this should dispose managed state, <see langword="false"/> otherwise.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -121,6 +153,7 @@ namespace Hive.Utilities
             }
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
