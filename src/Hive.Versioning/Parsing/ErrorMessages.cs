@@ -3,11 +3,11 @@ using Hive.Versioning.Resources;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using Hive.Utilities;
 
 #if !NETSTANDARD2_0
 using StringPart = System.ReadOnlySpan<char>;
 #else
-using Hive.Utilities;
 using StringPart = Hive.Utilities.StringView;
 #endif
 
@@ -40,9 +40,7 @@ namespace Hive.Versioning.Parsing
                 switch (report.Action)
                 {
                     case VersionParseAction.ExtraInput:
-                        // This could potentially mean a *lot* of things
-                        return ExtraInputMesage(text, report);
-
+                        return ProcessVersionExtraInput(text, reports, range, ourTextStart, report);
                     case VersionParseAction.ECoreVersionDot:
                         return ProcessVersionECoreVersionDot(text, reports, range, ourTextStart, report);
 
@@ -61,7 +59,38 @@ namespace Hive.Versioning.Parsing
             return sb.ToString();
         }
 
-        private static string ProcessVersionECoreVersionDot(StringPart text,
+        private static string ProcessVersionExtraInput(in StringPart text,
+            IReadOnlyList<ActionErrorReport<VersionParseAction>> reports,
+            (int Start, int Length) range,
+            long ourTextStart,
+            ActionErrorReport<VersionParseAction> report)
+        {
+            // This could potentially mean a *lot* of things
+
+            // It could mean the obvious: there's extra input.
+            // It coult also mean that the version ended with a number with a leading zero.
+            // It could also mean that the version ended with some incorrect attempt at a prerelease or build identifier.
+
+            // Lets start by checking for leading zeroes:
+            // If it is a leading zero issue, then the sequence of reports is this:
+            //    ...
+            //    FValidNumericId
+            //    FCoreVersion
+            //    ExtraInput
+            // Before passing off to check for leading zeroes, we need to remove that FCoreVersion report.
+            // But first, lets make sure its where we expect.
+            if (range.Start - 1 >= 0 && reports[range.Start - 1].Action == VersionParseAction.FCoreVersion)
+            {
+                if (TryMatchLeadingZeroNumId(text, (int)ourTextStart, reports.SkipIndex(range.Start - 1).ToLazyList(), range.Start - 1, out var lzMsg, out var lzSuggest))
+                    return FormatMessageAtPosition(text, report.TextOffset, report.Length, SR.Suggestion.Format(lzMsg, lzSuggest));
+            }
+
+            // TODO: check for a poor attempt at a prerelease or build ID
+
+            return ExtraInputMesage(text, report);
+        }
+
+        private static string ProcessVersionECoreVersionDot(in StringPart text,
             IReadOnlyList<ActionErrorReport<VersionParseAction>> reports,
             (int Start, int Length) range,
             long ourTextStart,

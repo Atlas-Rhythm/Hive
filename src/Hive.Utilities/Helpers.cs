@@ -41,6 +41,12 @@ namespace Hive.Utilities
             }
         }
 
+        public static IEnumerable<int> Indexes()
+        {
+            for (var i = 0; ; i++)
+                yield return i;
+        }
+
         /// <summary>
         /// Repeats a value <paramref name="val"/> times.
         /// </summary>

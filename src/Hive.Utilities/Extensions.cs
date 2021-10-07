@@ -47,6 +47,16 @@ namespace Hive.Utilities
             return sb.Append(text.BaseString, text.Start, text.Length);
         }
 
+        public static IEnumerable<T> SkipIndex<T>(this IEnumerable<T> seq, int index)
+            => seq.Zip(Helpers.Indexes(), (a, b) => (a, b))
+                .Where(t => t.b != index)
+                .Select(t => t.a);
+
+        public static IEnumerable<T> SkipIndicies<T>(this IEnumerable<T> seq, int startIndex, int lastIndex)
+            => seq.Zip(Helpers.Indexes(), (a, b) => (a, b))
+                .Where(t => t.b < startIndex || t.b > lastIndex)
+                .Select(t => t.a);
+
         public static LazyList<T> ToLazyList<T>(this IEnumerable<T> seq)
             => new(seq);
 

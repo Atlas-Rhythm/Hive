@@ -30,7 +30,7 @@ namespace Hive.Utilities
                 srcEnum ??= source.GetEnumerator();
 
                 var result = true;
-                while ((cacheList.Count < index || index == -1) && (result = srcEnum.MoveNext()))
+                while ((cacheList.Count <= index || index == -1) && (result = srcEnum.MoveNext()))
                 {
                     cacheList.Add(srcEnum.Current);
                 }
