@@ -50,6 +50,12 @@ namespace Hive.Utilities
         public static LazyList<T> ToLazyList<T>(this IEnumerable<T> seq)
             => new(seq);
 
+        public static IReadOnlyList<T> Slice<T>(this IReadOnlyList<T> list, int start)
+            => new ReadOnlySubList<T>(list ?? throw new ArgumentNullException(nameof(list)), start, list.Count - start);
+
+        public static IReadOnlyList<T> Slice<T>(this IReadOnlyList<T> list, int start, int length)
+            => new ReadOnlySubList<T>(list, start, length);
+
         /// <summary>
         /// Filters the provided sequence to contain only the non-null values in a null-safe way.
         /// </summary>
