@@ -15,12 +15,11 @@ namespace Hive.Versioning.Parsing
 {
     public static class ErrorMessages
     {
+        // TODO: refactor to make data more easily passed up and down the callstack
+
         public static string GetVersionErrorMessage(ref ParserErrorState<VersionParseAction> errors)
         {
             var reports = errors.ToArray();
-
-            if (reports.Length > 128) // arbitrary limit
-                return SR.Version_InputInvalid; // generic error message for when we don't want to spend time generating long ass messages
 
             return ProcessVersionErrorMessage(errors.InputText, reports);
         }
@@ -48,6 +47,9 @@ namespace Hive.Versioning.Parsing
                         break;
                 }
             }
+
+            if (reports.Count > 128) // arbitrary limit
+                return SR.Version_InputInvalid; // generic error message for when we don't want to spend time generating long ass messages
 
             var sb = new StringBuilder();
 
@@ -83,11 +85,49 @@ namespace Hive.Versioning.Parsing
             {
                 if (TryMatchLeadingZeroNumId(text, (int)ourTextStart, reports.SkipIndex(range.Start - 1).ToLazyList(), range.Start - 1, out var lzMsg, out var lzSuggest))
                     return FormatMessageAtPosition(text, report.TextOffset, report.Length, SR.Suggestion.Format(lzMsg, lzSuggest));
+
+                // Then, lets try to check for a poor man's prerelease.
+                // We expect the same FCoreVersion then ExtraInput, just with different starting characters.
+                if (TryMatchBadPrerelease(text, (int)ourTextStart, report, out var brMsg, out var brSuggest))
+                    return FormatMessageAtPosition(text, report.TextOffset, report.Length, SR.Suggestion.Format(brMsg, brSuggest));
             }
 
-            // TODO: check for a poor attempt at a prerelease or build ID
-
             return ExtraInputMesage(text, report);
+        }
+
+        private static bool TryMatchBadPrerelease(in StringPart text,
+            int ourTextStart,
+            ActionErrorReport<VersionParseAction> report,
+            [MaybeNullWhen(false)] out string message, [MaybeNullWhen(false)] out string suggest)
+        {
+            message = suggest = null;
+
+            // We'll check for several possible delineators.
+            if (text[(int)report.TextOffset] is not '.' and not '_' and not '=' and not '/' and not '\\')
+                return false;
+
+            // There's a pretty good bet that this is supposed to be a prerelease.
+            // Lets scan to the next alphanumeric char, and cut to there, dropping in a dash.
+            var position = (int)report.TextOffset;
+            while (position < text.Length
+                && !(text[position]
+                    is (>= 'a' and <= 'z')
+                    or (>= 'A' and <= 'Z')
+                    or (>= '0' and <= '9')))
+            {
+                position++;
+            }
+
+            if (position == text.Length)
+                return false; // it probably wasn't supposed to be a prerelease
+
+            message = SR.Version_PrereleaseUsesDash;
+
+            // call it close enough, lets try for something good
+            var part1 = text.Slice(ourTextStart, (int)report.TextOffset);
+            var part2 = text.Slice(position, FindEndOfVersion(text, position) - position);
+            suggest = part1.ToString() + "-" + part2.ToString();
+            return true;
         }
 
         private static string ProcessVersionECoreVersionDot(in StringPart text,
@@ -127,10 +167,9 @@ namespace Hive.Versioning.Parsing
             };
 
             // for the suggestion, lets trim out the rest as well
-            // NOTE: like in TryMatchLeadingZeroNumId, this may contain the rest of a version that this is processing inside of. Is that fine?
 
             var part1 = text.Slice((int)ourTextStart, (int)(report.TextOffset - ourTextStart));
-            var part2 = text.Slice((int)report.TextOffset);
+            var part2 = text.Slice((int)report.TextOffset, (int)(FindEndOfVersion(text, (int)report.TextOffset) - report.TextOffset));
             var suggestion =
                 part1.ToString() + vnumCount switch
                 {
@@ -173,19 +212,21 @@ namespace Hive.Versioning.Parsing
             // now we trim to the start of freport for the first half
             var part1 = text.Slice(ownStart, (int)freport.TextOffset - ownStart);
             // then from offs to the end of the string (though this will consume the rest of a range, if we're processing that)
-            // TODO: is there a sane way to guess the end of a version, even if in a range?
-            var part2 = text.Slice(offs);
+            var part2 = text.Slice(offs, FindEndOfVersion(text, offs) - offs);
             // then our suggestion is just the two parts concatenated
             suggest = part1.ToString() + part2.ToString();
             return true;
         }
 
+        private static int FindEndOfVersion(in StringPart text, int from)
+        {
+            // TODO: impelment
+            return text.Length;
+        }
+
         public static string GetVersionRangeErrorMessage(ref ParserErrorState<AnyParseAction> errors)
         {
             var reports = errors.ToArray();
-
-            if (reports.Length > 128) // arbitrary limit
-                return SR.Range_InputInvalid; // generic error message for when we don't want to spend time generating long ass messages
 
             var range = ScanForErrorRange(reports, RangeIsError);
 
@@ -194,6 +235,10 @@ namespace Hive.Versioning.Parsing
 
             if (range.Length == 1 && reports[range.Start].Action.Value == RangeParseAction.ExtraInput)
                 return ExtraInputMesage(errors.InputText, reports[range.Start]);
+
+            if (reports.Length > 128) // arbitrary limit
+                return SR.Range_InputInvalid; // generic error message for when we don't want to spend time generating long ass messages
+
 
             var sb = new StringBuilder();
 

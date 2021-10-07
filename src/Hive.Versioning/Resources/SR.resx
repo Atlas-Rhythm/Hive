@@ -155,6 +155,9 @@
   <data name="Version_InputTooShort" xml:space="preserve">
     <value>Input too short to be a SemVer version</value>
   </data>
+  <data name="Version_PrereleaseUsesDash" xml:space="preserve">
+    <value>Prerelease identifiers must be separated from the main version by a single '-' character.</value>
+  </data>
   <data name="WhatHow" xml:space="preserve">
     <value>What? How? {0}</value>
     <comment>{0} is specific error text</comment>
