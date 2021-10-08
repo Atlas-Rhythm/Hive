@@ -21,7 +21,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		FCC_UpdateCoverlet.ps1 = FCC_UpdateCoverlet.ps1
 		NuGet.config = NuGet.config
 		README.md = README.md
-		System.Diagnostics.CodeAnalysis.cs = System.Diagnostics.CodeAnalysis.cs
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Utilities", "src\Hive.Utilities\Hive.Utilities.csproj", "{3C265E15-AFDF-47B1-9893-7957F9A43818}"

@@ -17,19 +17,38 @@ namespace Hive.Versioning.Parsing
     {
         // TODO: refactor to make data more easily passed up and down the callstack
 
+        private record GeneratedMessage(string Message, string? Suggestion = null, (long Start, long Length)? Span = null);
+
+        private ref struct MessageInfo
+        {
+            public readonly StringPart Text;
+
+            public MessageInfo(in StringPart text)
+            {
+                Text = text;
+            }
+        }
+
+        private static (long Start, long Length) SpanFromReport<T>(in ActionErrorReport<T> report)
+            where T : struct
+            => (report.TextOffset, report.Length);
+
+        #region Version
         public static string GetVersionErrorMessage(ref ParserErrorState<VersionParseAction> errors)
         {
             var reports = errors.ToArray();
 
-            return ProcessVersionErrorMessage(errors.InputText, reports);
+            var msgInfo = new MessageInfo(errors.InputText);
+            var msg = ProcessVersionErrorMessage(in msgInfo, reports);
+            return FormatMessage(in msgInfo, msg);
         }
 
-        private static string ProcessVersionErrorMessage(in StringPart text, IReadOnlyList<ActionErrorReport<VersionParseAction>> reports)
+        private static GeneratedMessage ProcessVersionErrorMessage(in MessageInfo msgs, IReadOnlyList<ActionErrorReport<VersionParseAction>> reports)
         {
             var range = ScanForErrorRange(reports, VersionIsError);
 
             if (range.Length == 0)
-                return SR.ParsingSuccessful;
+                return new(SR.ParsingSuccessful);
 
             var ourTextStart = reports[0].TextOffset;
 
@@ -39,9 +58,9 @@ namespace Hive.Versioning.Parsing
                 switch (report.Action)
                 {
                     case VersionParseAction.ExtraInput:
-                        return ProcessVersionExtraInput(text, reports, range, ourTextStart, report);
+                        return ProcessVersionExtraInput(in msgs, reports, range, ourTextStart, report);
                     case VersionParseAction.ECoreVersionDot:
-                        return ProcessVersionECoreVersionDot(text, reports, range, ourTextStart, report);
+                        return ProcessVersionECoreVersionDot(in msgs, reports, range, ourTextStart, report);
 
                     default:
                         break;
@@ -49,19 +68,20 @@ namespace Hive.Versioning.Parsing
             }
 
             if (reports.Count > 128) // arbitrary limit
-                return SR.Version_InputInvalid; // generic error message for when we don't want to spend time generating long ass messages
+                return new(SR.Version_InputInvalid); // generic error message for when we don't want to spend time generating long ass messages
 
+            // TODO: fix this
             var sb = new StringBuilder();
 
             foreach (var report in reports)
             {
-                FormatMessageAtPosition(sb, text, report.TextOffset, report.Length, report.Action.ToString());
+                FormatMessageAtPosition(sb, msgs.Text, report.TextOffset, report.Length, report.Action.ToString());
             }
 
-            return sb.ToString();
+            return new(sb.ToString());
         }
 
-        private static string ProcessVersionExtraInput(in StringPart text,
+        private static GeneratedMessage ProcessVersionExtraInput(in MessageInfo msgs,
             IReadOnlyList<ActionErrorReport<VersionParseAction>> reports,
             (int Start, int Length) range,
             long ourTextStart,
@@ -83,34 +103,53 @@ namespace Hive.Versioning.Parsing
             // But first, lets make sure its where we expect.
             if (range.Start - 1 >= 0 && reports[range.Start - 1].Action == VersionParseAction.FCoreVersion)
             {
-                if (TryMatchLeadingZeroNumId(text, (int)ourTextStart, reports.SkipIndex(range.Start - 1).ToLazyList(), range.Start - 1, out var lzMsg, out var lzSuggest))
-                    return FormatMessageAtPosition(text, report.TextOffset, report.Length, SR.Suggestion.Format(lzMsg, lzSuggest));
+                if (TryMatchLeadingZeroNumId(in msgs, (int)ourTextStart, reports.SkipIndex(range.Start - 1).ToLazyList(), range.Start - 1, out var lzMsg))
+                    return lzMsg;
 
                 // Then, lets try to check for a poor man's prerelease.
                 // We expect the same FCoreVersion then ExtraInput, just with different starting characters.
-                if (TryMatchBadPrerelease(text, (int)ourTextStart, report, out var brMsg, out var brSuggest))
-                    return FormatMessageAtPosition(text, report.TextOffset, report.Length, SR.Suggestion.Format(brMsg, brSuggest));
+                if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, false, report, out var brMsg))
+                    return brMsg;
             }
 
-            return ExtraInputMesage(text, report);
+            // We could still have a bad prerelease, but we'd have expected a preceeding FPrerelease.
+            if (range.Start - 1 >= 0 && reports[range.Start - 1].Action == VersionParseAction.FPrerelease)
+            {
+                if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, true, report, out var brMsg))
+                    return brMsg;
+            }
+
+            return ExtraInputMesage(in msgs, report);
         }
 
-        private static bool TryMatchBadPrerelease(in StringPart text,
-            int ourTextStart,
+        private static bool TryMatchBadPrerelease(in MessageInfo msgs,
+            int ourTextStart, bool inPre,
             ActionErrorReport<VersionParseAction> report,
-            [MaybeNullWhen(false)] out string message, [MaybeNullWhen(false)] out string suggest)
+            [MaybeNullWhen(false)] out GeneratedMessage message)
         {
-            message = suggest = null;
+            message = null;
 
             // We'll check for several possible delineators.
-            if (text[(int)report.TextOffset] is not '.' and not '_' and not '=' and not '/' and not '\\')
-                return false;
+            if (msgs.Text[(int)report.TextOffset] is not '_' and not '=' and not '/' and not '\\')
+            {
+                // These delimiters are based on where we are
+                if (inPre)
+                {
+                    if (msgs.Text[(int)report.TextOffset] is not '-')
+                        return false;
+                }
+                else
+                {
+                    if (msgs.Text[(int)report.TextOffset] is not '.')
+                        return false;
+                }
+            }
 
             // There's a pretty good bet that this is supposed to be a prerelease.
             // Lets scan to the next alphanumeric char, and cut to there, dropping in a dash.
             var position = (int)report.TextOffset;
-            while (position < text.Length
-                && !(text[position]
+            while (position < msgs.Text.Length
+                && !(msgs.Text[position]
                     is (>= 'a' and <= 'z')
                     or (>= 'A' and <= 'Z')
                     or (>= '0' and <= '9')))
@@ -118,19 +157,20 @@ namespace Hive.Versioning.Parsing
                 position++;
             }
 
-            if (position == text.Length)
+            if (position == msgs.Text.Length)
                 return false; // it probably wasn't supposed to be a prerelease
 
-            message = SR.Version_PrereleaseUsesDash;
 
             // call it close enough, lets try for something good
-            var part1 = text.Slice(ourTextStart, (int)report.TextOffset);
-            var part2 = text.Slice(position, FindEndOfVersion(text, position) - position);
-            suggest = part1.ToString() + "-" + part2.ToString();
+            var part1 = msgs.Text.Slice(ourTextStart, (int)report.TextOffset);
+            var part2 = msgs.Text.Slice(position, FindEndOfVersion(msgs.Text, position) - position);
+            // instead of returning the full report range, just mark the start
+            var suggested = part1.ToString() + (inPre ? "." : "-") + part2.ToString();
+            message = new(inPre ? SR.Version_PrereleaseContainsDot : SR.Version_PrereleaseUsesDash, suggested, (report.TextOffset, 0));
             return true;
         }
 
-        private static string ProcessVersionECoreVersionDot(in StringPart text,
+        private static GeneratedMessage ProcessVersionECoreVersionDot(in MessageInfo msgs,
             IReadOnlyList<ActionErrorReport<VersionParseAction>> reports,
             (int Start, int Length) range,
             long ourTextStart,
@@ -145,18 +185,17 @@ namespace Hive.Versioning.Parsing
             }
 
             if (vnumCount is < 1 or > 2)
-                return FormatMessageAtPosition(text, report.TextOffset, report.Length,
-                    SR.WhatHow.Format( // this resource should accurately describe the situation
+                return new(SR.WhatHow.Format( // this resource should accurately describe the situation
                         SR.UnexpectedFValidNumericIdCount.Format(vnumCount)
-                    ));
+                    ), Span: SpanFromReport(report));
 
             // so there are actually 2 things that this could potentially mean
             // 1. it could mean exactly what you think; the input was lacking in some parts of the versoin
             // OR 2. it coult mean that the input had leading zeroes.
 
             // in order to check for number 2, we look at the immediately preceeding FValidNumericId and check if it is just `0`.
-            if (TryMatchLeadingZeroNumId(text, (int)ourTextStart, reports, range.Start, out var lzMsg, out var lzSuggest))
-                return FormatMessageAtPosition(text, report.TextOffset, report.Length, SR.Suggestion.Format(lzMsg, lzSuggest));
+            if (TryMatchLeadingZeroNumId(in msgs, (int)ourTextStart, reports, range.Start, out var lzMsg))
+                return lzMsg;
 
             // if we get here, we're processing no. 1
             var message = vnumCount switch
@@ -168,8 +207,8 @@ namespace Hive.Versioning.Parsing
 
             // for the suggestion, lets trim out the rest as well
 
-            var part1 = text.Slice((int)ourTextStart, (int)(report.TextOffset - ourTextStart));
-            var part2 = text.Slice((int)report.TextOffset, (int)(FindEndOfVersion(text, (int)report.TextOffset) - report.TextOffset));
+            var part1 = msgs.Text.Slice((int)ourTextStart, (int)(report.TextOffset - ourTextStart));
+            var part2 = msgs.Text.Slice((int)report.TextOffset, (int)(FindEndOfVersion(msgs.Text, (int)report.TextOffset) - report.TextOffset));
             var suggestion =
                 part1.ToString() + vnumCount switch
                 {
@@ -178,13 +217,16 @@ namespace Hive.Versioning.Parsing
                     _ => throw new InvalidOperationException()
                 } + part2.ToString();
 
-            return FormatMessageAtPosition(text, report.TextOffset, report.Length, SR.Suggestion.Format(message, suggestion));
+            return new(message, suggestion, SpanFromReport(report));
         }
 
-        private static bool TryMatchLeadingZeroNumId(in StringPart text, int ownStart, IReadOnlyList<ActionErrorReport<VersionParseAction>> reports, int eindex,
-            [MaybeNullWhen(false)] out string message, [MaybeNullWhen(false)] out string suggest)
+        private static bool TryMatchLeadingZeroNumId(in MessageInfo msgs,
+            int ownStart,
+            IReadOnlyList<ActionErrorReport<VersionParseAction>> reports,
+            int eindex,
+            [MaybeNullWhen(false)] out GeneratedMessage message)
         {
-            message = suggest = null;
+            message = null;
             if (eindex < 1) return false;
 
             var freport = reports[eindex - 1];
@@ -194,27 +236,26 @@ namespace Hive.Versioning.Parsing
             if (freport.Length != 1)
                 return false;
 
-            if (text[(int)freport.TextOffset] != '0')
+            if (msgs.Text[(int)freport.TextOffset] != '0')
                 return false;
 
-            if (text[(int)ereport.TextOffset] is < '0' or > '9')
+            if (msgs.Text[(int)ereport.TextOffset] is < '0' or > '9')
                 return false; // we need to actually continue with more digits
 
             // now we've matched it
-            message = SR.NumIdsDoNotHaveLeadingZeroes;
 
             // find first nonzero digit, or last actual digit
             var offs = (int)ereport.TextOffset;
-            while (text[offs] == '0' && offs < text.Length) offs++;
-            if (offs >= text.Length || text[offs] is < '0' or > '9') // we hit the end or ended up at a non-digit
+            while (msgs.Text[offs] == '0' && offs < msgs.Text.Length) offs++;
+            if (offs >= msgs.Text.Length || msgs.Text[offs] is < '0' or > '9') // we hit the end or ended up at a non-digit
                 offs--; // so we back up to find the last zero
 
             // now we trim to the start of freport for the first half
-            var part1 = text.Slice(ownStart, (int)freport.TextOffset - ownStart);
+            var part1 = msgs.Text.Slice(ownStart, (int)freport.TextOffset - ownStart);
             // then from offs to the end of the string (though this will consume the rest of a range, if we're processing that)
-            var part2 = text.Slice(offs, FindEndOfVersion(text, offs) - offs);
+            var part2 = msgs.Text.Slice(offs, FindEndOfVersion(msgs.Text, offs) - offs);
             // then our suggestion is just the two parts concatenated
-            suggest = part1.ToString() + part2.ToString();
+            message = new(SR.NumIdsDoNotHaveLeadingZeroes, part1.ToString() + part2.ToString(), SpanFromReport(ereport));
             return true;
         }
 
@@ -223,40 +264,46 @@ namespace Hive.Versioning.Parsing
             // TODO: impelment
             return text.Length;
         }
+        #endregion
 
+        #region VersionRange
         public static string GetVersionRangeErrorMessage(ref ParserErrorState<AnyParseAction> errors)
         {
             var reports = errors.ToArray();
 
+            var msgInfo = new MessageInfo(errors.InputText);
+            var msg = ProcessVersionRangeMessage(in msgInfo, reports);
+            return FormatMessage(in msgInfo, msg);
+        }
+
+        private static GeneratedMessage ProcessVersionRangeMessage(in MessageInfo msgs, ActionErrorReport<AnyParseAction>[] reports)
+        {
             var range = ScanForErrorRange(reports, RangeIsError);
 
             if (range.Length == 0)
-                return SR.ParsingSuccessful;
+                return new(SR.ParsingSuccessful);
 
             if (range.Length == 1 && reports[range.Start].Action.Value == RangeParseAction.ExtraInput)
-                return ExtraInputMesage(errors.InputText, reports[range.Start]);
+                return ExtraInputMesage(in msgs, reports[range.Start]);
 
             if (reports.Length > 128) // arbitrary limit
-                return SR.Range_InputInvalid; // generic error message for when we don't want to spend time generating long ass messages
+                return new(SR.Range_InputInvalid); // generic error message for when we don't want to spend time generating long ass messages
 
-
+            // TODO: fix
             var sb = new StringBuilder();
 
             foreach (var report in reports)
             {
-                FormatMessageAtPosition(sb, errors.InputText, report.TextOffset, report.Length, report.Action.ToString());
+                FormatMessageAtPosition(sb, msgs.Text, report.TextOffset, report.Length, report.Action.ToString());
             }
 
-            return sb.ToString();
+            return new(sb.ToString());
         }
+        #endregion
 
-        private static string ExtraInputMesage<T>(in StringPart text, ActionErrorReport<T> report)
+        private static GeneratedMessage ExtraInputMesage<T>(in MessageInfo msgs, ActionErrorReport<T> report)
             where T : struct
-        {
-            var strb = new StringBuilder();
-            FormatMessageAtPosition(strb, text, report.TextOffset, report.Length, SR.ExtraInputAtEnd);
-            return strb.ToString();
-        }
+            => new(SR.ExtraInputAtEnd, Span: SpanFromReport(report));
 
         private static (int Start, int Length) ScanForErrorRange<T>(IReadOnlyList<ActionErrorReport<T>> reports, Func<T, bool> checkIsError)
             where T : struct
@@ -325,6 +372,21 @@ namespace Hive.Versioning.Parsing
                 RangeParseAction.ExtraInput => true,
                 _ => false,
             };
+
+        private static string FormatMessage(in MessageInfo msgs, GeneratedMessage message)
+        {
+            var msgString = message.Message;
+            if (message.Suggestion is not null)
+                msgString = SR.Suggestion.Format(msgString, message.Suggestion);
+            if (message.Span is { } span)
+            {
+                return FormatMessageAtPosition(msgs.Text, span.Start, span.Length, msgString);
+            }
+            else
+            {
+                return msgString;
+            }
+        }
 
         private static string FormatMessageAtPosition(StringPart text, long position, long len, string message)
         {
