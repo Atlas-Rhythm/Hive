@@ -133,8 +133,8 @@
     <value>Input is not a valid VersionRange</value>
   </data>
   <data name="Suggestion" xml:space="preserve">
-    <value>{0} Did you mean '{1}'?</value>
-    <comment>{0} is the prefix text, {1} is the suggested text</comment>
+    <value>Did you mean '{0}'?</value>
+    <comment>{0} is the suggested text</comment>
   </data>
   <data name="UnexpectedFValidNumericIdCount" xml:space="preserve">
     <value>Unexpected FValidNumericIdCount in main version {0}.</value>
@@ -142,6 +142,9 @@
   </data>
   <data name="Version_BuildContainsDot" xml:space="preserve">
     <value>Build identifiers must be separated from each other by a single '.' character.</value>
+  </data>
+  <data name="Version_BuildIdsAreAlphaNumeric" xml:space="preserve">
+    <value>Build identifiers must be alphanumeric identifiers.</value>
   </data>
   <data name="Version_ExpectMajorNumber" xml:space="preserve">
     <value>Expected major version number.</value>
@@ -169,6 +172,9 @@
   </data>
   <data name="Version_PrereleaseUsesDash" xml:space="preserve">
     <value>Prerelease identifiers must be separated from the main version by a single '-' character.</value>
+  </data>
+  <data name="Version_PrereleasIdsAreAlphaNumeric" xml:space="preserve">
+    <value>Prerelease identifiers must be either a number or an alphanumeric identifier.</value>
   </data>
   <data name="WhatHow" xml:space="preserve">
     <value>What? How? {0}</value>

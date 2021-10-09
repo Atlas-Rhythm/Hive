@@ -78,21 +78,36 @@ namespace Hive.Versioning.Parsing
                 switch (reports[range.Start].Action)
                 {
                     case VersionParseAction.ENumericId:
-                        {
-                            // This means that there *was* no number provided. We can just suggest a 0.0.1 prefix.
-                            var versionPart = msgs.Text.Slice(
-                                (int)reports[range.Start].TextOffset,
-                                FindEndOfVersion(msgs.Text, (int)reports[range.Start].TextOffset)).ToString();
-                            if (versionPart.Length > 0 && versionPart[0] is not '-' and not '+')
-                                versionPart = "-" + versionPart;
-                            var suggest = "0.0.1" + versionPart;
-                            return new(SR.Version_MustBeginWithMajorMinorPatch, suggest, SpanFromReport(reports[range.Start]));
-                        }
+                        return ProcessENumericId(msgs, reports, range);
 
                     case VersionParseAction.EValidNumericId:
                         if (TryMatchTooBigCoreNumber(in msgs, reports, range.Start, out var tbMsg))
                             return tbMsg;
                         break;
+                }
+            }
+
+            if (range.Length >= 2)
+            {
+                // Now we'll check for bad prerelease identifiers.
+                var last = range.Start + range.Length - 1;
+                if (reports[last].Action == VersionParseAction.EPrerelease
+                    && reports[last - 1].Action == VersionParseAction.EPrereleaseId)
+                {
+                    // This is a bad prerelease identifier.
+                    var message = SR.Version_PrereleasIdsAreAlphaNumeric;
+                    // TODO: generate suggestion somehow
+                    return new(message, Span: SpanFromReport(reports[last - 1]));
+                }
+
+                // Let's also check for bad build identifiers.
+                if (reports[last].Action == VersionParseAction.EBuild
+                    && reports[last - 1].Action == VersionParseAction.EBuildId)
+                {
+                    // This is a bad prerelease identifier.
+                    var message = SR.Version_BuildIdsAreAlphaNumeric;
+                    // TODO: generate suggestion somehow
+                    return new(message, Span: SpanFromReport(reports[last - 1]));
                 }
             }
 
@@ -154,16 +169,20 @@ namespace Hive.Versioning.Parsing
                         {
                             if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, true, false, report, out var brMsg))
                                 return brMsg;
+                            // if the above fails, then we found an invalid character in the prerelease ID.
+                            // TODO: create suggestion here
+                            return new(SR.Version_PrereleasIdsAreAlphaNumeric, Span: SpanFromReport(report));
                         }
-                        break;
 
                     // We could also have a bad build ID, lets check that.
                     case VersionParseAction.FBuild:
                         {
                             if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, false, true, report, out var brMsg))
                                 return brMsg;
+                            // if the above fails, then we found an invalid character in the build ID.
+                            // TODO: create suggestion here
+                            return new(SR.Version_BuildIdsAreAlphaNumeric, Span: SpanFromReport(report));
                         }
-                        break;
 
                     default: break;
                 }
@@ -277,6 +296,20 @@ namespace Hive.Versioning.Parsing
         #endregion
 
         #region 2-long error range
+        private static GeneratedMessage ProcessENumericId(in MessageInfo msgs, IReadOnlyList<ActionErrorReport<VersionParseAction>> reports, (int Start, int Length) range)
+        {
+            // This means that there *was* no number provided. We can just suggest a 0.0.1 prefix.
+            var versionPart = msgs.Text.Slice(
+                (int)reports[range.Start].TextOffset,
+                FindEndOfVersion(msgs.Text, (int)reports[range.Start].TextOffset)).ToString();
+
+            if (versionPart.Length > 0 && versionPart[0] is not '-' and not '+')
+                versionPart = "-" + versionPart;
+
+            var suggest = "0.0.1" + versionPart;
+            return new(SR.Version_MustBeginWithMajorMinorPatch, suggest, SpanFromReport(reports[range.Start]));
+        }
+
         private static bool TryMatchTooBigCoreNumber(in MessageInfo msgs,
             IReadOnlyList<ActionErrorReport<VersionParseAction>> reports,
             int eindex,
@@ -460,16 +493,16 @@ namespace Hive.Versioning.Parsing
         private static string FormatMessage(in MessageInfo msgs, GeneratedMessage message)
         {
             var msgString = message.Message;
-            if (message.Suggestion is not null && message.ShowSuggestion)
-                msgString = SR.Suggestion.Format(msgString, message.Suggestion);
-            if (message.Span is { } span)
-            {
-                return FormatMessageAtPosition(msgs.Text, span.Start, span.Length, msgString);
-            }
-            else
-            {
-                return msgString;
-            }
+
+            var suggestion = message.Suggestion is not null && message.ShowSuggestion
+                ? SR.Suggestion.Format(message.Suggestion)
+                : null;
+
+            msgString = message.Span is { } span
+                ? FormatMessageAtPosition(msgs.Text, span.Start, span.Length, msgString)
+                : msgString;
+
+            return msgString + "\n" + suggestion;
         }
 
         private static string FormatMessageAtPosition(StringPart text, long position, long len, string message)
@@ -486,7 +519,9 @@ namespace Hive.Versioning.Parsing
                 .Append(' ', (int)position).Append('^');
             if (len > 0)
                 _ = builder.Append('~', (int)len - 1);
-            _ = builder.Append(' ').AppendLine(message);
+            _ = builder.AppendLine()
+                .Append(' ', (int)position)
+                .AppendLine(message);
         }
     }
 }
