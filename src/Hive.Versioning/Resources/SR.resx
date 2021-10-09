@@ -140,6 +140,9 @@
     <value>Unexpected FValidNumericIdCount in main version {0}.</value>
     <comment>{0} is the number of FValidNumericIds found</comment>
   </data>
+  <data name="Version_BuildContainsDot" xml:space="preserve">
+    <value>Build identifiers must be separated from each other by a single '.' character.</value>
+  </data>
   <data name="Version_ExpectMajorNumber" xml:space="preserve">
     <value>Expected major version number.</value>
   </data>

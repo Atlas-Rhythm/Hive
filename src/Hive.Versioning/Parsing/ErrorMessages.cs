@@ -108,14 +108,28 @@ namespace Hive.Versioning.Parsing
 
                 // Then, lets try to check for a poor man's prerelease.
                 // We expect the same FCoreVersion then ExtraInput, just with different starting characters.
-                if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, false, report, out var brMsg))
+                if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, false, false, report, out var brMsg))
                     return brMsg;
             }
 
             // We could still have a bad prerelease, but we'd have expected a preceeding FPrerelease.
+            // We could *also* still have a LZNumId, just in the prerelease instead.
             if (range.Start - 1 >= 0 && reports[range.Start - 1].Action == VersionParseAction.FPrerelease)
             {
-                if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, true, report, out var brMsg))
+                if (TryMatchLeadingZeroNumId(in msgs, (int)ourTextStart, reports.SkipIndex(range.Start - 1).ToLazyList(), range.Start - 1, out var lzMsg))
+                    return lzMsg;
+
+                if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, true, false, report, out var brMsg))
+                    return brMsg;
+            }
+
+            // We could also have a bad build ID, lets check that.
+            if (range.Start - 1 >= 0 && reports[range.Start - 1].Action == VersionParseAction.FBuild)
+            {
+                if (TryMatchLeadingZeroNumId(in msgs, (int)ourTextStart, reports.SkipIndex(range.Start - 1).ToLazyList(), range.Start - 1, out var lzMsg))
+                    return lzMsg;
+
+                if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, false, true, report, out var brMsg))
                     return brMsg;
             }
 
@@ -123,14 +137,14 @@ namespace Hive.Versioning.Parsing
         }
 
         private static bool TryMatchBadPrerelease(in MessageInfo msgs,
-            int ourTextStart, bool inPre,
+            int ourTextStart, bool inPre, bool inBuild,
             ActionErrorReport<VersionParseAction> report,
             [MaybeNullWhen(false)] out GeneratedMessage message)
         {
             message = null;
 
             // We'll check for several possible delineators.
-            if (msgs.Text[(int)report.TextOffset] is not '_' and not '=' and not '/' and not '\\')
+            if (msgs.Text[(int)report.TextOffset] is not '_' and not '=' and not '/' and not '\\' and not '+')
             {
                 // These delimiters are based on where we are
                 if (inPre)
@@ -165,8 +179,13 @@ namespace Hive.Versioning.Parsing
             var part1 = msgs.Text.Slice(ourTextStart, (int)report.TextOffset);
             var part2 = msgs.Text.Slice(position, FindEndOfVersion(msgs.Text, position) - position);
             // instead of returning the full report range, just mark the start
-            var suggested = part1.ToString() + (inPre ? "." : "-") + part2.ToString();
-            message = new(inPre ? SR.Version_PrereleaseContainsDot : SR.Version_PrereleaseUsesDash, suggested, (report.TextOffset, 0));
+            var suggested = part1.ToString() + (inPre || inBuild ? "." : "-") + part2.ToString();
+            message = new((inPre, inBuild) switch
+            {
+                (true, _) => SR.Version_PrereleaseContainsDot,
+                (false, true) => SR.Version_BuildContainsDot,
+                (false, false) => SR.Version_PrereleaseUsesDash,
+            }, suggested, (report.TextOffset, 0));
             return true;
         }
 
@@ -231,7 +250,7 @@ namespace Hive.Versioning.Parsing
 
             var freport = reports[eindex - 1];
             var ereport = reports[eindex];
-            if (freport.Action != VersionParseAction.FValidNumericId)
+            if (freport.Action is not VersionParseAction.FValidNumericId and not VersionParseAction.FNumericId)
                 return false;
             if (freport.Length != 1)
                 return false;
@@ -246,16 +265,20 @@ namespace Hive.Versioning.Parsing
 
             // find first nonzero digit, or last actual digit
             var offs = (int)ereport.TextOffset;
-            while (msgs.Text[offs] == '0' && offs < msgs.Text.Length) offs++;
+            while (offs < msgs.Text.Length && msgs.Text[offs] == '0') offs++;
             if (offs >= msgs.Text.Length || msgs.Text[offs] is < '0' or > '9') // we hit the end or ended up at a non-digit
                 offs--; // so we back up to find the last zero
+
+            // find the end of the run of digits
+            var end = offs;
+            while (end < msgs.Text.Length && msgs.Text[end] is >= '0' and <= '9') end++;
 
             // now we trim to the start of freport for the first half
             var part1 = msgs.Text.Slice(ownStart, (int)freport.TextOffset - ownStart);
             // then from offs to the end of the string (though this will consume the rest of a range, if we're processing that)
             var part2 = msgs.Text.Slice(offs, FindEndOfVersion(msgs.Text, offs) - offs);
             // then our suggestion is just the two parts concatenated
-            message = new(SR.NumIdsDoNotHaveLeadingZeroes, part1.ToString() + part2.ToString(), SpanFromReport(ereport));
+            message = new(SR.NumIdsDoNotHaveLeadingZeroes, part1.ToString() + part2.ToString(), ((int)freport.TextOffset, end - (int)freport.TextOffset));
             return true;
         }
 
