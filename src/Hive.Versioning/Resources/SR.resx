@@ -158,6 +158,12 @@
   <data name="Version_InputTooShort" xml:space="preserve">
     <value>Input too short to be a SemVer version</value>
   </data>
+  <data name="Version_MustBeginWithMajorMinorPatch" xml:space="preserve">
+    <value>Version must begin with a major, minor, and patch number.</value>
+  </data>
+  <data name="Version_NumberTooBig" xml:space="preserve">
+    <value>Number is too big to be represented by version object.</value>
+  </data>
   <data name="Version_PrereleaseContainsDot" xml:space="preserve">
     <value>Prerelease identifiers must be separated from each other by a single '.' character.</value>
   </data>

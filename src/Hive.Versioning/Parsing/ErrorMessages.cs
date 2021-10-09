@@ -17,7 +17,10 @@ namespace Hive.Versioning.Parsing
     {
         // TODO: refactor to make data more easily passed up and down the callstack
 
-        private record GeneratedMessage(string Message, string? Suggestion = null, (long Start, long Length)? Span = null);
+        private record GeneratedMessage(string Message,
+            string? Suggestion = null,
+            (long Start, long Length)? Span = null,
+            bool ShowSuggestion = true);
 
         private ref struct MessageInfo
         {
@@ -55,7 +58,10 @@ namespace Hive.Versioning.Parsing
             if (range.Length == 1)
             {
                 var report = reports[range.Start];
+#pragma warning disable IDE0010 // Add missing cases
+                // In all of my bad version tests, these are the only 2 that actually get hit.
                 switch (report.Action)
+#pragma warning restore IDE0010 // Add missing cases
                 {
                     case VersionParseAction.ExtraInput:
                         return ProcessVersionExtraInput(in msgs, reports, range, ourTextStart, report);
@@ -63,6 +69,29 @@ namespace Hive.Versioning.Parsing
                         return ProcessVersionECoreVersionDot(in msgs, reports, range, ourTextStart, report);
 
                     default:
+                        break;
+                }
+            }
+
+            if (range.Length == 2)
+            {
+                switch (reports[range.Start].Action)
+                {
+                    case VersionParseAction.ENumericId:
+                        {
+                            // This means that there *was* no number provided. We can just suggest a 0.0.1 prefix.
+                            var versionPart = msgs.Text.Slice(
+                                (int)reports[range.Start].TextOffset,
+                                FindEndOfVersion(msgs.Text, (int)reports[range.Start].TextOffset)).ToString();
+                            if (versionPart.Length > 0 && versionPart[0] is not '-' and not '+')
+                                versionPart = "-" + versionPart;
+                            var suggest = "0.0.1" + versionPart;
+                            return new(SR.Version_MustBeginWithMajorMinorPatch, suggest, SpanFromReport(reports[range.Start]));
+                        }
+
+                    case VersionParseAction.EValidNumericId:
+                        if (TryMatchTooBigCoreNumber(in msgs, reports, range.Start, out var tbMsg))
+                            return tbMsg;
                         break;
                 }
             }
@@ -81,6 +110,8 @@ namespace Hive.Versioning.Parsing
             return new(sb.ToString());
         }
 
+        #region 1-long error range
+        [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "All other cases are correctly falling through.")]
         private static GeneratedMessage ProcessVersionExtraInput(in MessageInfo msgs,
             IReadOnlyList<ActionErrorReport<VersionParseAction>> reports,
             (int Start, int Length) range,
@@ -93,44 +124,49 @@ namespace Hive.Versioning.Parsing
             // It coult also mean that the version ended with a number with a leading zero.
             // It could also mean that the version ended with some incorrect attempt at a prerelease or build identifier.
 
-            // Lets start by checking for leading zeroes:
-            // If it is a leading zero issue, then the sequence of reports is this:
-            //    ...
-            //    FValidNumericId
-            //    FCoreVersion
-            //    ExtraInput
-            // Before passing off to check for leading zeroes, we need to remove that FCoreVersion report.
-            // But first, lets make sure its where we expect.
-            if (range.Start - 1 >= 0 && reports[range.Start - 1].Action == VersionParseAction.FCoreVersion)
+            if (range.Start - 1 >= 0)
             {
+                // Lets start by checking for leading zeroes:
+                // If it is a leading zero issue, then the sequence of reports is this:
+                //    ...
+                //    FValidNumericId
+                //    FCoreVersion
+                //    ExtraInput
+                // Before passing off to check for leading zeroes, we need to remove that FCoreVersion report.
+                // But first, lets make sure its where we expect.
                 if (TryMatchLeadingZeroNumId(in msgs, (int)ourTextStart, reports.SkipIndex(range.Start - 1).ToLazyList(), range.Start - 1, out var lzMsg))
                     return lzMsg;
 
-                // Then, lets try to check for a poor man's prerelease.
-                // We expect the same FCoreVersion then ExtraInput, just with different starting characters.
-                if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, false, false, report, out var brMsg))
-                    return brMsg;
-            }
+                switch (reports[range.Start - 1].Action)
+                {
+                    // Then, lets try to check for a poor man's prerelease.
+                    // We expect the same FCoreVersion then ExtraInput, just with different starting characters.
+                    case VersionParseAction.FCoreVersion:
+                        {
+                            if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, false, false, report, out var brMsg))
+                                return brMsg;
+                        }
+                        break;
 
-            // We could still have a bad prerelease, but we'd have expected a preceeding FPrerelease.
-            // We could *also* still have a LZNumId, just in the prerelease instead.
-            if (range.Start - 1 >= 0 && reports[range.Start - 1].Action == VersionParseAction.FPrerelease)
-            {
-                if (TryMatchLeadingZeroNumId(in msgs, (int)ourTextStart, reports.SkipIndex(range.Start - 1).ToLazyList(), range.Start - 1, out var lzMsg))
-                    return lzMsg;
+                    // We could still have a bad prerelease, but we'd have expected a preceeding FPrerelease.
+                    // We could *also* still have a LZNumId, just in the prerelease instead.
+                    case VersionParseAction.FPrerelease:
+                        {
+                            if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, true, false, report, out var brMsg))
+                                return brMsg;
+                        }
+                        break;
 
-                if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, true, false, report, out var brMsg))
-                    return brMsg;
-            }
+                    // We could also have a bad build ID, lets check that.
+                    case VersionParseAction.FBuild:
+                        {
+                            if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, false, true, report, out var brMsg))
+                                return brMsg;
+                        }
+                        break;
 
-            // We could also have a bad build ID, lets check that.
-            if (range.Start - 1 >= 0 && reports[range.Start - 1].Action == VersionParseAction.FBuild)
-            {
-                if (TryMatchLeadingZeroNumId(in msgs, (int)ourTextStart, reports.SkipIndex(range.Start - 1).ToLazyList(), range.Start - 1, out var lzMsg))
-                    return lzMsg;
-
-                if (TryMatchBadPrerelease(in msgs, (int)ourTextStart, false, true, report, out var brMsg))
-                    return brMsg;
+                    default: break;
+                }
             }
 
             return ExtraInputMesage(in msgs, report);
@@ -238,6 +274,31 @@ namespace Hive.Versioning.Parsing
 
             return new(message, suggestion, SpanFromReport(report));
         }
+        #endregion
+
+        #region 2-long error range
+        private static bool TryMatchTooBigCoreNumber(in MessageInfo msgs,
+            IReadOnlyList<ActionErrorReport<VersionParseAction>> reports,
+            int eindex,
+            [MaybeNullWhen(false)] out GeneratedMessage message)
+        {
+            message = null;
+            if (eindex + 1 >= reports.Count) return false;
+
+            var freport = reports[eindex];
+            var ereport = reports[eindex + 1];
+
+            if (freport.Action is not VersionParseAction.EValidNumericId)
+                return false;
+            if (ereport.Action is not VersionParseAction.ECoreVersionNumber)
+                return false;
+
+            var restOfVer = (int)(freport.TextOffset + freport.Length);
+            var contSuggestion = "0" + msgs.Text.Slice(restOfVer, FindEndOfVersion(msgs.Text, restOfVer) - restOfVer).ToString();
+            message = new(SR.Version_NumberTooBig, contSuggestion, Span: SpanFromReport(freport), ShowSuggestion: false);
+            return true;
+        }
+        #endregion
 
         private static bool TryMatchLeadingZeroNumId(in MessageInfo msgs,
             int ownStart,
@@ -399,7 +460,7 @@ namespace Hive.Versioning.Parsing
         private static string FormatMessage(in MessageInfo msgs, GeneratedMessage message)
         {
             var msgString = message.Message;
-            if (message.Suggestion is not null)
+            if (message.Suggestion is not null && message.ShowSuggestion)
                 msgString = SR.Suggestion.Format(msgString, message.Suggestion);
             if (message.Span is { } span)
             {
