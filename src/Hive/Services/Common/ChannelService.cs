@@ -14,7 +14,7 @@ namespace Hive.Services.Common
     /// <summary>
     /// A class for plugins that allow modifications of <see cref="ChannelsController"/>
     /// </summary>
-    [Aggregable]
+    [Aggregable(Default = typeof(HiveChannelsControllerPlugin))]
     public interface IChannelsControllerPlugin
     {
         /// <summary>

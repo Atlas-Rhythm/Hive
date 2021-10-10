@@ -39,12 +39,14 @@ namespace Hive.Plugins.Loading
         private readonly LoaderConfig config;
         private readonly IConfigurationSection sharedConfigSection;
         private readonly PluginLoaderOptionsBuilder options;
+        private readonly ContainerConfigurator configurator;
 
-        public PluginLoader(IConfigurationSection config, PluginLoaderOptionsBuilder options)
+        public PluginLoader(IConfigurationSection config, PluginLoaderOptionsBuilder options, ContainerConfigurator configurator)
         {
             this.config = config.Get<LoaderConfig>() ?? new();
             sharedConfigSection = config.GetSection("PluginConfigurations");
             this.options = options;
+            this.configurator = configurator;
         }
 
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
@@ -149,6 +151,19 @@ namespace Hive.Plugins.Loading
 
                     var configureServices = FindMethod(type, "ConfigureServices");
                     ConfigureWith(services, configureServices, instance);
+
+                    var configureContainer = FindMethod(type, "ConfigureContainer");
+                    if (configureContainer is not null)
+                    {
+                        var containerType = configureContainer.GetParameters()[0].ParameterType;
+                        var actionType = typeof(Action<>).MakeGenericType(containerType);
+                        var configureDelegate = configureContainer.CreateDelegate(actionType, instance);
+
+                        _ = typeof(ContainerConfigurator)
+                            .GetMethod(nameof(ContainerConfigurator.ConfigureContainerNoCtx))!
+                            .MakeGenericMethod(containerType)
+                            .InvokeWithoutWrappingExceptions(configurator, new object[] { configureDelegate });
+                    }
 
                     // register preconfigure methods
                     foreach (var preConf in FindMethods(type, "PreConfigure"))

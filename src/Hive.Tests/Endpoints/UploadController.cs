@@ -2,7 +2,6 @@
 using Hive.Models;
 using Hive.Models.Serialized;
 using Hive.Permissions;
-using Hive.Plugins;
 using Hive.Plugins.Aggregates;
 using Hive.Services;
 using Hive.Utilities;
@@ -27,6 +26,7 @@ using Xunit;
 using Xunit.Abstractions;
 using Version = Hive.Versioning.Version;
 using static Hive.Tests.TestHelpers;
+using DryIoc;
 
 namespace Hive.Tests.Endpoints
 {
@@ -62,12 +62,17 @@ namespace Hive.Tests.Endpoints
             this.helper = helper;
         }
 
+        private class EmptyServiceProvider : IServiceProvider
+        {
+            public object? GetService(Type serviceType) => null;
+        }
+
         [Fact]
         public void EnsureIUploadPluginValid()
         {
             var emptyPlugin = new HiveDefaultUploadPlugin();
 
-            var aggregate = new Aggregate<IUploadPlugin>(new[] { emptyPlugin });
+            var aggregate = new Aggregate<IUploadPlugin>(new[] { emptyPlugin }, new EmptyServiceProvider());
 
             _ = aggregate.Instance;
         }
@@ -76,7 +81,8 @@ namespace Hive.Tests.Endpoints
         public async Task ValidUploadProcess()
         {
             var serviceProvider = CreateController(new[] { new HiveDefaultUploadPlugin() }, "next(true)");
-            var controller = serviceProvider.GetRequiredService<Controllers.UploadController>();
+            using var scope = serviceProvider.CreateScope();
+            var controller = scope.ServiceProvider.GetRequiredService<Controllers.UploadController>();
 
             controller.ControllerContext.HttpContext = CreateMockRequest(new MemoryStream());
 
@@ -140,19 +146,17 @@ namespace Hive.Tests.Endpoints
         //       Given the sheer number of variables in the flow, I feel more comfortable waiting until we have specific conditions that it
         //   is behaving incorrectly in to add more test cases, otherwise I'll be here for a year.
 
-        private IServiceProvider CreateController(IEnumerable<IUploadPlugin> plugins, string rule)
+        private IContainer CreateController(IEnumerable<IUploadPlugin> plugins, string rule)
         {
-            var services = DIHelper.ConfigureServices(Options, helper, new UploadsRuleProvider(rule));
+            var container = DIHelper.ConfigureServices(Options, _ => { }, helper, new UploadsRuleProvider(rule));
 
-            _ = services
-                .AddTransient(sp => plugins)
-                .AddScoped<Controllers.UploadController>()
-                .AddSingleton<ICdnProvider, MemoryTestCdn>()
-                .AddSingleton<SymmetricAlgorithm>(sp => Rijndael.Create())
-                .AddSingleton<IConfiguration>(new ConfigurationBuilder().Build())
-                .AddAggregates();
+            container.RegisterInstance(plugins);
+            container.Register<Controllers.UploadController>(Reuse.Scoped);
+            container.Register<ICdnProvider, MemoryTestCdn>(Reuse.Singleton);
+            container.RegisterInstance<SymmetricAlgorithm>(Rijndael.Create());
+            container.RegisterInstance<IConfiguration>(new ConfigurationBuilder().Build());
 
-            return services.BuildServiceProvider();
+            return container;
         }
 
         private class UploadsRuleProvider : IRuleProvider

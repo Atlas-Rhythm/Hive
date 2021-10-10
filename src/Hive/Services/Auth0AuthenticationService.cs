@@ -22,7 +22,7 @@ namespace Hive.Services
     /// <summary>
     /// Represents a plugin that handles user creation.
     /// </summary>
-    [Aggregable]
+    [Aggregable(Default = typeof(HiveUsernamePlugin))]
     public interface IUserCreationPlugin
     {
         /// <summary>

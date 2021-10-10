@@ -4,9 +4,9 @@ using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using DryIoc;
 using Hive.Models;
 using Hive.Models.Serialized;
-using Hive.Plugins;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -363,15 +363,15 @@ namespace Hive.Tests.Endpoints
 
         private Controllers.ModsController CreateController(string permissionRule, IEnumerable<IModsPlugin> plugins)
         {
-            var services = DIHelper.ConfigureServices(Options, helper, new ModTestHelper.ModsRuleProvider(permissionRule));
+            var container = DIHelper.ConfigureServices(Options, _ => { }, helper, new ModTestHelper.ModsRuleProvider(permissionRule));
 
-            services
-                .AddTransient(sp => plugins)
-                .AddScoped<ModService>()
-                .AddScoped<Controllers.ModsController>()
-                .AddAggregates();
+            container.RegisterInstance(plugins);
+            container.Register<ModService>(Reuse.Scoped);
+            container.Register<Controllers.ModsController>(Reuse.Scoped);
 
-            var controller = services.BuildServiceProvider().GetRequiredService<Controllers.ModsController>();
+            var scope = container.CreateScope();
+
+            var controller = scope.ServiceProvider.GetRequiredService<Controllers.ModsController>();
 
             controller.ControllerContext = new ControllerContext()
             {

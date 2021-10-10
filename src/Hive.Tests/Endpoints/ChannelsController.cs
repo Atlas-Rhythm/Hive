@@ -1,6 +1,6 @@
-﻿using Hive.Models;
+﻿using DryIoc;
+using Hive.Models;
 using Hive.Permissions;
-using Hive.Plugins;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -158,8 +158,9 @@ namespace Hive.Tests.Endpoints
             ruleProvider.Setup(m => m.TryGetRule(filterChannels.Name, out filterChannels)).Returns(true);
             ruleProvider.Setup(m => m.TryGetRule(createChannel.Name, out createChannel)).Returns(true);
 
-            var services = DIHelper.ConfigureServices(
+            var container = DIHelper.ConfigureServices(
                 Options,
+                _ => { },
                 helper,
                 ruleProvider.Object,
                 new List<(string, Delegate)>
@@ -167,13 +168,13 @@ namespace Hive.Tests.Endpoints
                     ("isNull", new Func<object?, bool>(o => o is null))
                 });
 
-            services.AddSingleton<IChannelsControllerPlugin>(sp => new HiveChannelsControllerPlugin());
-            services.AddSingleton(sp => plugin);
-            services.AddAggregates();
-            services.AddScoped<ChannelService>();
-            services.AddScoped<Controllers.ChannelsController>();
+            container.RegisterInstance(plugin);
+            container.Register<ChannelService>(Reuse.Scoped);
+            container.Register<Controllers.ChannelsController>(Reuse.Scoped);
 
-            var controller = services.BuildServiceProvider().GetRequiredService<Controllers.ChannelsController>();
+            var scope = container.CreateScope();
+
+            var controller = scope.ServiceProvider.GetRequiredService<Controllers.ChannelsController>();
 
             controller.ControllerContext = new ControllerContext()
             {

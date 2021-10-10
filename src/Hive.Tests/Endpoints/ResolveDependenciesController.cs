@@ -1,6 +1,6 @@
-﻿using Hive.Models;
+﻿using DryIoc;
+using Hive.Models;
 using Hive.Permissions;
-using Hive.Plugins;
 using Hive.Services.Common;
 using Hive.Utilities;
 using Hive.Versioning;
@@ -270,24 +270,17 @@ namespace Hive.Tests.Endpoints
 
         private Controllers.ResolveDependenciesController CreateController(string permissionRule, IEnumerable<IResolveDependenciesPlugin>? plugins = null)
         {
-            var services = DIHelper.ConfigureServices(Options, helper, new ResolveDependenciesRuleProvider(permissionRule));
+            var container = DIHelper.ConfigureServices(Options, _ => { }, helper, new ResolveDependenciesRuleProvider(permissionRule));
 
-            if (plugins is null)
-            {
-                plugins = new[] { new HiveResolveDependenciesControllerPlugin() };
-            }
-            else
-            {
-                plugins = plugins.Prepend(new HiveResolveDependenciesControllerPlugin());
-            }
+            plugins ??= Enumerable.Empty<IResolveDependenciesPlugin>();
 
-            services
-                .AddTransient(sp => plugins)
-                .AddScoped<DependencyResolverService>()
-                .AddScoped<Controllers.ResolveDependenciesController>()
-                .AddAggregates();
+            container.RegisterInstance(plugins);
+            container.Register<DependencyResolverService>(Reuse.Scoped);
+            container.Register<Controllers.ResolveDependenciesController>(Reuse.Scoped);
 
-            var controller = services.BuildServiceProvider().GetRequiredService<Controllers.ResolveDependenciesController>();
+            var scope = container.CreateScope();
+
+            var controller = scope.ServiceProvider.GetRequiredService<Controllers.ResolveDependenciesController>();
 
             controller.ControllerContext = new ControllerContext()
             {

@@ -6,6 +6,7 @@
     <MSBuildAllProjects Condition="'$(MSBuildToolsVersion)' != 'Current'">$(MSBuildAllProjects);$(MsBuildThisFileFullPath)</MSBuildAllProjects>
 
     <HiveToolsDirectory>$(MSBuildThisFileDirectory)..\msbtools\</HiveToolsDirectory> <!-- in the package, relative to this file, aka /Sdk/ -->
+    <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
   
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" Condition=" '$(MicrosoftCommonPropsHasBeenImported)' != 'true' "/>

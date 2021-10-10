@@ -13,7 +13,7 @@ namespace Hive.Controllers
     /// <summary>
     /// A plugin used for user related endpoints.
     /// </summary>
-    [Aggregable]
+    [Aggregable(Default = typeof(HiveUserPlugin))]
     public interface IUserPlugin
     {
         /// <summary>

@@ -94,7 +94,7 @@
     <ItemGroup>
       <_PackageInfo>
         <ConditionProp></ConditionProp>
-        <ExtraProps> Private="false" ExcludeAssets="buildTransitive"</ExtraProps>
+        <ExtraProps> Private="false" ExcludeAssets="runtime;buildTransitive"</ExtraProps>
         <ConditionProp Condition="'%(IsRoslynExtension)' == 'true'"> Condition="'%24(EnableHiveAnalyzers)' != 'false'"</ConditionProp>
         <ExtraProps Condition="'%(IsRoslynExtension)' == 'true'"> PrivateAssets="all" IncludeAssets="all"</ExtraProps>
       </_PackageInfo>
