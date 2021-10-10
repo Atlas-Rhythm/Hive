@@ -378,8 +378,17 @@ namespace Hive.Versioning.Parsing
 
         private static int FindEndOfVersion(in StringPart text, int from)
         {
-            // TODO: impelment
-            return text.Length;
+            // To be conservative with our guess, we'll only count whitespace and some special characters.
+            while (from < text.Length
+                && text[from] is not '~'
+                    and not '<' and not '>'
+                    and not '=' and not '^'
+                    and not '|'
+                && !char.IsWhiteSpace(text[from]))
+            {
+                from++;
+            }
+            return from;
         }
         #endregion
 
