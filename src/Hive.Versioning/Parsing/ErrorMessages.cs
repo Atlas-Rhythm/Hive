@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Hive.Utilities;
+using static Hive.Versioning.StaticHelpers;
 
 #if !NETSTANDARD2_0
 using StringPart = System.ReadOnlySpan<char>;
@@ -20,6 +21,7 @@ namespace Hive.Versioning.Parsing
         private record GeneratedMessage(string Message,
             string? Suggestion = null,
             (long Start, long Length)? Span = null,
+            (long Start, long Length)? ApplyRange = null, // if ApplyRange is null, we use Span
             bool ShowSuggestion = true);
 
         private ref struct MessageInfo
@@ -401,17 +403,34 @@ namespace Hive.Versioning.Parsing
             return FormatMessage(in msgInfo, msg);
         }
 
-        private static GeneratedMessage ProcessVersionRangeMessage(in MessageInfo msgs, ActionErrorReport<AnyParseAction>[] reports)
+        private static GeneratedMessage ProcessVersionRangeMessage(in MessageInfo msgs, IReadOnlyList<ActionErrorReport<AnyParseAction>> reports)
         {
             var range = ScanForErrorRange(reports, RangeIsError);
 
             if (range.Length == 0)
                 return new(SR.ParsingSuccessful);
 
-            if (range.Length == 1 && reports[range.Start].Action.Value == RangeParseAction.ExtraInput)
-                return ExtraInputMesage(in msgs, reports[range.Start]);
+            if (range.Length == 1)
+            {
+                var report = reports[range.Start];
 
-            if (reports.Length > 128) // arbitrary limit
+                // 1-long error reports *should* only ever be range parser errors or ExtraInput
+                Assert(!report.Action.IsVersionAction || report.Action.Value == RangeParseAction.ExtraInput);
+
+                switch (report.Action.Value)
+                {
+                    case RangeParseAction.ExtraInput:
+                        return ExtraInputMesage(in msgs, report);
+
+                    case RangeParseAction.EClosedSubrange:
+                    case RangeParseAction.EOrderedSubrange:
+                        return ProcessRangeBadSubrange(in msgs, reports, range.Start);
+
+                    default: break;
+                }
+            }
+
+            if (reports.Count > 128) // arbitrary limit
                 return new(SR.Range_InputInvalid); // generic error message for when we don't want to spend time generating long ass messages
 
             // TODO: fix
@@ -423,6 +442,95 @@ namespace Hive.Versioning.Parsing
             }
 
             return new(sb.ToString());
+        }
+
+        private static GeneratedMessage ProcessRangeBadSubrange(in MessageInfo msgs, IReadOnlyList<ActionErrorReport<AnyParseAction>> reports, int start)
+        {
+            if (start - 2 < 0)
+                return new(SR.WhatHow.Format($"ProcessRangeBadSubrange (start - 2 < 0, start = {start})"), Span: SpanFromReport(reports[start]));
+
+            // EClosedSubrange should always be after 2 FComparers
+            var c1 = reports[start - 2];
+            var c2 = reports[start - 1];
+            Assert(c1.Action.Value == RangeParseAction.FComparer);
+            Assert(c2.Action.Value == RangeParseAction.FComparer);
+
+            // we know what the error was, lets do a bunch of work to build up a corrected
+            // we also know, as it happens, that the two comparers are valid, so we can just parse them to build a suggestion
+            var ct1 = msgs.Text.Slice((int)c1.TextOffset, (int)c1.Length);
+            var ct2 = msgs.Text.Slice((int)c2.TextOffset, (int)c2.Length);
+
+            ParserErrorState<AnyParseAction> errors = default;
+            Assert(RangeParser.TryParseComparer(ref errors, ref ct1, out var comparer1) && ct1.Length == 0);
+            Assert(RangeParser.TryParseComparer(ref errors, ref ct2, out var comparer2) && ct2.Length == 0);
+
+            static VersionRange.ComparisonType GetDirection(in VersionRange.VersionComparer comparer)
+                => comparer.Type & VersionRange.ComparisonType._DirectionMask;
+            static bool HasDirection(in VersionRange.VersionComparer comparer)
+                => GetDirection(comparer) != VersionRange.ComparisonType.None;
+
+            if (comparer1.CompareTo > comparer2.CompareTo)
+            {
+                // if 1 is higher than 2, then swap them
+                var tmp = comparer1;
+                comparer1 = comparer2;
+                comparer2 = tmp;
+            }
+
+            bool isSingle;
+            if (comparer1.CompareTo == comparer2.CompareTo)
+            {
+                isSingle = true;
+                comparer2 = new(comparer1.CompareTo,
+                    GetDirection(comparer1) == GetDirection(comparer2)
+                    ? comparer1.Type & comparer2.Type
+                    : VersionRange.ComparisonType.ExactEqual);
+            }
+            else
+            {
+                isSingle = false;
+                // make sure that they both have directionality associated with tem
+                if (!HasDirection(comparer1))
+                    comparer1 = new(comparer1.CompareTo, VersionRange.ComparisonType.Greater | comparer1.Type);
+                if (!HasDirection(comparer2))
+                    comparer2 = new(comparer2.CompareTo, VersionRange.ComparisonType.Less | comparer2.Type);
+
+                if (GetDirection(comparer1) == GetDirection(comparer2))
+                {
+                    static void FlipDirection(ref VersionRange.VersionComparer comparer)
+                    {
+                        var newCompare = (~comparer.Type & VersionRange.ComparisonType._DirectionMask) | (comparer.Type & ~VersionRange.ComparisonType._DirectionMask);
+                        comparer = new(comparer.CompareTo, newCompare);
+                    }
+
+                    // if they have the same direction, we should flip one of them
+                    // which one we should flip depends on their direction
+                    if (GetDirection(comparer1) == VersionRange.ComparisonType.Less)
+                        FlipDirection(ref comparer1); // if they both point down, flip lower
+                    else if (GetDirection(comparer1) == VersionRange.ComparisonType.Greater)
+                        FlipDirection(ref comparer2); // if they both point up, flip upper
+                }
+
+                // the lower bound must match the upper bound
+                if (!comparer1.Matches(comparer2))
+                {
+                    // if it doesn't, then we should add an equals
+                    comparer1 = new(comparer1.CompareTo, comparer1.Type | VersionRange.ComparisonType.ExactEqual);
+                }
+                // the upper bound must match the lower bound
+                if (!comparer2.Matches(comparer1))
+                {
+                    // if it doesn't, then we should add an equals
+                    comparer2 = new(comparer2.CompareTo, comparer2.Type | VersionRange.ComparisonType.ExactEqual);
+                }
+            }
+
+            // now we should have a pretty much valid pair of comparers
+            var sb = new StringBuilder();
+            if (!isSingle) sb = comparer1.ToString(sb).Append(' ');
+            sb = comparer2.ToString(sb);
+
+            return new(SR.Range_BoundedRegionNotClosed, Suggestion: sb.ToString(), Span: SpanFromReport(reports[start]));
         }
         #endregion
 

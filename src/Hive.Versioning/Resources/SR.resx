@@ -118,7 +118,8 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AssertionFailed" xml:space="preserve">
-    <value />
+    <value>Assertion failed. {0}</value>
+    <comment>{0} is the expression being asserted.</comment>
   </data>
   <data name="ExtraInputAtEnd" xml:space="preserve">
     <value>Input had extra (non-whitespace) characters at the end.</value>
@@ -128,6 +129,9 @@
   </data>
   <data name="ParsingSuccessful" xml:space="preserve">
     <value>Parsing successful.</value>
+  </data>
+  <data name="Range_BoundedRegionNotClosed" xml:space="preserve">
+    <value>Bounded regions must be closed, and specify the lower bound first.</value>
   </data>
   <data name="Range_InputInvalid" xml:space="preserve">
     <value>Input is not a valid VersionRange</value>

@@ -45,6 +45,10 @@ namespace Hive.Versioning.Tests.Ranges
         [InlineData("=2.3.0-0.A >2.3.0-0.C ii", false)]
         [InlineData(">9.0.0  || =6.1.0  || <=2.0.0 =6.1.0  || <=2.0.0 ", false)]
         [InlineData("<1.0.0 <1.8.0   || ^1.0.0  ||.0.", false)]
+        [InlineData("<1.8.0 <1.0.0   || ^1.0.0  ||.0.", false)]
+        [InlineData(">1.0.0 >1.8.0   || ^1.0.0  ||.0.", false)]
+        [InlineData(">1.8.0 >1.0.0   || ^1.0.0  ||.0.", false)]
+        [InlineData("<1.8.0 >1.0.0   || ^1.0.0  ||.0.", false)]
         [InlineData("=2.3.0-0.A >2.3.0--0.A >", false)]
         [InlineData(">9.0.0  || =29.0.0  || =2.0.0 =29.0.0  || =2.0.0  || =2.0.0-0.0.0  || =2.0.0-0.0?", false)]
         [InlineData("<1.8.0 <1.8.0   || ^1.0.0  ||.0.", false)]

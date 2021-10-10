@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
-using Hive.Versioning.Resources;
+using static Hive.Versioning.StaticHelpers;
 
 namespace Hive.Versioning
 {
@@ -11,13 +10,6 @@ namespace Hive.Versioning
     // For everything else, see VersionRange.cs
     public partial class VersionRange
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Assert([DoesNotReturnIf(false)] bool value)
-        {
-            if (!value)
-                throw new InvalidOperationException(SR.AssertionFailed);
-        }
-
         [Flags]
         internal enum ComparisonType
         {
@@ -46,7 +38,7 @@ namespace Hive.Versioning
         }
 
         [SuppressMessage("", "CA1067", Justification = "This is an internal type, and never uses Equals(object).")]
-        internal partial struct VersionComparer : IEquatable<VersionComparer>
+        internal readonly partial struct VersionComparer : IEquatable<VersionComparer>
         {
             public readonly Version CompareTo;
             public readonly ComparisonType Type;
@@ -352,7 +344,7 @@ namespace Hive.Versioning
         }
 
         [SuppressMessage("", "CA1067", Justification = "This is an internal type, and never uses Equals(object).")]
-        internal partial struct Subrange : IEquatable<Subrange>
+        internal readonly partial struct Subrange : IEquatable<Subrange>
         {
             public readonly VersionComparer LowerBound;
             public readonly VersionComparer UpperBound;

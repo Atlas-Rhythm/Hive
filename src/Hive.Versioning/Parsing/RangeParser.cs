@@ -136,7 +136,7 @@ namespace Hive.Versioning.Parsing
     /// <summary>
     /// A parse action that can be either a <see cref="RangeParseAction"/> or a <see cref="VersionParseAction"/>.
     /// </summary>
-    public struct AnyParseAction : IEquatable<AnyParseAction>
+    public readonly struct AnyParseAction : IEquatable<AnyParseAction>
     {
         /// <summary>
         /// The value of this action, as a <see cref="RangeParseAction"/>.
