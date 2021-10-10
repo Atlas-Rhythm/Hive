@@ -75,7 +75,10 @@ namespace Hive.Versioning.Parsing
 
             if (range.Length == 2)
             {
+#pragma warning disable IDE0010 // Add missing cases
+                // In all of my bad version tests, these are the only 2 that actually get hit.
                 switch (reports[range.Start].Action)
+#pragma warning restore IDE0010 // Add missing cases
                 {
                     case VersionParseAction.ENumericId:
                         return ProcessENumericId(msgs, reports, range);
@@ -83,6 +86,9 @@ namespace Hive.Versioning.Parsing
                     case VersionParseAction.EValidNumericId:
                         if (TryMatchTooBigCoreNumber(in msgs, reports, range.Start, out var tbMsg))
                             return tbMsg;
+                        break;
+
+                    default:
                         break;
                 }
             }
@@ -111,18 +117,11 @@ namespace Hive.Versioning.Parsing
                 }
             }
 
-            if (reports.Count > 128) // arbitrary limit
-                return new(SR.Version_InputInvalid); // generic error message for when we don't want to spend time generating long ass messages
+            var realStart = reports[range.Start].TextOffset;
+            var lastReport = reports[range.Start + range.Length - 1];
+            var realEnd = lastReport.TextOffset + lastReport.Length;
 
-            // TODO: fix this
-            var sb = new StringBuilder();
-
-            foreach (var report in reports)
-            {
-                FormatMessageAtPosition(sb, msgs.Text, report.TextOffset, report.Length, report.Action.ToString());
-            }
-
-            return new(sb.ToString());
+            return new(SR.ReportVersionInput, Span: (realStart, realEnd));
         }
 
         #region 1-long error range

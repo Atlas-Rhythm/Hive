@@ -132,6 +132,9 @@
   <data name="Range_InputInvalid" xml:space="preserve">
     <value>Input is not a valid VersionRange</value>
   </data>
+  <data name="ReportVersionInput" xml:space="preserve">
+    <value>Unknown parsing error; please report the provided version.</value>
+  </data>
   <data name="Suggestion" xml:space="preserve">
     <value>Did you mean '{0}'?</value>
     <comment>{0} is the suggested text</comment>
