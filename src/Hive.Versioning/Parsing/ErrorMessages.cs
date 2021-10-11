@@ -430,6 +430,13 @@ namespace Hive.Versioning.Parsing
                 }
             }
 
+            if (range.Length == 2)
+            {
+                if (reports[range.Start + 1].Action.Value == RangeParseAction.ExtraInput
+                    && reports[range.Start].Action.Value is RangeParseAction.EClosedSubrange or RangeParseAction.EOrderedSubrange)
+                    return ProcessRangeBadSubrange(in msgs, reports, range.Start);
+            }
+
             if (reports.Count > 128) // arbitrary limit
                 return new(SR.Range_InputInvalid); // generic error message for when we don't want to spend time generating long ass messages
 
@@ -495,20 +502,28 @@ namespace Hive.Versioning.Parsing
                 if (!HasDirection(comparer2))
                     comparer2 = new(comparer2.CompareTo, VersionRange.ComparisonType.Less | comparer2.Type);
 
+                static void FlipDirection(ref VersionRange.VersionComparer comparer)
+                {
+                    var newCompare = (~comparer.Type & VersionRange.ComparisonType._DirectionMask) | (comparer.Type & ~VersionRange.ComparisonType._DirectionMask);
+                    comparer = new(comparer.CompareTo, newCompare);
+                }
+
                 if (GetDirection(comparer1) == GetDirection(comparer2))
                 {
-                    static void FlipDirection(ref VersionRange.VersionComparer comparer)
-                    {
-                        var newCompare = (~comparer.Type & VersionRange.ComparisonType._DirectionMask) | (comparer.Type & ~VersionRange.ComparisonType._DirectionMask);
-                        comparer = new(comparer.CompareTo, newCompare);
-                    }
-
                     // if they have the same direction, we should flip one of them
                     // which one we should flip depends on their direction
                     if (GetDirection(comparer1) == VersionRange.ComparisonType.Less)
                         FlipDirection(ref comparer1); // if they both point down, flip lower
                     else if (GetDirection(comparer1) == VersionRange.ComparisonType.Greater)
                         FlipDirection(ref comparer2); // if they both point up, flip upper
+                }
+
+                if (GetDirection(comparer1) == VersionRange.ComparisonType.Less
+                    || GetDirection(comparer2) == VersionRange.ComparisonType.Greater)
+                {
+                    // if at this point they are pointing the wrong direction , they should both be swapped.
+                    FlipDirection(ref comparer1);
+                    FlipDirection(ref comparer2);
                 }
 
                 // the lower bound must match the upper bound
