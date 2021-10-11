@@ -754,9 +754,9 @@ namespace Hive.Versioning
 
         private static Exception BuildError(ref ErrorState errors, string argumentName)
         {
-            // TODO: implement
+            var msg = ErrorMessages.GetVersionRangeErrorMessage(ref errors);
             errors.Dispose();
-            return new ArgumentException(SR.Range_InputInvalid, argumentName);
+            return new ArgumentException(msg, argumentName);
         }
     }
 }

@@ -470,9 +470,9 @@ namespace Hive.Versioning
 
         private static Exception BuildError(ref ErrorState errors, string argumentName)
         {
-            // TODO: implement
+            var msg = ErrorMessages.GetVersionErrorMessage(ref errors);
             errors.Dispose();
-            return new ArgumentException(SR.Version_InputInvalid, argumentName);
+            return new ArgumentException(msg, argumentName);
         }
     }
 }
