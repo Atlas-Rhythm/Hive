@@ -212,22 +212,5 @@ namespace Hive.Utilities
             }
         }
 
-        /// <summary>
-        /// Returns an <see cref="IEnumerable{T}"/> consisting of every non-null element of <paramref name="enumerable"/>.
-        /// </summary>
-        /// <typeparam name="T">The type of the values in the enumerables.</typeparam>
-        /// <param name="enumerable">The enumerable containing possibly null values.</param>
-        /// <returns>An enumerable containing no null values.</returns>
-        public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> enumerable)
-            => enumerable.Where(v => v is not null)!;
-
-        /// <summary>
-        /// Returns an <see cref="IAsyncEnumerable{T}"/> consisting of every non-null element of <paramref name="enumerable"/>.
-        /// </summary>
-        /// <typeparam name="T">The type of the values in the enumerables.</typeparam>
-        /// <param name="enumerable">The enumerable containing possibly null values.</param>
-        /// <returns>An enumerable containing no null values.</returns>
-        public static IAsyncEnumerable<T> WhereNotNull<T>(this IAsyncEnumerable<T?> enumerable)
-            => enumerable.Where(v => v is not null)!;
     }
 }

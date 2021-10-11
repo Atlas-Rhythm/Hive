@@ -83,6 +83,9 @@ namespace Hive.Utilities
         public static LazyList<T> ToLazyList<T>(this IEnumerable<T> seq)
             => new(seq);
 
+        public static IEnumerable<IEnumerable<T>> Partition<T>(this IEnumerable<T> seq, IPartitioner<T> partitioner)
+            => (partitioner ?? throw new ArgumentNullException(nameof(partitioner))).Partition(seq);
+
         /// <summary>
         /// Creates an <see cref="IReadOnlyList{T}"/> which is a slice over <paramref name="list"/> starting at index <paramref name="start"/>.
         /// </summary>
@@ -111,20 +114,39 @@ namespace Hive.Utilities
         /// <typeparam name="T">The type of the sequence elements.</typeparam>
         /// <param name="sequence">The sequence to filter.</param>
         /// <returns>A sequence which conains only non-null values.</returns>
-        public static IEnumerable<T> WhereNonNull<T>(this IEnumerable<T?> sequence) where T : class
+        public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> sequence) where T : class
             => sequence.Where(v => v is not null)!;
 
         /// <summary>
         /// Filters the provided sequence to contain only the non-null values in a null-safe way.
         /// </summary>
         /// <remarks>
-        /// The only difference between this and <see cref="WhereNonNull{T}(IEnumerable{T?})"/> is that this operates on
+        /// The only difference between this and <see cref="WhereNotNull{T}(IEnumerable{T?})"/> is that this operates on
         /// the value type <see cref="Nullable{T}"/>.
         /// </remarks>
         /// <typeparam name="T">The type of the sequence elements.</typeparam>
         /// <param name="sequence">The sequence to filter.</param>
         /// <returns>A sequence which conains only non-null values.</returns>
-        public static IEnumerable<T> WhereNonNull<T>(this IEnumerable<T?> sequence) where T : struct
+        public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> sequence) where T : struct
             => sequence.Where(v => v.HasValue).Select(v => v!.Value);
+
+
+        /// <summary>
+        /// Returns an <see cref="IAsyncEnumerable{T}"/> consisting of every non-null element of <paramref name="enumerable"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of the values in the enumerables.</typeparam>
+        /// <param name="enumerable">The enumerable containing possibly null values.</param>
+        /// <returns>An enumerable containing no null values.</returns>
+        public static IAsyncEnumerable<T> WhereNotNull<T>(this IAsyncEnumerable<T?> enumerable) where T : class
+            => enumerable.Where(v => v is not null)!;
+
+        /// <summary>
+        /// Returns an <see cref="IAsyncEnumerable{T}"/> consisting of every non-null element of <paramref name="enumerable"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of the values in the enumerables.</typeparam>
+        /// <param name="enumerable">The enumerable containing possibly null values.</param>
+        /// <returns>An enumerable containing no null values.</returns>
+        public static IAsyncEnumerable<T> WhereNotNull<T>(this IAsyncEnumerable<T?> enumerable) where T : struct
+            => enumerable.Where(v => v.HasValue).Select(v => v!.Value);
     }
 }
