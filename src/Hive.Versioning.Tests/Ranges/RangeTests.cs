@@ -289,7 +289,7 @@ namespace Hive.Versioning.Tests.Ranges
         {
             var errors = new ParserErrorState<AnyParseAction>(text);
             Assert.Equal(valid, VersionRange.TryParse(ref errors, text, out _));
-            var message = ErrorMessages.GetVersionRangeErrorMessage(ref errors);
+            var message = ErrorMessages.GetVersionRangeErrorMessage(ref errors, tryReparse: true);
             output.WriteLine(message);
             errors.Dispose();
         }

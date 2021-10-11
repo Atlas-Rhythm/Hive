@@ -754,7 +754,7 @@ namespace Hive.Versioning
 
         private static Exception BuildError(ref ErrorState errors, string argumentName)
         {
-            var msg = ErrorMessages.GetVersionRangeErrorMessage(ref errors);
+            var msg = ErrorMessages.GetVersionRangeErrorMessage(ref errors, tryReparse: true);
             errors.Dispose();
             return new ArgumentException(msg, argumentName);
         }

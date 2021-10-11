@@ -136,6 +136,9 @@
   <data name="Range_InputInvalid" xml:space="preserve">
     <value>Input is not a valid VersionRange</value>
   </data>
+  <data name="ReportRangeInput" xml:space="preserve">
+    <value>Unknown parsing error; please report the provided version range.</value>
+  </data>
   <data name="ReportVersionInput" xml:space="preserve">
     <value>Unknown parsing error; please report the provided version.</value>
   </data>

@@ -3,6 +3,7 @@ using Hive.Versioning.Resources;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Hive.Utilities;
 using static Hive.Versioning.StaticHelpers;
 
@@ -394,21 +395,146 @@ namespace Hive.Versioning.Parsing
         #endregion
 
         #region VersionRange
-        public static string GetVersionRangeErrorMessage(ref ParserErrorState<AnyParseAction> errors)
+        public static string GetVersionRangeErrorMessage(ref ParserErrorState<AnyParseAction> errors, bool tryReparse)
         {
             var reports = errors.ToArray();
 
-            var msgInfo = new MessageInfo(errors.InputText);
-            var msg = ProcessVersionRangeMessage(in msgInfo, reports);
-            return FormatMessage(in msgInfo, msg);
+            var origMsgInfo = new MessageInfo(errors.InputText);
+            var msgInfo = origMsgInfo;
+            var msgs = new List<GeneratedMessage>();
+            var startOffset = 0;
+            var printSuggestion = true;
+
+            while (true)
+            {
+                var msg = ProcessVersionRangeMessage(in msgInfo, reports);
+
+                if (msg is null)
+                    break;
+
+                msgs.Add(msg with
+                {
+                    Span = msg.Span is { } sp ? (sp.Start + startOffset, sp.Length) : null,
+                    ApplyRange = msg.ApplyRange is { } sp2 ? (sp2.Start + startOffset, sp2.Length) : null,
+                });
+
+                if (!tryReparse)
+                    break;
+
+                var maybeReplaceRange = msg.ApplyRange ?? msg.Span;
+                if (msg.Suggestion is not null && maybeReplaceRange is { } replaceRange)
+                {
+                    printSuggestion = msg.ShowSuggestion;
+
+                    var start = msgInfo.Text.Slice(0, (int)replaceRange.Start);
+                    var end = msgInfo.Text.Slice((int)(replaceRange.Start + replaceRange.Length));
+                    StringPart newText = start.ToString() + msg.Suggestion + end.ToString();
+
+                    startOffset += (int)replaceRange.Length - msg.Suggestion.Length;
+
+                    // reset errors and attempt a reparse using the new replacement
+                    errors.Dispose();
+                    errors = new ParserErrorState<AnyParseAction>(newText);
+                    msgInfo = new(newText);
+                    // we don't actually care about the outputs, only the errors
+                    _ = VersionRange.TryParse(ref errors, newText, out _);
+                    reports = errors.ToArray();
+                }
+                else
+                {
+                    printSuggestion = false;
+                    break;
+                }
+            }
+
+            if (msgs.Count == 0)
+                return SR.ParsingSuccessful;
+
+            // build a sequence of messages, where each message ocurrs exactly once, ordered according to first ocurrence, and keep a list of all locations
+            var messageLocations = msgs
+                .GroupBy(m => m.Message)
+                .Select(g => (Msg: g.Key, Locs: g.Select(m => m.Span).OrderBy(t => t?.Start).Distinct().ToLazyList()))
+                .Select(t => (t.Msg, t.Locs, fst: t.Locs.Min(t => t?.Start ?? long.MaxValue)))
+                .OrderBy(t => t.fst)
+                // then take that list, and build up a partitioning of the locations such that they are all mutually exclusive
+                .Select(t => (t.Msg, OverlapPartitioner(t.Locs.WhereNotNull())));
+
+            // now we can go ahead and *build* that error message
+            // input text is in origMsgInfo.Text
+            var sb = new StringBuilder();
+            // always start with our original text
+            _ = sb.Append(origMsgInfo.Text).AppendLine();
+            foreach (var (msg, locations) in messageLocations)
+            {
+                // now we emit our location information
+                var msgPosition = 0L;
+                foreach (var line in locations)
+                {
+                    var lastEnd = 0L;
+                    foreach (var (start, len) in line)
+                    {
+                        if (lastEnd == 0) // first iteration
+                            msgPosition = start;
+                        _ = sb.Append(' ', (int)(start - lastEnd)).Append('^');
+                        if (len > 0)
+                            _ = sb.Append('~', (int)len - 1);
+                        lastEnd = start + len;
+                    }
+                    _ = sb.AppendLine();
+                }
+
+                // now we append our message
+                _ = sb.Append(' ', (int)msgPosition).Append(msg).AppendLine();
+            }
+
+            if (printSuggestion)
+            {
+                // now we want to append our suggestion
+                // final suggested value is in msgInfo.Text
+                _ = sb.AppendLine().Append(SR.Suggestion.Format(msgInfo.Text.ToString()));
+            }
+
+            return sb.ToString(); // and then we're done
         }
 
-        private static GeneratedMessage ProcessVersionRangeMessage(in MessageInfo msgs, IReadOnlyList<ActionErrorReport<AnyParseAction>> reports)
+        private static IEnumerable<IEnumerable<(long Start, long Length)>> OverlapPartitioner(IEnumerable<(long Start, long Length)> src)
+        {
+            // this assumes our input is already sorted by start position
+            var effectiveRanges = new List<(long Start, long Length)>();
+            var outputs = new List<List<(long Start, long Length)>>();
+
+            foreach (var (start, len) in src)
+            {
+                var insertIdx = 0;
+                for (; insertIdx < effectiveRanges.Count; insertIdx++)
+                {
+                    var effRange = effectiveRanges[insertIdx];
+                    if (start >= effRange.Start + effRange.Length)
+                        break; // if this is the case, then, because we enter sorted, we can insert at this index
+                }
+
+                if (insertIdx >= effectiveRanges.Count)
+                {
+                    effectiveRanges.Add((start, len));
+                    outputs.Add(new() { (start, len) });
+                }
+                else
+                {
+                    var effRange = effectiveRanges[insertIdx];
+                    effectiveRanges[insertIdx] = (effRange.Start, start + len - effRange.Start);
+                    outputs[insertIdx].Add((start, len));
+                }
+            }
+
+            return outputs;
+        }
+
+        private static GeneratedMessage? ProcessVersionRangeMessage(in MessageInfo msgs, IReadOnlyList<ActionErrorReport<AnyParseAction>> reports)
         {
             var range = ScanForErrorRange(reports, RangeIsError);
 
             if (range.Length == 0)
-                return new(SR.ParsingSuccessful);
+                return null;
 
             if (range.Length == 1)
             {
@@ -437,18 +563,18 @@ namespace Hive.Versioning.Parsing
                     return ProcessRangeBadSubrange(in msgs, reports, range.Start);
             }
 
-            if (reports.Count > 128) // arbitrary limit
-                return new(SR.Range_InputInvalid); // generic error message for when we don't want to spend time generating long ass messages
+            // TODO: more advanced processing of potential error cases
 
-            // TODO: fix
-            var sb = new StringBuilder();
+            // lets check the last error to try generate more ExtraInput messsages
+            if (reports[range.Start + range.Length - 1].Action.Value == RangeParseAction.ExtraInput)
+                return ExtraInputMesage(in msgs, reports[range.Start + range.Length - 1]);
 
-            foreach (var report in reports)
-            {
-                FormatMessageAtPosition(sb, msgs.Text, report.TextOffset, report.Length, report.Action.ToString());
-            }
 
-            return new(sb.ToString());
+            var realStart = reports[range.Start].TextOffset;
+            var lastReport = reports[range.Start + range.Length - 1];
+            var realEnd = lastReport.TextOffset + lastReport.Length;
+
+            return new(SR.ReportRangeInput, Span: (realStart, realEnd));
         }
 
         private static GeneratedMessage ProcessRangeBadSubrange(in MessageInfo msgs, IReadOnlyList<ActionErrorReport<AnyParseAction>> reports, int start)
@@ -551,7 +677,7 @@ namespace Hive.Versioning.Parsing
 
         private static GeneratedMessage ExtraInputMesage<T>(in MessageInfo msgs, ActionErrorReport<T> report)
             where T : struct
-            => new(SR.ExtraInputAtEnd, Span: SpanFromReport(report));
+            => new(SR.ExtraInputAtEnd, Suggestion: "", Span: SpanFromReport(report));
 
         private static (int Start, int Length) ScanForErrorRange<T>(IReadOnlyList<ActionErrorReport<T>> reports, Func<T, bool> checkIsError)
             where T : struct
