@@ -49,12 +49,12 @@ namespace Hive.Versioning.Parsing
             return FormatMessage(in msgInfo, msg);
         }
 
-        private static GeneratedMessage ProcessVersionErrorMessage(in MessageInfo msgs, IReadOnlyList<ActionErrorReport<VersionParseAction>> reports)
+        private static GeneratedMessage? ProcessVersionErrorMessage(in MessageInfo msgs, IReadOnlyList<ActionErrorReport<VersionParseAction>> reports)
         {
             var range = ScanForErrorRange(reports, VersionIsError);
 
             if (range.Length == 0)
-                return new(SR.ParsingSuccessful);
+                return null;
 
             var ourTextStart = reports[0].TextOffset;
 
@@ -747,8 +747,10 @@ namespace Hive.Versioning.Parsing
                 _ => false,
             };
 
-        private static string FormatMessage(in MessageInfo msgs, GeneratedMessage message)
+        private static string FormatMessage(in MessageInfo msgs, GeneratedMessage? message)
         {
+            message ??= new(SR.ParsingSuccessful);
+
             var msgString = message.Message;
 
             var suggestion = message.Suggestion is not null && message.ShowSuggestion
