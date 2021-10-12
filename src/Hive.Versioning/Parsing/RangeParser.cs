@@ -166,7 +166,7 @@ namespace Hive.Versioning.Parsing
             = action => new(action);
 
         /// <inheritdoc/>
-        public override string ToString() => IsVersionAction ? VersionAction.ToString() : Value.ToString();
+        public override string ToString() => IsVersionAction ? "V:" + VersionAction.ToString() : Value.ToString();
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)

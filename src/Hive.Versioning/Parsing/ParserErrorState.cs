@@ -71,6 +71,9 @@ namespace Hive.Versioning.Parsing
         /// <inheritdoc/>
         public override int GetHashCode()
             => HashCode.Combine(Action, TextOffset, Length);
+
+        /// <inheritdoc/>
+        public override string ToString() => $"({TextOffset},{TextOffset + Length}) {Action}";
     }
 
     /// <summary>

@@ -300,15 +300,34 @@ namespace Hive.Versioning.Parsing
         #region 2-long error range
         private static GeneratedMessage ProcessENumericId(in MessageInfo msgs, IReadOnlyList<ActionErrorReport<VersionParseAction>> reports, (int Start, int Length) range)
         {
-            // This means that there *was* no number provided. We can just suggest a 0.0.1 prefix.
+            // This means that one or more numbers were left out.
             var versionPart = msgs.Text.Slice(
                 (int)reports[range.Start].TextOffset,
-                FindEndOfVersion(msgs.Text, (int)reports[range.Start].TextOffset)).ToString();
+                FindEndOfVersion(msgs.Text, (int)reports[range.Start].TextOffset) - (int)reports[range.Start].TextOffset).ToString();
+
+            // lets figure out what parts we *do* have
+            var fnumIdx = range.Start;
+            while (fnumIdx - 1 >= 0
+                && reports[fnumIdx - 1].Action == VersionParseAction.FValidNumericId)
+                fnumIdx--;
+
+            // importantly, if we're processing this error, then we *did* find a dot
+            var versionPrefix = (range.Start - fnumIdx) switch
+            {
+                0 => "0.0.0",
+                1 => "0.0",
+                2 => "0",
+                _ => throw new InvalidOperationException()
+            };
+
+            var fullPre = msgs.Text.Slice(
+                (int)reports[fnumIdx].TextOffset,
+                (int)reports[range.Start].TextOffset);
 
             if (versionPart.Length > 0 && versionPart[0] is not '-' and not '+')
                 versionPart = "-" + versionPart;
 
-            var suggest = "0.0.1" + versionPart;
+            var suggest = fullPre.ToString() + versionPrefix + versionPart;
             return new(SR.Version_MustBeginWithMajorMinorPatch, suggest, SpanFromReport(reports[range.Start]));
         }
 
@@ -753,7 +772,7 @@ namespace Hive.Versioning.Parsing
 
             var msgString = message.Message;
 
-            var suggestion = message.Suggestion is not null && message.ShowSuggestion
+            var suggestion = !string.IsNullOrEmpty(message.Suggestion) && message.ShowSuggestion
                 ? SR.Suggestion.Format(message.Suggestion)
                 : null;
 
