@@ -55,7 +55,7 @@ namespace Hive
             container.RegisterInstance<IClock>(SystemClock.Instance);
             container.Register<Permissions.Logging.ILogger, Logging.PermissionsProxy>();
             container.Register(Made.Of(() => new PermissionsManager<PermissionContext>(Arg.Of<IRuleProvider>(), Arg.Of<Permissions.Logging.ILogger>(), ".")), Reuse.Singleton);
-            container.Register<SymmetricAlgorithm>(made: Made.Of(() => Rijndael.Create()));
+            container.Register<SymmetricAlgorithm>(Reuse.Singleton, made: Made.Of(() => Rijndael.Create()));
 
             if (Configuration.GetSection("Auth0").Exists())
             {
