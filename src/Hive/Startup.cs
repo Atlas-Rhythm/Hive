@@ -17,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NodaTime;
+using NodaTime.Serialization.SystemTextJson;
 using Serilog;
 
 namespace Hive
@@ -102,14 +103,18 @@ namespace Hive
 
         private static JsonSerializerOptions ConstructHiveJsonSerializerOptions()
         {
-            var options = new JsonSerializerOptions
+            var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
             {
                 // We need to explicitly include fields for some ValueTuples to deserialize properly
-                IncludeFields = true
-            };
+                IncludeFields = true,
+            }
+            // Use Bcl time zone for Noda Time
+            .ConfigureForNodaTime(DateTimeZoneProviders.Bcl);
 
             // Add AdditionalData converter
             options.Converters.Add(ArbitraryAdditionalData.Converter);
+            // Add AdditionalData converter
+            options.Converters.Add(NodaConverters.InstantConverter);
 
             return options;
         }
