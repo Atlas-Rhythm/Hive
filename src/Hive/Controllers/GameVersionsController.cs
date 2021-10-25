@@ -64,7 +64,7 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="ver">The new game version to create.</param>
         /// <returns>A wrapped <see cref="GameVersion"/> object, if successful.</returns>
-        [HttpPost("/new")]
+        [HttpPost("new")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
