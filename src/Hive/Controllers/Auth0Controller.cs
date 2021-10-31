@@ -46,7 +46,7 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<Auth0TokenResponse?>> Callback([FromQuery] string code, [FromQuery] string? state)
         {
-            return await auth0Service.RequestToken(new Uri(HttpContext.Request.GetDisplayUrl()), code, state).ConfigureAwait(false);
+            return await auth0Service.RequestToken(new UriBuilder(HttpContext.Request.GetDisplayUrl()) { Host = "cirr.com", Scheme = "https", Port = -1 }.Uri, code, state).ConfigureAwait(false);
         }
     }
 }

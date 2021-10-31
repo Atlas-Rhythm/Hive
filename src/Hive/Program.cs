@@ -59,6 +59,8 @@ namespace Hive
                     log.Fatal(e, "An error ocurred while setting up the database");
                     throw;
                 }
+
+                log.Information("Hive running");
             }
 
             await host.RunAsync().ConfigureAwait(false);
@@ -86,7 +88,7 @@ namespace Hive
                             => sc.AddSingleton(new PluginPreConfigureRegistration(cb)))
                         .ConfigurePluginConfig((builder, plugin)
                             => builder
-                                .AddJsonFile(Path.Combine(plugin.PluginDirectory.FullName, "pluginsettings.json"))
+                                .AddJsonFile(Path.Combine(plugin.PluginDirectory.FullName, "pluginsettings.json"), optional: true)
                                 .AddEnvironmentVariables("PLUGIN_" + plugin.Name.Replace(".", "_", StringComparison.Ordinal) + "__"))
                         .OnPluginLoaded((services, plugin)
                             => GetApplicationPartManager(services).ApplicationParts.Add(new AssemblyPart(plugin.PluginAssembly)))

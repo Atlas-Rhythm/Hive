@@ -90,6 +90,7 @@ namespace Hive
             }
 
             _ = app.UseExceptionHandlingMiddleware()
+                .UsePathBase(Configuration.GetValue<string>("PathBase"))
                 .UseSerilogRequestLogging()
                 .UseHttpsRedirection()
                 .UseRouting()
