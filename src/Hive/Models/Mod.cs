@@ -97,7 +97,7 @@ namespace Hive.Models
         /// <remarks>This data is publicly read-only. Be sure not to store sensitive information as additional data.</remarks>
         [Column(TypeName = "jsonb")]
         [JsonConverter(typeof(ArbitraryAdditionalData.ArbitraryAdditionalDataConverter))]
-        public ArbitraryAdditionalData AdditionalData { get; } = new();
+        public ArbitraryAdditionalData AdditionalData { get; set; } = new();
 
         /// <summary>
         /// A collection of link pairs, with the name and url of each link. May be empty.

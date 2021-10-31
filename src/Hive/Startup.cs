@@ -1,5 +1,6 @@
 using System;
 using System.Security.Cryptography;
+using System.Text.Json;
 using DryIoc;
 using Hive.Controllers;
 using Hive.Graphing;
@@ -16,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NodaTime;
+using NodaTime.Serialization.SystemTextJson;
 using Serilog;
 
 namespace Hive
@@ -39,7 +41,6 @@ namespace Hive
 
             _ = services
                 .AddControllers()
-                .AddJsonOptions(opts => opts.JsonSerializerOptions.Converters.Add(ArbitraryAdditionalData.Converter))
                 .ConfigureApplicationPartManager(manager => manager.FeatureProviders.Add(conditionalFeature));
         }
 
@@ -53,9 +54,10 @@ namespace Hive
                 setup: Setup.With(condition: r => r.Parent.ImplementationType is not null));
 
             container.RegisterInstance<IClock>(SystemClock.Instance);
+            container.Register<JsonSerializerOptions>(Reuse.Singleton, made: Made.Of(() => ConstructHiveJsonSerializerOptions()));
             container.Register<Permissions.Logging.ILogger, Logging.PermissionsProxy>();
             container.Register(Made.Of(() => new PermissionsManager<PermissionContext>(Arg.Of<IRuleProvider>(), Arg.Of<Permissions.Logging.ILogger>(), ".")), Reuse.Singleton);
-            container.Register<SymmetricAlgorithm>(made: Made.Of(() => Rijndael.Create()));
+            container.Register<SymmetricAlgorithm>(Reuse.Singleton, made: Made.Of(() => Rijndael.Create()));
 
             if (Configuration.GetSection("Auth0").Exists())
             {
@@ -97,6 +99,24 @@ namespace Hive
                 .UseGraphQL<HiveSchema>("/graphql")
                 .UseGraphQLAltair()
                 .UseEndpoints(endpoints => endpoints.MapControllers());
+        }
+
+        private static JsonSerializerOptions ConstructHiveJsonSerializerOptions()
+        {
+            var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+            {
+                // We need to explicitly include fields for some ValueTuples to deserialize properly
+                IncludeFields = true,
+            }
+            // Use Bcl time zone for Noda Time
+            .ConfigureForNodaTime(DateTimeZoneProviders.Bcl);
+
+            // Add AdditionalData converter
+            options.Converters.Add(ArbitraryAdditionalData.Converter);
+            // Add AdditionalData converter
+            options.Converters.Add(NodaConverters.InstantConverter);
+
+            return options;
         }
     }
 }

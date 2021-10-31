@@ -21,7 +21,7 @@ namespace Hive.Models
         /// </summary>
         [Column(TypeName = "jsonb")]
         [JsonConverter(typeof(ArbitraryAdditionalData.ArbitraryAdditionalDataConverter))]
-        public ArbitraryAdditionalData AdditionalData { get; } = new();
+        public ArbitraryAdditionalData AdditionalData { get; set; } = new();
 
         /// <summary>
         /// Equality comparison

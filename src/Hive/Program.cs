@@ -10,6 +10,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using NodaTime;
+using Npgsql;
+using Npgsql.TypeHandlers;
+using Npgsql.TypeMapping;
+using NpgsqlTypes;
 using Serilog;
 using Serilog.Configuration;
 using Serilog.Exceptions;
@@ -36,6 +40,22 @@ namespace Hive
             {
                 var services = scope.ServiceProvider;
                 var log = services.GetRequiredService<ILogger>();
+                var serializerOptions = services.GetRequiredService<JsonSerializerOptions>();
+
+                // This should NOT need to exist but alas we need to overwrite NPGSQL's default Jsonb mapping with one
+                // that calls our AdditionalData converters.
+                // Thanks brendan-ssw for this janky workaround
+                var origJsonbMapping = NpgsqlConnection.GlobalTypeMapper.Mappings.Single(m => m.NpgsqlDbType == NpgsqlDbType.Jsonb);
+                _ = NpgsqlConnection.GlobalTypeMapper.RemoveMapping(origJsonbMapping.PgTypeName);
+                _ = NpgsqlConnection.GlobalTypeMapper.AddMapping(new NpgsqlTypeMappingBuilder
+                {
+                    PgTypeName = origJsonbMapping.PgTypeName,
+                    NpgsqlDbType = origJsonbMapping.NpgsqlDbType,
+                    DbTypes = origJsonbMapping.DbTypes,
+                    ClrTypes = origJsonbMapping.ClrTypes,
+                    InferredDbType = origJsonbMapping.InferredDbType,
+                    TypeHandlerFactory = new JsonbHandlerFactory(serializerOptions)
+                }.Build());
 
                 // Make sure to run the registered plugin pre-configuration step
                 var preConfigures = services.GetServices<PluginPreConfigureRegistration>();
