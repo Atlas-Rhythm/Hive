@@ -157,6 +157,7 @@ namespace Hive.Controllers
         private readonly HiveContext database;
         private readonly IClock nodaClock;
         private readonly long maxFileSize;
+        private readonly JsonSerializerOptions serializerOptions;
 
         /// <summary>
         /// Constructs the UploadController with the injected components it needs. For use with DI only.
@@ -170,6 +171,7 @@ namespace Hive.Controllers
         /// <param name="db"></param>
         /// <param name="clock"></param>
         /// <param name="config"></param>
+        /// <param name="serializerOptions"></param>
         public UploadController(ILogger log,
             PermissionsManager<PermissionContext> perms,
             IAggregate<IUploadPlugin> plugins,
@@ -178,7 +180,8 @@ namespace Hive.Controllers
             SymmetricAlgorithm tokenAlgo,
             HiveContext db,
             IClock clock,
-            IConfiguration config)
+            IConfiguration config,
+            JsonSerializerOptions serializerOptions)
         {
             if (plugins is null)
                 throw new ArgumentNullException(nameof(plugins));
@@ -189,6 +192,7 @@ namespace Hive.Controllers
             permissions = perms;
             this.plugins = plugins.Instance;
             this.cdn = cdn;
+            this.serializerOptions = serializerOptions;
             authService = auth;
             tokenAlgorithm = tokenAlgo;
             database = db;
@@ -437,11 +441,7 @@ namespace Hive.Controllers
         // ^^^ returned when the object associated with the upload was deleted automatically. Basically, "You took too long"
         public async Task<ActionResult<UploadResult>> CompleteUpload([FromForm] string finalMetadataJson, [FromForm] string cookie)
         {
-            var finalMetadata = JsonSerializer.Deserialize<SerializedMod>(finalMetadataJson, new()
-            {
-                // We need to explicitly include fields for some ValueTuples to deserialize properly
-                IncludeFields = true,
-            });
+            var finalMetadata = JsonSerializer.Deserialize<SerializedMod>(finalMetadataJson, serializerOptions);
 
             if (finalMetadata is null || cookie is null)
                 return BadRequest();

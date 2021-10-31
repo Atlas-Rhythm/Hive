@@ -205,8 +205,6 @@ namespace Hive.Services.Common
                 return new HiveObjectQuery<Channel>(StatusCodes.Status409Conflict, "A channel with this name already exists.");
 
             // Call our hooks
-            newChannel.AdditionalData.Add("test", "data");
-            newChannel.AdditionalData.Add("test2", 32);
             combined.NewChannelCreated(newChannel);
 
             _ = await context.Channels.AddAsync(newChannel).ConfigureAwait(false);

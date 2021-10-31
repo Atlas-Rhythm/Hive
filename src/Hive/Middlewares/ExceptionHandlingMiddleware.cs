@@ -2,7 +2,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -21,20 +20,17 @@ namespace Hive
     /// </summary>
     public class ExceptionHandlingMiddleware
     {
-        private static readonly JsonSerializerOptions serializerOptions = new()
-        {
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
-        };
-
         private readonly RequestDelegate _next;
         private readonly Serilog.ILogger logger;
+        private readonly JsonSerializerOptions serializerOptions;
 
         /// <summary>
         /// Create using a given <see cref="RequestDelegate"/> and <see cref="Serilog.ILogger"/>
         /// </summary>
         /// <param name="next"></param>
         /// <param name="log"></param>
-        public ExceptionHandlingMiddleware([DisallowNull] RequestDelegate next, [DisallowNull] Serilog.ILogger log)
+        /// <param name="serializerOptions"></param>
+        public ExceptionHandlingMiddleware([DisallowNull] RequestDelegate next, [DisallowNull] Serilog.ILogger log, JsonSerializerOptions serializerOptions)
         {
             if (next is null)
                 throw new ArgumentNullException(nameof(next));
@@ -42,6 +38,7 @@ namespace Hive
                 throw new ArgumentNullException(nameof(log));
             _next = next;
             logger = log.ForContext<ExceptionHandlingMiddleware>();
+            this.serializerOptions = serializerOptions;
         }
 
         /// <summary>
