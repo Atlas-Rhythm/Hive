@@ -55,6 +55,7 @@ namespace Hive.Tests
             // Initial services
             container.RegisterInstance<ILogger>(new LoggerConfiguration().WriteTo.Debug().CreateLogger());
             container.RegisterInstance<IClock>(SystemClock.Instance);
+            container.RegisterInstance(new JsonSerializerOptions());
             container.Register<IProxyAuthenticationService, MockAuthenticationService>(Reuse.Singleton);
             container.Register(typeof(IAggregate<>), typeof(Aggregate<>));
             if (outputHelper != null)
