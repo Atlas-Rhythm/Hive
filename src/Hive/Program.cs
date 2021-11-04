@@ -1,5 +1,6 @@
 using DryIoc.Microsoft.DependencyInjection;
 using Hive.Models;
+using Hive.Permissions;
 using Hive.Plugins.Loading;
 using Hive.Versioning;
 using Microsoft.AspNetCore.Builder;
@@ -61,6 +62,14 @@ namespace Hive
                 var preConfigures = services.GetServices<PluginPreConfigureRegistration>();
                 foreach (var prec in preConfigures)
                     await prec.Method(services).ConfigureAwait(false);
+
+                // Early RuleProvider check
+                if (services.GetService<IRuleProvider>() is null)
+                {
+                    // Failed to find! Lets exit now.
+                    log.Fatal($"Failed to find a valid instance of the {nameof(IRuleProvider)} interface! Have you added a valid RuleProvider plugin?");
+                    throw new InvalidOperationException($"Cannot run Hive without a valid {nameof(IRuleProvider)}!");
+                }
 
                 try
                 {
