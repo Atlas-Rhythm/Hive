@@ -191,7 +191,7 @@ namespace Hive.Services.Common
             var targetVersion = new Version(identifier.Version);
 
             // Get the database mod that represents the ModIdentifier.
-            var databaseMod = await CreateModQuery().Where(x => x.ReadableID == identifier.ID && x.Version == targetVersion)
+            var databaseMod = await CreateModQuery(true).Where(x => x.ReadableID == identifier.ID && x.Version == targetVersion)
                 .FirstOrDefaultAsync().ConfigureAwait(false);
 
             // The POSTed mod was successfully deserialzed, but no Mod exists in the database.
@@ -200,7 +200,7 @@ namespace Hive.Services.Common
 
             // Grab our origin and destination channels.
             var origin = databaseMod.Channel;
-            var destination = await context.Channels.Where(x => x.Name == channelDestination).FirstOrDefaultAsync().ConfigureAwait(false);
+            var destination = await context.Channels.FirstOrDefaultAsync(x => x.Name == channelDestination).ConfigureAwait(false);
 
             // The channelId from our Route does not point to an existing Channel. Okay, we just return 404.
             if (destination is null)
@@ -236,19 +236,19 @@ namespace Hive.Services.Common
             log.Debug("Filtering and serializing mods by existing plugins...");
 
             // Grab our initial set of mods
-            var mods = CreateModQuery().AsNoTracking();
+            var mods = CreateModQuery();
 
             // Perform various filtering on our mods
             if (channelIds != null && channelIds.Length >= 0)
             {
-                var filteredChannels = await context.Channels.AsNoTracking().Where(c => channelIds.Contains(c.Name)).ToListAsync().ConfigureAwait(false);
+                var filteredChannels = await context.Channels.Where(c => channelIds.Contains(c.Name)).ToListAsync().ConfigureAwait(false);
 
                 mods = mods.Where(m => filteredChannels.Contains(m.Channel));
             }
 
             if (gameVersion != null)
             {
-                var filteredGameVersion = await context.GameVersions.AsNoTracking().Where(g => g.Name == gameVersion).FirstOrDefaultAsync().ConfigureAwait(false);
+                var filteredGameVersion = await context.GameVersions.Where(g => g.Name == gameVersion).FirstOrDefaultAsync().ConfigureAwait(false);
 
                 if (filteredGameVersion != null)
                 {
@@ -296,10 +296,8 @@ namespace Hive.Services.Common
         }
 
         // Abstracts the construction of a Mod access query with necessary Include calls to a helper function
-        private IQueryable<Mod> CreateModQuery() => context
-            .Mods
-            .Include(m => m.Localizations)
-            .Include(m => m.Channel)
-            .Include(m => m.SupportedVersions);
+        private IQueryable<Mod> CreateModQuery(bool tracked = false) => tracked
+            ? context.Mods.Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions)
+            : context.Mods.AsTracking().Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions);
     }
 }

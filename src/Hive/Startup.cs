@@ -31,8 +31,9 @@ namespace Hive
         public void ConfigureServices(IServiceCollection services)
         {
             _ = services.AddDbContext<HiveContext>(options =>
-                options.UseNpgsql(Configuration.GetConnectionString("Default"),
-                    o => o.UseNodaTime().SetPostgresVersion(12, 0)));
+                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+                    .UseNpgsql(Configuration.GetConnectionString("Default"),
+                        o => o.UseNodaTime().SetPostgresVersion(12, 0)));
 
             _ = services.AddHiveGraphQL();
 
@@ -65,7 +66,7 @@ namespace Hive
             }
             else if (container.Resolve<IHostEnvironment>().IsDevelopment())
             {
-                // if Auth0 isn't configured, and we're in a dev environment, use 
+                // if Auth0 isn't configured, and we're in a dev environment, use
                 container.RegisterMany<MockAuthenticationService>();
             }
 
@@ -88,11 +89,10 @@ namespace Hive
 
             if (env.IsDevelopment())
             {
-                _ = app.UseDeveloperExceptionPage();
+                _ = app.UseDeveloperExceptionPage().UseExceptionHandlingMiddleware();
             }
 
-            _ = app.UseExceptionHandlingMiddleware()
-                .UsePathBase(Configuration.GetValue<string>("PathBase"))
+            _ = app.UsePathBase(Configuration.GetValue<string>("PathBase"))
                 .UseSerilogRequestLogging()
                 .UseHttpsRedirection()
                 .UseRouting()

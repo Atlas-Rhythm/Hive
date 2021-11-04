@@ -199,9 +199,7 @@ namespace Hive.Services.Common
             log.Debug("Adding the new channel...");
 
             // Exit if there's already an existing channel with the same name
-            var existingChannels = await context.Channels.ToListAsync().ConfigureAwait(false);
-
-            if (existingChannels.Any(x => x.Name == newChannel.Name))
+            if (await context.Channels.AnyAsync(x => x.Name == newChannel.Name).ConfigureAwait(false))
                 return new HiveObjectQuery<Channel>(StatusCodes.Status409Conflict, "A channel with this name already exists.");
 
             // Call our hooks

@@ -10,12 +10,12 @@ using System.Net.Http;
 using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Text.Json;
-using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Hive.Plugins.Aggregates;
 using Hive.Extensions;
+using System.Linq;
 
 namespace Hive.Services
 {
@@ -164,7 +164,7 @@ namespace Hive.Services
                 // Note that the found object is WITH tracking, so modifications can be applied and saved.
                 // TODO: This may not be what we want.
                 // This will throw if we have more than one matching sub
-                var matching = await context.Users.Where(u => u.AlternativeId == auth0User.Sub).SingleOrDefaultAsync().ConfigureAwait(false);
+                var matching = await context.Users.AsTracking().SingleOrDefaultAsync(u => u.AlternativeId == auth0User.Sub).ConfigureAwait(false);
                 if (matching is not null)
                 {
                     return matching;
@@ -181,7 +181,8 @@ namespace Hive.Services
                     };
                     u.AdditionalData.AddSerialized(auth0User.User_Metadata);
 
-                    while (await context.Users.AsNoTracking().ContainsAsync(u).ConfigureAwait(false))
+                    // This must be done to avoid ambiguity with System.Linq.
+                    while (await (context.Users as IQueryable<User>).ContainsAsync(u).ConfigureAwait(false))
                     {
                         u.Username += Guid.NewGuid();
                     }
