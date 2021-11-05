@@ -56,8 +56,7 @@ namespace Hive.Controllers
                 Host = baseUri.Host,
                 Scheme = baseUri.Scheme,
                 Port = baseUri.Port,
-                Path = Request.Path.Value,
-                Query = Request.QueryString.Value
+                Path = Request.Path.Value
             }.Uri, code, state).ConfigureAwait(false);
         }
     }
