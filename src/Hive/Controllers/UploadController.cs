@@ -197,8 +197,8 @@ namespace Hive.Controllers
             tokenAlgorithm = tokenAlgo;
             database = db;
             nodaClock = clock;
-            maxFileSize = config.GetSection("Uploads:MaxFileSize").Get<long>();
-            if (maxFileSize == 0) maxFileSize = 32 * 1024 * 1024;
+            maxFileSize = config.GetValue<long>("Uploads:MaxFileSize");
+            if (maxFileSize <= 0) maxFileSize = 32 * 1024 * 1024;
         }
 
         /// <summary>
