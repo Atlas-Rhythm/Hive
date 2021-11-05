@@ -1,6 +1,5 @@
 ﻿using Hive.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using NodaTime;
 using Serilog;
 using System;
@@ -16,6 +15,8 @@ using Microsoft.EntityFrameworkCore;
 using Hive.Plugins.Aggregates;
 using Hive.Extensions;
 using System.Linq;
+using Microsoft.Extensions.Options;
+using Hive.Configuration;
 
 namespace Hive.Services
 {
@@ -81,30 +82,39 @@ namespace Hive.Services
         public Auth0AuthenticationService(
             [DisallowNull] ILogger log,
             IClock clock,
-            IConfiguration configuration,
+            IOptions<Auth0Options> config,
             HiveContext context,
             IAggregate<IUserCreationPlugin> userCreationPlugin)
         {
             if (log is null)
                 throw new ArgumentNullException(nameof(log));
 
-            if (configuration is null)
-                throw new ArgumentNullException(nameof(configuration));
+            if (config is null)
+                throw new ArgumentNullException(nameof(config));
 
             this.clock = clock;
             this.context = context;
             logger = log.ForContext<Auth0AuthenticationService>();
 
-            var section = configuration.GetSection("Auth0");
-
-            var domain = section.GetValue<Uri>("Domain");
-            var audience = section.GetValue<string>("Audience");
+            Auth0Options options;
+            try
+            {
+                options = config.Value;
+            }
+            catch (OptionsValidationException ex)
+            {
+                logger.Error($"Invalid {nameof(Auth0Options.ConfigHeader)} configuration!");
+                foreach (var f in ex.Failures)
+                {
+                    logger.Error("{Failure}", f);
+                }
+                throw;
+            }
             // Hive needs to use a Machine-to-Machine Application to grab a Management API v2 token
             // in order to retrieve users by their IDs.
-            var clientID = section.GetValue<string>("ClientID");
-            Data = new Auth0ReturnData(domain.ToString(), clientID, audience);
+            Data = new Auth0ReturnData(options.Domain.ToString(), options.ClientID, options.Audience);
 
-            clientSecret = section.GetValue<string>("ClientSecret");
+            clientSecret = options.ClientSecret;
 
             // Create refresh token json body, used for sending requests of the proper type/shape
             refreshTokenJsonBody = new Dictionary<string, string>
@@ -115,10 +125,10 @@ namespace Hive.Services
                 { "audience", Data.Audience }
             };
 
-            var timeout = new TimeSpan(0, 0, 0, 0, section.GetValue("TimeoutMS", 10000));
+            var timeout = new TimeSpan(0, 0, 0, 0, options.TimeoutMS ?? 10000);
             client = new HttpClient
             {
-                BaseAddress = domain,
+                BaseAddress = options.Domain,
                 DefaultRequestVersion = new Version(2, 0),
                 Timeout = timeout,
             };

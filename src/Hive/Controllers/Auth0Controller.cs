@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Hive.Configuration;
 using Hive.Models;
 using Hive.Services;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Hive.Controllers
 {
@@ -24,11 +25,11 @@ namespace Hive.Controllers
         /// </summary>
         /// <param name="auth0Service"></param>
         /// <param name="config"></param>
-        public Auth0Controller(IAuth0Service auth0Service, IConfiguration config)
+        public Auth0Controller(IAuth0Service auth0Service, IOptions<Auth0Options> config)
         {
             this.auth0Service = auth0Service;
             // Look in Auth0 for the domain string, it MUST be a valid URI and it MUST exist.
-            baseUri = config.GetValue<Uri>("Auth0:BaseDomain");
+            baseUri = config.Value.BaseDomain;
         }
 
         /// <summary>
@@ -53,10 +54,10 @@ namespace Hive.Controllers
         {
             return await auth0Service.RequestToken(new UriBuilder
             {
-                Host = baseUri.Host,
-                Scheme = baseUri.Scheme,
-                Port = baseUri.Port,
-                Path = baseUri.LocalPath + '/' + Request.Path.Value
+                Host = config.BaseDomain.Host,
+                Scheme = config.BaseDomain.Scheme,
+                Port = config.BaseDomain.Port,
+                Path = config.BaseDomain.LocalPath + '/' + Request.Path.Value
             }.Uri, code, state).ConfigureAwait(false);
         }
     }

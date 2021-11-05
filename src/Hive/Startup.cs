@@ -2,6 +2,7 @@ using System;
 using System.Security.Cryptography;
 using System.Text.Json;
 using DryIoc;
+using Hive.Configuration;
 using Hive.Controllers;
 using Hive.Graphing;
 using Hive.Models;
@@ -28,6 +29,11 @@ namespace Hive
 
         public IConfiguration Configuration { get; }
 
+        private static void ConfigureConfiguration(IServiceCollection services)
+        {
+            _ = services.AddAuth0Config();
+        }
+
         public void ConfigureServices(IServiceCollection services)
         {
             _ = services.AddDbContext<HiveContext>(options =>
@@ -39,6 +45,9 @@ namespace Hive
 
             var conditionalFeature = new HiveConditionalControllerFeatureProvider()
                 .RegisterCondition<Auth0Controller>(Configuration.GetSection("Auth0").Exists());
+
+            // Add config
+            ConfigureConfiguration(services);
 
             _ = services
                 .AddControllers()
