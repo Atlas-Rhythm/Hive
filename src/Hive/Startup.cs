@@ -29,9 +29,23 @@ namespace Hive
 
         public IConfiguration Configuration { get; }
 
-        private static void ConfigureConfiguration(IServiceCollection services)
+        private void ConfigureConfiguration(IServiceCollection services)
         {
-            _ = services.AddAuth0Config();
+            if (Configuration.GetSection(Auth0Options.ConfigHeader).Exists())
+            {
+                _ = services.AddOptions<Auth0Options>()
+                    .BindConfiguration(Auth0Options.ConfigHeader, a => a.BindNonPublicProperties = true)
+                    .ValidateDataAnnotations();
+            }
+            _ = services.AddOptions<UploadOptions>()
+                .BindConfiguration(UploadOptions.ConfigHeader, a => a.BindNonPublicProperties = true)
+                .ValidateDataAnnotations();
+            if (Configuration.GetSection(RestrictionOptions.ConfigHeader).Exists())
+            {
+                _ = services.AddOptions<RestrictionOptions>()
+                    .BindConfiguration(RestrictionOptions.ConfigHeader)
+                    .ValidateDataAnnotations();
+            }
         }
 
         public void ConfigureServices(IServiceCollection services)
@@ -44,7 +58,7 @@ namespace Hive
             _ = services.AddHiveGraphQL();
 
             var conditionalFeature = new HiveConditionalControllerFeatureProvider()
-                .RegisterCondition<Auth0Controller>(Configuration.GetSection("Auth0").Exists());
+                .RegisterCondition<Auth0Controller>(Configuration.GetSection(Auth0Options.ConfigHeader).Exists());
 
             // Add config
             ConfigureConfiguration(services);
@@ -91,7 +105,7 @@ namespace Hive
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (Configuration.GetValue<bool>("RestrictEndpoints"))
+            if (Configuration.GetSection(RestrictionOptions.ConfigHeader).Exists())
             {
                 _ = app.UseGuestRestrictionMiddleware();
             }

@@ -7,10 +7,23 @@ To solve this, Hive has a simple and highly configurable Middleware that prevent
 By default, all routes are *unrestricted*, meaning they can be accessed by non-authenticated users.
 To *restrict* them to authenticated users only, you can utilize the below configuration options.
 
-## `RestrictEndpoints` - `bool`
+## Configuration Header
 
-This is a simple boolean value that toggles this Middleware on and off.
-If you do not care about restricting access, then disabling the entire system can slightly increase performance.
+`Restrictions`
+
+If this configuration section is not present, restriction will be disabled. Disabling can increase performance.
+
+## Sample Configuration
+
+```json
+"Restrictions": {
+    "RestrictedRoutes": [
+        "/api",
+        "/api/mods",
+        "/api/mods/latest"
+    ]
+}
+```
 
 ## `RestrictedRoutes` - `string[]`
 

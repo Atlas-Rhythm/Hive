@@ -1,7 +1,5 @@
 ﻿using System;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+using System.ComponentModel.DataAnnotations;
 
 namespace Hive.Configuration
 {
@@ -15,30 +13,23 @@ namespace Hive.Configuration
         /// </summary>
         public const string ConfigHeader = "Auth0";
 
-        // TODO: Consider adding validations here?
+        [Url]
+        [Required]
+        public Uri? Domain { get; private set; }
 
-        public Uri Domain { get; private set; }
-        public string Audience { get; private set; }
-        public string ClientID { get; private set; }
-        public string ClientSecret { get; private set; }
-        public int? TimeoutMS { get; private set; }
-        public Uri BaseDomain { get; private set; }
-    }
+        [Required(AllowEmptyStrings = false)]
+        public string? Audience { get; private set; }
 
-    /// <summary>
-    /// Extension type for adding Auth0 configuration.
-    /// </summary>
-    public static class Auth0OptionsExtensions
-    {
-        /// <summary>
-        /// Helper method for installing <see cref="Auth0Options"/> configuration.
-        /// </summary>
-        /// <param name="services"></param>
-        public static OptionsBuilder<Auth0Options> AddAuth0Config(this IServiceCollection services)
-        {
-            return services.AddOptions<Auth0Options>()
-                .BindConfiguration(Auth0Options.ConfigHeader, a => a.BindNonPublicProperties = true)
-                .ValidateDataAnnotations();
-        }
+        [Required(AllowEmptyStrings = false)]
+        public string? ClientID { get; private set; }
+
+        [Required(AllowEmptyStrings = false)]
+        public string? ClientSecret { get; private set; }
+
+        [Range(0, int.MaxValue, ErrorMessage = "TimeoutMS must be zero or positive!")]
+        public int TimeoutMS { get; private set; } = 10000;
+
+        [Required]
+        public Uri? BaseDomain { get; private set; }
     }
 }

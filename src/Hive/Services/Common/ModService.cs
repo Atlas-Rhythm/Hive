@@ -191,7 +191,7 @@ namespace Hive.Services.Common
             var targetVersion = new Version(identifier.Version);
 
             // Get the database mod that represents the ModIdentifier.
-            var databaseMod = await CreateModQuery(true).Where(x => x.ReadableID == identifier.ID && x.Version == targetVersion)
+            var databaseMod = await CreateModQuery().Where(x => x.ReadableID == identifier.ID && x.Version == targetVersion)
                 .FirstOrDefaultAsync().ConfigureAwait(false);
 
             // The POSTed mod was successfully deserialzed, but no Mod exists in the database.
@@ -299,8 +299,8 @@ namespace Hive.Services.Common
         }
 
         // Abstracts the construction of a Mod access query with necessary Include calls to a helper function
-        private IQueryable<Mod> CreateModQuery(bool tracked = false) => !tracked
-            ? context.Mods.Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions).AsSplitQuery()
-            : context.Mods.AsTracking().Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions).AsSplitQuery();
+        // Due to an EF issue, non-tracking here does not work. Instead we must use tracking EVEN IF we don't want to perform writes.
+        // Notably, non-tracking even WITH identity does not work.
+        private IQueryable<Mod> CreateModQuery() => context.Mods.AsTracking().Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions).AsSplitQuery();
     }
 }

@@ -1,12 +1,13 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Hive.Configuration;
 using Hive.Models;
 using Hive.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Serilog;
 
 namespace Hive.Controllers
 {
@@ -23,13 +24,27 @@ namespace Hive.Controllers
         /// <summary>
         /// Create a Auth0Controller with DI.
         /// </summary>
+        /// <param name="log"></param>
         /// <param name="auth0Service"></param>
         /// <param name="config"></param>
-        public Auth0Controller(IAuth0Service auth0Service, IOptions<Auth0Options> config)
+        public Auth0Controller([DisallowNull] ILogger log, IAuth0Service auth0Service, IOptions<Auth0Options> config)
         {
             this.auth0Service = auth0Service;
             // Look in Auth0 for the domain string, it MUST be a valid URI and it MUST exist.
-            baseUri = config.Value.BaseDomain;
+            var logger = log.ForContext<Auth0Controller>();
+            try
+            {
+                baseUri = config.Value.BaseDomain!;
+            }
+            catch (OptionsValidationException ex)
+            {
+                logger.Error($"Invalid {nameof(Auth0Options.ConfigHeader)} configuration!");
+                foreach (var f in ex.Failures)
+                {
+                    logger.Error("{Failure}", f);
+                }
+                throw;
+            }
         }
 
         /// <summary>
@@ -54,10 +69,10 @@ namespace Hive.Controllers
         {
             return await auth0Service.RequestToken(new UriBuilder
             {
-                Host = config.BaseDomain.Host,
-                Scheme = config.BaseDomain.Scheme,
-                Port = config.BaseDomain.Port,
-                Path = config.BaseDomain.LocalPath + '/' + Request.Path.Value
+                Host = baseUri.Host,
+                Scheme = baseUri.Scheme,
+                Port = baseUri.Port,
+                Path = baseUri.LocalPath + '/' + Request.Path.Value
             }.Uri, code, state).ConfigureAwait(false);
         }
     }

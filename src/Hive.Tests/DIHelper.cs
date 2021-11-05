@@ -18,6 +18,8 @@ using Hive.Graphing;
 using DryIoc;
 using DryIoc.Microsoft.DependencyInjection;
 using Hive.Plugins.Aggregates;
+using Microsoft.Extensions.Options;
+using Hive.Configuration;
 
 namespace Hive.Tests
 {
@@ -49,6 +51,8 @@ namespace Hive.Tests
             container.Use<IServiceScopeFactory>(r => new DryIocServiceScopeFactory(r));
 
             var services = new ServiceCollection();
+            // Add configuration options first and foremost. Other configuration options are not used/cared about.
+            services.AddSingleton(a => Options.Create(new UploadOptions()));
             configureServices(services);
             container.Populate(services);
 

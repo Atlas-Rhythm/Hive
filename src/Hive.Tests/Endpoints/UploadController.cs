@@ -130,7 +130,7 @@ namespace Hive.Tests.Endpoints
 
             // TODO: For some reason, NOT including AsTracking here makes our links null. Even if we WERE to fix that, we still have other properties that are seemingly gone.
             // THIS ALSO MEANS THAT OUR main code should be changed to reflect this, since we won't have any valid data if we use AsNoTracking as default...
-            var allMods = db.Mods.AsNoTrackingWithIdentityResolution().Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions).AsEnumerable().ToImmutableList();
+            var allMods = db.Mods.AsTracking().Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions).AsEnumerable().ToImmutableList();
             var mod = Assert.Single(allMods);
             var localization = Assert.Single(mod.Localizations);
             var serializedMod = SerializedMod.Serialize(mod, localization);

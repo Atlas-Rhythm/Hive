@@ -1,4 +1,5 @@
-﻿using Hive.Extensions;
+﻿using Hive.Configuration;
+using Hive.Extensions;
 using Hive.Models;
 using Hive.Models.Serialized;
 using Hive.Permissions;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
 using Serilog;
@@ -180,7 +182,7 @@ namespace Hive.Controllers
             SymmetricAlgorithm tokenAlgo,
             HiveContext db,
             IClock clock,
-            IConfiguration config,
+            IOptions<UploadOptions> config,
             JsonSerializerOptions serializerOptions)
         {
             if (plugins is null)
@@ -197,7 +199,19 @@ namespace Hive.Controllers
             tokenAlgorithm = tokenAlgo;
             database = db;
             nodaClock = clock;
-            maxFileSize = config.GetValue<long>("Uploads:MaxFileSize");
+            try
+            {
+                maxFileSize = config.Value.MaxFileSize;
+            }
+            catch (OptionsValidationException ex)
+            {
+                logger.Error($"Invalid {nameof(UploadOptions.ConfigHeader)} configuration!");
+                foreach (var f in ex.Failures)
+                {
+                    logger.Error("{Failure}", f);
+                }
+                throw;
+            }
             if (maxFileSize <= 0) maxFileSize = 32 * 1024 * 1024;
         }
 

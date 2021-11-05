@@ -112,9 +112,9 @@ namespace Hive.Services
             }
             // Hive needs to use a Machine-to-Machine Application to grab a Management API v2 token
             // in order to retrieve users by their IDs.
-            Data = new Auth0ReturnData(options.Domain.ToString(), options.ClientID, options.Audience);
+            Data = new Auth0ReturnData(options.Domain!.ToString(), options.ClientID!, options.Audience!);
 
-            clientSecret = options.ClientSecret;
+            clientSecret = options.ClientSecret!;
 
             // Create refresh token json body, used for sending requests of the proper type/shape
             refreshTokenJsonBody = new Dictionary<string, string>
@@ -125,13 +125,24 @@ namespace Hive.Services
                 { "audience", Data.Audience }
             };
 
-            var timeout = new TimeSpan(0, 0, 0, 0, options.TimeoutMS ?? 10000);
-            client = new HttpClient
+            if (options.TimeoutMS > 0)
             {
-                BaseAddress = options.Domain,
-                DefaultRequestVersion = new Version(2, 0),
-                Timeout = timeout,
-            };
+                var timeout = new TimeSpan(0, 0, 0, 0, options.TimeoutMS);
+                client = new HttpClient
+                {
+                    BaseAddress = options.Domain,
+                    DefaultRequestVersion = new Version(2, 0),
+                    Timeout = timeout,
+                };
+            }
+            else
+            {
+                client = new HttpClient
+                {
+                    BaseAddress = options.Domain,
+                    DefaultRequestVersion = new Version(2, 0),
+                };
+            }
             this.userCreationPlugin = userCreationPlugin;
         }
 
