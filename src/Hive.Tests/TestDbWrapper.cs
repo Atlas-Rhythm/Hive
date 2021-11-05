@@ -36,7 +36,8 @@ namespace Hive.Tests
             //cmd.ExecuteNonQuery();
             //outterConnection.Close();
             // Create Options
-            Options = new DbContextOptionsBuilder<HiveContext>().UseNpgsql(connectionString + "Database='" + dbName + "';", o => o.UseNodaTime()).Options;
+            Options = new DbContextOptionsBuilder<HiveContext>().UseNpgsql(connectionString + "Database='" + dbName + "';", o => o.UseNodaTime())
+                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking).Options;
             // Setup DB using context
             TestHelpers.SetupDb(Options, context);
         }

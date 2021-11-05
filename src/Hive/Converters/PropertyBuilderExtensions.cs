@@ -20,7 +20,7 @@ namespace Hive.Converters
         /// </summary>
         /// <param name="b"></param>
         /// <returns></returns>
-        public static PropertyBuilder<User> IsVaulthUser([DisallowNull] this PropertyBuilder<User> b)
+        public static PropertyBuilder<User> IsValidUser([DisallowNull] this PropertyBuilder<User> b)
         {
             if (b is null)
                 throw new ArgumentNullException(nameof(b));

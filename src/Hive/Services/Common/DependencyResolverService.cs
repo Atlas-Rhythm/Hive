@@ -232,17 +232,16 @@ namespace Hive.Services.Common
             public VersionRange Not(VersionRange a) => a.Invert();
 
             // External
-            public async Task<IEnumerable<Mod>> ModsMatching(ModReference @ref)
+            public Task<IEnumerable<Mod>> ModsMatching(ModReference @ref)
             {
-                var mods = context.Mods;
-
-                // I'm not sure how necessary this is, but it prevents Visual Studio yelling at me because:
-                // 1) Without it, Visual Studio would yell at me because I had an "async" method with no awaited calls
-                // 2) Removing "async" throws an error because now it doesn't return a Task<IEnumerable<Mod>>
-                await mods.LoadAsync().ConfigureAwait(false);
-
-                // Turn it into enumerable because the Where chain is too complex for EF to handle
-                return mods.AsEnumerable().Where(m => m.ReadableID == @ref.ModID && @ref.Versions.Matches(m.Version));
+                // Second half of the Where chain is too complex for EF to handle
+                // We need to cast here to avoid ambiguity with System.Linq
+                return Task.FromResult(
+                    (context.Mods as IQueryable<Mod>).Where(m => m.ReadableID == @ref.ModID)
+                    .ToAsyncEnumerable()
+                    .Where(m => @ref.Versions.Matches(m.Version))
+                    .ToEnumerable()
+                    );
             }
         }
     }

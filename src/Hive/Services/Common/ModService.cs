@@ -200,7 +200,10 @@ namespace Hive.Services.Common
 
             // Grab our origin and destination channels.
             var origin = databaseMod.Channel;
-            var destination = await context.Channels.FirstOrDefaultAsync(x => x.Name == channelDestination).ConfigureAwait(false);
+            // Specifically need identity here to ensure shared instance of channel across the move.
+            // Also, we must be fully tracked (and not non-tracked) since instances are swapped.
+            // This may actually be an EF bug, since AsNoTrackingWithIdentityResolution SHOULD work here, but does not.
+            var destination = await context.Channels.AsTracking().FirstOrDefaultAsync(x => x.Name == channelDestination).ConfigureAwait(false);
 
             // The channelId from our Route does not point to an existing Channel. Okay, we just return 404.
             if (destination is null)
@@ -296,8 +299,8 @@ namespace Hive.Services.Common
         }
 
         // Abstracts the construction of a Mod access query with necessary Include calls to a helper function
-        private IQueryable<Mod> CreateModQuery(bool tracked = false) => tracked
-            ? context.Mods.Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions)
-            : context.Mods.AsTracking().Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions);
+        private IQueryable<Mod> CreateModQuery(bool tracked = false) => !tracked
+            ? context.Mods.Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions).AsSplitQuery()
+            : context.Mods.AsTracking().Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions).AsSplitQuery();
     }
 }

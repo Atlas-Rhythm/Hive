@@ -506,13 +506,20 @@ namespace Hive.Controllers
                     .ConfigureAwait(false);
             }
 
-            var channel = await database.Channels.FirstOrDefaultAsync(c => c.Name == finalMetadata.ChannelName).ConfigureAwait(false);
+            // Here we explicitly need identity, but we ALSO need AsTracked.
+            // This is seemginly because of an EF bug (?) because AsNoTrackingWithIdentityResolution SHOULD work here, but does not.
+            var channel = await database.Channels
+                .AsTracking()
+                .FirstOrDefaultAsync(c => c.Name == finalMetadata.ChannelName)
+                .ConfigureAwait(false);
             if (channel is null)
                 return BadRequest($"Missing channel '{finalMetadata.ChannelName}'");
             modObject.Channel = channel;
 
+            // See above comment as to why we have this AsTracking.
+            // TODO: This section should be refactored
             var versions = finalMetadata.SupportedGameVersions
-                .Select(name => (name, version: database.GameVersions.FirstOrDefault(v => v.Name == name)))
+                .Select(name => (name, version: database.GameVersions.AsTracking().FirstOrDefault(v => v.Name == name)))
                 .ToList();
 
             foreach (var (name, version) in versions)
