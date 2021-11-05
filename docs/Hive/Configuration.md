@@ -6,3 +6,11 @@ This is a quick landing page for Hive's configuration. Further documentation can
 
 - [Serilog](https://github.com/serilog/serilog-settings-configuration)
 - [Restricting Non-Authenticated Users](Configuration/GuestRestrictionMiddleware.md)
+- [Auth0](Configuration/Auth0.md)
+- [Uploads](Configuration/Uploads.md)
+
+## Root Configuration Options
+
+### `PathBase` - `string`
+
+This represents the `PathBase` to set. See: [the microsoft documentation](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.builder.usepathbaseextensions.usepathbase?view=aspnetcore-5.0)

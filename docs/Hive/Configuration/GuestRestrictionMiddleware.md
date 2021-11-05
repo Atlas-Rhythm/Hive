@@ -98,7 +98,7 @@ This form of explicit unrestricting can be combined with cascading routes and wi
 Ambiguity can happen when a route is defined multiple times with differing restriction results.
 In this case, Hive will throw an `System.InvalidOperationException`, and tell which route entry has ambiguity.
 
-**Example 1**
+#### Example 1
 
 The most basic case of ambiguity is when two entries directly contradict each other.
 
@@ -111,7 +111,7 @@ The most basic case of ambiguity is when two entries directly contradict each ot
 
 In this instance, you will have to pick one of the entries to keep, and discard the other.
 
-**Example 2**
+#### Example 2
 
 Ambiguity can also occur with multiple entries, where one entry cascades, while the other doesn't:
 
