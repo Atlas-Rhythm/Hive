@@ -179,6 +179,7 @@ namespace Hive.Versioning.Parsing
 
             if (convert is null)
                 throw new ArgumentNullException(nameof(convert));
+            reports.Reserve(reports.Count + state.reports.Count);
             for (var i = 0; i < state.reports.Count; i++)
             {
                 Report(convert(state.reports[i].Action), state.reports[i].TextOffset, state.reports[i].Length);
