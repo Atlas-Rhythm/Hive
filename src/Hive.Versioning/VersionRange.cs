@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using Hive.Utilities;
-using Hive.Versioning.Resources;
 using Hive.Versioning.Parsing;
 
 #if !NETSTANDARD2_0
