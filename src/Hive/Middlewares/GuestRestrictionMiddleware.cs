@@ -102,18 +102,13 @@ namespace Hive
             if (!httpContext.Response.HasStarted)
             {
                 // Grab the route the user is wanting to access
-                var route = httpContext.Request.Path.Value!
-                    // Remove case insensitivity
-                    .ToUpperInvariant();
+                var route = httpContext.Request.Path.Value!.ToUpperInvariant(); // Remove case insensitivity
 
                 // Turn route into StringView components
                 var routeView = new StringView(route);
-                var routeComponents = routeView
-                    // Ignore query parameters
-                    .Split(queryParameterToken)
+                var routeComponents = routeView.Split(queryParameterToken) // Ignore query parameters
                     .First()
-                    // Split route into individual components
-                    .Split(routeSeparator);
+                    .Split(routeSeparator); // Split route into individual components
 
                 var currentNode = rootRestrictionNode;
                 Node? cascadingNode = null;
@@ -194,9 +189,7 @@ namespace Hive
             if (string.IsNullOrWhiteSpace(route)) return;
 
             // We need to process our route a little bit before we decompose it into the node tree.
-            var processedRoute = route
-                // Remove case sensitivity
-                .ToUpperInvariant();
+            var processedRoute = route.ToUpperInvariant(); // Remove case sensitivity
 
             // Turn into StringView and ignore query parameters
             var routeView = new StringView(processedRoute)
