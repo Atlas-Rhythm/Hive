@@ -29,6 +29,10 @@ namespace Hive.Controllers
         /// <param name="config"></param>
         public Auth0Controller([DisallowNull] ILogger log, IAuth0Service auth0Service, IOptions<Auth0Options> config)
         {
+            if (log is null)
+                throw new ArgumentNullException(nameof(log));
+            if (config is null)
+                throw new ArgumentNullException(nameof(config));
             this.auth0Service = auth0Service;
             // Look in Auth0 for the domain string, it MUST be a valid URI and it MUST exist.
             var logger = log.ForContext<Auth0Controller>();

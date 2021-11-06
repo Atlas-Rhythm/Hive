@@ -32,6 +32,10 @@ namespace Hive.Graphing
             return services;
         }
 
+        /// <summary>
+        /// Register Hive's GQL.
+        /// </summary>
+        /// <param name="container"></param>
         public static void RegisterHiveGraphQL(this IRegistrator container)
             => container.Register<HiveSchema>(Reuse.Scoped);
 
