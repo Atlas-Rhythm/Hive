@@ -244,7 +244,7 @@ namespace Hive.Services.Common
             // Perform various filtering on our mods
             if (channelIds != null && channelIds.Length >= 0)
             {
-                var filteredChannels = await context.Channels.Where(c => channelIds.Contains(c.Name)).ToListAsync().ConfigureAwait(false);
+                var filteredChannels = context.Channels.Where(c => channelIds.Contains(c.Name));
 
                 mods = mods.Where(m => filteredChannels.Contains(m.Channel));
             }

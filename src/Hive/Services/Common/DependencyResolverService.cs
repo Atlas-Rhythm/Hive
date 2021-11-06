@@ -232,16 +232,14 @@ namespace Hive.Services.Common
             public VersionRange Not(VersionRange a) => a.Invert();
 
             // External
-            public Task<IEnumerable<Mod>> ModsMatching(ModReference @ref)
+            public async Task<IEnumerable<Mod>> ModsMatching(ModReference @ref)
             {
                 // Second half of the Where chain is too complex for EF to handle
                 // We need to cast here to avoid ambiguity with System.Linq
-                return Task.FromResult(
-                    (context.Mods as IQueryable<Mod>).Where(m => m.ReadableID == @ref.ModID)
+                return await (context.Mods as IQueryable<Mod>).Where(m => m.ReadableID == @ref.ModID)
                     .ToAsyncEnumerable()
                     .Where(m => @ref.Versions.Matches(m.Version))
-                    .ToEnumerable()
-                    );
+                    .ToArrayAsync().ConfigureAwait(false);
             }
         }
     }

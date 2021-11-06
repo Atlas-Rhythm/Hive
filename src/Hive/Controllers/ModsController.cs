@@ -160,17 +160,12 @@ namespace Hive.Controllers
                 if (!StringValues.IsNullOrEmpty(requestedLanguages) && requestedLanguages.Count > 0)
                 {
                     preferredCultures = requestedLanguages.ToString().Split(',')
-                        // Parse the header values
-                        .Select(s => new StringSegment(s))
+                        .Select(s => new StringSegment(s)) // Parse the header values
                         .Select(StringWithQualityHeaderValue.Parse)
-                        // Ignore the "any language" rule
-                        .Where(sv => sv.Value != "*")
-                        // Remove duplicate rules with a lower value
-                        .GroupBy(sv => sv.Value).Select(svg => svg.OrderByDescending(sv => sv.Quality.GetValueOrDefault(1)).First())
-                        // Sort by preference level
-                        .OrderByDescending(sv => sv.Quality.GetValueOrDefault(1))
-                        // Then re-select the text values as strings.
-                        .Select(sv => sv.Value.Value);
+                        .Where(sv => sv.Value != "*") // Ignore the "any language" rule
+                        .GroupBy(sv => sv.Value).Select(svg => svg.OrderByDescending(sv => sv.Quality.GetValueOrDefault(1)).First()) // Remove duplicate rules with a lower value
+                        .OrderByDescending(sv => sv.Quality.GetValueOrDefault(1)) // Sort by preference level
+                        .Select(sv => sv.Value.Value); // Then re-select the text values as strings.
                 }
             }
 

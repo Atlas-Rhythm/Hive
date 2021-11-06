@@ -116,19 +116,17 @@ namespace Hive.Services.Common
             if (!combined.ListGameVersionsAdditionalChecks(user))
                 return forbiddenEnumerableResponse;
 
-            // Grab our list of game versions
-            var versions = await context.GameVersions.ToListAsync().ConfigureAwait(false);
-            log.Debug("Filtering versions from all {0} versions...", versions.Count);
-
             // First, we perform a permission check on each game version, in case we need to filter any specific ones
             // (Use additionalData to flag beta game versions, perhaps? Could be a plugin.)
-            var filteredVersions = versions.Where(v => permissions.CanDo(FilterActionName, new PermissionContext { GameVersion = v, User = user }, ref versionsParseState));
+            // Too complicated for EF, so go to IAsyncEnumerable.
+            var filteredVersions = await (context.GameVersions as IAsyncEnumerable<GameVersion>)
+                .Where(v => permissions.CanDo(FilterActionName, new PermissionContext { GameVersion = v, User = user }, ref versionsParseState))
+                .ToListAsync().ConfigureAwait(false);
 
-            log.Debug("Remaining versions after permissions check: {0}", filteredVersions.Count());
             // Then we filter this even further by passing it through all of our Hive plugins.
-            filteredVersions = combined.GetGameVersionsFilter(user, filteredVersions);
+            filteredVersions = combined.GetGameVersionsFilter(user, filteredVersions).ToList();
             // This final filtered list of versions is what we'll return back to the user.
-            log.Debug("Remaining versions after plugin filters: {0}", filteredVersions.Count());
+            log.Debug("Remaining versions after plugin filters: {0}", filteredVersions.Count);
 
             return new HiveObjectQuery<IEnumerable<GameVersion>>(StatusCodes.Status200OK, filteredVersions);
         }

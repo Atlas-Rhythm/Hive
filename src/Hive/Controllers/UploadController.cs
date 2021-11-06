@@ -531,9 +531,10 @@ namespace Hive.Controllers
 
             // See above comment as to why we have this AsTracking.
             // TODO: This section should be refactored
-            var versions = finalMetadata.SupportedGameVersions
-                .Select(name => (name, version: database.GameVersions.AsTracking().FirstOrDefault(v => v.Name == name)))
-                .ToList();
+            var versions = await finalMetadata.SupportedGameVersions
+                .ToAsyncEnumerable()
+                .SelectAwait(async name => (name, version: await database.GameVersions.AsTracking().FirstOrDefaultAsync(v => v.Name == name).ConfigureAwait(false)))
+                .ToListAsync().ConfigureAwait(false);
 
             foreach (var (name, version) in versions)
             {
