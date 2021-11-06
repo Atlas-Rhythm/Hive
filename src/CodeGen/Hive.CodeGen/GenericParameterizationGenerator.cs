@@ -453,7 +453,6 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                         $"Trivia after: {generateWith.GetLeadingTrivia().ToFullString().Replace(Environment.NewLine, "\\n")}"
                     ));
 
-
                     context.ReportDiagnostic(Diagnostic.Create(Report,
                         null,
                         generateWith.ToFullString().Replace(Environment.NewLine, "\\n")
@@ -476,7 +475,6 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                     continue;
                 yield return decl;
             }
-
         }
 
         private static AttributeListSyntax GetInstantiationAttribute(GeneratorExecutionContext context, string? fullOriginalType, int i)
@@ -491,7 +489,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                             SyntaxFactory.SeparatedList(new[] {
                                 SyntaxFactory.AttributeArgument(
                                     nameEquals: null,
-                                    nameColon: SyntaxFactory.NameColon("from"),
+                                    nameColon: SyntaxFactory.NameColon("generatedFrom"),
                                     expression: fullOriginalType is null
                                         ? SyntaxFactory.IdentifierName("null")
                                         : SyntaxFactory.TypeOfExpression(
@@ -502,7 +500,7 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                                 ),
                                 SyntaxFactory.AttributeArgument(
                                     nameEquals: null,
-                                    nameColon: SyntaxFactory.NameColon("with"),
+                                    nameColon: SyntaxFactory.NameColon("withParameters"),
                                     expression: SyntaxFactory.LiteralExpression(
                                         SyntaxKind.NumericLiteralExpression,
                                         SyntaxFactory.Literal(i)
@@ -616,8 +614,11 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                 => semModel = model;
 
             public override SyntaxNode? VisitGenericName(GenericNameSyntax node) => QualifyName(node);
+
             public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node) => QualifyName(node);
+
             public override SyntaxNode? VisitQualifiedName(QualifiedNameSyntax node) => QualifyName(node);
+
             public override SyntaxNode? VisitAliasQualifiedName(AliasQualifiedNameSyntax node) => QualifyName(node);
 
             private SyntaxNode QualifyName(NameSyntax name)
