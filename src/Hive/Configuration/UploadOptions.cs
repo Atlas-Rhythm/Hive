@@ -13,6 +13,9 @@ namespace Hive.Configuration
         /// </summary>
         public const string ConfigHeader = "Uploads";
 
+        /// <summary>
+        /// The maximum file size allowed for uploads, in bytes.
+        /// </summary>
         [Required]
         [Range(1, long.MaxValue, ErrorMessage = "Max file size must be positive and non-zero!")]
         public long MaxFileSize { get; private set; } = 32 * 1024 * 1024;

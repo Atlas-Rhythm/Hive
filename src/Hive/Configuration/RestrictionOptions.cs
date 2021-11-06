@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Hive.Configuration
 {
@@ -12,6 +13,10 @@ namespace Hive.Configuration
         /// </summary>
         public const string ConfigHeader = "Restrictions";
 
-        public IReadOnlyList<string>? RestrictedRoutes { get; private set; }
+        /// <summary>
+        /// The collection of restricted routes to deny access to.
+        /// </summary>
+        [SuppressMessage("Design", "CA1002:Do not expose generic lists", Justification = "Needed for proper deserialization")]
+        public List<string> RestrictedRoutes { get; private set; } = new();
     }
 }

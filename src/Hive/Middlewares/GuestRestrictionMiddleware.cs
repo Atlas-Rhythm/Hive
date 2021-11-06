@@ -63,7 +63,7 @@ namespace Hive
             rootRestrictionNode = new Node();
 
             // This configuration option is simply a list of routes ("/api/mod", "/api/upload", etc.)
-            IReadOnlyList<string> restrictedRoutes;
+            List<string> restrictedRoutes;
 
             try
             {
