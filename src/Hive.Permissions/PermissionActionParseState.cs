@@ -1,6 +1,7 @@
 ﻿using Hive.Utilities;
 using NodaTime;
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Hive.Permissions
 {
@@ -8,6 +9,7 @@ namespace Hive.Permissions
     /// A structure that is used to cache parsed actions and related information.
     /// </summary>
     /// <seealso cref="PermissionsManager{TContext}.CanDo(StringView, TContext, ref PermissionActionParseState)"/>
+    [SuppressMessage("Performance", "CA1815:Override equals and operator equals on value types", Justification = "There is no point in overriding this behavior for this type, since we never compare it.")]
     public struct PermissionActionParseState
     {
         internal struct SearchEntry

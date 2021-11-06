@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 #if NETSTANDARD2_0
+
 using System.Linq.Expressions;
 using Hive.Utilities.Resources;
+
 #else
 using System.Runtime.CompilerServices;
 #endif
+
 using System.Threading.Tasks;
 
 namespace Hive.Utilities
@@ -71,6 +75,7 @@ namespace Hive.Utilities
             return array;
         }
 #else
+
         public static object?[] ToArray<T>(this ref T tuple) where T : struct // must be a variant of ValueTuple
         {
             if (typeof(T) == typeof(ValueTuple))
@@ -134,18 +139,22 @@ namespace Hive.Utilities
 
             // we don't need to support just base ValueTuple
             private Type[]? typeArgs;
+
             public IReadOnlyList<Type> TypeArguments
                 => typeArgs ??= Type.GetGenericArguments();
 
             private Func<object, object?>[]? valueGetters;
+
             public IReadOnlyList<Func<object, object?>> ValueGetters
                 => valueGetters ??= MakeValueGetters(Type);
 
             private bool? hasLastArgTuple;
+
             public bool HasLastArgTuple
                 => hasLastArgTuple ??= TypeArguments.Count > 7 && TypeIsValueTuple(TypeArguments[7]);
 
             private IValueTupleTypeData? lastArgData;
+
             public IValueTupleTypeData LastArgTypeData
                 => lastArgData ??= (IValueTupleTypeData)typeof(ValueTupleTypeData<>).MakeGenericType(TypeArguments[7]).GetField(nameof(Instance)).GetValue(null);
 
@@ -162,6 +171,7 @@ namespace Hive.Utilities
                     .Select(t => Expression.Lambda<Func<object, object?>>(t.e, t.p).Compile())
                     .ToArray();
         }
+
 #endif
 
         /// <summary>

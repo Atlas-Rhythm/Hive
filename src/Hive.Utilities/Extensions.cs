@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 #if NETSTANDARD2_0
+
 using System.Text;
+
 #endif
 
 namespace Hive.Utilities
@@ -13,6 +16,7 @@ namespace Hive.Utilities
     public static class Extensions
     {
 #if NETSTANDARD2_0
+
         /// <summary>
         /// Concatenates the strings of the provided array, using the specified separator between each string,
         /// then appends the result to the current instance of the string builder.
@@ -25,7 +29,6 @@ namespace Hive.Utilities
         public static StringBuilder AppendJoin(this StringBuilder sb, string seperator, params string[] values)
         {
             if (sb is null) throw new ArgumentNullException(nameof(sb));
-            if (values is null) throw new ArgumentNullException(nameof(values));
 
             for (var i = 0; i < values.Length; i++)
             {
@@ -35,6 +38,7 @@ namespace Hive.Utilities
             }
             return sb;
         }
+
 #endif
 
         /// <summary>
