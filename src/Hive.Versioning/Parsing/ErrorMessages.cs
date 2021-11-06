@@ -237,7 +237,10 @@ namespace Hive.Versioning.Parsing
             var part2 = msgs.Text.Slice(position, FindEndOfVersion(msgs.Text, position) - position);
             // instead of returning the full report range, just mark the start
             var suggested = part1.ToString() + (inPre || inBuild ? "." : "-") + part2.ToString();
+#pragma warning disable IDE0072 // Add missing cases
+            // this is actually exhaustive, and the compiler recognises it, so shut up VS.
             message = new((inPre, inBuild) switch
+#pragma warning restore IDE0072 // Add missing cases
             {
                 (true, _) => SR.Version_PrereleaseContainsDot,
                 (false, true) => SR.Version_BuildContainsDot,
@@ -562,7 +565,10 @@ namespace Hive.Versioning.Parsing
                 // 1-long error reports *should* only ever be range parser errors or ExtraInput
                 Assert(!report.Action.IsVersionAction || report.Action.Value == RangeParseAction.ExtraInput);
 
+#pragma warning disable IDE0010 // Add missing cases
+                // These are the only cases that I encountered.
                 switch (report.Action.Value)
+#pragma warning restore IDE0010 // Add missing cases
                 {
                     case RangeParseAction.ExtraInput:
                         return ExtraInputMesage(in msgs, report);
