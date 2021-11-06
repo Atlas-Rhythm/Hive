@@ -29,17 +29,9 @@ namespace Hive.Versioning.Parsing
         None,
 
         /// <summary>
-        /// Did not find the first number in a star range.
+        /// Did not find a part of a star range.
         /// </summary>
-        EStarRange1 = RangeParser.RangeFlag,
-        /// <summary>
-        /// Did not find the second number in a star range.
-        /// </summary>
-        EStarRange2,
-        /// <summary>
-        /// Did not find the third star in a star range.
-        /// </summary>
-        EStarRange3,
+        EStarRange = RangeParser.RangeFlag,
         /// <summary>
         /// Found a star range.
         /// </summary>
@@ -560,7 +552,7 @@ namespace Hive.Versioning.Parsing
             if (!VersionParser.TryParseNumId(ref verErrors, ref text, out var majorNum) || !TryTake(ref text, '.'))
             {
                 errors.FromState(ref verErrors, AnyParseAction.Convert);
-                errors.Report(new(RangeParseAction.EStarRange1), text, text);
+                errors.Report(new(RangeParseAction.EStarRange), text, text);
                 text = copy;
                 range = default;
                 return false;
@@ -600,7 +592,7 @@ namespace Hive.Versioning.Parsing
             {
                 // if we can't read the last bit then rewind and exit
                 errors.FromState(ref verErrors, AnyParseAction.Convert);
-                errors.Report(new(RangeParseAction.EStarRange2), text, text);
+                errors.Report(new(RangeParseAction.EStarRange), text, text);
                 text = copy;
                 range = default;
                 return false;
@@ -610,7 +602,7 @@ namespace Hive.Versioning.Parsing
             if (!TryTakePlaceholder(ref text))
             {
                 errors.FromState(ref verErrors, AnyParseAction.Convert);
-                errors.Report(new(RangeParseAction.EStarRange3), text, text);
+                errors.Report(new(RangeParseAction.EStarRange), text, text);
                 text = copy;
                 range = default;
                 return false;

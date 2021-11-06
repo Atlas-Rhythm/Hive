@@ -276,14 +276,18 @@ namespace Hive.Versioning.Tests.Ranges
             "1.0.0||=1.0.0-q0.1.0.0--||=1.0.0||=1.0.0-0.0.0-0.0.-0.0.0||=1.0.0-q0.-0||=1.0.0-0||=1.0.0-q0.0||=1.0.0-0||=1.0.0||=1.0.0-0.0.0||=1.0.0-q0.1.-0.0.-0||=1.0.0-0.0-0.0.0||=1." +
             "0.0-q000", true)]
         [InlineData("f", false)]
+        [InlineData("nothing", false)]
         [InlineData("*", true)]
         [InlineData("1.*", true)]
         [InlineData("1.*.*", true)]
         [InlineData("1.2.*", true)]
+        [InlineData(".", false)]
+        [InlineData("1", false)]
         [InlineData("1.", false)]
         [InlineData("1.*.", false)]
         [InlineData("1..", false)]
         [InlineData("1..*", false)]
+        [InlineData("1.2", false)]
         [InlineData("1.2.", false)]
         public void TestParserValidation(string text, bool valid)
         {

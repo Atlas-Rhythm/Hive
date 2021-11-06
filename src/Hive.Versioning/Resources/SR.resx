@@ -133,8 +133,14 @@
   <data name="Range_BoundedRegionNotClosed" xml:space="preserve">
     <value>Bounded regions must be closed, and specify the lower bound first.</value>
   </data>
+  <data name="Range_IncompleteStarRange" xml:space="preserve">
+    <value>Star ranges must have '*' or 'x' stand in for version number components.</value>
+  </data>
   <data name="Range_InputInvalid" xml:space="preserve">
     <value>Input is not a valid VersionRange</value>
+  </data>
+  <data name="Range_NotEvenClose" xml:space="preserve">
+    <value>That doesn't look anything like a version range. Maybe you meant '*' (everything) or 'Z' (nothing)?</value>
   </data>
   <data name="ReportRangeInput" xml:space="preserve">
     <value>Unknown parsing error; please report the provided version range.</value>

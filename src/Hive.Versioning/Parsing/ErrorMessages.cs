@@ -582,18 +582,98 @@ namespace Hive.Versioning.Parsing
                     return ProcessRangeBadSubrange(in msgs, reports, range.Start);
             }
 
+            if (range.Length >= 3)
+            {
+                // the last error *should* be EComponent
+                // we want to look for EHyphenVersion just before it, and V:ECoreVersionNumber or V:ECoreVersionDot just before that
+                if (reports[range.Start + range.Length - 1].Action.Value == RangeParseAction.EComponent
+                    && reports[range.Start + range.Length - 2].Action.Value == RangeParseAction.EHyphenVersion
+                    && (reports[range.Start + range.Length - 3].Action.VersionAction == VersionParseAction.ECoreVersionNumber
+                    || reports[range.Start + range.Length - 3].Action.VersionAction == VersionParseAction.ECoreVersionDot))
+                {
+                    // this *probably* means that we're looking at a partial or broken version, lets try suggest a star range
+                    if (TryProcessBadStarRange(msgs, reports, range, out var message))
+                        return message;
+                }
+            }
+
             // TODO: more advanced processing of potential error cases
 
             // lets check the last error to try generate more ExtraInput messsages
             if (reports[range.Start + range.Length - 1].Action.Value == RangeParseAction.ExtraInput)
                 return ExtraInputMesage(in msgs, reports[range.Start + range.Length - 1]);
 
+            if (range.Length == reports.Count)
+            {
+                var start = reports[0].TextOffset;
+                var end = reports[reports.Count - 1].TextOffset + reports[reports.Count - 1].Length;
+                var scannedEnd = FindEndOfVersion(msgs.Text, (int)end); // try scan to the end
+                end = Math.Max(end, scannedEnd);
+                return new(SR.Range_NotEvenClose, Span: (start, end - start));
+            }
 
             var realStart = reports[range.Start].TextOffset;
             var lastReport = reports[range.Start + range.Length - 1];
             var realEnd = lastReport.TextOffset + lastReport.Length;
 
             return new(SR.ReportRangeInput, Span: (realStart, realEnd));
+        }
+
+        private static bool TryProcessBadStarRange(in MessageInfo msgs,
+            IReadOnlyList<ActionErrorReport<AnyParseAction>> reports,
+            (int Start, int Length) range,
+            [NotNullWhen(true)] out GeneratedMessage? msg)
+        {
+            msg = null;
+
+            // we should be able for find a star range error if we scan back a bit
+            var i = range.Start - 1;
+            while (i >= 0 && reports[i].Action.Value != RangeParseAction.EStarRange)
+                i--;
+
+            if (i < 1) return false;
+
+            var hasDot = reports[range.Start + range.Length - 3].Action.VersionAction != VersionParseAction.ECoreVersionDot;
+
+            // we found an EStarRange
+            // now, just before it, we'll find one of the following:
+            // - V:FValidNumericId
+            // - V:FValidNumericId, V:ENumericId
+            // - V:FValidNumericId, V:FValidNumericId
+
+            if (reports[i - 1].Action.VersionAction == VersionParseAction.ENumericId)
+            {
+                // this is the second case, something like 1., 1.., or 1..*
+                var pos = reports[i].TextOffset;
+                var endPos = FindEndOfVersion(msgs.Text, (int)pos);
+
+                // this will always be a valid FValidNumericId
+                var versionStart = reports[i - 2].TextOffset;
+                var firstPart = msgs.Text.Slice((int)versionStart, (int)pos - (int)versionStart);
+
+                msg = new(SR.Range_IncompleteStarRange, firstPart.ToString() + "*", (versionStart, endPos - versionStart));
+                return true;
+            }
+            else if (reports[i - 1].Action.VersionAction == VersionParseAction.FValidNumericId)
+            {
+                // this could be 1 or 3, but it only matters which for finding the start of the fragment
+                var pos = reports[i].TextOffset;
+                var endPos = FindEndOfVersion(msgs.Text, (int)pos);
+
+                // this will always be a valid FValidNumericId
+                var versionStart = reports[i - 1].TextOffset;
+                if (i - 2 >= 0 && reports[i - 2].Action.VersionAction == VersionParseAction.FValidNumericId)
+                    versionStart = reports[i - 2].TextOffset;
+
+                var firstPart = msgs.Text.Slice((int)versionStart, (int)pos - (int)versionStart);
+
+                msg = new(SR.Range_IncompleteStarRange, firstPart.ToString() + (hasDot ? "" : ".") + "*", (versionStart, endPos - versionStart));
+                return true;
+            }
+
+            // it wasn't actually any of the cases, fall out
+
+            return false;
         }
 
         private static GeneratedMessage ProcessRangeBadSubrange(in MessageInfo msgs, IReadOnlyList<ActionErrorReport<AnyParseAction>> reports, int start)
@@ -739,9 +819,7 @@ namespace Hive.Versioning.Parsing
             : action.Value switch
             {
                 RangeParseAction.None => false,
-                RangeParseAction.EStarRange1 => true,
-                RangeParseAction.EStarRange2 => true,
-                RangeParseAction.EStarRange3 => true,
+                RangeParseAction.EStarRange => true,
                 RangeParseAction.FStarRange => false,
                 RangeParseAction.EHyphenVersion => true,
                 RangeParseAction.EHyphenVersion2 => true,
