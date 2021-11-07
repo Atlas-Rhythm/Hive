@@ -38,7 +38,7 @@ namespace Hive
                     .ValidateDataAnnotations();
             }
             _ = services.AddOptions<UploadOptions>()
-                .BindConfiguration(UploadOptions.ConfigHeader, a => a.BindNonPublicProperties = true)
+                .Bind(Configuration, a => a.BindNonPublicProperties = true)
                 .ValidateDataAnnotations();
             if (Configuration.GetSection(RestrictionOptions.ConfigHeader).Exists())
             {

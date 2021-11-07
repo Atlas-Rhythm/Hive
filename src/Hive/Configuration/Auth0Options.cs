@@ -16,7 +16,6 @@ namespace Hive.Configuration
         /// <summary>
         /// The Auth0 Domain.
         /// </summary>
-        [Url]
         [Required]
         public Uri? Domain { get; private set; }
 
