@@ -1,5 +1,6 @@
 using DryIoc.Microsoft.DependencyInjection;
 using Hive.Models;
+using Hive.Permissions;
 using Hive.Plugins.Loading;
 using Hive.Versioning;
 using Microsoft.AspNetCore.Builder;
@@ -62,6 +63,14 @@ namespace Hive
                 foreach (var prec in preConfigures)
                     await prec.Method(services).ConfigureAwait(false);
 
+                // Early RuleProvider check
+                if (services.GetService<IRuleProvider>() is null)
+                {
+                    // Failed to find! Lets exit now.
+                    log.Fatal($"Failed to find a valid instance of the {nameof(IRuleProvider)} interface! Have you added a valid RuleProvider plugin?");
+                    throw new InvalidOperationException($"Cannot run Hive without a valid {nameof(IRuleProvider)}!");
+                }
+
                 try
                 {
                     log.Debug("Configuring database");
@@ -79,6 +88,8 @@ namespace Hive
                     log.Fatal(e, "An error ocurred while setting up the database");
                     throw;
                 }
+
+                log.Information("Hive running");
             }
 
             await host.RunAsync().ConfigureAwait(false);
@@ -106,7 +117,7 @@ namespace Hive
                             => sc.AddSingleton(new PluginPreConfigureRegistration(cb)))
                         .ConfigurePluginConfig((builder, plugin)
                             => builder
-                                .AddJsonFile(Path.Combine(plugin.PluginDirectory.FullName, "pluginsettings.json"))
+                                .AddJsonFile(Path.Combine(plugin.PluginDirectory.FullName, "pluginsettings.json"), optional: true)
                                 .AddEnvironmentVariables("PLUGIN_" + plugin.Name.Replace(".", "_", StringComparison.Ordinal) + "__"))
                         .OnPluginLoaded((services, plugin)
                             => GetApplicationPartManager(services).ApplicationParts.Add(new AssemblyPart(plugin.PluginAssembly)))

@@ -22,10 +22,10 @@ namespace Hive.CodeGen
         /// Constructs a <see cref="ParameterizeGenericParametersAttribute"/> with the specified minimum and maximum generic parameters
         /// to generate.
         /// </summary>
-        /// <param name="min">The minimum number of generic parameters to parameterize with.</param>
-        /// <param name="max">The maximum number of generic parameters to parameterize with.</param>
-        public ParameterizeGenericParametersAttribute(int min, int max)
-            => (MinParameters, MaxParameters) = (min, max);
+        /// <param name="minParameters">The minimum number of generic parameters to parameterize with.</param>
+        /// <param name="maxParameters">The maximum number of generic parameters to parameterize with.</param>
+        public ParameterizeGenericParametersAttribute(int minParameters, int maxParameters)
+            => (MinParameters, MaxParameters) = (minParameters, maxParameters);
     }
 
     /// <summary>
@@ -47,9 +47,9 @@ namespace Hive.CodeGen
         /// <summary>
         /// Constructs a <see cref="GeneratedParameterizationAttribute"/> with the specified generated source and parameter count.
         /// </summary>
-        /// <param name="from">The type that this instantiation was generated from.</param>
-        /// <param name="with">The number of parameters it was generated with.</param>
-        public GeneratedParameterizationAttribute(Type? from, int with)
-            => (GeneratedFrom, WithParameters) = (from, with);
+        /// <param name="generatedFrom">The type that this instantiation was generated from.</param>
+        /// <param name="withParameters">The number of parameters it was generated with.</param>
+        public GeneratedParameterizationAttribute(Type? generatedFrom, int withParameters)
+            => (GeneratedFrom, WithParameters) = (generatedFrom, withParameters);
     }
 }

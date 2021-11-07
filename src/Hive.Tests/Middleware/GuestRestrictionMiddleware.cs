@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using DryIoc;
+using Hive.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Xunit;
 using Xunit.Abstractions;
 using static Hive.Tests.TestHelpers;
@@ -151,10 +153,15 @@ namespace Hive.Tests.Middleware
             // Iterate using a for loop, as we need to add each item as a new KVP, and also utilize their index.
             for (var i = 0; i < restrictedEndpoints.Length; i++)
             {
-                configurationKVPs.Add($"RestrictedRoutes:{i}", restrictedEndpoints[i]);
+                configurationKVPs.Add($"Restrictions:RestrictedRoutes:{i}", restrictedEndpoints[i]);
             }
 
-            var container = DIHelper.ConfigureServices(Options, _ => { }, helper);
+            var container = DIHelper.ConfigureServices(Options, services =>
+            {
+                _ = services.AddOptions<RestrictionOptions>()
+                    .BindConfiguration(RestrictionOptions.ConfigHeader)
+                    .ValidateDataAnnotations();
+            }, helper);
 
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(configurationKVPs);

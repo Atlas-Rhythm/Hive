@@ -84,7 +84,6 @@ namespace Hive.Plugins.Loading
             return this;
         }
 
-
         // This is needed to avoid referencing the target assembly for just a cref.
 #pragma warning disable CA1200 // Avoid using cref tags with a prefix
         /// <summary>
@@ -94,6 +93,7 @@ namespace Hive.Plugins.Loading
         /// <param name="cb">The callback to call when a plugin is loaded.</param>
         /// <returns>The <see langword="this"/> object, to allow for easy method chaining.</returns>
 #pragma warning restore CA1200 // Avoid using cref tags with a prefix
+
         public PluginLoaderOptionsBuilder OnPluginLoaded(Action<IServiceCollection, PluginInstance> cb)
         {
             if (cb is null)

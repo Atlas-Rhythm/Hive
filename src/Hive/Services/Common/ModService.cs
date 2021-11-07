@@ -200,7 +200,10 @@ namespace Hive.Services.Common
 
             // Grab our origin and destination channels.
             var origin = databaseMod.Channel;
-            var destination = await context.Channels.Where(x => x.Name == channelDestination).FirstOrDefaultAsync().ConfigureAwait(false);
+            // Specifically need identity here to ensure shared instance of channel across the move.
+            // Also, we must be fully tracked (and not non-tracked) since instances are swapped.
+            // This may actually be an EF bug, since AsNoTrackingWithIdentityResolution SHOULD work here, but does not.
+            var destination = await context.Channels.AsTracking().FirstOrDefaultAsync(x => x.Name == channelDestination).ConfigureAwait(false);
 
             // The channelId from our Route does not point to an existing Channel. Okay, we just return 404.
             if (destination is null)
@@ -236,19 +239,19 @@ namespace Hive.Services.Common
             log.Debug("Filtering and serializing mods by existing plugins...");
 
             // Grab our initial set of mods
-            var mods = CreateModQuery().AsNoTracking();
+            var mods = CreateModQuery();
 
             // Perform various filtering on our mods
             if (channelIds != null && channelIds.Length >= 0)
             {
-                var filteredChannels = await context.Channels.AsNoTracking().Where(c => channelIds.Contains(c.Name)).ToListAsync().ConfigureAwait(false);
+                var filteredChannels = context.Channels.Where(c => channelIds.Contains(c.Name));
 
                 mods = mods.Where(m => filteredChannels.Contains(m.Channel));
             }
 
             if (gameVersion != null)
             {
-                var filteredGameVersion = await context.GameVersions.AsNoTracking().Where(g => g.Name == gameVersion).FirstOrDefaultAsync().ConfigureAwait(false);
+                var filteredGameVersion = await context.GameVersions.Where(g => g.Name == gameVersion).FirstOrDefaultAsync().ConfigureAwait(false);
 
                 if (filteredGameVersion != null)
                 {
@@ -296,10 +299,8 @@ namespace Hive.Services.Common
         }
 
         // Abstracts the construction of a Mod access query with necessary Include calls to a helper function
-        private IQueryable<Mod> CreateModQuery() => context
-            .Mods
-            .Include(m => m.Localizations)
-            .Include(m => m.Channel)
-            .Include(m => m.SupportedVersions);
+        // Due to an EF issue, non-tracking here does not work. Instead we must use tracking EVEN IF we don't want to perform writes.
+        // Notably, non-tracking even WITH identity does not work.
+        private IQueryable<Mod> CreateModQuery() => context.Mods.AsTracking().Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions).AsSplitQuery();
     }
 }

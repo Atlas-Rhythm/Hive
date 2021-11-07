@@ -179,7 +179,7 @@ namespace Hive.Models
                 .IsUnique();
             _ = b.Entity<Mod>()
                 .Property(m => m.Uploader)
-                .IsVaulthUser();
+                .IsValidUser();
             _ = b.Entity<Mod>()
                 .Property(m => m.Authors)
                 .IsValidUsers();

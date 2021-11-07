@@ -27,6 +27,7 @@ using Xunit.Abstractions;
 using Version = Hive.Versioning.Version;
 using static Hive.Tests.TestHelpers;
 using DryIoc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hive.Tests.Endpoints
 {
@@ -127,7 +128,9 @@ namespace Hive.Tests.Endpoints
 
             var db = serviceProvider.GetRequiredService<HiveContext>();
 
-            var allMods = db.Mods.AsEnumerable().ToImmutableList();
+            // TODO: For some reason, NOT including AsTracking here makes our links null. Even if we WERE to fix that, we still have other properties that are seemingly gone.
+            // THIS ALSO MEANS THAT OUR main code should be changed to reflect this, since we won't have any valid data if we use AsNoTracking as default...
+            var allMods = db.Mods.AsTracking().Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions).AsEnumerable().ToImmutableList();
             var mod = Assert.Single(allMods);
             var localization = Assert.Single(mod.Localizations);
             var serializedMod = SerializedMod.Serialize(mod, localization);

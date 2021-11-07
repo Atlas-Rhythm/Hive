@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using Hive.Configuration;
 using Hive.Models;
 using Hive.Services;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Serilog;
 
 namespace Hive.Controllers
 {
@@ -16,14 +19,36 @@ namespace Hive.Controllers
     public class Auth0Controller : ControllerBase
     {
         private readonly IAuth0Service auth0Service;
+        private readonly Uri baseUri;
 
         /// <summary>
         /// Create a Auth0Controller with DI.
         /// </summary>
+        /// <param name="log"></param>
         /// <param name="auth0Service"></param>
-        public Auth0Controller(IAuth0Service auth0Service)
+        /// <param name="config"></param>
+        public Auth0Controller([DisallowNull] ILogger log, IAuth0Service auth0Service, IOptions<Auth0Options> config)
         {
+            if (log is null)
+                throw new ArgumentNullException(nameof(log));
+            if (config is null)
+                throw new ArgumentNullException(nameof(config));
             this.auth0Service = auth0Service;
+            // Look in Auth0 for the domain string, it MUST be a valid URI and it MUST exist.
+            var logger = log.ForContext<Auth0Controller>();
+            try
+            {
+                baseUri = config.Value.BaseDomain!;
+            }
+            catch (OptionsValidationException ex)
+            {
+                logger.Error($"Invalid {nameof(Auth0Options.ConfigHeader)} configuration!");
+                foreach (var f in ex.Failures)
+                {
+                    logger.Error("{Failure}", f);
+                }
+                throw;
+            }
         }
 
         /// <summary>
@@ -46,7 +71,13 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<Auth0TokenResponse?>> Callback([FromQuery] string code, [FromQuery] string? state)
         {
-            return await auth0Service.RequestToken(new Uri(HttpContext.Request.GetDisplayUrl()), code, state).ConfigureAwait(false);
+            return await auth0Service.RequestToken(new UriBuilder
+            {
+                Host = baseUri.Host,
+                Scheme = baseUri.Scheme,
+                Port = baseUri.Port,
+                Path = baseUri.LocalPath + '/' + Request.Path.Value
+            }.Uri, code, state).ConfigureAwait(false);
         }
     }
 }

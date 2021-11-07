@@ -1,4 +1,5 @@
-﻿using Hive.Extensions;
+﻿using Hive.Configuration;
+using Hive.Extensions;
 using Hive.Models;
 using Hive.Models.Serialized;
 using Hive.Permissions;
@@ -8,7 +9,7 @@ using Hive.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
 using Serilog;
@@ -180,7 +181,7 @@ namespace Hive.Controllers
             SymmetricAlgorithm tokenAlgo,
             HiveContext db,
             IClock clock,
-            IConfiguration config,
+            IOptions<UploadOptions> config,
             JsonSerializerOptions serializerOptions)
         {
             if (plugins is null)
@@ -197,8 +198,20 @@ namespace Hive.Controllers
             tokenAlgorithm = tokenAlgo;
             database = db;
             nodaClock = clock;
-            maxFileSize = config.GetSection("Uploads:MaxFileSize").Get<long>();
-            if (maxFileSize == 0) maxFileSize = 32 * 1024 * 1024;
+            try
+            {
+                maxFileSize = config.Value.MaxFileSize;
+            }
+            catch (OptionsValidationException ex)
+            {
+                logger.Error($"Invalid {nameof(UploadOptions.ConfigHeader)} configuration!");
+                foreach (var f in ex.Failures)
+                {
+                    logger.Error("{Failure}", f);
+                }
+                throw;
+            }
+            if (maxFileSize <= 0) maxFileSize = 32 * 1024 * 1024;
         }
 
         /// <summary>
@@ -506,14 +519,22 @@ namespace Hive.Controllers
                     .ConfigureAwait(false);
             }
 
-            var channel = await database.Channels.FirstOrDefaultAsync(c => c.Name == finalMetadata.ChannelName).ConfigureAwait(false);
+            // Here we explicitly need identity, but we ALSO need AsTracked.
+            // This is seemginly because of an EF bug (?) because AsNoTrackingWithIdentityResolution SHOULD work here, but does not.
+            var channel = await database.Channels
+                .AsTracking()
+                .FirstOrDefaultAsync(c => c.Name == finalMetadata.ChannelName)
+                .ConfigureAwait(false);
             if (channel is null)
                 return BadRequest($"Missing channel '{finalMetadata.ChannelName}'");
             modObject.Channel = channel;
 
-            var versions = finalMetadata.SupportedGameVersions
-                .Select(name => (name, version: database.GameVersions.FirstOrDefault(v => v.Name == name)))
-                .ToList();
+            // See above comment as to why we have this AsTracking.
+            // TODO: This section should be refactored
+            var versions = await finalMetadata.SupportedGameVersions
+                .ToAsyncEnumerable()
+                .SelectAwait(async name => (name, version: await database.GameVersions.AsTracking().FirstOrDefaultAsync(v => v.Name == name).ConfigureAwait(false)))
+                .ToListAsync().ConfigureAwait(false);
 
             foreach (var (name, version) in versions)
             {

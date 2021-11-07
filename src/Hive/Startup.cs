@@ -2,6 +2,7 @@ using System;
 using System.Security.Cryptography;
 using System.Text.Json;
 using DryIoc;
+using Hive.Configuration;
 using Hive.Controllers;
 using Hive.Graphing;
 using Hive.Models;
@@ -28,16 +29,39 @@ namespace Hive
 
         public IConfiguration Configuration { get; }
 
+        private void ConfigureConfiguration(IServiceCollection services)
+        {
+            if (Configuration.GetSection(Auth0Options.ConfigHeader).Exists())
+            {
+                _ = services.AddOptions<Auth0Options>()
+                    .BindConfiguration(Auth0Options.ConfigHeader, a => a.BindNonPublicProperties = true)
+                    .ValidateDataAnnotations();
+            }
+            _ = services.AddOptions<UploadOptions>()
+                .BindConfiguration(UploadOptions.ConfigHeader, a => a.BindNonPublicProperties = true)
+                .ValidateDataAnnotations();
+            if (Configuration.GetSection(RestrictionOptions.ConfigHeader).Exists())
+            {
+                _ = services.AddOptions<RestrictionOptions>()
+                    .BindConfiguration(RestrictionOptions.ConfigHeader)
+                    .ValidateDataAnnotations();
+            }
+        }
+
         public void ConfigureServices(IServiceCollection services)
         {
             _ = services.AddDbContext<HiveContext>(options =>
-                options.UseNpgsql(Configuration.GetConnectionString("Default"),
-                    o => o.UseNodaTime().SetPostgresVersion(12, 0)));
+                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+                    .UseNpgsql(Configuration.GetConnectionString("Default"),
+                        o => o.UseNodaTime().SetPostgresVersion(12, 0)));
 
             _ = services.AddHiveGraphQL();
 
             var conditionalFeature = new HiveConditionalControllerFeatureProvider()
-                .RegisterCondition<Auth0Controller>(Configuration.GetSection("Auth0").Exists());
+                .RegisterCondition<Auth0Controller>(Configuration.GetSection(Auth0Options.ConfigHeader).Exists());
+
+            // Add config
+            ConfigureConfiguration(services);
 
             _ = services
                 .AddControllers()
@@ -65,7 +89,7 @@ namespace Hive
             }
             else if (container.Resolve<IHostEnvironment>().IsDevelopment())
             {
-                // if Auth0 isn't configured, and we're in a dev environment, use 
+                // if Auth0 isn't configured, and we're in a dev environment, use
                 container.RegisterMany<MockAuthenticationService>();
             }
 
@@ -81,17 +105,17 @@ namespace Hive
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (Configuration.GetValue<bool>("RestrictEndpoints"))
+            if (Configuration.GetSection(RestrictionOptions.ConfigHeader).Exists())
             {
                 _ = app.UseGuestRestrictionMiddleware();
             }
 
             if (env.IsDevelopment())
             {
-                _ = app.UseDeveloperExceptionPage();
+                _ = app.UseDeveloperExceptionPage().UseExceptionHandlingMiddleware();
             }
 
-            _ = app.UseExceptionHandlingMiddleware()
+            _ = app.UsePathBase(Configuration.GetValue<string>("PathBase"))
                 .UseSerilogRequestLogging()
                 .UseHttpsRedirection()
                 .UseRouting()

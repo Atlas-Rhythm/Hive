@@ -8,11 +8,11 @@ using Microsoft.FSharp.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Version = Hive.Versioning.Version;
+using System.Linq;
 
 namespace Hive.Services.Common
 {
@@ -98,13 +98,14 @@ namespace Hive.Services.Common
 
             // We iterate through each mod identifier, then attempt to grab mods that match them.
             var mods = new List<Mod>() { };
-            var query = context.Mods.AsNoTracking();
+            var query = context.Mods;
 
             foreach (var identifier in identifiers)
             {
                 var targetVersion = new Version(identifier.Version);
 
-                var mod = await query
+                // We forcibly cast here because FirstOrDefaultAsync is ambigious with System.Linq otherwise.
+                var mod = await (query as IQueryable<Mod>)
                     .FirstOrDefaultAsync(m => m.ReadableID == identifier.ID && m.Version == targetVersion)
                     .ConfigureAwait(false);
 
@@ -233,15 +234,12 @@ namespace Hive.Services.Common
             // External
             public async Task<IEnumerable<Mod>> ModsMatching(ModReference @ref)
             {
-                var mods = context.Mods.AsNoTracking();
-
-                // I'm not sure how necessary this is, but it prevents Visual Studio yelling at me because:
-                // 1) Without it, Visual Studio would yell at me because I had an "async" method with no awaited calls
-                // 2) Removing "async" throws an error because now it doesn't return a Task<IEnumerable<Mod>>
-                await mods.LoadAsync().ConfigureAwait(false);
-
-                // Turn it into enumerable because the Where chain is too complex for EF to handle
-                return mods.AsEnumerable().Where(m => m.ReadableID == @ref.ModID && @ref.Versions.Matches(m.Version));
+                // Second half of the Where chain is too complex for EF to handle
+                // We need to cast here to avoid ambiguity with System.Linq
+                return await (context.Mods as IQueryable<Mod>).Where(m => m.ReadableID == @ref.ModID)
+                    .ToAsyncEnumerable()
+                    .Where(m => @ref.Versions.Matches(m.Version))
+                    .ToArrayAsync().ConfigureAwait(false);
             }
         }
     }

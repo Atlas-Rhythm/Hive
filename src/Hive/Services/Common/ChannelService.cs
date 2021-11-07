@@ -150,19 +150,14 @@ namespace Hive.Services.Common
             if (!combined.GetChannelsAdditionalChecks(user))
                 return forbiddenEnumerableResponse;
 
-            // Filter channels based off of user-level permission
-            // Permission for a given channel is entirely plugin-based, channels in Hive are defaultly entirely public.
-            // For a mix of private/public channels, a plugin that maintains a user-level list of read/write channels is probably ideal.
-            var channels = await context.Channels.ToListAsync().ConfigureAwait(false);
-            log.Debug("Filtering channels from {0} channels...", channels.Count);
-
             // First, we filter over if the given channel is accessible to the given user.
             // This allows for much more specific permissions, although chances are that roles will be used (and thus a plugin) instead.
-            var filteredChannels = channels.Where(c => permissions.CanDo(FilterActionName, new PermissionContext { Channel = c, User = user }, ref channelsParseState));
+            // We also need to make sure we convert to an AsyncEnumerable so that we can avoid doing a lookup that's too complex for EF.
+            var filteredChannels = await (context.Channels as IAsyncEnumerable<Channel>)
+                .Where(c => permissions.CanDo(FilterActionName, new PermissionContext { Channel = c, User = user }, ref channelsParseState))
+                .ToListAsync().ConfigureAwait(false);
 
-            log.Debug("Remaining channels before plugin: {0}", filteredChannels.Count());
-            filteredChannels = combined.GetChannelsFilter(user, filteredChannels);
-            log.Debug("Remaining channels: {0}", filteredChannels.Count());
+            filteredChannels = combined.GetChannelsFilter(user, filteredChannels).ToList();
 
             return new HiveObjectQuery<IEnumerable<Channel>>(StatusCodes.Status200OK, filteredChannels);
         }
@@ -199,9 +194,7 @@ namespace Hive.Services.Common
             log.Debug("Adding the new channel...");
 
             // Exit if there's already an existing channel with the same name
-            var existingChannels = await context.Channels.ToListAsync().ConfigureAwait(false);
-
-            if (existingChannels.Any(x => x.Name == newChannel.Name))
+            if (await context.Channels.AnyAsync(x => x.Name == newChannel.Name).ConfigureAwait(false))
                 return new HiveObjectQuery<Channel>(StatusCodes.Status409Conflict, "A channel with this name already exists.");
 
             // Call our hooks

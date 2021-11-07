@@ -25,7 +25,6 @@ namespace Hive.Utilities
         public static StringBuilder AppendJoin(this StringBuilder sb, string seperator, params string[] values)
         {
             if (sb is null) throw new ArgumentNullException(nameof(sb));
-            if (values is null) throw new ArgumentNullException(nameof(values));
 
             for (var i = 0; i < values.Length; i++)
             {

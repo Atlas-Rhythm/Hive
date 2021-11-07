@@ -5,12 +5,13 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Hive.Configuration;
 using Hive.Extensions;
 using Hive.Services;
 using Hive.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Hive
 {
@@ -24,8 +25,6 @@ namespace Hive
         private const char cascadingSuffix = '/';
         private const char explicitUnrestrictedPrefix = '!';
         private const string queryParameterToken = "?";
-
-        private const string configurationKey = "RestrictedRoutes";
 
         private static readonly JsonSerializerOptions serializerOptions = new()
         {
@@ -45,14 +44,14 @@ namespace Hive
         /// <param name="auth"></param>
         /// <param name="configuration"></param>
         public GuestRestrictionMiddleware([DisallowNull] RequestDelegate next, [DisallowNull] Serilog.ILogger logger,
-            [DisallowNull] IProxyAuthenticationService auth, [DisallowNull] IConfiguration configuration)
+            [DisallowNull] IProxyAuthenticationService auth, [DisallowNull] IOptions<RestrictionOptions> configuration)
         {
-            if (logger == null)
+            if (logger is null)
             {
                 throw new ArgumentNullException(nameof(logger));
             }
 
-            if (configuration == null)
+            if (configuration is null)
             {
                 throw new ArgumentNullException(nameof(configuration));
             }
@@ -64,7 +63,21 @@ namespace Hive
             rootRestrictionNode = new Node();
 
             // This configuration option is simply a list of routes ("/api/mod", "/api/upload", etc.)
-            var restrictedRoutes = configuration.GetSection(configurationKey).Get<List<string>>();
+            List<string> restrictedRoutes;
+
+            try
+            {
+                restrictedRoutes = configuration.Value.RestrictedRoutes!;
+            }
+            catch (OptionsValidationException ex)
+            {
+                logger.Error($"Invalid {nameof(RestrictionOptions.ConfigHeader)} configuration!");
+                foreach (var f in ex.Failures)
+                {
+                    logger.Error("{Failure}", f);
+                }
+                throw;
+            }
 
             foreach (var route in restrictedRoutes)
             {
@@ -89,18 +102,13 @@ namespace Hive
             if (!httpContext.Response.HasStarted)
             {
                 // Grab the route the user is wanting to access
-                var route = httpContext.Request.Path.Value!
-                    // Remove case insensitivity
-                    .ToUpperInvariant();
+                var route = httpContext.Request.Path.Value!.ToUpperInvariant(); // Remove case insensitivity
 
                 // Turn route into StringView components
                 var routeView = new StringView(route);
-                var routeComponents = routeView
-                    // Ignore query parameters
-                    .Split(queryParameterToken)
+                var routeComponents = routeView.Split(queryParameterToken) // Ignore query parameters
                     .First()
-                    // Split route into individual components
-                    .Split(routeSeparator);
+                    .Split(routeSeparator); // Split route into individual components
 
                 var currentNode = rootRestrictionNode;
                 Node? cascadingNode = null;
@@ -181,9 +189,7 @@ namespace Hive
             if (string.IsNullOrWhiteSpace(route)) return;
 
             // We need to process our route a little bit before we decompose it into the node tree.
-            var processedRoute = route
-                // Remove case sensitivity
-                .ToUpperInvariant();
+            var processedRoute = route.ToUpperInvariant(); // Remove case sensitivity
 
             // Turn into StringView and ignore query parameters
             var routeView = new StringView(processedRoute)
@@ -303,8 +309,8 @@ namespace Hive
     }
 
     /// <summary>
-    /// 
-    /// </summary>    
+    ///
+    /// </summary>
     public static class GuestRestrictingMiddlewareExtensions
     {
         /// <summary>

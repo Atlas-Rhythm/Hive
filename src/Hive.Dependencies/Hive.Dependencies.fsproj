@@ -5,6 +5,7 @@
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DoNotMergeNugetPackages>true</DoNotMergeNugetPackages>
+    <IsFSharp>true</IsFSharp>
   </PropertyGroup>
 
   <ItemGroup>

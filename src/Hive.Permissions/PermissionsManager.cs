@@ -301,7 +301,7 @@ namespace Hive.Permissions
                         return false;
                     }
                 }
-                else if (entry.Rule != null && entry.Rule.Compiled == null)
+                else if (entry.Rule != null)
                 { // never compiled, unchanged, but exists
                     // I don't think this path will ever be taken in normal execution
                     return TryCompileRule(entry.Rule, out del, out entry.CheckedAt, throwOnError);

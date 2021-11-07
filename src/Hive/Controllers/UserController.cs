@@ -7,6 +7,7 @@ using Hive.Plugins.Aggregates;
 using Hive.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hive.Controllers
 {
@@ -102,7 +103,7 @@ namespace Hive.Controllers
                     return Unauthorized();
                 }
                 username = pluginInstance.ForceRename(username);
-                if (await context.Users.AnyAsync(u => u.Username == username).ConfigureAwait(false))
+                if (await context.Users.AsTracking().AnyAsync(u => u.Username == username).ConfigureAwait(false))
                 {
                     // Deny this username because it conflicts with A user who already exists (this means that a user renaming themselves to their own name is denied)
                     return Unauthorized();
