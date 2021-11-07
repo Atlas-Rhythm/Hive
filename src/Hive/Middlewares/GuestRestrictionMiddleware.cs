@@ -63,7 +63,7 @@ namespace Hive
             rootRestrictionNode = new Node();
 
             // This configuration option is simply a list of routes ("/api/mod", "/api/upload", etc.)
-            var restrictedRoutes = configuration.TryLoad(logger).RestrictedRoutes;
+            var restrictedRoutes = configuration.TryLoad(logger, RestrictionOptions.ConfigHeader).RestrictedRoutes;
 
             foreach (var route in restrictedRoutes)
             {

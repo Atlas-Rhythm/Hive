@@ -15,8 +15,9 @@ namespace Hive.Configuration
         /// <typeparam name="TValue">The type wrapped by the options</typeparam>
         /// <param name="val">The options instance</param>
         /// <param name="logger">The logger instance to report to</param>
+        /// <param name="configDescriptor">The configuration descriptor to report errors about</param>
         /// <returns></returns>
-        public static TValue TryLoad<TValue>(this IOptions<TValue> val, ILogger logger) where TValue : class
+        public static TValue TryLoad<TValue>(this IOptions<TValue> val, ILogger logger, string configDescriptor = "Root") where TValue : class
         {
             if (val is null)
                 throw new ArgumentNullException(nameof(val));
@@ -28,7 +29,7 @@ namespace Hive.Configuration
             }
             catch (OptionsValidationException ex)
             {
-                logger.Error($"Invalid {nameof(UploadOptions.ConfigHeader)} configuration!");
+                logger.Error("Invalid {ConfigDescriptor} configuration!", configDescriptor);
                 foreach (var f in ex.Failures)
                 {
                     logger.Error("{Failure}", f);
