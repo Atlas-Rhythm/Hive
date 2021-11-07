@@ -614,11 +614,8 @@ namespace {type.ContainingNamespace.ToDisplayString()}
                 => semModel = model;
 
             public override SyntaxNode? VisitGenericName(GenericNameSyntax node) => QualifyName(node);
-
             public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node) => QualifyName(node);
-
             public override SyntaxNode? VisitQualifiedName(QualifiedNameSyntax node) => QualifyName(node);
-
             public override SyntaxNode? VisitAliasQualifiedName(AliasQualifiedNameSyntax node) => QualifyName(node);
 
             private SyntaxNode QualifyName(NameSyntax name)

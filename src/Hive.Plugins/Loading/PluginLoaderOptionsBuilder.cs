@@ -17,9 +17,7 @@ namespace Hive.Plugins.Loading
         internal Action<IConfigurationBuilder, PluginInstance> ConfigurePluginConfigCb = (_, _) => { };
         internal Action<IServiceCollection, PluginInstance> OnPluginLoadedCb = (_, _) => { };
 
-        internal PluginLoaderOptionsBuilder()
-        {
-        }
+        internal PluginLoaderOptionsBuilder() { }
 
         /// <summary>
         /// Configures the configuration key to find plugin configuration in.

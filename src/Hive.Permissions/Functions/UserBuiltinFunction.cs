@@ -22,7 +22,8 @@ namespace Hive.Permissions.Functions
             this.@delegate = @delegate;
         }
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "We catch everything such that we can return false. We log the exception all the same.")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "We catch everything such that we can return false. We log the exception all the same.")]
         public bool TryCompile(IReadOnlyList<MathExpression> arguments, ICompilationContext<RuleCompilationSettings> context, ITypeHintHandler typeHintHandler, [MaybeNullWhen(false)] out Expression expr)
         {
             try

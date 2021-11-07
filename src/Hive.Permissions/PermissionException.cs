@@ -7,7 +7,8 @@ namespace Hive.Permissions
     /// <summary>
     /// An exception that ocurred while compiling or executing rules in the permission system.
     /// </summary>
-    [SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "We are only allowed to make these exceptions around failed permissions")]
+    [SuppressMessage("Design", "CA1032:Implement standard exception constructors",
+        Justification = "We are only allowed to make these exceptions around failed permissions")]
     public class PermissionException : Exception
     {
         /// <summary>
