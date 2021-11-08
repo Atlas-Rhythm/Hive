@@ -1,10 +1,9 @@
-﻿using Hive.Utilities;
-using Hive.Versioning.Resources;
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
-using static Hive.Versioning.ParseHelpers;
+using Hive.Utilities;
+using Hive.Versioning.Parsing;
 
 #if !NETSTANDARD2_0
 using StringPart = System.ReadOnlySpan<char>;
@@ -15,6 +14,11 @@ using StringPart = Hive.Utilities.StringView;
 
 namespace Hive.Versioning
 {
+#pragma warning disable IDE0065 // Misplaced using directive
+    // Having this inside the namespace makes it *far* shorter
+    using ErrorState = ParserErrorState<AnyParseAction>;
+#pragma warning restore IDE0065 // Misplaced using directive
+
     /// <summary>
     /// An arbitrary range of <see cref="Version"/>s, capable of matching any possible set of <see cref="Version"/>s.
     /// </summary>
@@ -33,8 +37,10 @@ namespace Hive.Versioning
         {
             text = text.Trim();
 
-            if (!TryParse(ref text, out var ranges, out additionalComparer) || text.Length > 0)
-                throw new ArgumentException(SR.Range_InputInvalid, nameof(text));
+            var errors = new ErrorState(text);
+            if (!TryParseComponents(ref errors, ref text, true, out var ranges, out additionalComparer) || text.Length > 0)
+                throw BuildError(ref errors, nameof(text));
+            errors.Dispose();
 
             (ranges, additionalComparer) = FixupRangeList(ranges, additionalComparer);
             subranges = ranges;
@@ -105,10 +111,10 @@ namespace Hive.Versioning
                     default: throw new InvalidOperationException();
                 }
             }
-            else if (additionalComparer != null)
-                comparer = additionalComparer;
             else
-                comparer = other.additionalComparer;
+            {
+                comparer = additionalComparer != null ? additionalComparer : other.additionalComparer;
+            }
 
             var allSubranges = new Subrange[subranges.Length + other.subranges.Length + (subrange != null ? 1 : 0)];
             Array.Copy(subranges, allSubranges, subranges.Length);
@@ -313,6 +319,8 @@ namespace Hive.Versioning
         /// <returns><see langword="true"/> if <paramref name="version"/> matches, <see langword="false"/> otherwise.</returns>
         public bool Matches(Version version)
         {
+            if (version is null) throw new ArgumentNullException(nameof(version));
+
             if (additionalComparer?.Matches(version) ?? false)
                 return true;
             foreach (var range in subranges)
@@ -323,12 +331,10 @@ namespace Hive.Versioning
             return false;
         }
 
-        private static readonly Subrange[] EverythingSubranges = new[] { Subrange.Everything };
-
         /// <summary>
         /// The <see cref="VersionRange"/> that matches all <see cref="Version"/>s.
         /// </summary>
-        public static VersionRange Everything { get; } = new VersionRange(EverythingSubranges, null);
+        public static VersionRange Everything { get; } = new VersionRange(RangeParser.EverythingSubranges, null);
 
         /// <summary>
         /// The <see cref="VersionRange"/> that matches no <see cref="Version"/>s.
@@ -409,7 +415,7 @@ namespace Hive.Versioning
                     case CombineResult.Everything:
                         // if any combo is everything, we can skip all the ceremony and make our result everything
                         ab.Clear();
-                        return (EverythingSubranges, null);
+                        return (RangeParser.EverythingSubranges, null);
 
                     default: throw new InvalidOperationException();
                 }
@@ -472,7 +478,7 @@ namespace Hive.Versioning
                         if (comparer.Value.Matches(current.LowerBound))
                         { // if we match the lower bound, then these two match everything
                             //ab.Clear();
-                            returnResult = (EverythingSubranges, null);
+                            returnResult = (RangeParser.EverythingSubranges, null);
                             return CombineWithComparerResult.ReturnEarly;
                         }
                         else if (comparer.Value.Matches(current.UpperBound))
@@ -490,7 +496,7 @@ namespace Hive.Versioning
                     {
                         if (comparer.Value.Matches(current.UpperBound))
                         { // if we match the upper bound, then these two match everything
-                            returnResult = (EverythingSubranges, null);
+                            returnResult = (RangeParser.EverythingSubranges, null);
                             return CombineWithComparerResult.ReturnEarly;
                         }
                         else if (comparer.Value.Matches(current.LowerBound))
@@ -616,6 +622,7 @@ namespace Hive.Versioning
         /// <returns><see langword="true"/> if <paramref name="b"/> and <paramref name="b"/> are not equivalent, <see langword="false"/> otherwise.</returns>
         public static bool operator !=(VersionRange? a, VersionRange? b) => !(a == b);
 
+        #region Parsing methods
         /// <summary>
         /// Parses a string as a <see cref="VersionRange"/>.
         /// </summary>
@@ -628,8 +635,10 @@ namespace Hive.Versioning
         /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid <see cref="VersionRange"/>.</exception>
         public static VersionRange Parse(StringPart text)
         {
-            if (!TryParse(text, out var range))
-                throw new ArgumentException(SR.Range_InputInvalid, nameof(text));
+            var errors = new ErrorState(text); // we do want error info
+            if (!TryParse(ref errors, text, out var range))
+                throw BuildError(ref errors, nameof(text));
+            errors.Dispose();
             return range;
         }
 
@@ -646,7 +655,25 @@ namespace Hive.Versioning
         public static bool TryParse(StringPart text, [MaybeNullWhen(false)] out VersionRange range)
         {
             text = text.Trim();
-            return TryParse(ref text, true, out range) && text.Length == 0;
+            var errors = new ErrorState();
+            return TryParse(ref errors, ref text, true, out range) && text.Length == 0; // don't report errors
+        }
+
+        /// <summary>
+        /// Attempts to parse a whole string as a <see cref="VersionRange"/>, optionally recording error information.
+        /// </summary>
+        /// <remarks>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
+        /// </remarks>
+        /// <param name="errors">The error state object to write error information to.</param>
+        /// <param name="text">The string to try to parse.</param>
+        /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
+        /// <seealso cref="TryParse(ref ErrorState, ref StringPart, out VersionRange)"/>
+        public static bool TryParse(ref ErrorState errors, StringPart text, [MaybeNullWhen(false)] out VersionRange range)
+        {
+            text = text.Trim();
+            return TryParse(ref errors, ref text, true, out range) && text.Length == 0; // report errors
         }
 
         /// <summary>
@@ -662,23 +689,36 @@ namespace Hive.Versioning
         /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
         [CLSCompliant(false)]
         public static bool TryParse(ref StringPart text, [MaybeNullWhen(false)] out VersionRange range)
-            => TryParse(ref text, false, out range);
-
-        private static bool TryParse(ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out VersionRange range)
         {
-            if (!TryParse(ref text, out var srs, out var compare))
-            {
-                range = null;
+            var errors = new ErrorState();
+            return TryParse(ref errors, ref text, false, out range); // don't do error reporting
+        }
+
+        /// <summary>
+        /// Attempts to parse a <see cref="VersionRange"/> from the start of the string, optionally recording error information.
+        /// </summary>
+        /// <remarks>
+        /// <para>When this returns <see langword="true"/>, <paramref name="text"/> will begin immediately after the parsed <see cref="VersionRange"/>.
+        /// When this returns <see langword="false"/>, <paramref name="text"/> will remain unchanged.</para>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
+        /// </remarks>
+        /// <param name="errors">The error state object to write error information to.</param>
+        /// <param name="text">The string to try to parse.</param>
+        /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
+        [CLSCompliant(false)]
+        public static bool TryParse(ref ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out VersionRange range)
+            => TryParse(ref errors, ref text, false, out range);
+
+        private static bool TryParse(ref ErrorState errors, ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out VersionRange range)
+        {
+            range = null;
+
+            if (!TryParseComponents(ref errors, ref text, checkLength, out var srs, out var compare))
                 return false;
-            }
-            if (checkLength && text.Length > 0)
-            {
-                range = null;
-                return false;
-            }
 
             // check for our everything range array as a minor optimization
-            if (srs == EverythingSubranges)
+            if (srs == RangeParser.EverythingSubranges)
             {
                 range = Everything;
                 return true;
@@ -694,117 +734,28 @@ namespace Hive.Versioning
             return true;
         }
 
-        #region Parser
-
-        [SuppressMessage("Style", "IDE0010:Add missing cases", Justification = "Don't need missing cases.")]
-        private static bool TryParse(ref StringPart text, [MaybeNullWhen(false)] out Subrange[] sranges, out VersionComparer? comparer)
+        private static bool TryParseComponents(ref ErrorState errors, ref StringPart text, bool checkLength,
+            [MaybeNullWhen(false)] out Subrange[] sranges, out VersionComparer? comparer)
         {
-            sranges = null;
-            comparer = null;
-
-            // check for the "everything" range first, which is just a star
-            if (TryTake(ref text, '*'))
+            if (!RangeParser.TryParse(ref errors, ref text, out sranges, out comparer))
             {
-                sranges = EverythingSubranges;
-                return true;
-            }
-
-            // then check for the "nothing" range, which is z or Z
-            if (TryTake(ref text, 'z') || TryTake(ref text, 'Z'))
-            {
-                sranges = Array.Empty<Subrange>();
-                return true;
-            }
-
-            if (!TryReadComponent(ref text, out var range, out var compare))
                 return false;
-
-            using var ab = new ArrayBuilder<Subrange>();
-
-            StringPart restoreTo;
-            do
-            {
-                restoreTo = text;
-
-                if (range != null)
-                    ab.Add(range.Value);
-                if (compare != null)
-                {
-                    if (comparer != null)
-                    {
-                        var res = comparer.Value.TryDisjunction(compare.Value, out var newComparer, out var sr);
-                        switch (res)
-                        {
-                            case CombineResult.OneComparer:
-                                comparer = newComparer;
-                                break;
-
-                            case CombineResult.Everything:
-                            case CombineResult.OneSubrange:
-                                ab.Add(sr);
-                                comparer = null;
-                                break;
-
-                            case CombineResult.Unrepresentable:
-                                // one of them is an ExactEqual comparer
-                                if (comparer.Value.Type == ComparisonType.ExactEqual)
-                                {
-                                    ab.Add(comparer.Value.ToExactEqualSubrange());
-                                    comparer = compare;
-                                }
-                                else if (compare.Value.Type == ComparisonType.ExactEqual)
-                                    ab.Add(compare.Value.ToExactEqualSubrange());
-                                else if (comparer.Value.Type == compare.Value.Type)
-                                    comparer = null;
-                                break;
-
-                            default: throw new InvalidOperationException();
-                        }
-                    }
-                    else if (compare.Value.Type == ComparisonType.ExactEqual)
-                    {
-                        ab.Add(compare.Value.ToExactEqualSubrange());
-                    }
-                    else
-                        comparer = compare;
-                }
-
-                text = text.TrimStart();
-                if (!TryTake(ref text, '|') || !TryTake(ref text, '|'))
-                {
-                    text = restoreTo;
-                    sranges = ab.ToArray();
-                    return true;
-                }
-                text = text.TrimStart();
             }
-            while (TryReadComponent(ref text, out range, out compare));
+            if (checkLength && text.Length > 0)
+            {
+                errors.Report(new(RangeParseAction.ExtraInput), text, text.Length);
+                return false;
+            }
 
-            text = restoreTo;
-            sranges = ab.ToArray();
             return true;
         }
+        #endregion
 
-        private static bool TryReadComponent(ref StringPart text, out Subrange? range, out VersionComparer? compare)
+        private static Exception BuildError(ref ErrorState errors, string argumentName)
         {
-            if (Subrange.TryParse(ref text, false, out var sr))
-            {
-                range = sr;
-                compare = null;
-                return true;
-            }
-
-            if (VersionComparer.TryParse(ref text, out var comp))
-            {
-                range = null;
-                compare = comp;
-                return true;
-            }
-
-            range = null;
-            compare = null;
-            return false;
+            var msg = ErrorMessages.GetVersionRangeErrorMessage(ref errors, tryReparse: true);
+            errors.Dispose();
+            return new ArgumentException(msg, argumentName);
         }
-        #endregion Parser
     }
 }

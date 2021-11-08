@@ -1,6 +1,8 @@
 ﻿using System.Linq;
 using System.Text.RegularExpressions;
+using Hive.Versioning.Parsing;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Hive.Versioning.Tests
 {
@@ -39,8 +41,10 @@ namespace Hive.Versioning.Tests
     public class VersionTests : IClassFixture<VersionTestFixture>
     {
         private readonly VersionTestFixture fixture;
+        private readonly ITestOutputHelper output;
 
-        public VersionTests(VersionTestFixture fix) => fixture = fix;
+        public VersionTests(VersionTestFixture fix, ITestOutputHelper output)
+            => (fixture, this.output) = (fix, output);
 
         [Theory]
         [InlineData("0.0.4")]
@@ -86,6 +90,9 @@ namespace Hive.Versioning.Tests
         [Theory]
         [InlineData("1")]
         [InlineData("1.2")]
+        [InlineData("1.")]
+        [InlineData("1.2.")]
+        [InlineData("1.2.3.")]
         [InlineData("1.2.3-0123")]
         [InlineData("1.2.3-0123.0123")]
         [InlineData("1.1.2+.123")]
@@ -138,7 +145,11 @@ namespace Hive.Versioning.Tests
         //[InlineData("22222222222222222222210.2.3\x0a")] // same as above
         public void SemverInvalid(string text)
         {
-            Assert.False(Version.TryParse(text, out var ver));
+            var errors = new ParserErrorState<VersionParseAction>(text);
+            Assert.False(Version.TryParse(ref errors, text, out var ver));
+            var message = ErrorMessages.GetVersionErrorMessage(ref errors);
+            output.WriteLine(message);
+            errors.Dispose();
             _ = ver;
 
             fixture.Validate(false, text, ver);

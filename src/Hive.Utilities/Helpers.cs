@@ -42,6 +42,20 @@ namespace Hive.Utilities
         }
 
         /// <summary>
+        /// Gets an infinite <see cref="IEnumerable{T}"/> of <see langword="int"/> of every value, starting at zero.
+        /// </summary>
+        /// <remarks>
+        /// This is typically intended for using with <see cref="Enumerable.Zip{TFirst, TSecond, TResult}(IEnumerable{TFirst}, IEnumerable{TSecond}, Func{TFirst, TSecond, TResult})"/>
+        /// to associate indicies with elements in a sequence.
+        /// </remarks>
+        /// <returns>An enumerable containing every index.</returns>
+        public static IEnumerable<int> Indexes()
+        {
+            for (var i = 0; ; i++)
+                yield return i;
+        }
+
+        /// <summary>
         /// Repeats a value <paramref name="val"/> times.
         /// </summary>
         /// <typeparam name="T">The type of the value.</typeparam>
@@ -198,22 +212,5 @@ namespace Hive.Utilities
             }
         }
 
-        /// <summary>
-        /// Returns an <see cref="IEnumerable{T}"/> consisting of every non-null element of <paramref name="enumerable"/>.
-        /// </summary>
-        /// <typeparam name="T">The type of the values in the enumerables.</typeparam>
-        /// <param name="enumerable">The enumerable containing possibly null values.</param>
-        /// <returns>An enumerable containing no null values.</returns>
-        public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> enumerable)
-            => enumerable.Where(v => v is not null)!;
-
-        /// <summary>
-        /// Returns an <see cref="IAsyncEnumerable{T}"/> consisting of every non-null element of <paramref name="enumerable"/>.
-        /// </summary>
-        /// <typeparam name="T">The type of the values in the enumerables.</typeparam>
-        /// <param name="enumerable">The enumerable containing possibly null values.</param>
-        /// <returns>An enumerable containing no null values.</returns>
-        public static IAsyncEnumerable<T> WhereNotNull<T>(this IAsyncEnumerable<T?> enumerable)
-            => enumerable.Where(v => v is not null)!;
     }
 }

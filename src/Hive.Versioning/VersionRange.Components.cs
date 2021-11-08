@@ -1,16 +1,8 @@
-﻿using Hive.Versioning.Resources;
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
-using static Hive.Versioning.ParseHelpers;
-
-#if !NETSTANDARD2_0
-using StringPart = System.ReadOnlySpan<char>;
-#else
-using StringPart = Hive.Utilities.StringView;
-#endif
+using static Hive.Versioning.StaticHelpers;
 
 namespace Hive.Versioning
 {
@@ -18,13 +10,6 @@ namespace Hive.Versioning
     // For everything else, see VersionRange.cs
     public partial class VersionRange
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Assert([DoesNotReturnIf(false)] bool value)
-        {
-            if (!value)
-                throw new InvalidOperationException(SR.AssertionFailed);
-        }
-
         [Flags]
         internal enum ComparisonType
         {
@@ -34,8 +19,12 @@ namespace Hive.Versioning
             GreaterEqual = Greater | ExactEqual,
             Less = 4,
             LessEqual = Less | ExactEqual,
+            PreRelease = 8,
+            PreReleaseGreaterEqual = GreaterEqual | PreRelease,
+            PreReleaseLess = Less | PreRelease,
 
-            _All = ExactEqual | Greater | Less,
+            _All = ExactEqual | Greater | Less | PreRelease,
+            _DirectionMask = Greater | Less,
         }
 
         internal enum CombineResult
@@ -49,7 +38,7 @@ namespace Hive.Versioning
         }
 
         [SuppressMessage("", "CA1067", Justification = "This is an internal type, and never uses Equals(object).")]
-        internal partial struct VersionComparer : IEquatable<VersionComparer>
+        internal readonly partial struct VersionComparer : IEquatable<VersionComparer>
         {
             public readonly Version CompareTo;
             public readonly ComparisonType Type;
@@ -70,8 +59,12 @@ namespace Hive.Versioning
                     ComparisonType.Less => ver < CompareTo,
                     ComparisonType.GreaterEqual => ver >= CompareTo,
                     ComparisonType.LessEqual => ver <= CompareTo,
+                    ComparisonType.PreReleaseGreaterEqual => ver >= CompareTo || ver.CompareNumericOnly(CompareTo) == 0,
+                    ComparisonType.PreReleaseLess => ver < CompareTo && ver.CompareNumericOnly(CompareTo) != 0,
                     ComparisonType.None => throw new NotImplementedException(),
                     ComparisonType._All => throw new NotImplementedException(),
+                    ComparisonType.PreRelease => throw new NotImplementedException(),
+                    ComparisonType._DirectionMask => throw new NotImplementedException(),
                     _ => throw new InvalidOperationException(),
                 };
 
@@ -80,8 +73,11 @@ namespace Hive.Versioning
             /// value matches.
             /// </remarks>
             public bool Matches(in VersionComparer other)
-                => Matches(other.CompareTo)
-                || (Type == other.Type && CompareTo == other.CompareTo);
+                => (Matches(other.CompareTo)
+                || (Type == other.Type && CompareTo == other.CompareTo)
+                || (Type == ComparisonType.Less && other.Type == ComparisonType.PreReleaseGreaterEqual && CompareTo.CompareNumericOnly(other.CompareTo) == 0))
+                && !(Type == ComparisonType.PreReleaseLess && other.Type == ComparisonType.GreaterEqual && CompareTo.CompareNumericOnly(other.CompareTo) == 0)
+                ;
 
             /// <summary>
             /// Converts this <see cref="ComparisonType.ExactEqual"/> <see cref="VersionComparer"/> to an equivalent <see cref="Subrange"/>.
@@ -115,12 +111,16 @@ namespace Hive.Versioning
                         range = new Subrange(new VersionComparer(CompareTo, ComparisonType.Less), new VersionComparer(CompareTo, ComparisonType.Greater));
                         return CombineResult.OneSubrange;
 
+                    case ComparisonType.PreRelease:
+                    case ComparisonType.PreReleaseGreaterEqual:
+                    case ComparisonType.PreReleaseLess:
                     case ComparisonType.None:
                     case ComparisonType.Greater:
                     case ComparisonType.GreaterEqual:
                     case ComparisonType.Less:
                     case ComparisonType.LessEqual:
                     case ComparisonType._All:
+                    case ComparisonType._DirectionMask:
                     default:
                         range = default;
                         comparer = new VersionComparer(CompareTo,
@@ -130,9 +130,13 @@ namespace Hive.Versioning
                                 ComparisonType.GreaterEqual => ComparisonType.Less,
                                 ComparisonType.Less => ComparisonType.GreaterEqual,
                                 ComparisonType.LessEqual => ComparisonType.Greater,
+                                ComparisonType.PreReleaseGreaterEqual => ComparisonType.PreReleaseLess,
+                                ComparisonType.PreReleaseLess => ComparisonType.PreReleaseGreaterEqual,
                                 ComparisonType.None => throw new NotImplementedException(),
                                 ComparisonType.ExactEqual => throw new NotImplementedException(),
                                 ComparisonType._All => throw new NotImplementedException(),
+                                ComparisonType.PreRelease => throw new NotImplementedException(),
+                                ComparisonType._DirectionMask => throw new NotImplementedException(),
                                 _ => throw new InvalidOperationException()
                             });
                         return CombineResult.OneComparer;
@@ -340,7 +344,7 @@ namespace Hive.Versioning
         }
 
         [SuppressMessage("", "CA1067", Justification = "This is an internal type, and never uses Equals(object).")]
-        internal partial struct Subrange : IEquatable<Subrange>
+        internal readonly partial struct Subrange : IEquatable<Subrange>
         {
             public readonly VersionComparer LowerBound;
             public readonly VersionComparer UpperBound;
@@ -725,7 +729,8 @@ namespace Hive.Versioning
             /// </summary>
             private static bool TestExactMeeting(in VersionComparer a, in VersionComparer b)
                 => a.CompareTo == b.CompareTo
-                && (a.Type & b.Type & ~ComparisonType.ExactEqual) == ComparisonType.None  // they have opposite directions
+                && (a.Type & ComparisonType.PreRelease) == (b.Type & ComparisonType.PreRelease) // they both treat prereleases the same
+                && (a.Type & b.Type & ComparisonType._DirectionMask) == ComparisonType.None  // they have opposite directions
                 && ((a.Type ^ b.Type) & ComparisonType.ExactEqual) != ComparisonType.None; // there is exactly one equal between them
 
             public bool Equals(Subrange other)
@@ -746,52 +751,12 @@ namespace Hive.Versioning
 
         internal partial struct VersionComparer
         {
-            public static bool TryParse(ref StringPart text, out VersionComparer comparer)
-            {
-                var copy = text;
-                if (!TryReadCompareType(ref text, out var compareType))
-                {
-                    comparer = default;
-                    return false;
-                }
-
-                text = text.TrimStart();
-                if (!Version.TryParse(ref text, out var version))
-                {
-                    text = copy;
-                    comparer = default;
-                    return false;
-                }
-
-                comparer = new VersionComparer(version, compareType);
-                return true;
-            }
-
-            private static bool TryReadCompareType(ref StringPart text, out ComparisonType type)
-            {
-                type = ComparisonType.None;
-
-                var copy = text;
-                if (TryTake(ref text, '>'))
-                    type |= ComparisonType.Greater;
-                else if (TryTake(ref text, '<'))
-                    type |= ComparisonType.Less;
-                if (TryTake(ref text, '='))
-                    type |= ComparisonType.ExactEqual;
-
-                if (type == ComparisonType.None)
-                {
-                    text = copy;
-                    return false;
-                }
-
-                return true;
-            }
-
             public StringBuilder ToString(StringBuilder sb)
             {
                 if (Type == ComparisonType.None) return sb.Append("default");
 
+                if ((Type & ComparisonType.PreRelease) != ComparisonType.None)
+                    _ = sb.Append('~');
                 if ((Type & ComparisonType.Greater) != ComparisonType.None)
                     _ = sb.Append('>');
                 if ((Type & ComparisonType.Less) != ComparisonType.None)
@@ -810,181 +775,9 @@ namespace Hive.Versioning
 
         internal partial struct Subrange
         {
-            public static bool TryParse(ref StringPart text, bool allowOutward, out Subrange subrange)
-            {
-                var copy = text;
-
-                // first we check for a star range
-                if (TryReadStarRange(ref text, out subrange)) return true;
-                // then we check for a hyphen range
-                if (TryReadHyphenRange(ref text, out subrange)) return true;
-
-                //---EVERYTHING AFTER THIS POINT HAS A SPECIAL FIRST CHARACTER---\\
-
-                // then we check for a ^ range
-                if (TryReadCaretRange(ref text, out subrange)) return true;
-
-                // otherwise we just try read two VersionComparers in a row
-                if (!VersionComparer.TryParse(ref text, out var lower))
-                {
-                    text = copy;
-                    subrange = default;
-                    return false;
-                }
-                text = text.TrimStart();
-                if (!VersionComparer.TryParse(ref text, out var upper))
-                {
-                    text = copy;
-                    subrange = default;
-                    return false;
-                }
-
-                if (lower.CompareTo > upper.CompareTo)
-                {
-                    text = copy;
-                    subrange = default;
-                    return false;
-                }
-
-                if (lower.Type == ComparisonType.ExactEqual || upper.Type == ComparisonType.ExactEqual
-                 || (lower.Type & ~ComparisonType.ExactEqual) == (upper.Type & ~ComparisonType.ExactEqual))
-                { // if the bounds point the same direction, the subrange is invalid
-                    text = copy;
-                    subrange = default;
-                    return false;
-                }
-
-                subrange = new Subrange(lower, upper);
-
-                if (!allowOutward && !subrange.IsInward)
-                { // reject inward-facing subranges for consistency on the outside
-                    text = copy;
-                    subrange = default;
-                    return false;
-                }
-
-                return true;
-            }
-
-            private static bool TryReadCaretRange(ref StringPart text, out Subrange range)
-            {
-                var copy = text;
-                if (!TryTake(ref text, '^'))
-                {
-                    range = default;
-                    return false;
-                }
-
-                text = text.TrimStart();
-                if (!Version.TryParse(ref text, out var lower))
-                {
-                    text = copy;
-                    range = default;
-                    return false;
-                }
-
-                Version upper;
-                if (lower.Major != 0)
-                    upper = new Version(lower.Major + 1, 0, 0);
-                else if (lower.Minor != 0)
-                    upper = new Version(0, lower.Minor + 1, 0);
-                else
-                    upper = new Version(0, 0, lower.Patch + 1);
-
-                range = new Subrange(new VersionComparer(lower, ComparisonType.GreaterEqual), new VersionComparer(upper, ComparisonType.Less));
-                return true;
-            }
-
-            private static bool TryReadHyphenRange(ref StringPart text, out Subrange range)
-            {
-                var copy = text;
-                if (!Version.TryParse(ref text, out var lowVersion))
-                {
-                    range = default;
-                    text = copy;
-                    return false;
-                }
-
-                text = text.TrimStart();
-                if (!TryTake(ref text, '-'))
-                {
-                    range = default;
-                    text = copy;
-                    return false;
-                }
-                text = text.TrimStart();
-
-                if (!Version.TryParse(ref text, out var highVersion))
-                {
-                    range = default;
-                    text = copy;
-                    return false;
-                }
-
-                range = new(new(lowVersion, ComparisonType.GreaterEqual), new(highVersion, ComparisonType.LessEqual));
-                return true;
-            }
-
-            private static bool TryReadStarRange(ref StringPart text, out Subrange range)
-            {
-                var copy = text;
-                if (!Version.TryParseNumId(ref text, out var majorNum) || !TryTake(ref text, '.'))
-                {
-                    text = copy;
-                    range = default;
-                    return false;
-                }
-
-                static bool TryTakePlaceholder(ref StringPart text)
-                    => TryTake(ref text, '*') || TryTake(ref text, 'x') || TryTake(ref text, 'X');
-
-                // at this point, we *know* that we have a star range
-                if (TryTakePlaceholder(ref text))
-                {
-                    copy = text;
-                    // try to read another star
-                    if (!TryTake(ref text, '.')
-                        || !TryTakePlaceholder(ref text))
-                    {
-                        // if we can't, that's fine, just rewind to copy
-                        // this might be something else
-                        text = copy;
-                    }
-
-                    // we now have a star range
-                    var versionBase = new Version(majorNum, 0, 0);
-                    var versionUpper = new Version(majorNum + 1, 0, 0);
-                    range = new Subrange(new VersionComparer(versionBase, ComparisonType.GreaterEqual), new VersionComparer(versionUpper, ComparisonType.Less));
-                    return true;
-                }
-
-                // try to read the second number
-                if (!Version.TryParseNumId(ref text, out var minorNum) || !TryTake(ref text, '.'))
-                {
-                    // if we can't read the last bit then rewind and exit
-                    text = copy;
-                    range = default;
-                    return false;
-                }
-
-                // if our last thing isn't a star, then this isn't a star range
-                if (!TryTakePlaceholder(ref text))
-                {
-                    text = copy;
-                    range = default;
-                    return false;
-                }
-
-                // we now have a star range
-                var versionBase2 = new Version(majorNum, minorNum, 0);
-                var versionUpper2 = new Version(majorNum, minorNum + 1, 0);
-                range = new Subrange(new VersionComparer(versionBase2, ComparisonType.GreaterEqual), new VersionComparer(versionUpper2, ComparisonType.Less));
-                return true;
-            }
-
             public StringBuilder ToString(StringBuilder sb)
             {
-                if (LowerBound.Type == ComparisonType.GreaterEqual && UpperBound.Type == ComparisonType.Less)
+                if (LowerBound.Type == ComparisonType.GreaterEqual && UpperBound.Type == ComparisonType.PreReleaseLess)
                 {
                     var lower = LowerBound.CompareTo;
                     var upper = UpperBound.CompareTo;

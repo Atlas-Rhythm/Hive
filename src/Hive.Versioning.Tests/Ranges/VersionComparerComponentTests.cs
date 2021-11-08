@@ -1,4 +1,5 @@
 ﻿using System;
+using Hive.Versioning.Parsing;
 using Xunit;
 using static Hive.Versioning.VersionRange;
 
@@ -148,7 +149,8 @@ namespace Hive.Versioning.Tests.Ranges
             var expect = valid ? CreateComparer(verS, typeS) : default;
 
             StringPart text = input;
-            Assert.Equal(valid, VersionComparer.TryParse(ref text, out var comparer));
+            var errors = new ParserErrorState<AnyParseAction>();
+            Assert.Equal(valid, RangeParser.TryParseComparer(ref errors, ref text, out var comparer));
             if (valid)
             {
                 Assert.Equal(expect.Type, comparer.Type);

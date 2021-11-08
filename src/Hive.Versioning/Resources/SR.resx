@@ -118,15 +118,82 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AssertionFailed" xml:space="preserve">
-    <value />
+    <value>Assertion failed. {0}</value>
+    <comment>{0} is the expression being asserted.</comment>
+  </data>
+  <data name="ExtraInputAtEnd" xml:space="preserve">
+    <value>Input had extra (non-whitespace) characters at the end.</value>
+  </data>
+  <data name="NumIdsDoNotHaveLeadingZeroes" xml:space="preserve">
+    <value>Numbers cannot have leading zeroes.</value>
+  </data>
+  <data name="ParsingSuccessful" xml:space="preserve">
+    <value>Parsing successful.</value>
+  </data>
+  <data name="Range_BoundedRegionNotClosed" xml:space="preserve">
+    <value>Bounded regions must be closed, and specify the lower bound first.</value>
+  </data>
+  <data name="Range_IncompleteStarRange" xml:space="preserve">
+    <value>Star ranges must have '*' or 'x' stand in for version number components.</value>
   </data>
   <data name="Range_InputInvalid" xml:space="preserve">
     <value>Input is not a valid VersionRange</value>
+  </data>
+  <data name="Range_NotEvenClose" xml:space="preserve">
+    <value>That doesn't look anything like a version range. Maybe you meant '*' (everything) or 'Z' (nothing)?</value>
+  </data>
+  <data name="ReportRangeInput" xml:space="preserve">
+    <value>Unknown parsing error; please report the provided version range.</value>
+  </data>
+  <data name="ReportVersionInput" xml:space="preserve">
+    <value>Unknown parsing error; please report the provided version.</value>
+  </data>
+  <data name="Suggestion" xml:space="preserve">
+    <value>Did you mean '{0}'?</value>
+    <comment>{0} is the suggested text</comment>
+  </data>
+  <data name="UnexpectedFValidNumericIdCount" xml:space="preserve">
+    <value>Unexpected FValidNumericIdCount in main version {0}.</value>
+    <comment>{0} is the number of FValidNumericIds found</comment>
+  </data>
+  <data name="Version_BuildContainsDot" xml:space="preserve">
+    <value>Build identifiers must be separated from each other by a single '.' character.</value>
+  </data>
+  <data name="Version_BuildIdsAreAlphaNumeric" xml:space="preserve">
+    <value>Build identifiers must be alphanumeric identifiers.</value>
+  </data>
+  <data name="Version_ExpectMajorNumber" xml:space="preserve">
+    <value>Expected major version number.</value>
+  </data>
+  <data name="Version_ExpectMinorNumber" xml:space="preserve">
+    <value>Expected minor version number.</value>
+  </data>
+  <data name="Version_ExpectPatchNumber" xml:space="preserve">
+    <value>Expected patch version number.</value>
   </data>
   <data name="Version_InputInvalid" xml:space="preserve">
     <value>Input was not a valid SemVer version</value>
   </data>
   <data name="Version_InputTooShort" xml:space="preserve">
     <value>Input too short to be a SemVer version</value>
+  </data>
+  <data name="Version_MustBeginWithMajorMinorPatch" xml:space="preserve">
+    <value>Version must begin with a major, minor, and patch number.</value>
+  </data>
+  <data name="Version_NumberTooBig" xml:space="preserve">
+    <value>Number is too big to be represented by version object.</value>
+  </data>
+  <data name="Version_PrereleaseContainsDot" xml:space="preserve">
+    <value>Prerelease identifiers must be separated from each other by a single '.' character.</value>
+  </data>
+  <data name="Version_PrereleaseUsesDash" xml:space="preserve">
+    <value>Prerelease identifiers must be separated from the main version by a single '-' character.</value>
+  </data>
+  <data name="Version_PrereleasIdsAreAlphaNumeric" xml:space="preserve">
+    <value>Prerelease identifiers must be either a number or an alphanumeric identifier.</value>
+  </data>
+  <data name="WhatHow" xml:space="preserve">
+    <value>What? How? {0}</value>
+    <comment>{0} is specific error text</comment>
   </data>
 </root>

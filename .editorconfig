@@ -240,8 +240,8 @@ dotnet_diagnostic.IDE0058.severity = warning
 csharp_style_unused_value_expression_statement_preference = discard_variable:warning
 
 # 'using' directive preferences
-dotnet_diagnostic.IDE0065.severity = error
-csharp_using_directive_placement = outside_namespace:error
+dotnet_diagnostic.IDE0065.severity = warning
+csharp_using_directive_placement = outside_namespace:warning
 
 #### C# Formatting Rules ####
 

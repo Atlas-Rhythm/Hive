@@ -6,16 +6,13 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <VersionPrefix>0.1.0</VersionPrefix>
     <DoesBuildStandalone>true</DoesBuildStandalone>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <Compile Include="$(HiveToolsDirectory)\..\System.Diagnostics.CodeAnalysis.cs" />
-  </ItemGroup>
 
   <ItemGroup Condition="'$(BuildingStandalone)' == 'true'">
     <ExcludeFromInternalize Include="Hive.Utilities.StringView" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <EmbeddedResource Update="Resources\SR.resx" IsResXToGenerate="true" />
   </ItemGroup>

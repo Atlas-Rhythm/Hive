@@ -50,8 +50,8 @@ namespace Hive.Plugins.Aggregates
                 outParamTemps[i] = Expression.Variable(varType, $"t_{param.Name}");
             }
 
-            var initializers = outParamStorageSet
-                .WhereNonNull()
+            var initializers = Extensions.WhereNotNull(outParamStorageSet
+)
                 .Select(p => Expression.Assign(p!, DefaultForType(p!.Type)));
             if (returnStorage != null)
             {
@@ -151,11 +151,11 @@ namespace Hive.Plugins.Aggregates
                 callExpr = Expression.Assign(returnTemp, callExpr);
             var loopBodyFinal = loopBody.Prepend(callExpr).Concat(loopBodyEnd);
 
-            var stores = outParamStorageSet.WhereNonNull();
+            var stores = Extensions.WhereNotNull(outParamStorageSet);
             if (returnStorage != null)
                 stores = stores.Append(returnStorage).Append(returnStorageSet!);
 
-            var temps = outParamTemps.WhereNonNull();
+            var temps = Extensions.WhereNotNull(outParamTemps);
             if (returnTemp != null)
                 temps = temps.Append(returnTemp);
 

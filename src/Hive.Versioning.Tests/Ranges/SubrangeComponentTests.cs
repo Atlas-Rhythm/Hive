@@ -1,5 +1,6 @@
 ﻿using System;
 using Xunit;
+using Hive.Versioning.Parsing;
 using static Hive.Versioning.VersionRange;
 
 #if !NETCOREAPP3_1
@@ -16,15 +17,18 @@ namespace Hive.Versioning.Tests.Ranges
         private static VersionComparer ParseComparer(string input)
         {
             StringPart text = input;
-            Assert.True(VersionComparer.TryParse(ref text, out var comparer));
+            var errors = new ParserErrorState<AnyParseAction>();
+            Assert.True(RangeParser.TryParseComparer(ref errors, ref text, out var comparer));
             return comparer;
         }
 
         private static Subrange ParseSubrange(string input, bool valid = true)
         {
             StringPart text = input;
-            Assert.Equal(valid, Subrange.TryParse(ref text, true, out var range));
-            return range;
+            var errors = new ParserErrorState<AnyParseAction>();
+            Assert.Equal(valid, RangeParser.TryReadComponent(ref errors, ref text, true, out var range, out _)
+                && range is not null);
+            return range ?? default;
         }
 
         private static Subrange CreateSubrange(string lower, string upper)
@@ -33,12 +37,12 @@ namespace Hive.Versioning.Tests.Ranges
         [Theory]
         [InlineData(">1.0.0 <2.0.0", true, ">1.0.0", "<2.0.0")]
         [InlineData(">=1.0.0 <2.0.0", true, ">=1.0.0", "<2.0.0")]
-        [InlineData("^1.0.0", true, ">=1.0.0", "<2.0.0")]
-        [InlineData("^1.0.1", true, ">=1.0.1", "<2.0.0")]
-        [InlineData("^1.1.0", true, ">=1.1.0", "<2.0.0")]
-        [InlineData("^0.1.0", true, ">=0.1.0", "<0.2.0")]
-        [InlineData("^0.1.5", true, ">=0.1.5", "<0.2.0")]
-        [InlineData("^0.0.1", true, ">=0.0.1", "<0.0.2")]
+        [InlineData("^1.0.0", true, ">=1.0.0", "~<2.0.0")]
+        [InlineData("^1.0.1", true, ">=1.0.1", "~<2.0.0")]
+        [InlineData("^1.1.0", true, ">=1.1.0", "~<2.0.0")]
+        [InlineData("^0.1.0", true, ">=0.1.0", "~<0.2.0")]
+        [InlineData("^0.1.5", true, ">=0.1.5", "~<0.2.0")]
+        [InlineData("^0.0.1", true, ">=0.0.1", "~<0.0.2")]
         [InlineData("<2.0.0 >1.0.0", false, ">1.0.0", "<2.0.0")]
         [InlineData("<2.0.0 >=1.0.0", false, ">=1.0.0", "<2.0.0")]
         public void TestParse(string text, bool valid, string lowerS, string upperS)

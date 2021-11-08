@@ -77,6 +77,7 @@ namespace Hive.Utilities
             if (array != null && amount <= array.Length) return;
 
             var newSize = array is not null ? array.Length * 2 : 8;
+            newSize = Math.Max(newSize, 8);
             while (amount > newSize)
                 newSize *= 2;
             Resize(newSize);
@@ -137,6 +138,13 @@ namespace Hive.Utilities
             Reserve(Count + 1);
             array[Count++] = item;
         }
+
+        /// <summary>
+        /// Gets the item at the specified index in the builder.
+        /// </summary>
+        /// <param name="i">The index of the item to get.</param>
+        /// <returns>The item at that index.</returns>
+        public T this[int i] => array[i];
 
         /// <summary>
         /// Gets this builder as an array.
