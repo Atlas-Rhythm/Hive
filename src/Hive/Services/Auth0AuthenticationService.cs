@@ -96,20 +96,7 @@ namespace Hive.Services
             this.context = context;
             logger = log.ForContext<Auth0AuthenticationService>();
 
-            Auth0Options options;
-            try
-            {
-                options = config.Value;
-            }
-            catch (OptionsValidationException ex)
-            {
-                logger.Error($"Invalid {nameof(Auth0Options.ConfigHeader)} configuration!");
-                foreach (var f in ex.Failures)
-                {
-                    logger.Error("{Failure}", f);
-                }
-                throw;
-            }
+            var options = config.TryLoad(logger, Auth0Options.ConfigHeader);
             // Hive needs to use a Machine-to-Machine Application to grab a Management API v2 token
             // in order to retrieve users by their IDs.
             Data = new Auth0ReturnData(options.Domain!.ToString(), options.ClientID!, options.Audience!);

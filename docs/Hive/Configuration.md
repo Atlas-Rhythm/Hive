@@ -14,3 +14,7 @@ This is a quick landing page for Hive's configuration. Further documentation can
 ### `PathBase` - `string`
 
 This represents the `PathBase` to set. See: [the microsoft documentation](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.builder.usepathbaseextensions.usepathbase?view=aspnetcore-5.0)
+
+### `MaxFileSize` - `long`
+
+The maximum file size in bytes. It must also be > 0. It will be set to: `32 * 1024 * 1024` on default.

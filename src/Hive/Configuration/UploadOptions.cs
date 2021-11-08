@@ -9,14 +9,8 @@ namespace Hive.Configuration
     public class UploadOptions
     {
         /// <summary>
-        /// The config header to look under for this configuration instance.
-        /// </summary>
-        public const string ConfigHeader = "Uploads";
-
-        /// <summary>
         /// The maximum file size allowed for uploads, in bytes.
         /// </summary>
-        [Required]
         [Range(1, long.MaxValue, ErrorMessage = "Max file size must be positive and non-zero!")]
         public long MaxFileSize { get; private set; } = 32 * 1024 * 1024;
     }

@@ -198,19 +198,8 @@ namespace Hive.Controllers
             tokenAlgorithm = tokenAlgo;
             database = db;
             nodaClock = clock;
-            try
-            {
-                maxFileSize = config.Value.MaxFileSize;
-            }
-            catch (OptionsValidationException ex)
-            {
-                logger.Error($"Invalid {nameof(UploadOptions.ConfigHeader)} configuration!");
-                foreach (var f in ex.Failures)
-                {
-                    logger.Error("{Failure}", f);
-                }
-                throw;
-            }
+            var cfg = config.TryLoad(logger);
+            maxFileSize = cfg.MaxFileSize;
             if (maxFileSize <= 0) maxFileSize = 32 * 1024 * 1024;
         }
 
