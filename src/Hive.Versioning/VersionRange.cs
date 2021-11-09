@@ -46,6 +46,23 @@ namespace Hive.Versioning
             subranges = ranges;
         }
 
+#if !NETSTANDARD2_0
+        /// <summary>
+        /// Constructs a new <see cref="VersionRange"/> that corresponds to the text provided in <paramref name="text"/>.
+        /// </summary>
+        /// <param name="text">The textual represenation of the <see cref="VersionRange"/> to create.</param>
+        /// <seealso cref="TryParse(ref StringPart, out VersionRange)"/>
+        /// <exception cref="ArgumentException">Thrown when<paramref name="text"/> is not a valid <see cref="VersionRange"/>.</exception>
+        public VersionRange(StringView text) : this(text.AsSpan()) { }
+        /// <summary>
+        /// Constructs a new <see cref="VersionRange"/> that corresponds to the text provided in <paramref name="text"/>.
+        /// </summary>
+        /// <param name="text">The textual represenation of the <see cref="VersionRange"/> to create.</param>
+        /// <seealso cref="TryParse(ref StringPart, out VersionRange)"/>
+        /// <exception cref="ArgumentException">Thrown when<paramref name="text"/> is not a valid <see cref="VersionRange"/>.</exception>
+        public VersionRange(string text) : this(text.AsSpan()) { }
+#endif
+
         private VersionRange(Subrange[] srs, VersionComparer? comparer)
         {
             (srs, comparer) = FixupRangeList(srs, comparer);
@@ -623,6 +640,83 @@ namespace Hive.Versioning
         public static bool operator !=(VersionRange? a, VersionRange? b) => !(a == b);
 
         #region Parsing methods
+        // Provide netstandard2.0 binary compat for 2.1
+        // This also needs string overloads to prevent ambiguous resolution.
+#if !NETSTANDARD2_0
+        /// <summary>
+        /// Parses a string as a <see cref="VersionRange"/>.
+        /// </summary>
+        /// <remarks>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
+        /// </remarks>
+        /// <param name="text">The string to parse.</param>
+        /// <returns>The parsed <see cref="VersionRange"/>.</returns>
+        /// <seealso cref="TryParse(StringPart, out VersionRange)"/>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid <see cref="VersionRange"/>.</exception>
+        public static VersionRange Parse(StringView text) => Parse(text.AsSpan());
+        /// <summary>
+        /// Parses a string as a <see cref="VersionRange"/>.
+        /// </summary>
+        /// <remarks>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
+        /// </remarks>
+        /// <param name="text">The string to parse.</param>
+        /// <returns>The parsed <see cref="VersionRange"/>.</returns>
+        /// <seealso cref="TryParse(StringPart, out VersionRange)"/>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid <see cref="VersionRange"/>.</exception>
+        public static VersionRange Parse(string text) => Parse(text.AsSpan());
+        /// <summary>
+        /// Attempts to parse a whole string as a <see cref="VersionRange"/>.
+        /// </summary>
+        /// <remarks>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
+        /// </remarks>
+        /// <param name="text">The string to try to parse.</param>
+        /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
+        /// <seealso cref="TryParse(ref StringPart, out VersionRange)"/>
+        public static bool TryParse(StringView text, [MaybeNullWhen(false)] out VersionRange range)
+            => TryParse(text.AsSpan(), out range);
+        /// <summary>
+        /// Attempts to parse a whole string as a <see cref="VersionRange"/>.
+        /// </summary>
+        /// <remarks>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
+        /// </remarks>
+        /// <param name="text">The string to try to parse.</param>
+        /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
+        /// <seealso cref="TryParse(ref StringPart, out VersionRange)"/>
+        public static bool TryParse(string text, [MaybeNullWhen(false)] out VersionRange range)
+            => TryParse(text.AsSpan(), out range);
+        /// <summary>
+        /// Attempts to parse a whole string as a <see cref="VersionRange"/>, optionally recording error information.
+        /// </summary>
+        /// <remarks>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
+        /// </remarks>
+        /// <param name="errors">The error state object to write error information to.</param>
+        /// <param name="text">The string to try to parse.</param>
+        /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
+        /// <seealso cref="TryParse(ref ErrorState, ref StringPart, out VersionRange)"/>
+        public static bool TryParse(ref ErrorState errors, StringView text, [MaybeNullWhen(false)] out VersionRange range)
+            => TryParse(ref errors, text.AsSpan(), out range);
+        /// <summary>
+        /// Attempts to parse a whole string as a <see cref="VersionRange"/>, optionally recording error information.
+        /// </summary>
+        /// <remarks>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
+        /// </remarks>
+        /// <param name="errors">The error state object to write error information to.</param>
+        /// <param name="text">The string to try to parse.</param>
+        /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
+        /// <seealso cref="TryParse(ref ErrorState, ref StringPart, out VersionRange)"/>
+        public static bool TryParse(ref ErrorState errors, string text, [MaybeNullWhen(false)] out VersionRange range)
+            => TryParse(ref errors, text.AsSpan(), out range);
+#endif
+
         /// <summary>
         /// Parses a string as a <see cref="VersionRange"/>.
         /// </summary>
