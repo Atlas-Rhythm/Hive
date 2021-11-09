@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <!-- ParserErrorState is a somewhat internal type, so for convenitence, we just won't guarantee compat between framework builds -->
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:Hive.Versioning.Parsing.ParserErrorState`1.#ctor(Hive.Utilities.StringView@)</Target>
+    <Left>lib/netstandard2.0/Hive.Versioning.dll</Left>
+    <Right>lib/netstandard2.1/Hive.Versioning.dll</Right>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:Hive.Versioning.Parsing.ParserErrorState`1.Report(`0,Hive.Utilities.StringView@,Hive.Utilities.StringView@)</Target>
+    <Left>lib/netstandard2.0/Hive.Versioning.dll</Left>
+    <Right>lib/netstandard2.1/Hive.Versioning.dll</Right>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0002</DiagnosticId>
+    <Target>M:Hive.Versioning.Parsing.ParserErrorState`1.Report(`0,Hive.Utilities.StringView@,System.Int64)</Target>
+    <Left>lib/netstandard2.0/Hive.Versioning.dll</Left>
+    <Right>lib/netstandard2.1/Hive.Versioning.dll</Right>
+  </Suppression>
+</Suppressions>
