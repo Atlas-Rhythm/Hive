@@ -1,5 +1,4 @@
 ﻿using Hive.Models;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -28,7 +27,7 @@ namespace Hive.Converters
                     u => u.Username,
                     s => new User { Username = s }, null)
                 ).Metadata.SetValueComparer(new ValueComparer<User>(
-                    (a, b) => a.Username == b.Username,
+                    (a, b) => (a == null && b == null) || (a != null && b != null && a.Username == b.Username),
                     u => u.Username.GetHashCode(StringComparison.InvariantCulture),
                     u => new User { Username = u.Username }
                 ));
@@ -50,7 +49,7 @@ namespace Hive.Converters
                       u => u.Select(u => u.Username).ToArray(),
                       s => s.Select(s => new User { Username = s }).ToList(), null)
                 ).Metadata.SetValueComparer(new ValueComparer<IList<User>>(
-                    (a, b) => a.SequenceEqual(b, UserComparer.Instance),
+                    (a, b) => (a == null && b == null) || (a != null && b != null && a.SequenceEqual(b, UserComparer.Instance)),
                     l => l.Aggregate(0, (a, v) => HashCode.Combine(a, v.Username.GetHashCode(StringComparison.InvariantCulture))),
                     l => l.ToList() as IList<User> // DO NOT REMOVE THIS CAST! IT IS REQUIRED FOR THIS TO WORK.
                 ));

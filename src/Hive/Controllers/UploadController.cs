@@ -286,7 +286,7 @@ namespace Hive.Controllers
 
             internal static readonly JsonSerializerOptions Options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
             {
-                IgnoreNullValues = true
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             }.ConfigureForNodaTime(DateTimeZoneProviders.Bcl); // BCL is (I think) the best thing to use here
 
             internal static UploadResult Confirm(SymmetricAlgorithm algo, Mod data, CdnObject cdnObj)

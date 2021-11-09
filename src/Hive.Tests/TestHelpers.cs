@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using Hive.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -64,6 +65,13 @@ namespace Hive.Tests
             context.Request.Body = body;
 
             return context;
+        }
+
+        // the attribute tells the compiler that the argument is non-null if the function returns
+        internal static void AssertNotNull([NotNull] object? obj)
+        {
+            Assert.NotNull(obj);
+            if (obj is null) throw new System.InvalidOperationException(); // <-- this is unreachable, but Roslyn wants it
         }
 
         internal static void AssertForbid(ActionResult result)

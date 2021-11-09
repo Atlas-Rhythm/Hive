@@ -55,7 +55,7 @@ namespace Hive.Graphing
 
             if (!queryResult.Successful)
             {
-                var err = new ExecutionError(queryResult.Message)
+                var err = new ExecutionError(queryResult.Message ?? "")
                 {
                     Code = queryResult.StatusCode.ToString(CultureInfo.InvariantCulture)
                 };

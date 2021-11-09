@@ -123,8 +123,8 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(false)", defaultPlugins);
             var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
 
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
+            TestHelpers.AssertNotNull(res); // Result must not be null.
+            TestHelpers.AssertNotNull(res.Result);
             TestHelpers.AssertForbid(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
@@ -149,8 +149,8 @@ namespace Hive.Tests.Endpoints
             });
             var res = await controller.GetSpecificMod("Counters+"); // We will look for Counters+, which is in Beta.
 
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
+            TestHelpers.AssertNotNull(res); // Result must not be null.
+            TestHelpers.AssertNotNull(res.Result);
             TestHelpers.AssertForbid(res.Result); // The above endpoint must be fail, since Counters+ is in Beta.
 
             res = await controller.GetSpecificMod("SongCore"); // Next, we will look for SongCore, which is in Release.
@@ -193,8 +193,8 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(false)", defaultPlugins);
             var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
 
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
+            TestHelpers.AssertNotNull(res); // Result must not be null.
+            TestHelpers.AssertNotNull(res.Result);
             TestHelpers.AssertForbid(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
@@ -219,8 +219,8 @@ namespace Hive.Tests.Endpoints
             });
             var res = await controller.GetSpecificMod("Counters+"); // We will look for Counters+, which is in Beta.
 
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
+            TestHelpers.AssertNotNull(res); // Result must not be null.
+            TestHelpers.AssertNotNull(res.Result);
             TestHelpers.AssertForbid(res.Result); // The above endpoint must be fail, since Counters+ is in Beta.
 
             res = await controller.GetSpecificMod("BSIPA"); // Next, we will look for SongCore, which is in Release.
@@ -344,8 +344,8 @@ namespace Hive.Tests.Endpoints
 
             var res = await controller.MoveModToChannel("Public", identifier);
 
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
+            TestHelpers.AssertNotNull(res); // Result must not be null.
+            TestHelpers.AssertNotNull(res.Result);
             TestHelpers.AssertForbid(res.Result); // The above endpoint must fail due to the permission rule.
         }
 

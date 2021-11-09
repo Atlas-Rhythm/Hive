@@ -36,13 +36,13 @@ namespace Hive.Graphing.Types
                 graph.Configure(this);
         }
 
-        private async Task<IEnumerable<Mod>> GetChannelMods(IResolveFieldContext<Channel> ctx)
+        private async Task<IEnumerable<Mod>?> GetChannelMods(IResolveFieldContext<Channel> ctx)
         {
             (var modService, var http, var authService)
                 = ctx.RequestServices.GetRequiredServices<ModService, IHttpContextAccessor, IProxyAuthenticationService>();
 
             var user = await http.HttpContext!.GetHiveUser(authService).ConfigureAwait(false);
-            var queryResult = await modService.GetAllMods(user, new[] { ctx.Source.Name }).ConfigureAwait(false);
+            var queryResult = await modService.GetAllMods(user, new[] { ctx.Source!.Name }).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
             return queryResult.Value ?? Array.Empty<Mod>();

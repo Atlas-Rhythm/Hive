@@ -153,7 +153,7 @@ namespace Hive.Services.Common
             // First, we filter over if the given channel is accessible to the given user.
             // This allows for much more specific permissions, although chances are that roles will be used (and thus a plugin) instead.
             // We also need to make sure we convert to an AsyncEnumerable so that we can avoid doing a lookup that's too complex for EF.
-            var filteredChannels = await (context.Channels as IAsyncEnumerable<Channel>)
+            var filteredChannels = await context.Channels.AsAsyncEnumerable()
                 .Where(c => permissions.CanDo(FilterActionName, new PermissionContext { Channel = c, User = user }, ref channelsParseState))
                 .ToListAsync().ConfigureAwait(false);
 
@@ -194,7 +194,7 @@ namespace Hive.Services.Common
             log.Debug("Adding the new channel...");
 
             // Exit if there's already an existing channel with the same name
-            if (await context.Channels.AnyAsync(x => x.Name == newChannel.Name).ConfigureAwait(false))
+            if (await context.Channels.Where(x => x.Name == newChannel.Name).ToAsyncEnumerable().AnyAsync().ConfigureAwait(false))
                 return new HiveObjectQuery<Channel>(StatusCodes.Status409Conflict, "A channel with this name already exists.");
 
             // Call our hooks

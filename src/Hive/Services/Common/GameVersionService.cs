@@ -119,7 +119,7 @@ namespace Hive.Services.Common
             // First, we perform a permission check on each game version, in case we need to filter any specific ones
             // (Use additionalData to flag beta game versions, perhaps? Could be a plugin.)
             // Too complicated for EF, so go to IAsyncEnumerable.
-            var filteredVersions = await (context.GameVersions as IAsyncEnumerable<GameVersion>)
+            var filteredVersions = await context.GameVersions.AsAsyncEnumerable()
                 .Where(v => permissions.CanDo(FilterActionName, new PermissionContext { GameVersion = v, User = user }, ref versionsParseState))
                 .ToListAsync().ConfigureAwait(false);
 
@@ -166,7 +166,7 @@ namespace Hive.Services.Common
             };
 
             // Exit if there's already an existing version with the same name
-            if (await context.GameVersions.AnyAsync(x => x.Name == version.Name).ConfigureAwait(false))
+            if (await context.GameVersions.Where(x => x.Name == version.Name).ToAsyncEnumerable().AnyAsync().ConfigureAwait(false))
                 return new HiveObjectQuery<GameVersion>(StatusCodes.Status409Conflict, "A channel with this name already exists.");
 
             // Call our hooks

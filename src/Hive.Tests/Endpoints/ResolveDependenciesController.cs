@@ -131,7 +131,7 @@ namespace Hive.Tests.Endpoints
 
             var res = await controller.ResolveDependencies(input);
 
-            Assert.NotNull(res.Result); // Make sure we got a request back
+            AssertNotNull(res.Result); // Make sure we got a request back
             AssertForbid(res.Result); // This endpoint must fail at the permissions check.
         }
 
@@ -145,7 +145,7 @@ namespace Hive.Tests.Endpoints
 
             var res = await controller.ResolveDependencies(input);
 
-            Assert.NotNull(res.Result); // Make sure we got a request back
+            AssertNotNull(res.Result); // Make sure we got a request back
             AssertForbid(res.Result); // This endpoint must fail at the plugin check.
         }
 

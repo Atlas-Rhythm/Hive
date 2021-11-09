@@ -50,8 +50,8 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(false)", defaultPlugins);
             var res = await controller.GetGameVersions();
 
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
+            AssertNotNull(res); // Result must not be null.
+            AssertNotNull(res.Result);
             AssertForbid(res.Result); // The above endpoint must fail from the permission rule.
         }
 
@@ -66,8 +66,8 @@ namespace Hive.Tests.Endpoints
                     });
             var res = await controller.GetGameVersions();
 
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
+            AssertNotNull(res); // Result must not be null.
+            AssertNotNull(res.Result);
             AssertForbid(res.Result); // The above endpoint must fail from the plugin.
         }
 

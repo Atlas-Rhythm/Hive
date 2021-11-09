@@ -30,62 +30,62 @@ namespace Hive.Graphing.Types
             _ = Field<ListGraphType<LocalizedModInfoType>>(
                 "localizations",
                 Resources.GraphQL.Mod_Localizations,
-                resolve: ctx => ctx.Source.Localizations);
+                resolve: ctx => ctx.Source!.Localizations);
 
             _ = Field<StringGraphType>(
                 "version",
                 Resources.GraphQL.Mod_Version,
-                resolve: ctx => ctx.Source.Version.ToString());
+                resolve: ctx => ctx.Source!.Version.ToString());
 
             _ = Field<StringGraphType>(
                 "uploadedAt",
                 Resources.GraphQL.Mod_UploadedAt,
-                resolve: ctx => ctx.Source.UploadedAt.ToString());
+                resolve: ctx => ctx.Source!.UploadedAt.ToString());
 
             _ = Field<StringGraphType>(
                 "editedAt",
                 Resources.GraphQL.Mod_EditedAt,
-                resolve: ctx => ctx.Source.EditedAt.ToString());
+                resolve: ctx => ctx.Source!.EditedAt.ToString());
 
             _ = Field<UserType>(
                 "uploader",
                 Resources.GraphQL.Mod_Uploader,
-                resolve: ctx => ctx.Source.Uploader);
+                resolve: ctx => ctx.Source!.Uploader);
 
             _ = Field<ListGraphType<UserType>>(
                 "authors",
                 Resources.GraphQL.Mod_Authors,
-                resolve: ctx => ctx.Source.Authors);
+                resolve: ctx => ctx.Source!.Authors);
 
             _ = Field<ListGraphType<UserType>>(
                 "contributors",
                 Resources.GraphQL.Mod_Contributors,
-                resolve: ctx => ctx.Source.Contributors);
+                resolve: ctx => ctx.Source!.Contributors);
 
             _ = Field<ListGraphType<GameVersionType>>(
                 "supportedVersions",
                 Resources.GraphQL.Mod_SupportedVersions,
-                resolve: ctx => ctx.Source.SupportedVersions);
+                resolve: ctx => ctx.Source!.SupportedVersions);
 
             _ = Field<ListGraphType<ModReferenceType>>(
                 "dependencies",
                 Resources.GraphQL.Mod_Dependencies,
-                resolve: ctx => ctx.Source.Dependencies);
+                resolve: ctx => ctx.Source!.Dependencies);
 
             _ = Field<ListGraphType<ModReferenceType>>(
                 "conflicts",
                 Resources.GraphQL.Mod_Conflicts,
-                resolve: ctx => ctx.Source.Conflicts);
+                resolve: ctx => ctx.Source!.Conflicts);
 
             _ = Field<ListGraphType<LinkType>>(
                 "links",
                 Resources.GraphQL.Mod_Links,
-                resolve: (context) => context.Source.Links);
+                resolve: (context) => context.Source!.Links);
 
             _ = Field<StringGraphType>(
                 "downloadLink",
                 Resources.GraphQL.Mod_DownloadLink,
-                resolve: context => context.Source.DownloadLink.ToString()
+                resolve: context => context.Source!.DownloadLink.ToString()
             );
 
             foreach (var graph in customGraphs)

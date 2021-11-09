@@ -42,6 +42,7 @@ namespace Hive.Tests.Graphing
             Assert.Null(result.Errors);
             Assert.NotNull(result.Data);
             var execution = Assert.IsType<RootExecutionNode>(result.Data);
+            TestHelpers.AssertNotNull(execution.SubFields);
             Assert.NotEmpty(execution.SubFields);
             Assert.Equal("mod", execution.SubFields[0].Name);
             var mod = Assert.IsType<Mod>(execution.SubFields[0].Result);
@@ -73,6 +74,7 @@ namespace Hive.Tests.Graphing
             Assert.NotNull(result.Data);
             Assert.IsType<RootExecutionNode>(result.Data);
             var execution = (result.Data as RootExecutionNode)!;
+            TestHelpers.AssertNotNull(execution.SubFields);
             Assert.NotEmpty(execution.SubFields);
             Assert.Equal("mod", execution.SubFields[0].Name);
             Assert.IsType<Mod>(execution.SubFields[0].Result);
