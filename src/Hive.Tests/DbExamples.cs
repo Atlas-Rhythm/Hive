@@ -16,14 +16,14 @@ namespace Hive.Tests
         {
             GenericUsers = new Dictionary<string, User>
             {
-                { "Eris", new User { Username = "Eris" } },
-                { "Auros", new User { Username = "Auros" } },
-                { "DaNike", new User { Username = "DaNike" } },
-                { "Umbranox", new User { Username = "Umbranox" } },
-                { "Caeden117", new User { Username = "Caeden117" } },
-                { "monkeymanboy", new User { Username = "monkeymanboy" } },
-                { "Toni Macaroni", new User { Username = "Toni Macaroni" } },
-                { "raftario", new User { Username = "raftario best modder" } },
+                { "Eris", new User { Username = "Eris", AlternativeId = "1" } },
+                { "Auros", new User { Username = "Auros", AlternativeId = "2" } },
+                { "DaNike", new User { Username = "DaNike", AlternativeId = "3" } },
+                { "Umbranox", new User { Username = "Umbranox", AlternativeId = "4" } },
+                { "Caeden117", new User { Username = "Caeden117", AlternativeId = "5" } },
+                { "monkeymanboy", new User { Username = "monkeymanboy", AlternativeId = "6" } },
+                { "Toni Macaroni", new User { Username = "Toni Macaroni", AlternativeId = "7" } },
+                { "raftario", new User { Username = "raftario best modder", AlternativeId = "8" } },
             };
 
             GenericChannels = new List<Channel>

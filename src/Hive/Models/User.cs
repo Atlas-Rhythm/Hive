@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
@@ -29,6 +30,7 @@ namespace Hive.Models
         /// Note that usernames are NOT length restricted by default in Hive.
         /// If you wish to restrict a username's length, <see cref="IUserPlugin.AllowUsername(string)"/>
         /// </summary>
+        [Key]
         public string Username { get; set; } = null!;
 
         /// <summary>
@@ -36,7 +38,6 @@ namespace Hive.Models
         /// In Auth0's case, this would be the auth0 unique ID, which would then be mappable to this particular username/user structure.
         /// Note that a given user's <see cref="AlternativeId"/> cannot be changed once the user has been created and tracked.
         /// </summary>
-        [Key]
         public string AlternativeId { get; set; } = null!;
 
         /// <summary>
@@ -49,6 +50,19 @@ namespace Hive.Models
         public ArbitraryAdditionalData AdditionalData { get; set; } = new();
 
         /// <summary>
+        /// A list of all the mods that the user has uploaded.
+        /// </summary>
+        public IList<Mod> Uploaded { get; set; } = new List<Mod>();
+        /// <summary>
+        /// A list of all the mods that the user has authored.
+        /// </summary>
+        public IList<Mod> Authored { get; set; } = new List<Mod>();
+        /// <summary>
+        /// A list of all the mods that the user has contriubted to.
+        /// </summary>
+        public IList<Mod> ContributedTo { get; set; } = new List<Mod>();
+
+        /// <summary>
         /// Configures for EF
         /// </summary>
         /// <param name="b"></param>
@@ -59,6 +73,8 @@ namespace Hive.Models
             _ = b.Entity<User>()
                 .HasIndex(u => u.Username)
                 .IsUnique();
+            _ = b.Entity<User>()
+                .HasIndex(u => u.AlternativeId);
         }
     }
 }

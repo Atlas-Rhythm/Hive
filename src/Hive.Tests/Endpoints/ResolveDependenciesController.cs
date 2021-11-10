@@ -300,7 +300,7 @@ namespace Hive.Tests.Endpoints
                 Version = new Versioning.Version(1, 0, 0),
                 UploadedAt = new Instant(),
                 EditedAt = null,
-                Uploader = new User() { Username = "Billy bob joe" },
+                Uploader = new User() { Username = "Billy bob joe", AlternativeId = "bbj altid" },
                 Channel = DefaultChannel,
                 DownloadLink = new Uri("https://www.github.com/Atlas-Rhythm/Hive"),
                 Dependencies = dependencies ?? new List<ModReference>(),

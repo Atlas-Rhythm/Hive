@@ -383,6 +383,7 @@ namespace Hive.Tests.Endpoints
 
         // I need to set up a "proper" Mod object so that the controller won't throw a fit
         // from (understandably) having missing data.
+        private static readonly User DummyUser = new() { Username = "Billy bob joe", AlternativeId = "bbj altid" };
         private static Mod GetPlaceholderMod(string name, string channel, Versioning.Version? version = null)
         {
             var mod = new Mod()
@@ -391,7 +392,7 @@ namespace Hive.Tests.Endpoints
                 Version = version ?? new Versioning.Version(1, 0, 0),
                 UploadedAt = new Instant(),
                 EditedAt = null,
-                Uploader = new User() { Username = "Billy bob joe" },
+                Uploader = DummyUser,
                 Channel = defaultChannels.First(c => c.Name == channel),
                 DownloadLink = new Uri("https://www.github.com/Atlas-Rhythm/Hive")
             };

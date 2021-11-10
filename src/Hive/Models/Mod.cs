@@ -178,14 +178,16 @@ namespace Hive.Models
                 .HasIndex(m => new { m.ReadableID, m.Version })
                 .IsUnique();
             _ = b.Entity<Mod>()
-                .Property(m => m.Uploader)
-                .IsValidUser();
+                .HasOne(m => m.Uploader)
+                .WithMany(u => u.Uploaded);
             _ = b.Entity<Mod>()
-                .Property(m => m.Authors)
-                .IsValidUsers();
+                .HasMany(m => m.Authors)
+                .WithMany(u => u.Authored)
+                .UsingEntity(b => { });
             _ = b.Entity<Mod>()
-                .Property(m => m.Contributors)
-                .IsValidUsers();
+                .HasMany(m => m.Contributors)
+                .WithMany(u => u.ContributedTo)
+                .UsingEntity(b => { });
         }
     }
 
