@@ -10,10 +10,6 @@ namespace Hive.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_Users",
-                table: "Users");
-
             migrationBuilder.DropColumn(
                 name: "Authors",
                 table: "Mods");
@@ -25,7 +21,7 @@ namespace Hive.Migrations
             migrationBuilder.RenameColumn(
                 name: "Uploader",
                 table: "Mods",
-                newName: "UploaderUsername");
+                newName: "UploaderAlternativeId");
 
             migrationBuilder.AlterColumn<Instant>(
                 name: "UploadedAt",
@@ -52,21 +48,16 @@ namespace Hive.Migrations
                 oldClrType: typeof(Instant),
                 oldType: "timestamp without time zone");
 
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_Users",
-                table: "Users",
-                column: "Username");
-
             migrationBuilder.CreateTable(
                 name: "ModUser",
                 columns: table => new
                 {
                     AuthoredId = table.Column<Guid>(type: "uuid", nullable: false),
-                    AuthorsUsername = table.Column<string>(type: "text", nullable: false)
+                    AuthorsAlternativeId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ModUser", x => new { x.AuthoredId, x.AuthorsUsername });
+                    table.PrimaryKey("PK_ModUser", x => new { x.AuthoredId, x.AuthorsAlternativeId });
                     table.ForeignKey(
                         name: "FK_ModUser_Mods_AuthoredId",
                         column: x => x.AuthoredId,
@@ -74,10 +65,10 @@ namespace Hive.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ModUser_Users_AuthorsUsername",
-                        column: x => x.AuthorsUsername,
+                        name: "FK_ModUser_Users_AuthorsAlternativeId",
+                        column: x => x.AuthorsAlternativeId,
                         principalTable: "Users",
-                        principalColumn: "Username",
+                        principalColumn: "AlternativeId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -86,11 +77,11 @@ namespace Hive.Migrations
                 columns: table => new
                 {
                     ContributedToId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContributorsUsername = table.Column<string>(type: "text", nullable: false)
+                    ContributorsAlternativeId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ModUser1", x => new { x.ContributedToId, x.ContributorsUsername });
+                    table.PrimaryKey("PK_ModUser1", x => new { x.ContributedToId, x.ContributorsAlternativeId });
                     table.ForeignKey(
                         name: "FK_ModUser1_Mods_ContributedToId",
                         column: x => x.ContributedToId,
@@ -98,10 +89,10 @@ namespace Hive.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ModUser1_Users_ContributorsUsername",
-                        column: x => x.ContributorsUsername,
+                        name: "FK_ModUser1_Users_ContributorsAlternativeId",
+                        column: x => x.ContributorsAlternativeId,
                         principalTable: "Users",
-                        principalColumn: "Username",
+                        principalColumn: "AlternativeId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -111,33 +102,33 @@ namespace Hive.Migrations
                 column: "AlternativeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Mods_UploaderUsername",
+                name: "IX_Mods_UploaderAlternativeId",
                 table: "Mods",
-                column: "UploaderUsername");
+                column: "UploaderAlternativeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ModUser_AuthorsUsername",
+                name: "IX_ModUser_AuthorsAlternativeId",
                 table: "ModUser",
-                column: "AuthorsUsername");
+                column: "AuthorsAlternativeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ModUser1_ContributorsUsername",
+                name: "IX_ModUser1_ContributorsAlternativeId",
                 table: "ModUser1",
-                column: "ContributorsUsername");
+                column: "ContributorsAlternativeId");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_Mods_Users_UploaderUsername",
+                name: "FK_Mods_Users_UploaderAlternativeId",
                 table: "Mods",
-                column: "UploaderUsername",
+                column: "UploaderAlternativeId",
                 principalTable: "Users",
-                principalColumn: "Username",
+                principalColumn: "AlternativeId",
                 onDelete: ReferentialAction.Cascade);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_Mods_Users_UploaderUsername",
+                name: "FK_Mods_Users_UploaderAlternativeId",
                 table: "Mods");
 
             migrationBuilder.DropTable(
@@ -146,20 +137,16 @@ namespace Hive.Migrations
             migrationBuilder.DropTable(
                 name: "ModUser1");
 
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_Users",
-                table: "Users");
-
             migrationBuilder.DropIndex(
                 name: "IX_Users_AlternativeId",
                 table: "Users");
 
             migrationBuilder.DropIndex(
-                name: "IX_Mods_UploaderUsername",
+                name: "IX_Mods_UploaderAlternativeId",
                 table: "Mods");
 
             migrationBuilder.RenameColumn(
-                name: "UploaderUsername",
+                name: "UploaderAlternativeId",
                 table: "Mods",
                 newName: "Uploader");
 
@@ -201,11 +188,6 @@ namespace Hive.Migrations
                 nullable: false,
                 oldClrType: typeof(Instant),
                 oldType: "timestamp with time zone");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_Users",
-                table: "Users",
-                column: "AlternativeId");
         }
     }
 }

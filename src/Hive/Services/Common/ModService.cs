@@ -279,6 +279,7 @@ namespace Hive.Services.Common
 
                 // With "RECENT", we group each mod by their ID, and grab the most recently uploaded version.
                 case "RECENT":
+                    // TODO: this can *absolutely* be done in a DB query
                     filteredMods = filteredMods
                         .GroupBy(m => m.ReadableID)
                         .Select(g => g.OrderByDescending(m => m.UploadedAt).First())

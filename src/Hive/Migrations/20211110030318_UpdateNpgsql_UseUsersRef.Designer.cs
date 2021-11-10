@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Hive.Migrations
 {
     [DbContext(typeof(HiveContext))]
-    [Migration("20211109235417_UpdateNpgsql_UseUsersRef")]
+    [Migration("20211110030318_UpdateNpgsql_UseUsersRef")]
     partial class UpdateNpgsql_UseUsersRef
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -153,7 +153,7 @@ namespace Hive.Migrations
                     b.Property<Instant>("UploadedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("UploaderUsername")
+                    b.Property<string>("UploaderAlternativeId")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -165,7 +165,7 @@ namespace Hive.Migrations
 
                     b.HasIndex("ChannelName");
 
-                    b.HasIndex("UploaderUsername");
+                    b.HasIndex("UploaderAlternativeId");
 
                     b.HasIndex("ReadableID", "Version")
                         .IsUnique();
@@ -175,18 +175,18 @@ namespace Hive.Migrations
 
             modelBuilder.Entity("Hive.Models.User", b =>
                 {
-                    b.Property<string>("Username")
+                    b.Property<string>("AlternativeId")
                         .HasColumnType("text");
 
                     b.Property<ArbitraryAdditionalData>("AdditionalData")
                         .IsRequired()
                         .HasColumnType("jsonb");
 
-                    b.Property<string>("AlternativeId")
+                    b.Property<string>("Username")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("Username");
+                    b.HasKey("AlternativeId");
 
                     b.HasIndex("AlternativeId");
 
@@ -201,12 +201,12 @@ namespace Hive.Migrations
                     b.Property<Guid>("AuthoredId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("AuthorsUsername")
+                    b.Property<string>("AuthorsAlternativeId")
                         .HasColumnType("text");
 
-                    b.HasKey("AuthoredId", "AuthorsUsername");
+                    b.HasKey("AuthoredId", "AuthorsAlternativeId");
 
-                    b.HasIndex("AuthorsUsername");
+                    b.HasIndex("AuthorsAlternativeId");
 
                     b.ToTable("ModUser");
                 });
@@ -216,12 +216,12 @@ namespace Hive.Migrations
                     b.Property<Guid>("ContributedToId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContributorsUsername")
+                    b.Property<string>("ContributorsAlternativeId")
                         .HasColumnType("text");
 
-                    b.HasKey("ContributedToId", "ContributorsUsername");
+                    b.HasKey("ContributedToId", "ContributorsAlternativeId");
 
-                    b.HasIndex("ContributorsUsername");
+                    b.HasIndex("ContributorsAlternativeId");
 
                     b.ToTable("ModUser1");
                 });
@@ -260,7 +260,7 @@ namespace Hive.Migrations
 
                     b.HasOne("Hive.Models.User", "Uploader")
                         .WithMany("Uploaded")
-                        .HasForeignKey("UploaderUsername")
+                        .HasForeignKey("UploaderAlternativeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -279,7 +279,7 @@ namespace Hive.Migrations
 
                     b.HasOne("Hive.Models.User", null)
                         .WithMany()
-                        .HasForeignKey("AuthorsUsername")
+                        .HasForeignKey("AuthorsAlternativeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -294,7 +294,7 @@ namespace Hive.Migrations
 
                     b.HasOne("Hive.Models.User", null)
                         .WithMany()
-                        .HasForeignKey("ContributorsUsername")
+                        .HasForeignKey("ContributorsAlternativeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
