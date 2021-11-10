@@ -78,7 +78,7 @@ namespace Hive.Tests
         internal static PartialContext PopulatedPartialContext()
         {
             var db = new DbExamples();
-            return new PartialContext { Channels = db.GenericChannels, Mods = db.GenericMods };
+            return new PartialContext { Users = db.GenericUsers.Values, Channels = db.GenericChannels, Mods = db.GenericMods };
         }
     }
 }

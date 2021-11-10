@@ -383,9 +383,11 @@ namespace Hive.Tests.Endpoints
 
         // I need to set up a "proper" Mod object so that the controller won't throw a fit
         // from (understandably) having missing data.
-        private static readonly User DummyUser = new() { Username = "Billy bob joe", AlternativeId = "bbj altid" };
+        private static User DummyUser = null!;
         private static Mod GetPlaceholderMod(string name, string channel, Versioning.Version? version = null)
         {
+            // We need this because GetPlaceholderMod is called before DummyUser is initialized
+            DummyUser ??= new() { Username = "Billy bob joe", AlternativeId = "bbj altid" };
             var mod = new Mod()
             {
                 ReadableID = name,
@@ -405,7 +407,7 @@ namespace Hive.Tests.Endpoints
                 Description = "if you read this, william gay"
             };
 
-            mod.Localizations.Add(info);
+            //mod.Localizations.Add(info);
 
             return mod;
         }

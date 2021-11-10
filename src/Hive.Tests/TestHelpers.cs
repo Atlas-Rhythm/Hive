@@ -27,6 +27,7 @@ namespace Hive.Tests
                 dbContext.ModLocalizations.AddRange(context.ModLocalizations);
             if (context.Mods is not null)
                 dbContext.Mods.AddRange(context.Mods);
+            dbContext.Users.AddRange(context.AllUsers);
             dbContext.SaveChanges();
         }
 
