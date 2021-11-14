@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FastExpressionCompiler" Version="3.0.0-preview-07" />
+    <PackageReference Include="FastExpressionCompiler" Version="3.2.1" />
     <PackageReference Include="MathExpr" Version="0.5.0" />
-    <PackageReference Include="NodaTime" Version="3.0.5" />
+    <PackageReference Include="NodaTime" Version="3.0.9" />
   </ItemGroup>
 
   <ItemGroup>

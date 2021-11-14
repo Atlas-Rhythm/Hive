@@ -47,7 +47,7 @@ namespace Hive.Utilities
                 if (!result)
                 {
                     // we finished evaluating the enumerator, so lets dispose it eagerly
-                    Interlocked.Exchange<IEnumerator<T>?>(ref srcEnum, null)?.Dispose();
+                    Interlocked.Exchange(ref srcEnum, null)?.Dispose();
                     completed = true;
                 }
             }

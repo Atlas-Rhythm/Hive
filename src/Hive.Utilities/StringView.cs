@@ -418,6 +418,15 @@ namespace Hive.Utilities
         public override string ToString()
             => BaseString?.Substring(Start, Length) ?? "";
 
+#if !NETSTANDARD2_0
+        /// <summary>
+        /// Gets the value of this <see cref="StringView"/> as a <see cref="ReadOnlySpan{T}"/>.
+        /// </summary>
+        /// <returns>A <see cref="ReadOnlySpan{T}"/> containing the value of this <see cref="StringView"/>.</returns>
+        public ReadOnlySpan<char> AsSpan()
+            => BaseString is not null ? BaseString.AsSpan().Slice(Start, Length) : "";
+#endif
+
         /// <summary>
         /// Gets an enumerator for the characters in this view.
         /// </summary>

@@ -123,8 +123,8 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(false)", defaultPlugins);
             var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
 
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
+            TestHelpers.AssertNotNull(res); // Result must not be null.
+            TestHelpers.AssertNotNull(res.Result);
             TestHelpers.AssertForbid(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
@@ -149,8 +149,8 @@ namespace Hive.Tests.Endpoints
             });
             var res = await controller.GetSpecificMod("Counters+"); // We will look for Counters+, which is in Beta.
 
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
+            TestHelpers.AssertNotNull(res); // Result must not be null.
+            TestHelpers.AssertNotNull(res.Result);
             TestHelpers.AssertForbid(res.Result); // The above endpoint must be fail, since Counters+ is in Beta.
 
             res = await controller.GetSpecificMod("SongCore"); // Next, we will look for SongCore, which is in Release.
@@ -193,8 +193,8 @@ namespace Hive.Tests.Endpoints
             var controller = CreateController("next(false)", defaultPlugins);
             var res = await controller.GetSpecificMod("BSIPA"); // We will look for BSIPA.
 
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
+            TestHelpers.AssertNotNull(res); // Result must not be null.
+            TestHelpers.AssertNotNull(res.Result);
             TestHelpers.AssertForbid(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
@@ -219,8 +219,8 @@ namespace Hive.Tests.Endpoints
             });
             var res = await controller.GetSpecificMod("Counters+"); // We will look for Counters+, which is in Beta.
 
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
+            TestHelpers.AssertNotNull(res); // Result must not be null.
+            TestHelpers.AssertNotNull(res.Result);
             TestHelpers.AssertForbid(res.Result); // The above endpoint must be fail, since Counters+ is in Beta.
 
             res = await controller.GetSpecificMod("BSIPA"); // Next, we will look for SongCore, which is in Release.
@@ -344,8 +344,8 @@ namespace Hive.Tests.Endpoints
 
             var res = await controller.MoveModToChannel("Public", identifier);
 
-            Assert.NotNull(res); // Result must not be null.
-            Assert.NotNull(res.Result);
+            TestHelpers.AssertNotNull(res); // Result must not be null.
+            TestHelpers.AssertNotNull(res.Result);
             TestHelpers.AssertForbid(res.Result); // The above endpoint must fail due to the permission rule.
         }
 
@@ -383,15 +383,18 @@ namespace Hive.Tests.Endpoints
 
         // I need to set up a "proper" Mod object so that the controller won't throw a fit
         // from (understandably) having missing data.
+        private static User DummyUser = null!;
         private static Mod GetPlaceholderMod(string name, string channel, Versioning.Version? version = null)
         {
+            // We need this because GetPlaceholderMod is called before DummyUser is initialized
+            DummyUser ??= new() { Username = "Billy bob joe", AlternativeId = "bbj altid" };
             var mod = new Mod()
             {
                 ReadableID = name,
                 Version = version ?? new Versioning.Version(1, 0, 0),
                 UploadedAt = new Instant(),
                 EditedAt = null,
-                Uploader = new User() { Username = "Billy bob joe" },
+                Uploader = DummyUser,
                 Channel = defaultChannels.First(c => c.Name == channel),
                 DownloadLink = new Uri("https://www.github.com/Atlas-Rhythm/Hive")
             };
@@ -404,7 +407,7 @@ namespace Hive.Tests.Endpoints
                 Description = "if you read this, william gay"
             };
 
-            mod.Localizations.Add(info);
+            //mod.Localizations.Add(info);
 
             return mod;
         }

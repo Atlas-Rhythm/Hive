@@ -114,7 +114,7 @@ namespace Hive.Tests.Endpoints
                 Dependencies = ImmutableList.Create(new ModReference("bsipa", new VersionRange("^4.0.0"))),
             };
 
-            var jsonString = JsonSerializer.Serialize(data, new()
+            var jsonString = JsonSerializer.Serialize(data, new JsonSerializerOptions()
             {
                 // We need to explicitly include fields for some ValueTuples to serialize properly
                 IncludeFields = true
@@ -156,7 +156,7 @@ namespace Hive.Tests.Endpoints
             container.RegisterInstance(plugins);
             container.Register<Controllers.UploadController>(Reuse.Scoped);
             container.Register<ICdnProvider, MemoryTestCdn>(Reuse.Singleton);
-            container.RegisterInstance<SymmetricAlgorithm>(Rijndael.Create());
+            container.RegisterInstance<SymmetricAlgorithm>(Aes.Create());
             container.RegisterInstance<IConfiguration>(new ConfigurationBuilder().Build());
 
             return container;

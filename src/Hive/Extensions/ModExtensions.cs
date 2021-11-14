@@ -46,6 +46,7 @@ namespace Hive.Extensions
             // We do not need to explicitly search for the System culture since it was already added to the end of this list.
             foreach (var preferredLanguage in preferredLanguages)
             {
+                // TODO: also try to do this filtering on the DB
                 var localizedInfos = localizations.Where(x => x.Language == preferredLanguage);
                 if (localizedInfos.Any())
                 {

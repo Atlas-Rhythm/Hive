@@ -9,5 +9,12 @@
       <SdkGottenProperty>$(%(_SdkPropertyToGet.Identity))</SdkGottenProperty>
     </PropertyGroup>
   </Target>
+
+  <Target Name="SdkPrintProperty">
+    <MSBuild Targets="SdkGetProperty" Projects="$(MSBuildProjectFullPath)">
+      <Output PropertyName="_ReturnedProperty" TaskParameter="TargetOutputs" />
+    </MSBuild>
+    <Message Importance="high" Text="$(_ReturnedProperty)" />
+  </Target>
   
 </Project>

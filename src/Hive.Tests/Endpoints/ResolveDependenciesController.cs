@@ -131,7 +131,7 @@ namespace Hive.Tests.Endpoints
 
             var res = await controller.ResolveDependencies(input);
 
-            Assert.NotNull(res.Result); // Make sure we got a request back
+            AssertNotNull(res.Result); // Make sure we got a request back
             AssertForbid(res.Result); // This endpoint must fail at the permissions check.
         }
 
@@ -145,7 +145,7 @@ namespace Hive.Tests.Endpoints
 
             var res = await controller.ResolveDependencies(input);
 
-            Assert.NotNull(res.Result); // Make sure we got a request back
+            AssertNotNull(res.Result); // Make sure we got a request back
             AssertForbid(res.Result); // This endpoint must fail at the plugin check.
         }
 
@@ -292,15 +292,17 @@ namespace Hive.Tests.Endpoints
 
         // I need to set up a "proper" Mod object so that the controller won't throw a fit
         // from (understandably) having missing data.
+        private static User DummyUser = null!;
         private static Mod GetPlaceholderMod(string name, IList<ModReference> dependencies = null!, IList<ModReference> conflicts = null!)
         {
+            DummyUser ??= new User() { Username = "Billy bob joe", AlternativeId = "bbj altid" };
             var mod = new Mod()
             {
                 ReadableID = name,
                 Version = new Versioning.Version(1, 0, 0),
                 UploadedAt = new Instant(),
                 EditedAt = null,
-                Uploader = new User() { Username = "Billy bob joe" },
+                Uploader = DummyUser,
                 Channel = DefaultChannel,
                 DownloadLink = new Uri("https://www.github.com/Atlas-Rhythm/Hive"),
                 Dependencies = dependencies ?? new List<ModReference>(),

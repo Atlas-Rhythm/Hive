@@ -44,9 +44,9 @@ namespace Hive.Tests.Endpoints
 
             var controller = CreateController("next(true)", plugin.Object);
             var res = await controller.GetChannels();
-            Assert.NotNull(res);
+            AssertNotNull(res);
             // Should forbid based off of a plugin failure.
-            Assert.NotNull(res.Result);
+            AssertNotNull(res.Result);
             AssertForbid(res.Result);
         }
 

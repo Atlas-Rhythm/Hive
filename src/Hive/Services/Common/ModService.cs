@@ -279,6 +279,7 @@ namespace Hive.Services.Common
 
                 // With "RECENT", we group each mod by their ID, and grab the most recently uploaded version.
                 case "RECENT":
+                    // TODO: this can *absolutely* be done in a DB query
                     filteredMods = filteredMods
                         .GroupBy(m => m.ReadableID)
                         .Select(g => g.OrderByDescending(m => m.UploadedAt).First())
@@ -301,6 +302,15 @@ namespace Hive.Services.Common
         // Abstracts the construction of a Mod access query with necessary Include calls to a helper function
         // Due to an EF issue, non-tracking here does not work. Instead we must use tracking EVEN IF we don't want to perform writes.
         // Notably, non-tracking even WITH identity does not work.
-        private IQueryable<Mod> CreateModQuery() => context.Mods.AsTracking().Include(m => m.Localizations).Include(m => m.Channel).Include(m => m.SupportedVersions).AsSplitQuery();
+        private IQueryable<Mod> CreateModQuery()
+            => context.Mods.AsTracking()
+            // TODO: only Include the aspects which we need at the time
+            .Include(m => m.Localizations)
+            .Include(m => m.Channel)
+            .Include(m => m.SupportedVersions)
+            .Include(m => m.Uploader)
+            .Include(m => m.Authors)
+            .Include(m => m.Contributors)
+            .AsSingleQuery();
     }
 }

@@ -76,13 +76,13 @@ namespace Hive.Graphing.Types
                 = ctx.RequestServices.GetRequiredServices<ChannelService, IHttpContextAccessor, IProxyAuthenticationService>();
 
             var user = await http.HttpContext!.GetHiveUser(authService).ConfigureAwait(false);
-            var queryResult = await channelService.GetChannel(ctx.GetArgument<string>("id"), user).ConfigureAwait(false);
+            var queryResult = await channelService.GetChannel(ctx.GetArgument<string>("id")!, user).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
             return queryResult.Value;
         }
 
-        private async Task<IEnumerable<Channel>> GetAllChannels(IResolveFieldContext<object> ctx)
+        private async Task<IEnumerable<Channel>?> GetAllChannels(IResolveFieldContext<object> ctx)
         {
             (var channelService, var http, var authService)
                 = ctx.RequestServices.GetRequiredServices<ChannelService, IHttpContextAccessor, IProxyAuthenticationService>();
@@ -100,13 +100,13 @@ namespace Hive.Graphing.Types
                 = ctx.RequestServices.GetRequiredServices<ModService, IHttpContextAccessor, IProxyAuthenticationService>();
 
             var user = await http.HttpContext!.GetHiveUser(authService).ConfigureAwait(false);
-            var queryResult = await modService.GetMod(user, ctx.GetArgument<string>("id")).ConfigureAwait(false);
+            var queryResult = await modService.GetMod(user, ctx.GetArgument<string>("id")!).ConfigureAwait(false);
 
             ctx.Analyze(queryResult);
             return queryResult.Value;
         }
 
-        private async Task<IEnumerable<Mod>> GetAllMods(IResolveFieldContext<object> ctx)
+        private async Task<IEnumerable<Mod>?> GetAllMods(IResolveFieldContext<object> ctx)
         {
             (var modService, var http, var authService)
                 = ctx.RequestServices.GetRequiredServices<ModService, IHttpContextAccessor, IProxyAuthenticationService>();
@@ -135,7 +135,7 @@ namespace Hive.Graphing.Types
             return queryResult.Value?.FirstOrDefault(v => version == v.Name);
         }
 
-        private async Task<IEnumerable<GameVersion?>> GetAllGameVersions(IResolveFieldContext<object> ctx)
+        private async Task<IEnumerable<GameVersion?>?> GetAllGameVersions(IResolveFieldContext<object> ctx)
         {
             (var versionService, var http, var authService)
                 = ctx.RequestServices.GetRequiredServices<GameVersionService, IHttpContextAccessor, IProxyAuthenticationService>();

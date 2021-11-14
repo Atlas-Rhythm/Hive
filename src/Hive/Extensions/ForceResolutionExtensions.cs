@@ -45,7 +45,7 @@ namespace Hive.Extensions
         /// <param name="dbset"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static Task<T> FirstOrDefaultAsync<T>(this DbSet<T> dbset, CancellationToken token = default)
+        public static Task<T?> FirstOrDefaultAsync<T>(this DbSet<T> dbset, CancellationToken token = default)
             where T : class
             => ((IQueryable<T>)dbset).FirstOrDefaultAsync(token);
 
@@ -57,7 +57,7 @@ namespace Hive.Extensions
         /// <param name="expr"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static Task<T> FirstOrDefaultAsync<T>(this DbSet<T> dbset, Expression<Func<T, bool>> expr, CancellationToken token = default)
+        public static Task<T?> FirstOrDefaultAsync<T>(this DbSet<T> dbset, Expression<Func<T, bool>> expr, CancellationToken token = default)
             where T : class
             => ((IQueryable<T>)dbset).FirstOrDefaultAsync(expr, token);
     }

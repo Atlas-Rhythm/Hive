@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
@@ -49,6 +50,19 @@ namespace Hive.Models
         public ArbitraryAdditionalData AdditionalData { get; set; } = new();
 
         /// <summary>
+        /// A list of all the mods that the user has uploaded.
+        /// </summary>
+        public IList<Mod> Uploaded { get; set; } = new List<Mod>();
+        /// <summary>
+        /// A list of all the mods that the user has authored.
+        /// </summary>
+        public IList<Mod> Authored { get; set; } = new List<Mod>();
+        /// <summary>
+        /// A list of all the mods that the user has contriubted to.
+        /// </summary>
+        public IList<Mod> ContributedTo { get; set; } = new List<Mod>();
+
+        /// <summary>
         /// Configures for EF
         /// </summary>
         /// <param name="b"></param>
@@ -59,6 +73,8 @@ namespace Hive.Models
             _ = b.Entity<User>()
                 .HasIndex(u => u.Username)
                 .IsUnique();
+            _ = b.Entity<User>()
+                .HasIndex(u => u.AlternativeId);
         }
     }
 }

@@ -60,6 +60,28 @@ namespace Hive.Versioning
             this.buildIds = buildIds;
         }
 
+#if !NETSTANDARD2_0
+        /// <summary>
+        /// Parses and creates a version object from a sequence of characters.
+        /// </summary>
+        /// <remarks>
+        /// This is roughly equivalent to <see cref="Parse(StringPart)"/>.
+        /// </remarks>
+        /// <param name="text">The sequence of characters to parse as a version.</param>
+        /// <exception cref="ArgumentException">Thrown when the input is not a valid SemVer version.</exception>
+        public Version(StringView text) : this(text.AsSpan()) { }
+
+        /// <summary>
+        /// Parses and creates a version object from a sequence of characters.
+        /// </summary>
+        /// <remarks>
+        /// This is roughly equivalent to <see cref="Parse(StringPart)"/>.
+        /// </remarks>
+        /// <param name="text">The sequence of characters to parse as a version.</param>
+        /// <exception cref="ArgumentException">Thrown when the input is not a valid SemVer version.</exception>
+        public Version(string text) : this(text.AsSpan()) { }
+#endif
+
         /// <summary>
         /// Creates a version object from the component parts of the version.
         /// </summary>
@@ -285,7 +307,7 @@ namespace Hive.Versioning
         /// <param name="other">The version to compare to.</param>
         /// <returns><see langword="true"/> if the versions are equal, <see langword="false"/> otherwise.</returns>
         public bool Equals(Version? other)
-            => !(other is null)
+            => other is not null
             && Major == other.Major && Minor == other.Minor && Patch == other.Patch
             && prereleaseIds.Length == other.prereleaseIds.Length
             && prereleaseIds.Zip(other.prereleaseIds, (a, b) => a == b).All(a => a);
@@ -360,6 +382,64 @@ namespace Hive.Versioning
         }
 
         #region Parse methods
+
+        // Provide compatibiliry overrides with the netstandard2.0 methods
+        // We also need to provide string overloads so that strings don't get 
+        //   ambiguous match errors. I wish there was a way to satisfy the checker
+        //   without doing all this.
+#if !NETSTANDARD2_0
+        /// <summary>
+        /// Parses a sequence of characters into a <see cref="Version"/> object.
+        /// </summary>
+        /// <param name="text">The sequence of characters to parse.</param>
+        /// <returns>The parsed version object.</returns>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid SemVer version.</exception>
+        public static Version Parse(StringView text) => Parse(text.AsSpan());
+        /// <summary>
+        /// Parses a sequence of characters into a <see cref="Version"/> object.
+        /// </summary>
+        /// <param name="text">The sequence of characters to parse.</param>
+        /// <returns>The parsed version object.</returns>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="text"/> is not a valid SemVer version.</exception>
+        public static Version Parse(string text) => Parse(text.AsSpan());
+        /// <summary>
+        /// Attempts to parse a sequence of characters into a version object.
+        /// </summary>
+        /// <param name="text">The sequence of characters to parse.</param>
+        /// <param name="version">The parsed version, if the input is valid.</param>
+        /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
+        public static bool TryParse(StringView text, [MaybeNullWhen(false)] out Version version)
+            => TryParse(text.AsSpan(), out version);
+        /// <summary>
+        /// Attempts to parse a sequence of characters into a version object.
+        /// </summary>
+        /// <param name="text">The sequence of characters to parse.</param>
+        /// <param name="version">The parsed version, if the input is valid.</param>
+        /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
+        public static bool TryParse(string text, [MaybeNullWhen(false)] out Version version)
+            => TryParse(text.AsSpan(), out version);
+        /// <summary>
+        /// Attempts to parse a sequence of characters into a version object, optionally recording error information.
+        /// </summary>
+        /// <param name="errors">The error state object to write error information to.</param>
+        /// <param name="text">The sequence of characters to parse.</param>
+        /// <param name="version">The parsed version, if the input is valid.</param>
+        /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
+        public static bool TryParse(ref ErrorState errors, StringView text, [MaybeNullWhen(false)] out Version version)
+            => TryParse(ref errors, text.AsSpan(), out version);
+        /// <summary>
+        /// Attempts to parse a sequence of characters into a version object, optionally recording error information.
+        /// </summary>
+        /// <param name="errors">The error state object to write error information to.</param>
+        /// <param name="text">The sequence of characters to parse.</param>
+        /// <param name="version">The parsed version, if the input is valid.</param>
+        /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
+        public static bool TryParse(ref ErrorState errors, string text, [MaybeNullWhen(false)] out Version version)
+            => TryParse(ref errors, text.AsSpan(), out version);
+
+        // We also intentionally leave out the overloads which take the text byref, as we cannot do type conversions.
+#endif
+
         /// <summary>
         /// Parses a sequence of characters into a <see cref="Version"/> object.
         /// </summary>

@@ -5,6 +5,7 @@
   
   <PropertyGroup>
     <NeutralLanguage>en-US</NeutralLanguage>
+    <EnablePackageValidation>true</EnablePackageValidation>
     
     <IsRoslynExtension Condition="'$(IsRoslynExtension)' == ''">false</IsRoslynExtension>
     <IsRoslynExtension Condition="'$(IsCodeGen)' == 'true' or '$(IsAnalyzer)' == 'true'">true</IsRoslynExtension>

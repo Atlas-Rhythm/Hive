@@ -7,7 +7,6 @@ using Hive.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Xunit;
 using Xunit.Abstractions;
 using static Hive.Tests.TestHelpers;

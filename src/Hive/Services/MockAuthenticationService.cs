@@ -24,8 +24,8 @@ namespace Hive.Services
         public MockAuthenticationService()
         {
             // Create dummy data for now
-            var user1 = new User { Username = "test" };
-            var user2 = new User { Username = "test2" };
+            var user1 = new User { Username = "test", AlternativeId = "test altid" };
+            var user2 = new User { Username = "test2", AlternativeId = "test2 altid" };
             Users.Add("Bearer: test", user1);
             Users.Add("Bearer: asdf", user2);
         }

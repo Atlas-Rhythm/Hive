@@ -10,7 +10,6 @@ namespace Hive.Utilities
     /// </summary>
     public static class Extensions
     {
-#if NETSTANDARD2_0
         /// <summary>
         /// Concatenates the strings of the provided array, using the specified separator between each string,
         /// then appends the result to the current instance of the string builder.
@@ -20,9 +19,14 @@ namespace Hive.Utilities
         /// the joined strings only if <paramref name="values"/> has more than one element.</param>
         /// <param name="values">An array that contains the strings to concatenate and append to the current instance of the string builder.</param>
         /// <returns>A reference to this instance after the append operation has completed.</returns>
+#if !NETSTANDARD2_0
+        [Obsolete("This should only be used as an extension method, and when targeting >standard2.0, you should use the " +
+            "actual StringBuilder member.")]
+#endif
         public static StringBuilder AppendJoin(this StringBuilder sb, string seperator, params string[] values)
         {
             if (sb is null) throw new ArgumentNullException(nameof(sb));
+            if (values is null) throw new ArgumentNullException(nameof(values));
 
             for (var i = 0; i < values.Length; i++)
             {
@@ -32,7 +36,6 @@ namespace Hive.Utilities
             }
             return sb;
         }
-#endif
 
         /// <summary>
         /// Appends a <see cref="StringView"/> to a <see cref="StringBuilder"/>.

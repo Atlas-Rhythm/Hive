@@ -11,8 +11,8 @@
     <HiveToolsDirectory>$(HiveRootDirectory)tools\</HiveToolsDirectory>
     <HiveSourceDirectory>$(HiveRootDirectory)src\</HiveSourceDirectory>
 
-    <RoslynVersion>3.10.0</RoslynVersion>
-    <MSBuildRequiredVersion>16.9.0</MSBuildRequiredVersion>
+    <RoslynVersion>4.0.0</RoslynVersion>
+    <MSBuildRequiredVersion>17.0.0</MSBuildRequiredVersion>
   </PropertyGroup>
 
   <Import Project="$(HiveToolsDirectory)SharedProps.props"/>
@@ -59,7 +59,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <!-- Work around https://github.com/coverlet-coverage/coverlet/issues/1084 -->
-    <PackageReference Include="coverlet.collector" Version="3.0.3-preview.4">
+    <PackageReference Include="coverlet.collector" Version="3.1.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

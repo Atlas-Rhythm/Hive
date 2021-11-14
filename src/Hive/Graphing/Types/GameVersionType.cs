@@ -27,7 +27,7 @@ namespace Hive.Graphing.Types
             _ = Field<StringGraphType>(
                 "creationTime",
                 Resources.GraphQL.GameVersion_CreationTime,
-                resolve: ctx => ctx.Source.CreationTime.ToString());
+                resolve: ctx => ctx.Source!.CreationTime.ToString());
 
             foreach (var graph in customGraphs)
                 graph.Configure(this);
