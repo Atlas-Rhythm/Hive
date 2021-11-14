@@ -219,7 +219,7 @@ namespace Hive.Services
             try
             {
                 // Should only have one matching user. If it has more than that, this will throw. Otherwise, will return null.
-                return await context.Users.Where(u => u.Username == userId).SingleOrDefaultAsync().ConfigureAwait(false);
+                return await context.Users.AsTracking().Where(u => u.Username == userId).SingleOrDefaultAsync().ConfigureAwait(false);
             }
             catch
             {
