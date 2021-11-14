@@ -23,7 +23,7 @@ WORKDIR "/src/src/Hive"
 RUN dotnet build "Hive.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "Hive.csproj" -c Release -o /app/publish --framework net5.0
+RUN dotnet publish "Hive.csproj" -c Release -o /app/publish --framework net6.0
 
 FROM base AS final
 WORKDIR /app
