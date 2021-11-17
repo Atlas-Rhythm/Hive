@@ -4,8 +4,6 @@
 
 /api/                               @sc2ad
 
-/tools/                             @nike4613
-
 /src/CodeGen/                       @nike4613
 /src/PluginSDK/                     @nike4613
 /src/Hive.Analyzers/                @nike4613
