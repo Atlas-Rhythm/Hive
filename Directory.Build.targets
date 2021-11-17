@@ -5,6 +5,6 @@
     <CodeGenTargetsFile>CodeGen\Hive.CodeGen\build\Hive.CodeGen.targets</CodeGenTargetsFile>
   </PropertyGroup>
 
-  <Import Project="tools\_Build.targets" />
+  <Import Project="$(MSBuildThisFileDirectory)tools\_Build.targets" />
 
 </Project>

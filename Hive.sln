@@ -22,6 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\dotnet-core.yml = .github\workflows\dotnet-core.yml
 		FCC_UpdateCoverlet.ps1 = FCC_UpdateCoverlet.ps1
 		NuGet.config = NuGet.config
+		NuGetInfo.props = NuGetInfo.props
 		README.md = README.md
 	EndProjectSection
 EndProject

@@ -3,7 +3,8 @@
 
   <PropertyGroup>
     <HiveSourceDirectory>$(MSBuildThisFileDirectory)..\..\</HiveSourceDirectory>
-    <HiveToolsDirectory>$(MSBuildThisFileDirectory)..\..\..\tools\</HiveToolsDirectory>
+    <HiveRootDirectory>$(HiveSourceDirectory)..\</HiveRootDirectory>
+    <HiveToolsDirectory>$(HiveRootDirectory)tools\</HiveToolsDirectory>
     <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
     <IncludeContentInPack>true</IncludeContentInPack>
     <IncludeBuildOutput>false</IncludeBuildOutput>
@@ -15,6 +16,7 @@
 
   <!-- This includes NuGet info -->
   <Import Project="$(HiveToolsDirectory)NuGetInfo.props" />
+  <Import Project="$(HiveRootDirectory)NuGetInfo.props"/>
   <!-- This includes output locations  -->
   <Import Project="$(HiveToolsDirectory)Artifacts.props" />
 
