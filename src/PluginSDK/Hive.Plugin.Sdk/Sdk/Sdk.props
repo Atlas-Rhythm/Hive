@@ -18,7 +18,7 @@
     <EnableHiveCodeGen Condition="'$(EnableHiveCodeGen)' == ''">true</EnableHiveCodeGen>
     <UseHiveSharedProperties Condition="'$(UseHiveSharedProperties)' == ''">true</UseHiveSharedProperties>
 
-    <TargetFramework Condition="'$(TargetFramework)' == '' and '$(TargetFrameworks)' == ''">net5.0</TargetFramework>
+    <TargetFramework Condition="'$(TargetFramework)' == '' and '$(TargetFrameworks)' == ''">net6.0</TargetFramework>
   </PropertyGroup>
 
   <Import Project="$(HiveToolsDirectory)SharedProps.props" Condition="'$(UseHiveSharedProperties)' == 'true'" />
