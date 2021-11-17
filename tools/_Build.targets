@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="$(HiveToolsDirectory)SharedProps.targets"/>
+
+  <PropertyGroup>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <EnablePackageValidation>true</EnablePackageValidation>
+
+    <IsRoslynExtension Condition="'$(IsRoslynExtension)' == ''">false</IsRoslynExtension>
+    <IsRoslynExtension Condition="'$(IsCodeGen)' == 'true' or '$(IsAnalyzer)' == 'true'">true</IsRoslynExtension>
+    <IsCLSCompliant Condition="'$(Tests)' == 'true' or '$(IsRoslynExtension)' == 'true'">false</IsCLSCompliant>
+  </PropertyGroup>
+
+  <Choose>
+    <When Condition="'$(IsRoslynExtension)' == 'true'">
+      <PropertyGroup>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <NoWarn>$(NoWarn);NU5128</NoWarn>
+      </PropertyGroup>
+
+      <ItemGroup>
+        <PackageReference Update="NETStandard.Library" PrivateAssets="all" />
+        <PackageReference Update="Microsoft.CodeAnalysis" Pack="false" />
+      </ItemGroup>
+    </When>
+  </Choose>
+
+  <Target Name="SetAnalyzerPackProps" BeforeTargets="InferPackageContents"
+          Condition="'$(IsRoslynExtension)' == 'true'">
+    <PropertyGroup>
+      <PackFrameworkReferences>false</PackFrameworkReferences>
+      <BuildOutputFrameworkSpecific>false</BuildOutputFrameworkSpecific>
+      <PackFolder>analyzers/dotnet/cs</PackFolder>
+    </PropertyGroup>
+    <ItemGroup>
+      <PackageFile Include="$(HiveToolsDirectory)analyzers\install.ps1" PackagePath="/tools/install.ps1" />
+      <PackageFile Include="$(HiveToolsDirectory)analyzers\uninstall.ps1" PackagePath="/tools/uninstall.ps1" />
+    </ItemGroup>
+  </Target>
+
+  <Import Project="$(HiveToolsDirectory)MSBuildVersionCheck.targets" />
+  <Import Project="$(HiveToolsDirectory)InternalsVisibleToItemGroup.targets" />
+  <Import Project="$(HiveToolsDirectory)LiteralAssemblyAttributeItemGroup.targets" />
+  <Import Project="$(HiveToolsDirectory)SdkGetProperty.targets" />
+
+  <Import Project="$(HiveSourceDirectory)\$(CodeGenTargetsFile)" Condition="'$(CodeGenTargetsFile)' != '' and '$(IsCodeGen)' != 'true'" />
+  <Import Project="$(HiveToolsDirectory)Packaging.targets" Condition="'$(BuildingStandalone)' == 'true' and '$(DoesBuildStandalone)' == 'true'" />
+  
+</Project>

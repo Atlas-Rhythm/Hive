@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <IsCLSCompliant>true</IsCLSCompliant>
+
+    <!-- This is needed sometimes when packing single projects -->
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+
+    <HiveToolsDirectory>$(MSBuildThisFileDirectory)\</HiveToolsDirectory>
+    <HiveRootDirectory>$(HiveToolsDirectory)..\</HiveRootDirectory>
+    <HiveSourceDirectory>$(HiveRootDirectory)src\</HiveSourceDirectory>
+
+    <RoslynVersion>4.0.0</RoslynVersion>
+    <MSBuildRequiredVersion>17.0.0</MSBuildRequiredVersion>
+  </PropertyGroup>
+
+  <Import Project="$(HiveToolsDirectory)SharedProps.props"/>
+  <Import Project="$(HiveToolsDirectory)NuGetInfo.props" />
+  <Import Project="$(HiveToolsDirectory)Artifacts.props" />
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="$(RoslynVersion)" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="$(RoslynVersion)">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+
+    <!-- For any target nullable and records -->
+    <PackageReference Include="IsExternalInit" Version="1.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Nullable" Version="1.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Tests)' == 'true'">
+    <PackageReference Include="Moq" Version="4.*" />
+    <PackageReference Include="xunit" Version="2.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.*">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector" Version="3.1.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <Import Project="$(HiveSourceDirectory)\$(CodeGenPropsFile)" Condition="'$(CodeGenPropsFile)' != '' and '$(IsCodeGen)' != 'true'" />
+  <Import Project="$(HiveToolsDirectory)Packaging.props" />
+
+  <Import Project="$(HiveToolsDirectory)VSDocEditing.props" />
+  
+</Project>
