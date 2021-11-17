@@ -5,6 +5,13 @@
     <CodeGenPropsFile>CodeGen\Hive.CodeGen\build\Hive.CodeGen.props</CodeGenPropsFile>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <Description>A highly extensible mod repository.</Description>
+    <Authors></Authors>
+    <!-- TODO: complete this a bit more -->
+  </PropertyGroup>
+
   <Import Project="tools\_Build.props" />
 
   <ItemGroup Condition="'$(IsFSharp)' != true And '$(IsCodeGen)' != 'true' And '$(NoAutoProjectRefs)' != 'true'">
