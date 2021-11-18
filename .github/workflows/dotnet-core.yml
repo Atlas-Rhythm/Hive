@@ -71,7 +71,7 @@ jobs:
           GH_RUN_ID: ${{ github.run_number }}.${{ github.run_attempt }}
         run: |
             $branch_name = $env:CURRENT_BRANCH -replace "/", "."
-            $is_pr = ${{ steps.branch-name.outputs.is_default != 'true' }}
+            $is_pr = "${{ steps.branch-name.outputs.is_default != 'true' }}" -eq "true"
             $is_master = $branch_name -eq "master"
 
             if ($is_pr) {
