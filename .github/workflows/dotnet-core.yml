@@ -75,4 +75,4 @@ jobs:
       - name: Push packages
         if: steps.branch-name.outputs.is_default == 'true' # runs only on non-PR builds
         shell: pwsh
-        run: dotnet nuget push "artifacts/packages/Release/*.nupkg" --source "github"
+        run: dotnet nuget push "artifacts/packages/Release/*.nupkg" --source "github" --api-key ${{ secrets.GITHUB_TOKEN }}
