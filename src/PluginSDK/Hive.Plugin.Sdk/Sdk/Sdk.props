@@ -5,7 +5,7 @@
     <UsingHivePluginSdk>true</UsingHivePluginSdk>
     <MSBuildAllProjects Condition="'$(MSBuildToolsVersion)' != 'Current'">$(MSBuildAllProjects);$(MsBuildThisFileFullPath)</MSBuildAllProjects>
 
-    <HiveToolsDirectory>$(MSBuildThisFileDirectory)..\msbtools\</HiveToolsDirectory> <!-- in the package, relative to this file, aka /Sdk/ -->
+    <_SdkHiveToolsDirectory>$(MSBuildThisFileDirectory)..\msbtools\</_SdkHiveToolsDirectory> <!-- in the package, relative to this file, aka /Sdk/ -->
     <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
   
@@ -18,9 +18,9 @@
     <EnableHiveCodeGen Condition="'$(EnableHiveCodeGen)' == ''">true</EnableHiveCodeGen>
     <UseHiveSharedProperties Condition="'$(UseHiveSharedProperties)' == ''">true</UseHiveSharedProperties>
 
-    <TargetFramework Condition="'$(TargetFramework)' == '' and '$(TargetFrameworks)' == ''">net5.0</TargetFramework>
+    <TargetFramework Condition="'$(TargetFramework)' == '' and '$(TargetFrameworks)' == ''">net6.0</TargetFramework>
   </PropertyGroup>
 
-  <Import Project="$(HiveToolsDirectory)SharedProps.props" Condition="'$(UseHiveSharedProperties)' == 'true'" />
+  <Import Project="$(_SdkHiveToolsDirectory)SharedProps.props" Condition="'$(UseHiveSharedProperties)' == 'true'" />
   
 </Project>

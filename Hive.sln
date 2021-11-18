@@ -22,6 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\dotnet-core.yml = .github\workflows\dotnet-core.yml
 		FCC_UpdateCoverlet.ps1 = FCC_UpdateCoverlet.ps1
 		NuGet.config = NuGet.config
+		NuGetInfo.props = NuGetInfo.props
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -59,6 +60,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hive.Plugin.Sdk", "src\Plug
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{C6CF4A49-70F0-47B5-993D-A782197BE815}"
 	ProjectSection(SolutionItems) = preProject
+		tools\_Build.props = tools\_Build.props
+		tools\_Build.targets = tools\_Build.targets
 		tools\_EmptyProjectForILRepack.targets = tools\_EmptyProjectForILRepack.targets
 		tools\Artifacts.props = tools\Artifacts.props
 		tools\InternalsVisibleToItemGroup.targets = tools\InternalsVisibleToItemGroup.targets

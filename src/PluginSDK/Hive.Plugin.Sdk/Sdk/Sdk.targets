@@ -30,17 +30,17 @@
   </Choose>
 
   <!-- Always include the target for the MSBuild version check -->
-  <Import Project="$(HiveToolsDirectory)MSBuildVersionCheck.targets" />
+  <Import Project="$(_SdkHiveToolsDirectory)MSBuildVersionCheck.targets" />
 
   <!-- Conditionally include other targets files -->
-  <Import Project="$(HiveToolsDirectory)InternalsVisibleToItemGroup.targets" 
+  <Import Project="$(_SdkHiveToolsDirectory)InternalsVisibleToItemGroup.targets" 
           Condition="'$(ImportHiveDefaultTargets)' != 'false' or '$(ImportInternalsVisibleToTargets)' != 'false'" />
-  <Import Project="$(HiveToolsDirectory)LiteralAssemblyAttributeItemGroup.targets"
+  <Import Project="$(_SdkHiveToolsDirectory)LiteralAssemblyAttributeItemGroup.targets"
           Condition="'$(ImportHiveDefaultTargets)' != 'false' or '$(ImportLiteralAssemblyAttributeTargets)' != 'false'" />
 
   <Import Project="$(_HiveSdkPackagesProj)"/>
 
-  <Import Project="$(HiveToolsDirectory)SharedProps.targets" Condition="'$(UseHiveSharedProperties)' == 'true'" />
+  <Import Project="$(_SdkHiveToolsDirectory)SharedProps.targets" Condition="'$(UseHiveSharedProperties)' == 'true'" />
   
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" Condition=" '$(CommonTargetsPath)' == '' " />
   

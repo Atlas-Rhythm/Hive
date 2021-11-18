@@ -3,13 +3,15 @@
 
   <PropertyGroup>
     <HiveSourceDirectory>$(MSBuildThisFileDirectory)..\..\</HiveSourceDirectory>
-    <HiveToolsDirectory>$(MSBuildThisFileDirectory)..\..\..\tools\</HiveToolsDirectory>
+    <HiveRootDirectory>$(HiveSourceDirectory)..\</HiveRootDirectory>
+    <HiveToolsDirectory>$(HiveRootDirectory)tools\</HiveToolsDirectory>
     <NugetHiveToolsDir>msbtools\</NugetHiveToolsDir>
     <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
   </PropertyGroup>
 
   <!-- This includes NuGet info -->
   <Import Project="$(HiveToolsDirectory)NuGetInfo.props" />
+  <Import Project="$(HiveRootDirectory)NuGetInfo.props"/>
   <!-- This includes output locations  -->
   <Import Project="$(HiveToolsDirectory)Artifacts.props" />
 
