@@ -3,6 +3,14 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
 
+    <Description>
+      <![CDATA[A set of code generators used by Hive.
+
+Currently, there are 2:
+- The ResX generator, which we use to have more control over how resources are accessed; and
+- A generator which generates N-arity generic insstantiations from a single definition.]]>
+    </Description>
+
     <IsCodeGen>true</IsCodeGen>
   </PropertyGroup>
   

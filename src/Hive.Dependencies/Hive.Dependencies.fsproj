@@ -3,6 +3,10 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
 
+    <Description>
+      <![CDATA[The dependency resolver for Hive.]]>
+    </Description>
+    
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DoNotMergeNugetPackages>true</DoNotMergeNugetPackages>
     <IsFSharp>true</IsFSharp>

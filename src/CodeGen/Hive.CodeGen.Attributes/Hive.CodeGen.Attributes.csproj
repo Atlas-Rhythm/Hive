@@ -3,6 +3,10 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
 
+    <Description>
+      <![CDATA[Attributes used by Hive.CodeGen to request actions.]]>
+    </Description>
+    
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoAutoProjectRefs>true</NoAutoProjectRefs>
 

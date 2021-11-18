@@ -3,6 +3,10 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
 
+    <Description>
+      <![CDATA[The plugin system used by Hive for its extennsibility.]]>
+    </Description>
+    
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DoNotMergeNugetPackages>true</DoNotMergeNugetPackages>
     <DoesBuildStandalone>true</DoesBuildStandalone>

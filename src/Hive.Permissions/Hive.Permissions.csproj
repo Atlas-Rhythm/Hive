@@ -2,6 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
+
+    <Description>
+      <![CDATA[The permission system used for Hive.]]>
+    </Description>
     
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
