@@ -8,6 +8,9 @@ jobs:
     # Containers must run in Linux based operating systems
     runs-on: ubuntu-latest
 
+    permissions:
+      packages: write
+
     # Service containers to run with `container-job`
     services:
       # Label used to access the service container
@@ -28,6 +31,9 @@ jobs:
           - 5432:5432
 
     steps:
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -44,6 +50,13 @@ jobs:
           dotnet-version: "3.1.404"
       - name: Setup PostgreSQL DB Test Connection String
         run: dotnet user-secrets set "ConnectionStrings:Test" "User ID=postgres;Password=postgres;Host=127.0.0.1;Port=5432;" --project "./src/Hive"
+      - name: Log in to package source
+        shell: pwsh
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
+        run: |
+            dotnet nuget add source --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} `
+            --store-password-in-clear-text --name github "https://nuget.pkg.github.com/$($env:REPO_OWNER)/index.json"
       - name: Install dependencies
         run: dotnet restore -p:Configuration=Release -clp:NoSummary
       - name: Build
@@ -52,4 +65,14 @@ jobs:
         run: dotnet test --no-restore -c Release -clp:NoSummary
       - name: Pack
         shell: pwsh
-        run: .\buildPackages.ps1 -c Release
+        env:
+          CURRENT_BRANCH: ${{ steps.branch-name.outputs.current_branch }}
+          GH_RUN_ID: ${{ github.run_number }}.${{ github.run_id }}
+        run: |
+            $branch_name = $env:CURRENT_BRANCH -replace "/" "."
+            .\buildPackages.ps1 -c Release "-clp:NoSummary" "-p:IncludeSymbols=true" "-p:BuildRelease=true" `
+            "-p:VersionSuffix=gh$($env:GH_RUN_ID).$($env:CURRENT_BRANCH)+$(git rev-parse --short "$env:GITHUB_SHA")"
+      - name: Push packages
+        if: steps.branch-name.outputs.is_default == 'true' # runs only on non-PR builds
+        shell: pwsh
+        run: dotnet nuget push "artifacts/packages/Release/*.nupkg" --source "github"
