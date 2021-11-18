@@ -64,15 +64,30 @@ jobs:
       - name: Test
         run: dotnet test --no-restore -c Release -clp:NoSummary
       - name: Pack
+        id: pack
         shell: pwsh
         env:
           CURRENT_BRANCH: ${{ steps.branch-name.outputs.current_branch }}
           GH_RUN_ID: ${{ github.run_number }}.${{ github.run_attempt }}
         run: |
             $branch_name = $env:CURRENT_BRANCH -replace "/", "."
+            $is_pr = ${{ steps.branch-name.outputs.is_default != 'true' }}
+            $is_master = $branch_name -eq "master"
+
+            if ($is_pr) {
+                $branch_name = ".pr.$branch_name"
+                echo "::set-output name=push::true"
+            } else if ($is_master) {
+                $branch_name = ""
+                echo "::set-output name=push::true"
+            } else {
+                $branch_name = ".$branch_name"
+                echo "::set-output name=push::false"
+            }
+
             .\buildPackages.ps1 -c Release "-clp:NoSummary" "-p:IncludeSymbols=true" "-p:BuildRelease=true" `
-            "-p:VersionSuffix=gh$($env:GH_RUN_ID).$($branch_name)+$(git rev-parse --short "$env:GITHUB_SHA")"
+            "-p:VersionSuffix=gh$($env:GH_RUN_ID)$($branch_name)+$(git rev-parse --short "$env:GITHUB_SHA")"
       - name: Push packages
-        if: steps.branch-name.outputs.is_default == 'true' # runs only on non-PR builds
+        if: steps.pack.outputs.push == 'true' # runs only when pack says to
         shell: pwsh
         run: dotnet nuget push "artifacts/packages/Release/*.nupkg" --source "github" --api-key ${{ secrets.GITHUB_TOKEN }}
