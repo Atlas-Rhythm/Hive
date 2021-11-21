@@ -3,6 +3,10 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
 
+    <Description>
+      <![CDATA[A set of helpers used in Hive and its related packages.]]>
+    </Description>
+    
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsUtilities>true</IsUtilities>
   </PropertyGroup>

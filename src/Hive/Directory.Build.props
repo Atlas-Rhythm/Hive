@@ -9,9 +9,9 @@
     <PackageId>Hive.ReferenceAssembly</PackageId>
 
     <Description>
-      $(Description)
-      
-      THIS PACKAGE CONTAINS ONLY A REFERENCE ASSEMBLY. IT CANNOT BE USED TO RUN HIVE.
+      <![CDATA[$(Description)
+
+THIS PACKAGE CONTAINS ONLY A REFERENCE ASSEMBLY. IT CANNOT BE USED TO RUN HIVE.]]>
     </Description>
     
     <IsPackable>true</IsPackable>

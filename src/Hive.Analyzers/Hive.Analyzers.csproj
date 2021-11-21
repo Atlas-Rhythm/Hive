@@ -3,6 +3,10 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
 
+    <Description>
+      <![CDATA[A set of analyzers for various aspects of Hive.]]>
+    </Description>
+    
     <IsAnalyzer>true</IsAnalyzer>
   </PropertyGroup>
 
