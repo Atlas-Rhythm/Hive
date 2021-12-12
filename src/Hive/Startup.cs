@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text.Json;
 using DryIoc;
@@ -80,7 +81,7 @@ namespace Hive
             container.RegisterInstance<IClock>(SystemClock.Instance);
             container.Register<JsonSerializerOptions>(Reuse.Singleton, made: Made.Of(() => ConstructHiveJsonSerializerOptions()));
             container.Register<Permissions.Logging.ILogger, Logging.PermissionsProxy>();
-            container.Register(Made.Of(() => new PermissionsManager<PermissionContext>(Arg.Of<IRuleProvider>(), Arg.Of<Permissions.Logging.ILogger>(), ".")), Reuse.Singleton);
+            container.Register(Made.Of(() => new PermissionsManager<PermissionContext>(Arg.Of<IRuleProvider>(), Arg.Of<Permissions.Logging.ILogger>(), ".", Arg.Of<IEnumerable<(string, Delegate)>>())), Reuse.Singleton);
             container.Register<SymmetricAlgorithm>(Reuse.Singleton, made: Made.Of(() => Aes.Create()));
 
             if (Configuration.GetSection("Auth0").Exists())
