@@ -67,9 +67,6 @@ namespace Hive.Services.Common
         private readonly IAggregate<IModsPlugin> plugin;
         private readonly PermissionsManager<PermissionContext> permissions;
 
-        // Actions done on a list of mods
-        private const string FilterModsActionName = "hive.mods.filter";
-
         // Actions done on a singular mod
         private const string FilterModActionName = "hive.mod.filter";
 
@@ -121,7 +118,7 @@ namespace Hive.Services.Common
 
             // Further filter these mods by both a permissions check and a plugin check
             filteredMods = filteredMods.Where(m =>
-                permissions.CanDo(FilterModsActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState)
+                permissions.CanDo(FilterModActionName, new PermissionContext { User = user, Mod = m }, ref getModsParseState)
                         && combined.GetSpecificModAdditionalChecks(user, m));
 
             return new HiveObjectQuery<IEnumerable<Mod>>(StatusCodes.Status200OK, filteredMods);
