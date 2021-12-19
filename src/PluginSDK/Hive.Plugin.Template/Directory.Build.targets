@@ -10,7 +10,7 @@
              Projects="$(SdkProject)">
       <Output TaskParameter="TargetOutputs" ItemName="_SdkPackageId" />
     </MSBuild>
-    <MSBuild Targets="SdkGetProperty" Properties="SdkPropertyToGet=PackageVersion"
+    <MSBuild Targets="GetPackageVersion"
              Projects="$(SdkProject)">
       <Output TaskParameter="TargetOutputs" ItemName="_SdkPackageVersion" />
     </MSBuild>
@@ -28,8 +28,6 @@
              Properties="SdkPackageId=$(_SdkName);SdkVersion=$(_SdkVersion);_ContentTemplate=%(ContentTemplate.Identity)">
       <Output TaskParameter="TargetOutputs" ItemName="Content" />
     </MSBuild>
-
-    <Message Importance="high" Text="C: @(Content->'%(BuildAction)')" />
   </Target>
 
   <PropertyGroup>
@@ -37,7 +35,7 @@
   </PropertyGroup>
   
   <Target Name="_ProcessContentTemplate" Returns="@(_FileOut)">
-    <Message Importance="high" Text="CT: $(_ContentTemplate)" />
+    <Message Importance="normal" Text="CT: $(_ContentTemplate)" />
     <ReadLinesFromFile File="$(_ContentTemplate)">
       <Output TaskParameter="Lines" ItemName="_FileLines" />
     </ReadLinesFromFile>
