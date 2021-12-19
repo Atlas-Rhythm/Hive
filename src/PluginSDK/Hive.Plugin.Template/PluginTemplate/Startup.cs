@@ -1,4 +1,5 @@
-﻿using Hive.Plugins;
+﻿using DryIoc;
+using Hive.Plugins;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;

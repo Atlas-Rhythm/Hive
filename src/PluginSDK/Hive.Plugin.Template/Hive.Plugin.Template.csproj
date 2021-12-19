@@ -1,7 +1,8 @@
-﻿<Project Sdk="Microsoft.Build.NoTargets/3.0.4">
+﻿<Project Sdk="Microsoft.Build.NoTargets/3.2.14">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <!-- We need this even though we aren't actually targeting anything -->
+    <TargetFramework>net6.0</TargetFramework>
 
     <PackageType>Template</PackageType>
     <PackageTags>$(PackageTags);dotnet-new;templates</PackageTags>
