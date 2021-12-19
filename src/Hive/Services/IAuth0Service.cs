@@ -17,7 +17,8 @@ namespace Hive.Services
         /// Requests a token from the provided source Uri, authentication code, and state. This should be called as part of the callback from Auth0.
         /// </summary>
         /// <param name="code">The authentication code for this client.</param>
+        /// <param name="redirectUri">The callback request uri.</param>
         /// <returns>The <see cref="Auth0TokenResponse"/> that results from the request. The access token property from this response should be all that is necessary.</returns>
-        Task<Auth0TokenResponse?> RequestToken(string code);
+        Task<Auth0TokenResponse?> RequestToken(string code, string redirectUri);
     }
 }

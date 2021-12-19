@@ -626,7 +626,7 @@ paths:
         '404':
           description: Not Found
         '401':
-          description: Invalid code
+          description: Invalid code, or otherwise denied by server
       operationId: get-auth0-token
       description: 'Performs the authentication step of the Auth0 workflow. If the Hive instance was not configured to use Auth0, this endpoint will return a 404.'
       parameters:
@@ -639,8 +639,9 @@ paths:
         - schema:
             type: string
           in: query
-          name: state
-          description: Optional state
+          name: redirect_uri
+          description: The redirect URI from the authentication call to Auth0. MUST MATCH! If it does not, this will respond with a 401.
+          required: true
   /user/rename:
     post:
       summary: ''

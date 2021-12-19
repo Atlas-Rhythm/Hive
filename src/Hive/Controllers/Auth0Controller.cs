@@ -44,13 +44,14 @@ namespace Hive.Controllers
         /// Authenticates and returns a <see cref="Auth0TokenResponse"/> for the provided authentication code and state, or null on failure.
         /// </summary>
         /// <param name="code">The authentication code to provide (from a call to Auth0/authenticate).</param>
+        /// <param name="redirect_uri">The redirect uri that MUST match the authorization endpoint's redirect uri.</param>
         /// <returns>The resultant <see cref="Auth0TokenResponse"/> or null on failure.</returns>
         [HttpGet("token")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<Auth0TokenResponse?>> Callback([FromQuery] string code)
+        public async Task<ActionResult<Auth0TokenResponse?>> Callback([FromQuery] string code, [FromQuery] string redirect_uri)
         {
-            var val = await auth0Service.RequestToken(code).ConfigureAwait(false);
+            var val = await auth0Service.RequestToken(code, redirect_uri).ConfigureAwait(false);
             return val is null ? Unauthorized() : (ActionResult<Auth0TokenResponse?>)Ok(val);
         }
     }
