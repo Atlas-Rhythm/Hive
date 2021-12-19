@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Hive.Models;
 
 namespace Hive.Services
@@ -17,10 +16,8 @@ namespace Hive.Services
         /// <summary>
         /// Requests a token from the provided source Uri, authentication code, and state. This should be called as part of the callback from Auth0.
         /// </summary>
-        /// <param name="sourceUri">The callback Uri.</param>
         /// <param name="code">The authentication code for this client.</param>
-        /// <param name="state">The state to verify.</param>
         /// <returns>The <see cref="Auth0TokenResponse"/> that results from the request. The access token property from this response should be all that is necessary.</returns>
-        Task<Auth0TokenResponse?> RequestToken(Uri sourceUri, string code, string? state);
+        Task<Auth0TokenResponse?> RequestToken(string code);
     }
 }
