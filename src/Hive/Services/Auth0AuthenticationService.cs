@@ -285,16 +285,18 @@ namespace Hive.Services
         }
 
         /// <inheritdoc/>
-        public async Task<Auth0TokenResponse?> RequestToken(string code, string redirectUri)
+        public async Task<Auth0TokenResponse?> RequestToken(string code, Uri redirectUri)
         {
-            logger.Debug("Requesting auth token for user...");
+            if (redirectUri is null)
+                throw new ArgumentNullException(nameof(redirectUri));
+            logger.Debug("Requesting auth token for user... from: {RedirectUri}", redirectUri);
             var data = new Dictionary<string, string>()
             {
                 { "grant_type", "authorization_code" },
                 { "code", code },
                 { "client_id", Data.ClientId },
                 { "client_secret", clientSecret },
-                { "redirect_uri", redirectUri }
+                { "redirect_uri", redirectUri.ToString() }
             };
 
             using var message = new HttpRequestMessage(HttpMethod.Post, authenticationAPIGetToken)

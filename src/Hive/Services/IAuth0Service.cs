@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Hive.Models;
 
 namespace Hive.Services
@@ -19,6 +20,6 @@ namespace Hive.Services
         /// <param name="code">The authentication code for this client.</param>
         /// <param name="redirectUri">The callback request uri.</param>
         /// <returns>The <see cref="Auth0TokenResponse"/> that results from the request. The access token property from this response should be all that is necessary.</returns>
-        Task<Auth0TokenResponse?> RequestToken(string code, string redirectUri);
+        Task<Auth0TokenResponse?> RequestToken(string code, Uri redirectUri);
     }
 }
