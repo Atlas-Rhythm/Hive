@@ -639,7 +639,7 @@ paths:
         - schema:
             type: string
           in: query
-          name: redirect_uri
+          name: redirectUri
           description: The redirect URI from the authentication call to Auth0. MUST MATCH! If it does not, this will respond with a 401.
           required: true
   /user/rename:
