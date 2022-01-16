@@ -42,11 +42,5 @@ namespace Hive.Configuration
         /// </summary>
         [Range(0, int.MaxValue, ErrorMessage = "TimeoutMS must be zero or positive!")]
         public int TimeoutMS { get; private set; } = 10000;
-
-        /// <summary>
-        /// The domain to redirect to after callbacks. Should be the publicly facing uri of this Hive instance.
-        /// </summary>
-        [Required]
-        public Uri? BaseDomain { get; private set; }
     }
 }

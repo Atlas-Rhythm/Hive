@@ -69,6 +69,6 @@ namespace Hive.Services
         }
 
         /// <inheritdoc/>
-        public Task<Auth0TokenResponse?> RequestToken(Uri sourceUri, string code, string? state) => Task.FromResult<Auth0TokenResponse?>(null);
+        public Task<Auth0TokenResponse?> RequestToken(string code, Uri redirectUri) => Task.FromResult<Auth0TokenResponse?>(null);
     }
 }

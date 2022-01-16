@@ -43,8 +43,3 @@ This configuration option is required.
 ## `TimeoutMS` - `int`
 
 The timeout for Auth0 callback requests in milliseconds. Must be positive or 0. If not present, will default to `10000`.
-
-## `BaseDomain` - `Uri`
-
-The callback URI to use for determining callback resolution. Should be the forward-facing URI of the instance.
-This configuration option is required.

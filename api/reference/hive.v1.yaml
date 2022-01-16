@@ -611,7 +611,7 @@ paths:
           description: Not Found
       operationId: get-auth0-get_data
       description: 'Returns data useful for authentication with Auth0, if this instance of Hive has been configured to use Auth0. If this instance does not use Auth0, this endpoint will return a 404.'
-  /auth0/callback:
+  /auth0/token:
     get:
       summary: Your GET endpoint
       tags:
@@ -625,7 +625,9 @@ paths:
                 $ref: '#/components/schemas/Auth0TokenResponse'
         '404':
           description: Not Found
-      operationId: get-auth0-callback
+        '401':
+          description: Invalid code, or otherwise denied by server
+      operationId: get-auth0-token
       description: 'Performs the authentication step of the Auth0 workflow. If the Hive instance was not configured to use Auth0, this endpoint will return a 404.'
       parameters:
         - schema:
@@ -637,8 +639,9 @@ paths:
         - schema:
             type: string
           in: query
-          name: state
-          description: Optional state
+          name: redirectUri
+          description: The redirect URI from the authentication call to Auth0. MUST MATCH! If it does not, this will respond with a 401.
+          required: true
   /user/rename:
     post:
       summary: ''
