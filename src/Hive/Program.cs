@@ -171,7 +171,7 @@ namespace Hive
                     ReadableID = "test-mod",
                     Version = new Version("0.1.0"),
                     UploadedAt = SystemClock.Instance.GetCurrentInstant(),
-                    Uploader = new User { Username = "me" },
+                    Uploader = new User { Username = "me", AlternativeId = Guid.Empty.ToString() },
                     Channel = channel,
                     DownloadLink = new Uri("file:///"),
                 };
