@@ -1,4 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Hive.Extensions;
 using Hive.Models;
@@ -33,6 +36,16 @@ namespace Hive.Controllers
         /// <param name="username">The input username to rename.</param>
         /// <returns>The new username to apply.</returns>
         string ForceRename([TakesReturnValue] string username) => username;
+
+        /// <summary>
+        /// This function is used to expose additional user metadata to the <see cref="UserController.GetUserInfo"/> call.
+        /// Hive default is to add nothing.
+        /// </summary>
+        /// <param name="data">The MUTABLE dictionary to perform modification to.</param>
+        /// <param name="userData">The extra user data.</param>
+        void ExposeUserInfo(Dictionary<string, object> data, ArbitraryAdditionalData userData)
+        {
+        }
     }
 
     internal class HiveUserPlugin : IUserPlugin { }
@@ -50,7 +63,9 @@ namespace Hive.Controllers
         private readonly PermissionsManager<PermissionContext> permissions;
 
         private const string RenameActionName = "hive.user.rename";
+        private const string GetUserInfoActionName = "hive.user.info";
         private PermissionActionParseState renameParseState;
+        private PermissionActionParseState getUserParseState;
 
         /// <summary>
         /// Create with DI
@@ -68,6 +83,50 @@ namespace Hive.Controllers
         }
 
         /// <summary>
+        /// Returns the user information for a requested user.
+        /// This is a JSON serialized collection of arbitrary objects, where the only two Hive defaults are the <see cref="User.Username"/> and <see cref="User.AlternativeId"/>.
+        /// Everything else can be added (or removed) as per plugins.
+        /// </summary>
+        /// <param name="username">The username to search for.</param>
+        /// <returns>The data to serialize.</returns>
+        [Route("info")]
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<Dictionary<string, object>>> GetUserInfo([FromQuery] string username)
+        {
+            username = Uri.UnescapeDataString(username);
+            if (string.IsNullOrWhiteSpace(username))
+                return BadRequest();
+            try
+            {
+                var user = await authService.GetUser(username).ConfigureAwait(false);
+                // User must exist
+                if (user is null)
+                {
+                    return NotFound();
+                }
+                // Permissions check
+                if (!permissions.CanDo(GetUserInfoActionName, new PermissionContext { User = await HttpContext.GetHiveUser(authService).ConfigureAwait(false), Username = username }, ref getUserParseState))
+                {
+                    return Unauthorized();
+                }
+                // Data to be serialized, pass through plugin first
+                // Start by adding username and sub in case (for some reason) the plugin wants to remove those
+                Dictionary<string, object> data = new() { { nameof(username), username }, { "sub", user.AlternativeId } };
+                plugin.Instance.ExposeUserInfo(data, user.AdditionalData);
+                return Ok(data);
+            }
+            catch
+            {
+                // If we have any type of error, for any reason, lets just go with BadRequest
+                return BadRequest();
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Rename a username from a query string.
         /// </summary>
         /// <param name="username">Username to change the logged in user to.</param>
@@ -79,6 +138,7 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<string>> Rename([FromQuery] string username)
         {
+            username = Uri.UnescapeDataString(username);
             if (string.IsNullOrWhiteSpace(username))
             {
                 return BadRequest();
