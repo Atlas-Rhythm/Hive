@@ -39,9 +39,9 @@ public class WebOptions
     public List<string>? AllowedHeaders { get; private set; }
 
     /// <summary>
-    /// The CORS policy name. Defaults to "_hive"
+    /// The CORS policy name. Defaults to "_hiveOrigins"
     /// </summary>
-    public string PolicyName { get; set; } = "_hive";
+    public string PolicyName { get; set; } = "_hiveOrigins";
 
     /// <summary>
     /// Enables https redirection. Defaults to true.

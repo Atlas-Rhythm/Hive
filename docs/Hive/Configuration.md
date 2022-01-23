@@ -8,6 +8,7 @@ This is a quick landing page for Hive's configuration. Further documentation can
 - [Restricting Non-Authenticated Users](Configuration/GuestRestrictionMiddleware.md)
 - [Auth0](Configuration/Auth0.md)
 - [Uploads](Configuration/Uploads.md)
+- [Web](Configuration/Web.md)
 
 ## Root Configuration Options
 
