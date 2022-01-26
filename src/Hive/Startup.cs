@@ -12,6 +12,7 @@ using Hive.Plugins.Aggregates;
 using Hive.Services;
 using Hive.Services.Common;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +68,31 @@ namespace Hive
             _ = services
                 .AddControllers()
                 .ConfigureApplicationPartManager(manager => manager.FeatureProviders.Add(conditionalFeature));
+
+
+            var web = Configuration.GetSection(WebOptions.ConfigHeader);
+            if (web.Exists())
+            {
+                var webOptions = web.Get<WebOptions>();
+                if (webOptions.CORS)
+                {
+                    _ = services.AddCors(options =>
+                    {
+                        options.AddPolicy(name: webOptions.PolicyName, policyBuilder =>
+                        {
+                            _ = policyBuilder.WithOrigins(webOptions.AllowedOrigins.ToArray());
+                            _ = webOptions.AllowedMethods is not null && webOptions.AllowedMethods.Count != 0
+                                ? policyBuilder.WithMethods(webOptions.AllowedMethods.ToArray())
+                                : policyBuilder.AllowAnyMethod();
+
+                            _ = webOptions.AllowedHeaders is not null && webOptions.AllowedHeaders.Count != 0
+                                ? policyBuilder.WithMethods(webOptions.AllowedHeaders.ToArray())
+                                : policyBuilder.AllowAnyHeader();
+
+                        });
+                    });
+                }
+            }
         }
 
         public void ConfigureContainer(IContainer container)
@@ -119,12 +145,30 @@ namespace Hive
 
             _ = app.UsePathBase(Configuration.GetValue<string>("PathBase"))
                 .UseSerilogRequestLogging()
-                .UseHttpsRedirection()
-                .UseRouting()
-                .UseAuthentication()
+                .UseRouting();
+
+            var web = Configuration.GetSection(WebOptions.ConfigHeader);
+            if (web.Exists())
+            {
+                var webOptions = web.Get<WebOptions>();
+                if (webOptions.HTTPSRedirection ?? true)
+                    _ = app.UseHttpsRedirection();
+                if (webOptions.CORS)
+                {
+                    _ = app.UseCors(webOptions.PolicyName);
+                }
+            }
+            else
+            {
+                _ = app.UseHttpsRedirection();
+            }
+
+            _ = app.UseAuthentication()
                 .UseGraphQL<HiveSchema>("/graphql")
                 .UseGraphQLAltair()
                 .UseEndpoints(endpoints => endpoints.MapControllers());
+
+
         }
 
         private static JsonSerializerOptions ConstructHiveJsonSerializerOptions()
