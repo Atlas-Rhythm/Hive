@@ -63,8 +63,10 @@ namespace Hive.Controllers
 
         private const string RenameActionName = "hive.user.rename";
         private const string GetUserInfoActionName = "hive.user.info";
-        [ThreadStatic] private PermissionActionParseState renameParseState;
-        [ThreadStatic] private PermissionActionParseState getUserParseState;
+        [ThreadStatic]
+        private static PermissionActionParseState renameParseState;
+        [ThreadStatic]
+        private static PermissionActionParseState getUserParseState;
 
         /// <summary>
         /// Create with DI
