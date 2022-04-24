@@ -64,8 +64,8 @@ namespace Hive.Controllers
 
         private const string RenameActionName = "hive.user.rename";
         private const string GetUserInfoActionName = "hive.user.info";
-        private PermissionActionParseState renameParseState;
-        private PermissionActionParseState getUserParseState;
+        [ThreadStatic] private PermissionActionParseState renameParseState;
+        [ThreadStatic] private PermissionActionParseState getUserParseState;
 
         /// <summary>
         /// Create with DI
@@ -113,24 +113,21 @@ namespace Hive.Controllers
             {
                 return NotFound();
             }
-            try
-            {
-                // Permissions check
-                if (!permissions.CanDo(GetUserInfoActionName, new PermissionContext { User = await HttpContext.GetHiveUser(authService).ConfigureAwait(false), Username = username }, ref getUserParseState))
+            // Permissions check
+            if (!permissions.CanDo(GetUserInfoActionName,
+                new PermissionContext
                 {
-                    return Unauthorized();
-                }
-                // Data to be serialized, pass through plugin first
-                // Start by adding username and sub in case (for some reason) the plugin wants to remove those
-                Dictionary<string, object> data = new() { { "username", username ?? user.Username }, { "sub", user.AlternativeId } };
-                plugin.Instance.ExposeUserInfo(data, user.AdditionalData);
-                return Ok(data);
-            }
-            catch
+                    User = await HttpContext.GetHiveUser(authService).ConfigureAwait(false),
+                    Username = username
+                }, ref getUserParseState))
             {
-                // If we have any type of error, for any reason, lets just go with BadRequest
-                return BadRequest();
+                return Unauthorized();
             }
+            // Data to be serialized, pass through plugin first
+            // Start by adding username and sub in case (for some reason) the plugin wants to remove those
+            Dictionary<string, object> data = new() { { "username", username ?? user.Username }, { "sub", user.AlternativeId } };
+            plugin.Instance.ExposeUserInfo(data, user.AdditionalData);
+            return Ok(data);
         }
 
         /// <summary>
@@ -145,11 +142,11 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<string>> Rename([FromQuery] string username)
         {
-            username = Uri.UnescapeDataString(username);
             if (string.IsNullOrWhiteSpace(username))
             {
                 return BadRequest();
             }
+            username = Uri.UnescapeDataString(username);
             var pluginInstance = plugin.Instance;
             try
             {
