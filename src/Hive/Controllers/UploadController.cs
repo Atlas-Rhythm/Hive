@@ -491,6 +491,7 @@ namespace Hive.Controllers
             if (finalMetadata.Authors is not null)
             {
                 modObject.Authors = await finalMetadata.Authors
+                    .WhereNotNull()
                     .Select(n => authService.GetUser(n))
                     .FlattenToAsyncEnumerable()
                     .WhereNotNull()
@@ -501,6 +502,7 @@ namespace Hive.Controllers
             if (finalMetadata.Contributors is not null)
             {
                 modObject.Contributors = await finalMetadata.Contributors
+                    .WhereNotNull()
                     .Select(n => authService.GetUser(n))
                     .FlattenToAsyncEnumerable()
                     .WhereNotNull()
