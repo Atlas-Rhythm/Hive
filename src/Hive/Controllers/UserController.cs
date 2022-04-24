@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Hive.Extensions;
 using Hive.Models;
@@ -94,19 +94,27 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<Dictionary<string, object>>> GetUserInfo([FromQuery] string username)
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Return expression does this")]
+        public async Task<ActionResult<Dictionary<string, object>>> GetUserInfo([FromQuery] string? username)
         {
-            username = Uri.UnescapeDataString(username);
+            User? user;
             if (string.IsNullOrWhiteSpace(username))
-                return BadRequest();
+            {
+                // User should be self
+                user = await HttpContext.GetHiveUser(authService).ConfigureAwait(false);
+            }
+            else
+            {
+                username = Uri.UnescapeDataString(username);
+                user = await authService.GetUser(username).ConfigureAwait(false);
+            }
+            // User must exist
+            if (user is null)
+            {
+                return NotFound();
+            }
             try
             {
-                var user = await authService.GetUser(username).ConfigureAwait(false);
-                // User must exist
-                if (user is null)
-                {
-                    return NotFound();
-                }
                 // Permissions check
                 if (!permissions.CanDo(GetUserInfoActionName, new PermissionContext { User = await HttpContext.GetHiveUser(authService).ConfigureAwait(false), Username = username }, ref getUserParseState))
                 {
@@ -114,7 +122,7 @@ namespace Hive.Controllers
                 }
                 // Data to be serialized, pass through plugin first
                 // Start by adding username and sub in case (for some reason) the plugin wants to remove those
-                Dictionary<string, object> data = new() { { nameof(username), username }, { "sub", user.AlternativeId } };
+                Dictionary<string, object> data = new() { { "username", username ?? user.Username }, { "sub", user.AlternativeId } };
                 plugin.Instance.ExposeUserInfo(data, user.AdditionalData);
                 return Ok(data);
             }
@@ -122,7 +130,6 @@ namespace Hive.Controllers
             {
                 // If we have any type of error, for any reason, lets just go with BadRequest
                 return BadRequest();
-                throw;
             }
         }
 
