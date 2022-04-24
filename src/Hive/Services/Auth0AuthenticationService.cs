@@ -165,8 +165,8 @@ namespace Hive.Services
 
                 if (auth0User is null)
                 {
-                    // We can either throw here because we MUST have a valid auth0 user, or return null
-                    throw new InvalidOperationException("Auth0 user not found!");
+                    // If user is null, return null
+                    return null;
                 }
                 // We should perform a DB lookup on the sub to see if we can find a User object with that sub.
                 // Note that the found object is WITH tracking, so modifications can be applied and saved.
