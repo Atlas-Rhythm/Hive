@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using Hive.Extensions;
@@ -94,7 +93,6 @@ namespace Hive.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Return expression does this")]
         public async Task<ActionResult<Dictionary<string, object>>> GetUserInfo([FromQuery] string? username)
         {
             User? user;

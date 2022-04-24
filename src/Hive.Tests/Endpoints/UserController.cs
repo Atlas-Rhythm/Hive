@@ -20,7 +20,21 @@ namespace Hive.Tests.Endpoints
     {
         private readonly ITestOutputHelper helper;
 
-        public UserController(ITestOutputHelper helper) : base(new PartialContext { Users = new[] { new User { Username = "test", AlternativeId = "1234" }, new User { Username = "test2", AlternativeId = "4321" } } })
+        public UserController(ITestOutputHelper helper) : base(new PartialContext
+        {
+            Users = new[]
+            {
+                new User
+                {
+                    Username = "test",
+                    AlternativeId = "1234"
+                }, new User
+                {
+                    Username = "test2",
+                    AlternativeId = "4321"
+                }
+            }
+        })
         {
             this.helper = helper;
         }
