@@ -551,18 +551,14 @@ namespace Hive.Controllers
             if (!result)
                 return BadRequest(UploadResult.ErrValidationFailed(validationFailureInfo));
 
+            // do one final permission check, but do it BEFORE removing the expiry on the object
+            if (!permissions.CanDo(UploadWithDataAction, new PermissionContext { User = user, Mod = modObject }, ref UploadWithDataParseState))
+                return new ForbidResult();
+
             if (!await cdn.RemoveExpiry(cdnObject).ConfigureAwait(false))
                 return StatusCode(StatusCodes.Status410Gone); // the object no longer exists, tell the client as much
 
             modObject.DownloadLink = await cdn.GetObjectActualUrl(cdnObject).ConfigureAwait(false);
-
-            // do one final permission check
-            if (!permissions.CanDo(UploadWithDataAction, new PermissionContext { User = user, Mod = modObject }, ref UploadWithDataParseState))
-            {
-                // the user doesn't have permissions, so we don't want to keep the object on the CDN
-                _ = await cdn.TryDeleteObject(cdnObject).ConfigureAwait(false); // if it failed, that should mean that it doesn't exist
-                return new ForbidResult();
-            }
 
             // Additional data should be serialized to the DB, so we call this hook first.
             plugins.UploadFinished(modObject);
