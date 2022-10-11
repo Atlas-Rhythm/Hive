@@ -170,6 +170,40 @@ namespace Hive.Services.Common
             return new HiveObjectQuery<Mod>(StatusCodes.Status200OK, mod);
         }
 
+        public async Task<HiveObjectQuery<Mod>> GetMod(User? user, ModIdentifier identifier)
+        {
+            if (identifier is null)
+                return new(StatusCodes.Status400BadRequest, "Mod Identifier is invalid");
+
+            // Combine plugins
+            log.Debug("Combining plugins...");
+            var combined = plugin.Instance;
+
+            if (!Version.TryParse(identifier.Version, out var modVersion))
+            {
+                return new(StatusCodes.Status400BadRequest, "Could not parse Version string");
+            }
+
+            var modId = identifier.ID;
+
+            var mod = await CreateModQuery()
+                .Where(m => m.ReadableID == modId && m.Version == modVersion)
+                .FirstOrDefaultAsync()
+                .ConfigureAwait(false);
+
+            if (mod == null)
+            {
+                return notFoundModResponse;
+            }
+
+            // Forbid if a permissions check or plugins check prevents the user from accessing this mod.
+            if (!permissions.CanDo(FilterModActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState)
+                || !combined.GetSpecificModAdditionalChecks(user, mod))
+                return forbiddenModResponse;
+
+            return new HiveObjectQuery<Mod>(StatusCodes.Status200OK, mod);
+        }
+
         /// <summary>
         /// Moves the specified <see cref="ModIdentifier"/> to the specified channel.
         /// This performs a permission check at: <c>hive.mod.move</c>.
