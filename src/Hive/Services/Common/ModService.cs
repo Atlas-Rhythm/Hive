@@ -170,6 +170,12 @@ namespace Hive.Services.Common
             return new HiveObjectQuery<Mod>(StatusCodes.Status200OK, mod);
         }
 
+        /// <summary>
+        /// Gets a <see cref="Mod"/> that matches the provided <paramref name="identifier"/>.
+        /// </summary>
+        /// <param name="user">The user associated with this request.</param>
+        /// <param name="identifier">Identifier which represents the mod.</param>
+        /// <returns>A warapped <see cref="Mod"/> of the found mod, if successful.</returns>
         public async Task<HiveObjectQuery<Mod>> GetMod(User? user, ModIdentifier identifier)
         {
             if (identifier is null)
