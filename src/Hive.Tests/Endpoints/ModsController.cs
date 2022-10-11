@@ -17,6 +17,7 @@ using Xunit.Abstractions;
 
 namespace Hive.Tests.Endpoints
 {
+    // TODO: Replace all Assert.True with Assert.Equal when applicable
     public class ModsController : TestDbWrapper
     {
         private readonly ITestOutputHelper helper;
@@ -165,6 +166,60 @@ namespace Hive.Tests.Endpoints
 
             // This mod must be SongCore.
             Assert.True(value?.ID == "SongCore");
+        }
+
+        [Fact]
+        public async Task SpecificModSpecificVersionStandard()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+            var res = await controller.GetSpecificModSpecificVersion("BSIPA", "0.6.9"); // We will look for BSIPA.
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed.
+            var result = res.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var value = result!.Value as SerializedMod;
+            Assert.NotNull(value); // We must be given a serialized mod back.
+
+            // This mod must be BSIPA.
+            Assert.Equal("BSIPA", value.ID);
+            // But! There's two versions of BSIPA, so we need to check that this version is REALLY 0.6.9.
+            Assert.Equal(new Versioning.Version(0, 6, 9), value.Version);
+        }
+
+        [Fact]
+        public async Task SpecificModSpecificVersionForbid()
+        {
+            var controller = CreateController("next(false)", defaultPlugins);
+            var res = await controller.GetSpecificModSpecificVersion("BSIPA", "0.6.9"); // We will look for BSIPA.
+
+
+            TestHelpers.AssertNotNull(res); // Result must not be null.
+            TestHelpers.AssertNotNull(res.Result);
+            TestHelpers.AssertForbid(res.Result); // The above endpoint must fail due to the permission rule.
+        }
+
+        [Fact]
+        public async Task SpecificModSpecificVersionInvalidVersion()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+            var res = await controller.GetSpecificModSpecificVersion("BSIPA", "abcdef"); // Completely non-existent mod.
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<BadRequestObjectResult>(res.Result); // The above endpoint must return 404.
+        }
+
+        [Fact]
+        public async Task SpecificModSpecificVersionNonExistent()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+            var res = await controller.GetSpecificModSpecificVersion("william gay", "1.0.0"); // Completely non-existent mod.
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must return 404.
         }
 
         [Fact]

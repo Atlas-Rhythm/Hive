@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Version = Hive.Versioning.Version;
 using Hive.Extensions;
+using Hive.Versioning.Parsing;
 
 namespace Hive.Services.Common
 {
@@ -171,6 +172,47 @@ namespace Hive.Services.Common
         }
 
         /// <summary>
+        /// Gets a <see cref="Mod"/> that matches the provided <paramref name="identifier"/>.
+        /// </summary>
+        /// <param name="user">The user associated with this request.</param>
+        /// <param name="identifier">Identifier which represents the mod.</param>
+        /// <returns>A warapped <see cref="Mod"/> of the found mod, if successful.</returns>
+        public async Task<HiveObjectQuery<Mod>> GetMod(User? user, ModIdentifier identifier)
+        {
+            if (identifier is null)
+                return new(StatusCodes.Status400BadRequest, "Mod Identifier is invalid");
+
+            // Combine plugins
+            log.Debug("Combining plugins...");
+            var combined = plugin.Instance;
+
+            var modVersion = AttemptParseVersionWithError(identifier.Version, out var error);
+            if (modVersion == null)
+            {
+                return new(StatusCodes.Status400BadRequest, error);
+            }
+
+            var modId = identifier.ID;
+
+            var mod = await CreateModQuery()
+                .Where(m => m.ReadableID == modId && m.Version == modVersion)
+                .FirstOrDefaultAsync()
+                .ConfigureAwait(false);
+
+            if (mod == null)
+            {
+                return notFoundModResponse;
+            }
+
+            // Forbid if a permissions check or plugins check prevents the user from accessing this mod.
+            if (!permissions.CanDo(FilterModActionName, new PermissionContext { User = user, Mod = mod }, ref getModsParseState)
+                || !combined.GetSpecificModAdditionalChecks(user, mod))
+                return forbiddenModResponse;
+
+            return new HiveObjectQuery<Mod>(StatusCodes.Status200OK, mod);
+        }
+
+        /// <summary>
         /// Moves the specified <see cref="ModIdentifier"/> to the specified channel.
         /// This performs a permission check at: <c>hive.mod.move</c>.
         /// </summary>
@@ -294,6 +336,23 @@ namespace Hive.Services.Common
             }
 
             return filteredMods;
+        }
+
+        private static Version? AttemptParseVersionWithError(string version, out string error)
+        {
+            var versionSpan = version.AsSpan();
+            var errorState = new ParserErrorState<VersionParseAction>(in versionSpan);
+
+            if (!Version.TryParse(ref errorState, versionSpan, out var parsedVersion))
+            {
+                error = ErrorMessages.GetVersionErrorMessage(ref errorState);
+                errorState.Dispose();
+                return null;
+            }
+
+            errorState.Dispose();
+            error = string.Empty;
+            return parsedVersion;
         }
 
         // Abstracts the construction of a Mod access query with necessary Include calls to a helper function

@@ -100,6 +100,36 @@ namespace Hive.Controllers
         }
 
         /// <summary>
+        /// Gets a specific version of the <see cref="Mod"/> that matches the given ID.
+        /// This performs a permission check at <c>hive.mod.filter</c> once the <see cref="Mod"/> object was retrieved.
+        /// </summary>
+        /// <param name="id">The identifier of the mod.</param>
+        /// <param name="version">The specific version of the mod.</param>
+        /// <returns>A wrapped <see cref="SerializedMod"/> that is the latest version available, if successful.</returns>
+        [HttpGet("mod/{id}/{version}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<SerializedMod>> GetSpecificModSpecificVersion([FromRoute] string id, [FromRoute] string version)
+        {
+            log.Debug("Getting a specific version of a specific mod...");
+            // Get the user, do not need to capture context
+            var user = await HttpContext.GetHiveUser(proxyAuth).ConfigureAwait(false);
+
+            // Version parsing is done in ModService.
+            var identifier = new ModIdentifier
+            {
+                ID = id,
+                Version = version
+            };
+
+            var queryResult = await modService.GetMod(user, identifier).ConfigureAwait(false);
+
+            return queryResult.Serialize(GetAcceptLanguageCultures());
+        }
+
+        /// <summary>
         /// Gets the latest version of the <see cref="Mod"/> that matches the given ID.
         /// This performs a permission check at <c>hive.mod.get</c>, and at <c>hive.mod.filter</c> once the <see cref="Mod"/> object was retrieved.
         /// </summary>
