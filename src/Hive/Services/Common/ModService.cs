@@ -346,9 +346,11 @@ namespace Hive.Services.Common
             if (!Version.TryParse(ref errorState, versionSpan, out var parsedVersion))
             {
                 error = ErrorMessages.GetVersionErrorMessage(ref errorState);
+                errorState.Dispose();
                 return null;
             }
 
+            errorState.Dispose();
             error = string.Empty;
             return parsedVersion;
         }
