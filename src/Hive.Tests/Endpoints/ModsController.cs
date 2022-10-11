@@ -17,6 +17,7 @@ using Xunit.Abstractions;
 
 namespace Hive.Tests.Endpoints
 {
+    // TODO: Replace all Assert.True with Assert.Equal when applicable
     public class ModsController : TestDbWrapper
     {
         private readonly ITestOutputHelper helper;
@@ -182,9 +183,9 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(value); // We must be given a serialized mod back.
 
             // This mod must be BSIPA.
-            Assert.True(value?.ID == "BSIPA");
+            Assert.Equal("BSIPA", value.ID);
             // But! There's two versions of BSIPA, so we need to check that this version is REALLY 0.6.9.
-            Assert.True(value?.Version == new Versioning.Version(0, 6, 9));
+            Assert.Equal(new Versioning.Version(0, 6, 9), value.Version);
         }
 
         [Fact]
