@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Version = Hive.Versioning.Version;
 using Hive.Extensions;
+using Hive.Versioning.Parsing;
 
 namespace Hive.Services.Common
 {
@@ -185,9 +186,10 @@ namespace Hive.Services.Common
             log.Debug("Combining plugins...");
             var combined = plugin.Instance;
 
-            if (!Version.TryParse(identifier.Version, out var modVersion))
+            var modVersion = AttemptParseVersionWithError(identifier.Version, out var error);
+            if (modVersion == null)
             {
-                return new(StatusCodes.Status400BadRequest, "Could not parse Version string");
+                return new(StatusCodes.Status400BadRequest, error);
             }
 
             var modId = identifier.ID;
@@ -334,6 +336,21 @@ namespace Hive.Services.Common
             }
 
             return filteredMods;
+        }
+
+        private static Version? AttemptParseVersionWithError(string version, out string error)
+        {
+            var versionSpan = version.AsSpan();
+            var errorState = new ParserErrorState<VersionParseAction>(in versionSpan);
+
+            if (!Version.TryParse(ref errorState, versionSpan, out var parsedVersion))
+            {
+                error = ErrorMessages.GetVersionErrorMessage(ref errorState);
+                return null;
+            }
+
+            error = string.Empty;
+            return parsedVersion;
         }
 
         // Abstracts the construction of a Mod access query with necessary Include calls to a helper function
