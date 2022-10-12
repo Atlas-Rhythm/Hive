@@ -14,7 +14,7 @@ namespace Hive.Versioning.Parsing
     /// An error action reported while parsing a version or version range.
     /// </summary>
     /// <typeparam name="TAction">The action type being used.</typeparam>
-    public struct ActionErrorReport<TAction> : IEquatable<ActionErrorReport<TAction>>
+    internal struct ActionErrorReport<TAction> : IEquatable<ActionErrorReport<TAction>>
         where TAction : struct
     {
         /// <summary>
@@ -83,7 +83,7 @@ namespace Hive.Versioning.Parsing
     /// If this type is default constructed, errors will not be reported.
     /// </remarks>
     /// <typeparam name="TAction">The action type to use for reports.</typeparam>
-    public ref struct ParserErrorState<TAction>
+    internal ref struct ParserErrorState<TAction>
         where TAction : struct
     {
         /// <summary>

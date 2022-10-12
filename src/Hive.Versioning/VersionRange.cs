@@ -690,31 +690,33 @@ namespace Hive.Versioning
         public static bool TryParse(string text, [MaybeNullWhen(false)] out VersionRange range)
             => TryParse(text.AsSpan(), out range);
         /// <summary>
-        /// Attempts to parse a whole string as a <see cref="VersionRange"/>, optionally recording error information.
+        /// Attempts to parse a whole string as a <see cref="VersionRange"/>.
         /// </summary>
         /// <remarks>
         /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
         /// </remarks>
-        /// <param name="errors">The error state object to write error information to.</param>
         /// <param name="text">The string to try to parse.</param>
         /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <param name="error">An error message describing the parse error, if any.</param>
+        /// <param name="fullErrorMessages"><see langword="true"/> to attempt to give a complete error message, <see langword="false"/> otherwise.</param>
         /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
-        /// <seealso cref="TryParse(ref ErrorState, ref StringPart, out VersionRange)"/>
-        public static bool TryParse(ref ErrorState errors, StringView text, [MaybeNullWhen(false)] out VersionRange range)
-            => TryParse(ref errors, text.AsSpan(), out range);
+        /// <seealso cref="TryParse(ref StringPart, out VersionRange)"/>
+        public static bool TryParse(StringView text, [MaybeNullWhen(false)] out VersionRange range, [MaybeNullWhen(true)] out string error, bool fullErrorMessages = true)
+            => TryParse(text.AsSpan(), out range, out error, fullErrorMessages);
         /// <summary>
-        /// Attempts to parse a whole string as a <see cref="VersionRange"/>, optionally recording error information.
+        /// Attempts to parse a whole string as a <see cref="VersionRange"/>.
         /// </summary>
         /// <remarks>
         /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
         /// </remarks>
-        /// <param name="errors">The error state object to write error information to.</param>
         /// <param name="text">The string to try to parse.</param>
         /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <param name="error">An error message describing the parse error, if any.</param>
+        /// <param name="fullErrorMessages"><see langword="true"/> to attempt to give a complete error message, <see langword="false"/> otherwise.</param>
         /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
-        /// <seealso cref="TryParse(ref ErrorState, ref StringPart, out VersionRange)"/>
-        public static bool TryParse(ref ErrorState errors, string text, [MaybeNullWhen(false)] out VersionRange range)
-            => TryParse(ref errors, text.AsSpan(), out range);
+        /// <seealso cref="TryParse(ref StringPart, out VersionRange)"/>
+        public static bool TryParse(string text, [MaybeNullWhen(false)] out VersionRange range, [MaybeNullWhen(true)] out string error, bool fullErrorMessages = true)
+            => TryParse(text.AsSpan(), out range, out error, fullErrorMessages);
 #endif
 
         /// <summary>
@@ -754,6 +756,24 @@ namespace Hive.Versioning
         }
 
         /// <summary>
+        /// Attempts to parse a whole string as a <see cref="VersionRange"/>.
+        /// </summary>
+        /// <remarks>
+        /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
+        /// </remarks>
+        /// <param name="text">The string to try to parse.</param>
+        /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <param name="error">An error message describing the parse error, if any.</param>
+        /// <param name="fullErrorMessages"><see langword="true"/> to attempt to give a complete error message, <see langword="false"/> otherwise.</param>
+        /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
+        /// <seealso cref="TryParse(ref StringPart, out VersionRange)"/>
+        public static bool TryParse(StringPart text, [MaybeNullWhen(false)] out VersionRange range, [MaybeNullWhen(true)] out string error, bool fullErrorMessages = true)
+        {
+            text = text.Trim();
+            return TryParse(ref text, true, out range, out error, fullErrorMessages);
+        }
+
+        /// <summary>
         /// Attempts to parse a whole string as a <see cref="VersionRange"/>, optionally recording error information.
         /// </summary>
         /// <remarks>
@@ -764,7 +784,7 @@ namespace Hive.Versioning
         /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
         /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
         /// <seealso cref="TryParse(ref ErrorState, ref StringPart, out VersionRange)"/>
-        public static bool TryParse(ref ErrorState errors, StringPart text, [MaybeNullWhen(false)] out VersionRange range)
+        internal static bool TryParse(ref ErrorState errors, StringPart text, [MaybeNullWhen(false)] out VersionRange range)
         {
             text = text.Trim();
             return TryParse(ref errors, ref text, true, out range) && text.Length == 0; // report errors
@@ -789,19 +809,41 @@ namespace Hive.Versioning
         }
 
         /// <summary>
-        /// Attempts to parse a <see cref="VersionRange"/> from the start of the string, optionally recording error information.
+        /// Attempts to parse a <see cref="VersionRange"/> from the start of the string.
         /// </summary>
         /// <remarks>
         /// <para>When this returns <see langword="true"/>, <paramref name="text"/> will begin immediately after the parsed <see cref="VersionRange"/>.
         /// When this returns <see langword="false"/>, <paramref name="text"/> will remain unchanged.</para>
         /// <include file="docs.xml" path='csdocs/class[@name="VersionRange"]/syntax/*'/>
         /// </remarks>
-        /// <param name="errors">The error state object to write error information to.</param>
         /// <param name="text">The string to try to parse.</param>
         /// <param name="range">The parsed <see cref="VersionRange"/>, if any.</param>
+        /// <param name="error">An error message describing the parse error, if any.</param>
+        /// <param name="fullErrorMessages"><see langword="true"/> to attempt to give a complete error message, <see langword="false"/> otherwise.</param>
         /// <returns><see langword="true"/> if <paramref name="text"/> was successfully parsed, <see langword="false"/> otherwise.</returns>
         [CLSCompliant(false)]
-        public static bool TryParse(ref ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out VersionRange range)
+        public static bool TryParse(ref StringPart text, [MaybeNullWhen(false)] out VersionRange range, [MaybeNullWhen(true)] out string error, bool fullErrorMessages = true)
+            => TryParse(ref text, false, out range, out error, fullErrorMessages);
+
+        internal static bool TryParse(ref StringPart text, bool checkLength,
+            [MaybeNullWhen(false)] out VersionRange range, [MaybeNullWhen(true)] out string error, bool fullErrorMessages = true)
+        {
+            var errors = new ErrorState(text);
+            if (TryParse(ref errors, ref text, checkLength, out range))
+            {
+                error = null;
+                errors.Dispose();
+                return true;
+            }
+            else
+            {
+                error = ErrorMessages.GetVersionRangeErrorMessage(ref errors, fullErrorMessages);
+                errors.Dispose();
+                return false;
+            }
+        }
+
+        internal static bool TryParse(ref ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out VersionRange range)
             => TryParse(ref errors, ref text, false, out range);
 
         private static bool TryParse(ref ErrorState errors, ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out VersionRange range)

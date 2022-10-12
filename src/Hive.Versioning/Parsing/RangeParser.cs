@@ -21,7 +21,7 @@ namespace Hive.Versioning.Parsing
     /// <summary>
     /// The parse actions for version range parsing.
     /// </summary>
-    public enum RangeParseAction
+    internal enum RangeParseAction
     {
         /// <summary>
         /// No action.
@@ -128,7 +128,7 @@ namespace Hive.Versioning.Parsing
     /// <summary>
     /// A parse action that can be either a <see cref="RangeParseAction"/> or a <see cref="VersionParseAction"/>.
     /// </summary>
-    public readonly struct AnyParseAction : IEquatable<AnyParseAction>
+    internal readonly struct AnyParseAction : IEquatable<AnyParseAction>
     {
         /// <summary>
         /// The value of this action, as a <see cref="RangeParseAction"/>.
