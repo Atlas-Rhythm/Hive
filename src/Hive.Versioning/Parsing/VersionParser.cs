@@ -18,7 +18,7 @@ namespace Hive.Versioning.Parsing
     /// <summary>
     /// The parse actions for version parsing.
     /// </summary>
-    public enum VersionParseAction
+    internal enum VersionParseAction
     {
         /// <summary>
         /// No action.

@@ -18,7 +18,7 @@ namespace Hive.Versioning.Parsing
     /// <summary>
     /// A class containing helpers for getting user-friendly parser error messages given a populated <see cref="ParserErrorState{TAction}"/>.
     /// </summary>
-    public static class ErrorMessages
+    internal static class ErrorMessages
     {
         private record GeneratedMessage(string Message,
             string? Suggestion = null,

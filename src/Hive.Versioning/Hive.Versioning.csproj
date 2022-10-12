@@ -12,6 +12,8 @@
     <VersionPrefix>0.1.0</VersionPrefix>
     <DoesBuildStandalone>true</DoesBuildStandalone>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(BuildingStandalone)' == 'true'">

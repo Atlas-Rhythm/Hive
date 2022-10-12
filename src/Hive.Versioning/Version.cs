@@ -415,27 +415,27 @@ namespace Hive.Versioning
         /// </summary>
         /// <param name="text">The sequence of characters to parse.</param>
         /// <param name="version">The parsed version, if the input is valid.</param>
+        /// <param name="error">An error message describing the parse error, if any.</param>
+        /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
+        public static bool TryParse(StringView text, [MaybeNullWhen(false)] out Version version, [MaybeNullWhen(true)] out string error)
+            => TryParse(text.AsSpan(), out version, out error);
+        /// <summary>
+        /// Attempts to parse a sequence of characters into a version object.
+        /// </summary>
+        /// <param name="text">The sequence of characters to parse.</param>
+        /// <param name="version">The parsed version, if the input is valid.</param>
         /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
         public static bool TryParse(string text, [MaybeNullWhen(false)] out Version version)
             => TryParse(text.AsSpan(), out version);
         /// <summary>
-        /// Attempts to parse a sequence of characters into a version object, optionally recording error information.
+        /// Attempts to parse a sequence of characters into a version object.
         /// </summary>
-        /// <param name="errors">The error state object to write error information to.</param>
         /// <param name="text">The sequence of characters to parse.</param>
         /// <param name="version">The parsed version, if the input is valid.</param>
+        /// <param name="error">An error message describing the parse error, if any.</param>
         /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
-        public static bool TryParse(ref ErrorState errors, StringView text, [MaybeNullWhen(false)] out Version version)
-            => TryParse(ref errors, text.AsSpan(), out version);
-        /// <summary>
-        /// Attempts to parse a sequence of characters into a version object, optionally recording error information.
-        /// </summary>
-        /// <param name="errors">The error state object to write error information to.</param>
-        /// <param name="text">The sequence of characters to parse.</param>
-        /// <param name="version">The parsed version, if the input is valid.</param>
-        /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
-        public static bool TryParse(ref ErrorState errors, string text, [MaybeNullWhen(false)] out Version version)
-            => TryParse(ref errors, text.AsSpan(), out version);
+        public static bool TryParse(string text, [MaybeNullWhen(false)] out Version version, [MaybeNullWhen(true)] out string error)
+            => TryParse(text.AsSpan(), out version, out error);
 
         // We also intentionally leave out the overloads which take the text byref, as we cannot do type conversions.
 #endif
@@ -468,13 +468,19 @@ namespace Hive.Versioning
         }
 
         /// <summary>
-        /// Attempts to parse a sequence of characters into a version object, optionally recording error information.
+        /// Attempts to parse a sequence of characters into a version object.
         /// </summary>
-        /// <param name="errors">The error state object to write error information to.</param>
         /// <param name="text">The sequence of characters to parse.</param>
         /// <param name="version">The parsed version, if the input is valid.</param>
+        /// <param name="error">An error message describing the parse error, if any.</param>
         /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
-        public static bool TryParse(ref ErrorState errors, StringPart text, [MaybeNullWhen(false)] out Version version)
+        public static bool TryParse(StringPart text, [MaybeNullWhen(false)] out Version version, [MaybeNullWhen(true)] out string error)
+        {
+            text = text.Trim();
+            return TryParse(ref text, true, out version, out error) && text.Length == 0;
+        }
+
+        internal static bool TryParse(ref ErrorState errors, StringPart text, [MaybeNullWhen(false)] out Version version)
         {
             text = text.Trim();
             return TryParse(ref errors, ref text, true, out version) && text.Length == 0;
@@ -495,25 +501,44 @@ namespace Hive.Versioning
             => TryParse(ref text, false, out version);
 
         /// <summary>
-        /// Attempts to parse a sequence of characters into a version object, as part of a larger parse, possibly keeping track
-        /// of error information.
+        /// Attempts to parse a sequence of characters into a version object, as part of a larger parse.
         /// </summary>
         /// <remarks>
         /// When this method returns, <paramref name="text"/> will begin after the end of the parsed version, if it is present, or
         /// what it initially contained if no version is present and this returns <see langword="false"/>.
         /// </remarks>
-        /// <param name="errors">The error state object to write error information to.</param>
         /// <param name="text">The sequence of characters to parse.</param>
         /// <param name="version">The parsed version, if the input is valid.</param>
+        /// <param name="error">An error message describing the parse error, if any.</param>
         /// <returns><see langword="true"/> if the text is valid and could be parsed, <see langword="false"/> otherwise.</returns>
         [CLSCompliant(false)]
-        public static bool TryParse(ref ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out Version version)
+        public static bool TryParse(ref StringPart text, [MaybeNullWhen(false)] out Version version, [MaybeNullWhen(true)] out string error)
+            => TryParse(ref text, false, out version, out error);
+
+        internal static bool TryParse(ref ErrorState errors, ref StringPart text, [MaybeNullWhen(false)] out Version version)
             => TryParse(ref errors, ref text, false, out version);
 
         private static bool TryParse(ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out Version version)
         {
             var errors = new ErrorState();
             return TryParse(ref errors, ref text, checkLength, out version); // don't do error reporting
+        }
+
+        private static bool TryParse(ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out Version version, [MaybeNullWhen(true)] out string error)
+        {
+            var errors = new ErrorState(text);
+            if (TryParse(ref errors, ref text, checkLength, out version))
+            {
+                error = null;
+                errors.Dispose();
+                return true;
+            }
+            else
+            {
+                error = ErrorMessages.GetVersionErrorMessage(ref errors);
+                errors.Dispose();
+                return false;
+            }
         }
 
         private static bool TryParse(ref ErrorState errors, ref StringPart text, bool checkLength, [MaybeNullWhen(false)] out Version version)

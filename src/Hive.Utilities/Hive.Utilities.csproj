@@ -9,6 +9,8 @@
     
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsUtilities>true</IsUtilities>
+
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">

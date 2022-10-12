@@ -189,7 +189,7 @@ namespace Hive.Services.Common
             var modVersion = AttemptParseVersionWithError(identifier.Version, out var error);
             if (modVersion == null)
             {
-                return new(StatusCodes.Status400BadRequest, error);
+                return new(StatusCodes.Status400BadRequest, error ?? "");
             }
 
             var modId = identifier.ID;
@@ -338,21 +338,16 @@ namespace Hive.Services.Common
             return filteredMods;
         }
 
-        private static Version? AttemptParseVersionWithError(string version, out string error)
+        private static Version? AttemptParseVersionWithError(string version, out string? error)
         {
-            var versionSpan = version.AsSpan();
-            var errorState = new ParserErrorState<VersionParseAction>(in versionSpan);
-
-            if (!Version.TryParse(ref errorState, versionSpan, out var parsedVersion))
+            if (Version.TryParse(version, out var parsedVersion, out error))
             {
-                error = ErrorMessages.GetVersionErrorMessage(ref errorState);
-                errorState.Dispose();
+                return parsedVersion;
+            }
+            else
+            {
                 return null;
             }
-
-            errorState.Dispose();
-            error = string.Empty;
-            return parsedVersion;
         }
 
         // Abstracts the construction of a Mod access query with necessary Include calls to a helper function
