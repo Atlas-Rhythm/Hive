@@ -58,17 +58,16 @@ namespace Hive.Plugins.Loading
             var pluginsToLoad = FindPluginsToLoad(pluginDir);
 
             var exceptions = new List<(Exception Exception, string PluginName)>();
+
+            // first we want to collect all of the plugins
+            var plugins = new Dictionary<string, PluginInstance>();
             foreach (var plugin in pluginsToLoad)
             {
                 try
                 {
                     var plc = new PluginLoadContext(plugin);
                     var instance = new PluginInstance(plc);
-
-                    options.OnPluginLoadedCb(services, instance);
-
-                    InitPlugin(instance, services, hostEnv);
-                    _ = services.AddSingleton(instance);
+                    plugins.Add(instance.Name, instance);
                 }
                 catch (AggregateException e)
                 {
@@ -78,6 +77,44 @@ namespace Hive.Plugins.Loading
                 catch (Exception e)
                 {
                     exceptions.Add((e, plugin.Name));
+                }
+            }
+
+            // now, we want to figure out and mark dependencies so that the ALCs depend on each other properly
+            foreach (var (_, inst) in plugins)
+            {
+                var selfLibs = inst.DependencyContext.RuntimeLibraries
+                    .Where(l => l.Name == inst.Name);
+                foreach (var lib in selfLibs)
+                {
+                    foreach (var dep in lib.Dependencies)
+                    {
+                        if (plugins.TryGetValue(dep.Name, out var plugin))
+                        {
+                            inst.LoadContext.AddDependencyContext(plugin.LoadContext);
+                        }
+                    }
+                }
+            }
+
+            // then, finally, we take the plugins and initialize them
+            foreach (var (_, instance) in plugins)
+            {
+                try
+                {
+                    options.OnPluginLoadedCb(services, instance);
+
+                    InitPlugin(instance, services, hostEnv);
+                    _ = services.AddSingleton(instance);
+                }
+                catch (AggregateException e)
+                {
+                    // TODO: these exceptions should *ideally* also include the stack trace of the AggregateException
+                    exceptions.AddRange(e.InnerExceptions.Select(e => (e, instance.Name)));
+                }
+                catch (Exception e)
+                {
+                    exceptions.Add((e, instance.Name));
                 }
             }
 

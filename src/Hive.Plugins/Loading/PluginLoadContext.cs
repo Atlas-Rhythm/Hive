@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Threading;
 using Hive.Plugins.Resources;
 
 namespace Hive.Plugins.Loading
@@ -10,6 +12,7 @@ namespace Hive.Plugins.Loading
     internal class PluginLoadContext : AssemblyLoadContext
     {
         private readonly AssemblyDependencyResolver resolver;
+        private readonly List<PluginLoadContext> depencencyContexts = new();
 
         public PluginLoadContext(DirectoryInfo directory)
             : base((directory ?? throw new ArgumentNullException(nameof(directory))).Name, false)
@@ -31,12 +34,39 @@ namespace Hive.Plugins.Loading
         public Assembly LoadPlugin()
             => LoadFromAssemblyPath(MainFile.FullName);
 
+        internal void AddDependencyContext(PluginLoadContext ctx)
+            => depencencyContexts.Add(ctx);
+
+        private readonly ThreadLocal<bool> isResolving = new(static () => false);
+
         protected override Assembly? Load(AssemblyName assemblyName)
         {
+            // if this condition triggers, then we're in a cycle
+            // returning immediately will break that cycle
+            if (isResolving.Value)
+                return null;
+
             var path = resolver.ResolveAssemblyToPath(assemblyName);
             if (path is not null)
             {
                 return LoadFromAssemblyPath(path);
+            }
+
+            // if we couldn't find it in *our* ALC, we want to try to find it in our *dependencies'* ALCs, before finally falling back to the default ALC
+            try
+            {
+                isResolving.Value = true;
+
+                foreach (var dep in depencencyContexts)
+                {
+                    var asm = dep.Load(assemblyName);
+                    if (asm is not null)
+                        return asm;
+                }
+            }
+            finally
+            {
+                isResolving.Value = false;
             }
 
             return null; // cannot load the assembly in this ALC
