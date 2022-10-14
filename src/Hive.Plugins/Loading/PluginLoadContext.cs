@@ -9,7 +9,7 @@ using Hive.Plugins.Resources;
 
 namespace Hive.Plugins.Loading
 {
-    internal class PluginLoadContext : AssemblyLoadContext
+    internal class PluginLoadContext : AssemblyLoadContext, IDisposable
     {
         private readonly AssemblyDependencyResolver resolver;
         private readonly List<PluginLoadContext> depencencyContexts = new();
@@ -81,6 +81,34 @@ namespace Hive.Plugins.Loading
             }
 
             return IntPtr.Zero; // cannot load the dll in this ALC
+        }
+
+        private bool disposedValue;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    isResolving.Dispose();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        // ~PluginLoadContext()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }
