@@ -157,7 +157,7 @@ namespace Hive.Plugins.Loading
                     {
                         var containerType = configureContainer.GetParameters()[0].ParameterType;
                         var actionType = typeof(Action<>).MakeGenericType(containerType);
-                        var configureDelegate = configureContainer.CreateDelegate(actionType, instance);
+                        var configureDelegate = Delegate.CreateDelegate(actionType, configureContainer.IsStatic ? null : instance, configureContainer);
 
                         _ = typeof(ContainerConfigurator)
                             .GetMethod(nameof(ContainerConfigurator.ConfigureContainerNoCtx))!
