@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Reflection;
+using Microsoft.Extensions.DependencyModel;
 
 namespace Hive.Plugins.Loading
 {
@@ -20,12 +21,15 @@ namespace Hive.Plugins.Loading
         /// Gets the name of the plugin.
         /// </summary>
         public string Name => LoadContext.Name!;
+
         internal PluginLoadContext LoadContext { get; }
+        internal DependencyContext DependencyContext { get; }
 
         internal PluginInstance(PluginLoadContext context)
         {
             LoadContext = context;
             PluginAssembly = context.LoadPlugin();
+            DependencyContext = DependencyContext.Load(PluginAssembly);
         }
     }
 }
