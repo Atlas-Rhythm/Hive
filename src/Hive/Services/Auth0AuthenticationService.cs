@@ -53,6 +53,7 @@ namespace Hive.Services
     {
         private const string authenticationAPIUserEndpoint = "userinfo";
         private const string authenticationAPIGetToken = "oauth/token";
+        private const string informationContextKey = "Auth0 Management Info";
         //private const string managementAPIUserEndpoint = "api/v2/users";
 
         private readonly JsonSerializerOptions jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
@@ -61,10 +62,8 @@ namespace Hive.Services
         private readonly ILogger logger;
         private readonly IClock clock;
         private readonly HiveContext context;
+        private readonly IInformationContext informationContext;
         private readonly IAggregate<IUserCreationPlugin> userCreationPlugin;
-
-        private string? managementToken;
-        private Instant? managementExpireInstant;
 
         /// <inheritdoc/>
         public Auth0ReturnData Data { get; }
@@ -84,6 +83,7 @@ namespace Hive.Services
             IClock clock,
             IOptions<Auth0Options> config,
             HiveContext context,
+            IInformationContext informationContext,
             IAggregate<IUserCreationPlugin> userCreationPlugin)
         {
             if (log is null)
@@ -94,6 +94,7 @@ namespace Hive.Services
 
             this.clock = clock;
             this.context = context;
+            this.informationContext = informationContext;
             logger = log.ForContext<Auth0AuthenticationService>();
 
             var options = config.TryLoad(logger, Auth0Options.ConfigHeader);
@@ -231,7 +232,7 @@ namespace Hive.Services
         {
             try
             {
-                if (managementToken == null || clock.GetCurrentInstant() >= managementExpireInstant)
+                if (!informationContext.TryGetValue<InstanceManagementInfo>(informationContextKey, out var context) || clock.GetCurrentInstant() >= context!.Expiration)
                 {
                     await RefreshManagementAPIToken().ConfigureAwait(false);
                 }
@@ -275,8 +276,7 @@ namespace Hive.Services
 
                 var body = await response.Content.ReadFromJsonAsync<ManagementAPIResponse>(jsonSerializerOptions).ConfigureAwait(false);
 
-                managementToken = body!.Access_Token;
-                managementExpireInstant = clock.GetCurrentInstant() + Duration.FromSeconds(body!.Expires_In);
+                informationContext.SetValue(informationContextKey, new InstanceManagementInfo(body!.Access_Token, clock.GetCurrentInstant() + Duration.FromSeconds(body!.Expires_In)));
             }
             finally
             {
@@ -312,6 +312,8 @@ namespace Hive.Services
             }
             return await response.Content.ReadFromJsonAsync<Auth0TokenResponse>(jsonSerializerOptions).ConfigureAwait(false);
         }
+
+        private record InstanceManagementInfo(string Token, Instant Expiration);
 
         private record ManagementAPIResponse(string Access_Token, int Expires_In, string Scope, string Token_Type);
 
