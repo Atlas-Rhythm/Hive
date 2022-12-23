@@ -128,6 +128,7 @@ namespace Hive
             container.Register<GameVersionService>(Reuse.Scoped);
             container.Register<DependencyResolverService>(Reuse.Scoped);
             container.Register(typeof(IAggregate<>), typeof(Aggregate<>), Reuse.Singleton);
+            container.Register<IInformationContext, InMemoryInformationContext>(Reuse.Singleton);
 
             container.RegisterHiveGraphQL();
         }
