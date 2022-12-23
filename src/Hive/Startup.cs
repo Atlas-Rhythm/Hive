@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text.Json;
 using DryIoc;
+using GraphQL.Server.Ui.Altair;
 using Hive.Configuration;
 using Hive.Controllers;
 using Hive.Graphing;
@@ -164,8 +165,8 @@ namespace Hive
             }
 
             _ = app.UseAuthentication()
-                .UseGraphQL<HiveSchema>("/graphql")
-                .UseGraphQLAltair()
+                .UseGraphQL<HiveSchema>("/api/graphql")
+                .UseGraphQLAltair(new AltairOptions { GraphQLEndPoint = "/api/graphql" })
                 .UseEndpoints(endpoints => endpoints.MapControllers());
 
 
