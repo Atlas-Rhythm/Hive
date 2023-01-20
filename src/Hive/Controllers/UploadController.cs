@@ -577,7 +577,7 @@ namespace Hive.Controllers
 
             logger.Information("Upload {ID} complete: {Name} by {Author}", cookie.Substring(0, 16), localization.Name, modObject.Uploader.Username);
 
-            return UploadResult.Finish();
+            return UploadResult.Finish(modObject);
         }
     }
 }
