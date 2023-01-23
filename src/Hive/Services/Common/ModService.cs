@@ -281,7 +281,7 @@ namespace Hive.Services.Common
             var mods = CreateModQuery();
 
             // Perform various filtering on our mods
-            if (channelIds != null && channelIds.Length >= 0)
+            if (channelIds != null && channelIds.Length > 0)
             {
                 var filteredChannels = context.Channels.Where(c => channelIds.Contains(c.Name));
 
@@ -298,14 +298,14 @@ namespace Hive.Services.Common
                 }
             }
 
-            if (filteredVersionRange != null)
-            {
-                mods = mods.Where(m => filteredVersionRange.Matches(m.Version));
-            }
-
             // Because EF (or PostgreSQL or both) does not like advanced LINQ expressions (like GroupBy),
             // we convert to an enumerable and do additional filtering on the client.
             var filteredMods = await mods.ToListAsync().ConfigureAwait(false);
+
+            if (filteredVersionRange != null)
+            {
+                _ = filteredMods.RemoveAll(m => !filteredVersionRange.Matches(m.Version));
+            }
 
             var filteredType = filterType?.ToUpperInvariant() ?? "LATEST";
 
