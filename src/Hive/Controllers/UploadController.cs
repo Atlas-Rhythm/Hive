@@ -249,7 +249,7 @@ namespace Hive.Controllers
             public object? ErrorContext { get; init; }
 
             /// <summary>
-            /// The mod data extracted during the first stage of the upload flow.
+            /// The mod data associated with this upload.
             /// </summary>
             [JsonPropertyName("data")]
             [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -319,10 +319,11 @@ namespace Hive.Controllers
                 };
             }
 
-            internal static UploadResult Finish()
+            internal static UploadResult Finish(Mod mod)
                 => new()
                 {
-                    Type = ResultType.Success
+                    Type = ResultType.Success,
+                    ExtractedData = SerializedMod.Serialize(mod, mod.Localizations.FirstOrDefault())
                 };
         }
 
@@ -576,7 +577,7 @@ namespace Hive.Controllers
 
             logger.Information("Upload {ID} complete: {Name} by {Author}", cookie.Substring(0, 16), localization.Name, modObject.Uploader.Username);
 
-            return UploadResult.Finish();
+            return UploadResult.Finish(modObject);
         }
     }
 }

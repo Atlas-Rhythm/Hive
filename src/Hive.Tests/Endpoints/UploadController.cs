@@ -125,6 +125,7 @@ namespace Hive.Tests.Endpoints
             Assert.NotNull(result2);
             Assert.Null(result2.Result);
             Assert.Equal(Controllers.UploadController.ResultType.Success, result2.Value.Type);
+            Assert.NotNull(result2.Value.ExtractedData);
 
             var db = serviceProvider.GetRequiredService<HiveContext>();
 
