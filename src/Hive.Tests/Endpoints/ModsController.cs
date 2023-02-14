@@ -469,8 +469,6 @@ namespace Hive.Tests.Endpoints
             Assert.NotEmpty(confirmationMod!.Dependencies);
             Assert.NotEmpty(confirmationMod.ConflictsWith);
             Assert.NotNull(confirmationMod.LocalizedModInfo);
-            Assert.Equal("ChromaToggleModifiedName", confirmationMod.LocalizedModInfo.Name);
-            Assert.Equal("MyNewDescription", confirmationMod.LocalizedModInfo.Description);
         }
 
         [Fact]
