@@ -179,6 +179,32 @@ namespace Hive.Controllers
             return queryResult.Serialize(GetAcceptLanguageCultures());
         }
 
+        /// <summary>
+        /// Edits a specific mod with new information.
+        /// This performs a permission check at: <c>hive.mod.edit</c>.
+        /// </summary>
+        /// <param name="serializedModUpdate">The <see cref="SerializedModUpdate"/> to update and the updated information.</param>
+        /// <returns>A wrapped <see cref="SerializedMod"/> of the edited mod, if successful.</returns>
+        [HttpPut("mod")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<SerializedMod>> UpdateSpecificMod([FromBody] SerializedModUpdate serializedModUpdate)
+        {
+            log.Debug("Attempting to update a mod");
+
+            // Get the user, do not need to capture context
+            var user = await HttpContext.GetHiveUser(proxyAuth).ConfigureAwait(false);
+
+            if (user is null) return new UnauthorizedResult();
+
+            var queryResult = await modService.UpdateMod(user, serializedModUpdate).ConfigureAwait(false);
+
+            return queryResult.Serialize(GetAcceptLanguageCultures());
+        }
+
         // This code was generously provided by the following StackOverflow user, with some slight tweaks.
         // https://stackoverflow.com/questions/9414123/get-cultureinfo-from-current-visitor-and-setting-resources-based-on-that/51144362#51144362
         private IEnumerable<string> GetAcceptLanguageCultures()
