@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Version = Hive.Versioning.Version;
 using Hive.Extensions;
+using Hive.Models.Serialized;
 using Hive.Versioning.Parsing;
 
 namespace Hive.Services.Common
@@ -72,9 +73,12 @@ namespace Hive.Services.Common
         private const string FilterModActionName = "hive.mod.filter";
 
         private const string MoveModActionName = "hive.mod.move";
+        
+        private const string EditModActionName = "hive.mod.edit";
 
         [ThreadStatic] private static PermissionActionParseState getModsParseState;
         [ThreadStatic] private static PermissionActionParseState moveModsParseState;
+        [ThreadStatic] private static PermissionActionParseState editModsParseState;
 
         private static readonly HiveObjectQuery<Mod> forbiddenModResponse = new(StatusCodes.Status403Forbidden);
         private static readonly HiveObjectQuery<Mod> notFoundModResponse = new(StatusCodes.Status404NotFound, "Not Found");
@@ -265,6 +269,66 @@ namespace Hive.Services.Common
 
             // If any plugins want to modify the object further after the move operation, they can do so here.
             combined.ModifyAfterModMove(in databaseMod);
+
+            _ = await context.SaveChangesAsync().ConfigureAwait(false);
+
+            return new HiveObjectQuery<Mod>(StatusCodes.Status200OK, databaseMod);
+        }
+
+        /// <summary>
+        /// Updates an existing mod.
+        /// </summary>
+        /// <param name="user">The user updating the mod.</param>
+        /// <param name="update">The data to update the mod with, as well as the mod identifier.</param>
+        /// <returns>A wrapped <see cref="Mod"/> of the updated mod, if successful.</returns>
+        public async Task<HiveObjectQuery<Mod>> UpdateMod(User? user, SerializedModUpdate update)
+        {
+            log.Debug("Getting database objects...");
+
+            if (update is null)
+                return new HiveObjectQuery<Mod>(StatusCodes.Status400BadRequest, "Mod Update is invalid");
+
+            var targetVersion = new Version(update.Version);
+
+            // Get the database mod that represents the SerializedModUpdate.
+            var databaseMod = await CreateModQuery().Where(x => x.ReadableID == update.ID && x.Version == targetVersion)
+                .FirstOrDefaultAsync().ConfigureAwait(false);
+
+            // The POSTed mod was successfully deserialzed, but no Mod exists in the database.
+            if (databaseMod == null)
+                return new HiveObjectQuery<Mod>(StatusCodes.Status404NotFound, "Mod does not exist");
+
+            // Forbid iff a given user (or none) is allowed to edit the mod.
+            if (!permissions.CanDo(EditModActionName, new PermissionContext { User = user, Mod = databaseMod }, ref editModsParseState))
+                return forbiddenModResponse;
+
+            log.Debug("Editing mod...");
+
+            // Update localization if necessary.
+            var locale = update.LocalizedModInfo;
+            if (locale is not null)
+            {
+                var databaseLocale = databaseMod.Localizations.FirstOrDefault(l => l.Language == locale.Language);
+                if (databaseLocale is null)
+                {
+                    databaseLocale = new LocalizedModInfo
+                    {
+                        OwningMod = databaseMod,
+                        Language = locale.Language
+                    };
+                    databaseMod.Localizations.Add(databaseLocale);
+                }
+                databaseLocale.Name = locale.Name;
+                databaseLocale.Credits = locale.Credits;
+                databaseLocale.Changelog = locale.Changelog;
+                databaseLocale.Description = locale.Description;
+            }
+
+            var versions = await context.GameVersions.AsTracking().Where(g => update.SupportedGameVersions.Contains(g.Name)).ToArrayAsync().ConfigureAwait(false);
+
+            databaseMod.SupportedVersions = versions;
+            databaseMod.Dependencies = update.Dependencies;
+            databaseMod.Conflicts = update.ConflictsWith;
 
             _ = await context.SaveChangesAsync().ConfigureAwait(false);
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
@@ -8,6 +9,7 @@ using DryIoc;
 using Hive.Models;
 using Hive.Models.Serialized;
 using Hive.Services.Common;
+using Hive.Versioning;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -411,6 +413,137 @@ namespace Hive.Tests.Endpoints
 
             // Try to request without specifying a user
             var res = await controller.MoveModToChannel("Public", null!);
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.IsType<UnauthorizedResult>(res.Result); // The above endpoint must fail since a user is not logged in/
+        }
+
+        [Fact]
+        public async Task EditModStandard()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+            var getMod = await controller.GetSpecificMod("ChromaToggle"); // Grab the mod we want to edit.
+
+            // Serialize our mod into JSON, since we need to re-attach it with the request.
+            Assert.NotNull(getMod.Result);
+            var getModResult = getMod.Result as OkObjectResult;
+            Assert.NotNull(getModResult);
+
+            // Serialize our request JSON data into a stream, which we will feed into our request.
+            var identifier = new SerializedModUpdate
+            {
+                ID = "ChromaToggle",
+                Version = "1.0.0",
+                SupportedGameVersions = Array.Empty<string>().ToImmutableList(),
+                LocalizedModInfo = new SerializedLocalizedModInfo
+                {
+                    Name = "ChromaToggleModifiedName",
+                    Description = "MyNewDescription",
+                    Language = "en-US"
+                },
+                Dependencies = new ModReference[]
+                {
+                    new("SiraUtil", new VersionRange("^3.0.0")) // Add new dependency
+                }.ToImmutableList(),
+                ConflictsWith = new ModReference[]
+                {
+                    new("TrickSaber", new VersionRange("^2.5.1")) // Add new conflict
+                }.ToImmutableList()
+            };
+
+            await using var stringStream = TestHelpers.GenerateStreamFromString(JsonSerializer.Serialize(identifier));
+
+            controller.ControllerContext.HttpContext = TestHelpers.CreateMockRequest(stringStream);
+
+            var res = await controller.UpdateSpecificMod(identifier);
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.IsType<OkObjectResult>(res.Result); // The above endpoint must succeed.
+
+            var confirmation = await controller.GetSpecificMod("ChromaToggle");
+
+            Assert.NotNull(confirmation.Result);
+            var confirmationResult = confirmation.Result as OkObjectResult;
+            Assert.NotNull(confirmationResult);
+            var confirmationMod = confirmationResult.Value as SerializedMod;
+            Assert.NotEmpty(confirmationMod!.Dependencies);
+            Assert.NotEmpty(confirmationMod.ConflictsWith);
+            Assert.NotNull(confirmationMod.LocalizedModInfo);
+        }
+
+        [Fact]
+        public async Task EditModNonExistentMod()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+            var getMod = await controller.GetSpecificMod("ChromaToggle"); // Grab the mod we want to edit.
+
+            // Serialize our mod into JSON, since we need to re-attach it with the request.
+            Assert.NotNull(getMod.Result);
+            var getModResult = getMod.Result as OkObjectResult;
+            Assert.NotNull(getModResult);
+
+            // Serialize our request JSON data into a stream, which we will feed into our request.
+            var identifier = new SerializedModUpdate
+            {
+                ID = "sdfghjolisdjtfghoildrtfgh serdtolhg serdtjhgstrdfghn j",
+                Version = "1.0.0",
+                SupportedGameVersions = Array.Empty<string>().ToImmutableList(),
+                LocalizedModInfo = new SerializedLocalizedModInfo
+                {
+                    Name = "ChromaToggleModifiedName",
+                    Description = "MyNewDescription",
+                    Language = "en-US"
+                }
+            };
+
+            await using var stringStream = TestHelpers.GenerateStreamFromString(JsonSerializer.Serialize(identifier));
+
+            controller.ControllerContext.HttpContext = TestHelpers.CreateMockRequest(stringStream);
+
+            var res = await controller.UpdateSpecificMod(identifier);
+
+            Assert.NotNull(res); // Result must not be null.
+            Assert.NotNull(res.Result);
+            Assert.IsType<NotFoundObjectResult>(res.Result); // The above endpoint must fail.
+        }
+
+        [Fact]
+        public async Task EditModForbid()
+        {
+            var controller = CreateController("next(false)", defaultPlugins);
+
+            // Serialize our request JSON data into a stream, which we will feed into our channel request.
+            var identifier = new SerializedModUpdate
+            {
+                ID = "ChromaToggle",
+                Version = "1.0.0",
+                SupportedGameVersions = Array.Empty<string>().ToImmutableList(),
+                LocalizedModInfo = new SerializedLocalizedModInfo
+                {
+                    Name = "ChromaToggleModifiedName",
+                    Description = "MyNewDescription",
+                    Language = "en-US"
+                }
+            };
+
+            await using var stringStream = TestHelpers.GenerateStreamFromString(JsonSerializer.Serialize(identifier));
+
+            controller.ControllerContext.HttpContext = TestHelpers.CreateMockRequest(stringStream);
+
+            var res = await controller.UpdateSpecificMod(identifier);
+
+            TestHelpers.AssertNotNull(res); // Result must not be null.
+            TestHelpers.AssertNotNull(res.Result);
+            TestHelpers.AssertForbid(res.Result); // The above endpoint must fail due to the permission rule.
+        }
+
+        [Fact]
+        public async Task EditModUnauthorized()
+        {
+            var controller = CreateController("next(true)", defaultPlugins);
+
+            // Try to request without specifying a user
+            var res = await controller.UpdateSpecificMod(null!);
 
             Assert.NotNull(res); // Result must not be null.
             Assert.IsType<UnauthorizedResult>(res.Result); // The above endpoint must fail since a user is not logged in/
