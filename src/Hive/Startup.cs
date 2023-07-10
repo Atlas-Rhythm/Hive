@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using DryIoc;
 using GraphQL.Server.Ui.Altair;
@@ -12,6 +14,9 @@ using Hive.Permissions;
 using Hive.Plugins.Aggregates;
 using Hive.Services;
 using Hive.Services.Common;
+using LitJWT;
+using LitJWT.Algorithms;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -20,6 +25,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
 using Serilog;
@@ -70,7 +77,6 @@ namespace Hive
                 .AddControllers()
                 .ConfigureApplicationPartManager(manager => manager.FeatureProviders.Add(conditionalFeature));
 
-
             var web = Configuration.GetSection(WebOptions.ConfigHeader);
             if (web.Exists())
             {
@@ -93,6 +99,33 @@ namespace Hive
                         });
                     });
                 }
+            }
+
+            var auth0 = Configuration.GetSection(Auth0Options.ConfigHeader);
+            if (auth0.Exists())
+            {
+                var domain = Configuration.GetValue<Uri>("Auth0:Domain");
+                var audience = Configuration.GetValue<string>("Auth0:Audience");
+                var clientSecret = Configuration.GetValue<string>("Auth0:ClientSecret");
+
+                _ = services.AddAuthentication(options =>
+                {
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.Audience = audience;
+                    options.Authority = domain?.ToString();
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        NameClaimType = ClaimTypes.NameIdentifier
+                    };
+                });
+                _ = services.AddAuthorization();
+                _ = services.AddSingleton<JwtEncoder>();
+                _ = services.AddSingleton(provider => new JwtDecoder(provider.GetRequiredService<IJwtAlgorithm>()));
+                _ = services.AddSingleton<IJwtAlgorithm>(new HS256Algorithm(Encoding.UTF8.GetBytes(clientSecret!)));
             }
         }
 
@@ -165,12 +198,12 @@ namespace Hive
                 _ = app.UseHttpsRedirection();
             }
 
-            _ = app.UseAuthentication()
-                .UseGraphQL<HiveSchema>("/api/graphql")
+            _ = app.UseAuthentication();
+            _ = app.UseAuthorization();
+
+            _ = app.UseGraphQL<HiveSchema>("/api/graphql")
                 .UseGraphQLAltair(new AltairOptions { GraphQLEndPoint = "/api/graphql" })
                 .UseEndpoints(endpoints => endpoints.MapControllers());
-
-
         }
 
         private static JsonSerializerOptions ConstructHiveJsonSerializerOptions()

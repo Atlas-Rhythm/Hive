@@ -17,6 +17,8 @@
     <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="5.0.2" />
     <PackageReference Include="GraphQL.Server.Transports.AspNetCore.SystemTextJson" Version="5.0.2" />
     <PackageReference Include="GraphQL.Server.Ui.Altair" Version="5.0.2" />
+    <PackageReference Include="LitJWT" Version="2.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.19" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0" Pack="false">
       <PrivateAssets>all</PrivateAssets>

@@ -1,6 +1,5 @@
 ﻿using Hive.Models;
 using Microsoft.AspNetCore.Http;
-using NodaTime;
 using Serilog;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -10,13 +9,13 @@ using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Hive.Plugins.Aggregates;
-using Hive.Extensions;
 using System.Linq;
+using System.Security.Claims;
 using Microsoft.Extensions.Options;
 using Hive.Configuration;
+using LitJWT;
 
 namespace Hive.Services
 {
@@ -51,39 +50,27 @@ namespace Hive.Services
     /// </summary>
     public sealed class Auth0AuthenticationService : IProxyAuthenticationService, IAuth0Service, IDisposable
     {
-        private const string authenticationAPIUserEndpoint = "userinfo";
-        private const string authenticationAPIGetToken = "oauth/token";
-        private const string informationContextKey = "Auth0 Management Info";
-        //private const string managementAPIUserEndpoint = "api/v2/users";
+        private const string AuthenticationAPIGetToken = "oauth/token";
 
         private readonly JsonSerializerOptions jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
         private readonly HttpClient client;
         private readonly string clientSecret;
         private readonly ILogger logger;
-        private readonly IClock clock;
         private readonly HiveContext context;
-        private readonly IInformationContext informationContext;
+        private readonly JwtDecoder jwtDecoder;
         private readonly IAggregate<IUserCreationPlugin> userCreationPlugin;
 
         /// <inheritdoc/>
         public Auth0ReturnData Data { get; }
 
-        private readonly Dictionary<string, string> refreshTokenJsonBody;
-
-        /// <summary>
-        /// A semaphore that only allows for one job to perform work for refreshing the token.
-        /// </summary>
-        private static readonly SemaphoreSlim refreshTokenSemaphore = new(1);
-
         /// <summary>
         /// Construct a <see cref="Auth0AuthenticationService"/> with DI.
         /// </summary>
         public Auth0AuthenticationService(
-            [DisallowNull] ILogger log,
-            IClock clock,
+            ILogger log,
             IOptions<Auth0Options> config,
             HiveContext context,
-            IInformationContext informationContext,
+            JwtDecoder jwtDecoder,
             IAggregate<IUserCreationPlugin> userCreationPlugin)
         {
             if (log is null)
@@ -92,9 +79,8 @@ namespace Hive.Services
             if (config is null)
                 throw new ArgumentNullException(nameof(config));
 
-            this.clock = clock;
             this.context = context;
-            this.informationContext = informationContext;
+            this.jwtDecoder = jwtDecoder;
             logger = log.ForContext<Auth0AuthenticationService>();
 
             var options = config.TryLoad(logger, Auth0Options.ConfigHeader);
@@ -103,15 +89,6 @@ namespace Hive.Services
             Data = new Auth0ReturnData(options.Domain!.ToString(), options.ClientID!, options.Audience!);
 
             clientSecret = options.ClientSecret!;
-
-            // Create refresh token json body, used for sending requests of the proper type/shape
-            refreshTokenJsonBody = new Dictionary<string, string>
-            {
-                { "grant_type", "client_credentials" },
-                { "client_id", Data.ClientId },
-                { "client_secret", clientSecret },
-                { "audience", Data.Audience }
-            };
 
             if (options.TimeoutMS > 0)
             {
@@ -146,62 +123,15 @@ namespace Hive.Services
                 return null;
             try
             {
-                // Note that this call CAN throw exceptions.
-                // If it does, we should return null immediately, since we need a valid management API token.
-                await EnsureValidManagementAPIToken().ConfigureAwait(false);
+                var principal = request.HttpContext.User;
+                var sub = principal.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                using var message = new HttpRequestMessage(HttpMethod.Get, authenticationAPIUserEndpoint);
-
-                if (request.Headers.TryGetValue("Authorization", out var auth))
-                    message.Headers.Add("Authorization", new List<string> { auth });
-
-                var response = await client.SendAsync(message).ConfigureAwait(false);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    return null;
-                }
-                // We should obtain both the nickname and the sub
-                var auth0User = await response.Content.ReadFromJsonAsync<Auth0User>(jsonSerializerOptions).ConfigureAwait(false);
-
-                if (auth0User is null)
-                {
-                    // If user is null, return null
-                    return null;
-                }
                 // We should perform a DB lookup on the sub to see if we can find a User object with that sub.
                 // Note that the found object is WITH tracking, so modifications can be applied and saved.
                 // TODO: This may not be what we want.
                 // This will throw if we have more than one matching sub
-                var matching = await context.Users.AsTracking().SingleOrDefaultAsync(u => u.AlternativeId == auth0User.Sub).ConfigureAwait(false);
-                if (matching is not null)
-                {
-                    return matching;
-                }
-                else
-                {
-                    // If we cannot find an existing sub, we make a new username and ensure no duplicates.
-                    // Also note that accounts need to be LINKED in order for them to be considered the same (ex, Discord and GH accounts linked on frontend)
-                    // Once accounts are linked, they have the same sub
-                    var u = new User
-                    {
-                        Username = userCreationPlugin.Instance.ChooseUsername(auth0User.Nickname),
-                        AlternativeId = auth0User.Sub,
-                    };
-                    u.AdditionalData.AddSerialized(auth0User.User_Metadata);
-
-                    // This must be done to avoid ambiguity with System.Linq.
-                    while (await (context.Users as IQueryable<User>).ContainsAsync(u).ConfigureAwait(false))
-                    {
-                        u.Username += Guid.NewGuid();
-                    }
-
-                    userCreationPlugin.Instance.ExtraDataModification(u.AdditionalData);
-
-                    _ = await context.Users.AddAsync(u).ConfigureAwait(false);
-                    _ = await context.SaveChangesAsync().ConfigureAwait(false);
-                    return u;
-                }
+                var matching = await context.Users.AsTracking().SingleOrDefaultAsync(u => u.AlternativeId == sub).ConfigureAwait(false);
+                return matching;
             }
             catch (Exception e)
             {
@@ -228,108 +158,97 @@ namespace Hive.Services
             }
         }
 
-        private async Task EnsureValidManagementAPIToken()
-        {
-            try
-            {
-                if (!informationContext.TryGetValue<InstanceManagementInfo>(informationContextKey, out var context) || clock.GetCurrentInstant() >= context!.Expiration)
-                {
-                    await RefreshManagementAPIToken().ConfigureAwait(false);
-                }
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "An exception occured while attempting to refresh our Auth0 Management API Token.");
-                throw;
-            }
-        }
-
-        // Helper method to refresh Hive's management API token.
-        // It's main purpose is for getting a user by their ID, since that endpoint requires this special kind of token.
-        // This token expires every 24 hours, so each day at least 1 request might be a little bit slower.
-        // For more info, see https://auth0.com/docs/tokens/management-api-access-tokens
-        private async Task RefreshManagementAPIToken()
-        {
-            // Exit if we are using the semaphore already.
-            if (refreshTokenSemaphore.CurrentCount == 0)
-                return;
-            logger.Information("Refreshing Auth0 Management API Token...");
-            // Only if we are not currently getting a management API token do we call this, thus the TryEnter as opposed to a lock.
-            // If we do NOT enter, that means that another thread wants to refresh the token while this is currently being used.
-            await refreshTokenSemaphore.WaitAsync().ConfigureAwait(false);
-            try
-            {
-                using var message = new HttpRequestMessage(HttpMethod.Post, authenticationAPIGetToken)
-                {
-                    Content = JsonContent.Create(refreshTokenJsonBody)
-                };
-
-                // Any exception here will bubble to caller.
-                var response = await client.SendAsync(message).ConfigureAwait(false);
-                if (!response.IsSuccessStatusCode)
-                {
-                    logger.Error("Failed to retrieve new auth0 token! Failed status code: {StatusCode}", response.StatusCode);
-                    // Short circuit exit without fixing management token on failure to retreive one later.
-                    // TODO: This is ultimately something we may want to consider making a new exception type for.
-                    throw new InvalidOperationException(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
-                }
-
-                var body = await response.Content.ReadFromJsonAsync<ManagementAPIResponse>(jsonSerializerOptions).ConfigureAwait(false);
-
-                informationContext.SetValue(informationContextKey, new InstanceManagementInfo(body!.Access_Token, clock.GetCurrentInstant() + Duration.FromSeconds(body!.Expires_In)));
-            }
-            finally
-            {
-                _ = refreshTokenSemaphore.Release();
-            }
-        }
-
         /// <inheritdoc/>
         public async Task<Auth0TokenResponse?> RequestToken(string code, Uri redirectUri)
         {
             if (redirectUri is null)
                 throw new ArgumentNullException(nameof(redirectUri));
-            logger.Debug("Requesting auth token for user... from: {RedirectUri}", redirectUri);
-            var data = new Dictionary<string, string>()
-            {
-                { "grant_type", "authorization_code" },
-                { "code", code },
-                { "client_id", Data.ClientId },
-                { "client_secret", clientSecret },
-                { "redirect_uri", redirectUri.ToString() }
-            };
 
-            using var message = new HttpRequestMessage(HttpMethod.Post, authenticationAPIGetToken)
+            logger.Debug("Requesting auth token for user... from: {RedirectUri}", redirectUri);
+
+            var response = await client.PostAsync(AuthenticationAPIGetToken, new FormUrlEncodedContent(new[]
             {
-                Content = JsonContent.Create(data)
-            };
-            var response = await client.SendAsync(message).ConfigureAwait(false);
+                new KeyValuePair<string, string>("code", code),
+                new KeyValuePair<string, string>("redirect_uri", redirectUri.ToString()),
+                new KeyValuePair<string, string>("client_id", Data.ClientId),
+                new KeyValuePair<string, string>("grant_type", "authorization_code"),
+                new KeyValuePair<string, string>("client_secret", clientSecret),
+            })).ConfigureAwait(false);
+
             if (!response.IsSuccessStatusCode)
             {
                 logger.Error("Failed to retrieve client auth0 token! Failed status code: {StatusCode}", response.StatusCode);
                 // Short circuit exit without fixing management token on failure to retreive one later.
                 return null;
             }
-            return await response.Content.ReadFromJsonAsync<Auth0TokenResponse>(jsonSerializerOptions).ConfigureAwait(false);
+
+            var auth0Tokens = await response.Content.ReadFromJsonAsync<Auth0TokenResponse>(jsonSerializerOptions).ConfigureAwait(false);
+
+            // Read the id token
+            if (jwtDecoder.TryDecode<Auth0User>(auth0Tokens!.IdToken, out var payload) is not DecodeResult.Success)
+                throw new InvalidOperationException("Could not validate id token");
+
+            var sub = payload.Sub;
+            var username = payload.Name;
+
+            var matching = await context.Users.AsTracking().SingleOrDefaultAsync(u => u.AlternativeId == sub).ConfigureAwait(false);
+            if (matching is null)
+            {
+                logger.Information("Creating new user with username {Username} and auth sub {Sub}", payload.Name, sub);
+
+                // If we cannot find an existing sub, we make a new username and ensure no duplicates.
+                // Also note that accounts need to be LINKED in order for them to be considered the same (ex, Discord and GH accounts linked on frontend)
+                // Once accounts are linked, they have the same sub
+                var u = new User
+                {
+                    AlternativeId = sub,
+                    Username = userCreationPlugin.Instance.ChooseUsername(username),
+                };
+                u.AdditionalData.AddSerialized(payload.UserMetadata);
+
+                // This must be done to avoid ambiguity with System.Linq.
+                while (await context.Users.ContainsAsync(u).ConfigureAwait(false))
+                {
+                    u.Username += Guid.NewGuid();
+                }
+
+                userCreationPlugin.Instance.ExtraDataModification(u.AdditionalData);
+
+                _ = await context.Users.AddAsync(u).ConfigureAwait(false);
+                _ = await context.SaveChangesAsync().ConfigureAwait(false);
+                matching = u;
+            }
+
+            // Update profile picture if necessary
+            var newPictureExists = payload.UserMetadata.TryGetValue("picture", out var newPictureJson);
+            _ = matching.AdditionalData.TryGetValue<string>("picture", out var oldPicture);
+            var newPicture = newPictureExists ? newPictureJson.GetString() : null;
+
+            if (newPicture != oldPicture)
+            {
+                matching.AdditionalData.Set("picture", newPicture);
+                _ = await context.SaveChangesAsync().ConfigureAwait(false);
+            }
+
+            return auth0Tokens;
         }
-
-        private record InstanceManagementInfo(string Token, Instant Expiration);
-
-        private record ManagementAPIResponse(string Access_Token, int Expires_In, string Scope, string Token_Type);
 
         private record Auth0User
         {
-            public string Nickname { get; set; }
-
+            [JsonPropertyName("sub")]
             public string Sub { get; set; }
 
-            [JsonExtensionData]
-            public Dictionary<string, JsonElement> User_Metadata { get; set; } = new Dictionary<string, JsonElement>();
+            [JsonPropertyName("name")]
+            public string Name { get; set; }
 
-            public Auth0User(string nickname, string sub)
+            [JsonExtensionData]
+            [JsonPropertyName("User_Metadata")]
+            public Dictionary<string, JsonElement> UserMetadata { get; set; } = new();
+
+            public Auth0User(string name, string sub)
             {
-                Nickname = nickname;
                 Sub = sub;
+                Name = name;
             }
         }
     }
