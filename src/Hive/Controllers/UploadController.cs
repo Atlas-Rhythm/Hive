@@ -482,7 +482,7 @@ namespace Hive.Controllers
                 Uploader = user,
                 Dependencies = finalMetadata.Dependencies?.ToList() ?? new(), // if deps is null, default to empty list (it's allowed)
                 Conflicts = finalMetadata.ConflictsWith?.ToList() ?? new(),   // same as above
-                Links = finalMetadata.Links?.Select(t => (t.Item1, new Uri(t.Item2))).ToList() ?? new(), // defaults to empty list
+                Links = finalMetadata.Links?.ToList() ?? new(), // defaults to empty list
                 Authors = new List<User>(), // both of these default to empty lists
                 Contributors = new List<User>(),
             };

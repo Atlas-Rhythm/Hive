@@ -73,9 +73,9 @@ namespace Hive.Models.Serialized
         public ImmutableList<string> SupportedGameVersions { get; init; } = null!;
 
         /// <summary>
-        /// The links provided of the <see cref="Mod"/>, with the left hand side as the name and the right hand side as the url.
+        /// The links provided of the <see cref="Mod"/>.
         /// </summary>
-        public ImmutableList<(string, string)> Links { get; init; } = null!;
+        public ImmutableList<Link> Links { get; init; } = null!;
 
         /// <summary>
         /// The dependencies (a list of <see cref="ModReference"/> objects) of the <see cref="Mod"/>.
@@ -117,7 +117,7 @@ namespace Hive.Models.Serialized
                 Authors = toSerialize.Authors.Select(x => x.Username).ToImmutableList(),
                 Contributors = toSerialize.Contributors.Select(x => x.Username).ToImmutableList(),
                 SupportedGameVersions = toSerialize.SupportedVersions.Select(x => x.Name!).ToImmutableList(),
-                Links = toSerialize.Links.Select(x => (x.Name, x.Url.ToString()))!.ToImmutableList(),
+                Links = toSerialize.Links.ToImmutableList(),
                 Dependencies = toSerialize.Dependencies.ToImmutableList(),
                 ConflictsWith = toSerialize.Conflicts.ToImmutableList()
             };

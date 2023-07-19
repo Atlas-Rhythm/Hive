@@ -36,5 +36,10 @@ namespace Hive.Models.Serialized
         /// The conflicts (a list of <see cref="ModReference"/> objects) of the <see cref="Mod"/>
         /// </summary>
         public ImmutableList<ModReference> ConflictsWith { get; init; } = null!;
+
+        /// <summary>
+        /// The links of the <see cref="Mod"/>
+        /// </summary>
+        public ImmutableList<Link> Links { get; init; } = null!;
     }
 }
