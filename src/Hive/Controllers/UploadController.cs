@@ -422,7 +422,7 @@ namespace Hive.Controllers
             var cdnObject = await cdn.UploadObject(file.FileName, memStream, nodaClock.GetCurrentInstant() + Duration.FromHours(1)).ConfigureAwait(false);
 
             var uploadResult = UploadResult.Confirm(tokenAlgorithm, modData, cdnObject);
-            logger.Information("First stage of mod upload complete (cookie {ID})", uploadResult.ActionCookie!.Substring(0, 16));
+            logger.Information("First stage of mod upload complete (cookie {ID})", uploadResult.ActionCookie![..16]);
 
             // this method encrypts the extracted data into a cookie in the resulting object that is sent along
             return uploadResult;
@@ -464,7 +464,7 @@ namespace Hive.Controllers
              || finalMetadata.SupportedGameVersions is null || finalMetadata.SupportedGameVersions.Count < 1)
                 return BadRequest("Missing metadata keys");
 
-            logger.Information("Completing upload {ID}", cookie.Substring(0, 16));
+            logger.Information("Completing upload {ID}", cookie[..16]);
 
             // decrypt the token
             var payload = await EncryptedUploadPayload.ExtractFromCookie(tokenAlgorithm, cookie).ConfigureAwait(false);
@@ -575,7 +575,7 @@ namespace Hive.Controllers
                 await transaction.CommitAsync().ConfigureAwait(false);
             }
 
-            logger.Information("Upload {ID} complete: {Name} by {Author}", cookie.Substring(0, 16), localization.Name, modObject.Uploader.Username);
+            logger.Information("Upload {ID} complete: {Name} by {Author}", cookie[..16], localization.Name, modObject.Uploader.Username);
 
             return UploadResult.Finish(modObject);
         }

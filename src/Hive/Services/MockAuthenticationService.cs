@@ -13,7 +13,7 @@ namespace Hive.Services
     /// </summary>
     public class MockAuthenticationService : IProxyAuthenticationService, IAuth0Service
     {
-        private Dictionary<string, User?> Users { get; } = new Dictionary<string, User?>();
+        private Dictionary<string, User?> Users { get; } = new();
 
         /// <inheritdoc/>
         public Auth0ReturnData Data => null!;

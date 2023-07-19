@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using Hive.Configuration;
 using Hive.Models;
 using Hive.Services;
 using Microsoft.AspNetCore.Http;
@@ -52,7 +51,7 @@ namespace Hive.Controllers
         public async Task<ActionResult<Auth0TokenResponse?>> Callback([FromQuery] string code, [FromQuery] Uri redirectUri)
         {
             var val = await auth0Service.RequestToken(code, redirectUri).ConfigureAwait(false);
-            return val is null ? Unauthorized() : (ActionResult<Auth0TokenResponse?>)Ok(val);
+            return val is null ? Unauthorized() : Ok(val);
         }
     }
 }
