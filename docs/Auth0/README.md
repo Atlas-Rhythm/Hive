@@ -33,6 +33,10 @@ This should create an Auth0 Machine to Machine Application named `<Your API Name
     * In Allowed Callback URLs, add the endpoint to what you want to redirect to after auth.
     If you're just working on the Hive API, you can set this to a random localhost url like `http://localhost:10000`.
     * In the Advanced Settings Grant Types tab, ensure that `Authorization Code`, `Refresh Token`, and `Client Credentials` are selected.
+4. In Advanced Settings...
+    * Under the OAuth tab, set the `JSON Web Token (JWT) Signature Algorithm` to **HS256**.
+    * Under the Grant Types tab, ensure `Authorization Code`, `Refresh Token`, and `Client Credentials` are selected.
+5. Make sure to save
 
 ## Hive
 
