@@ -23,8 +23,11 @@ services:
       # 21034 is the port that Hive can be accessed from the host machine. You are free to change it to something that works for you.
       - "21034:80"
 
-    # volumes:
-    #  - /path/to/hive/plugins:/app/plugins
+    # Plugins are required to use Hive.
+    # Please re-map the host directory (/path/to/hive/plugins) to a location on the machine where plugins will be loaded from.
+    # Leave the second half (/app/plugins) the same!
+    volumes:
+     - /path/to/hive/plugins:/app/plugins
   db:
     image: postgres:12.8
     restart: unless-stopped
