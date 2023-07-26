@@ -104,7 +104,7 @@ namespace Hive.Models
         /// </summary>
         [Column(TypeName = "jsonb")] // use jsonb here because that will let the db handle it sanely
         [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "EF wants a setter")]
-        public IList<(string Name, Uri Url)> Links { get; set; } = new List<(string, Uri)>();
+        public IList<Link> Links { get; set; } = new List<Link>();
 
         /// <summary>
         /// The download link of the mod.

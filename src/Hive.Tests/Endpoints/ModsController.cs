@@ -448,7 +448,8 @@ namespace Hive.Tests.Endpoints
                 ConflictsWith = new ModReference[]
                 {
                     new("TrickSaber", new VersionRange("^2.5.1")) // Add new conflict
-                }.ToImmutableList()
+                }.ToImmutableList(),
+                Links = Array.Empty<Link>().ToImmutableList()
             };
 
             await using var stringStream = TestHelpers.GenerateStreamFromString(JsonSerializer.Serialize(identifier));

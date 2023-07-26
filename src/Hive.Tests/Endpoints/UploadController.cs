@@ -108,7 +108,7 @@ namespace Hive.Tests.Endpoints
                     Name = "Test Mod 1",
                     Description = "The first uploaded test mod"
                 },
-                Links = ImmutableList.Create(("project-home", "https://test-mod.bsmg.wiki/")),
+                Links = ImmutableList.Create(new Link("project-home", new Uri("https://test-mod.bsmg.wiki/"))),
                 ChannelName = "newly-uploaded",
                 SupportedGameVersions = ImmutableList.Create("1.12.1", "1.13.0"),
                 Dependencies = ImmutableList.Create(new ModReference("bsipa", new VersionRange("^4.0.0"))),

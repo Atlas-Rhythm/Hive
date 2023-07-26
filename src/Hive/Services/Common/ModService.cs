@@ -326,6 +326,7 @@ namespace Hive.Services.Common
 
             var versions = await context.GameVersions.AsTracking().Where(g => update.SupportedGameVersions.Contains(g.Name)).ToArrayAsync().ConfigureAwait(false);
 
+            databaseMod.Links = update.Links;
             databaseMod.SupportedVersions = versions;
             databaseMod.Dependencies = update.Dependencies;
             databaseMod.Conflicts = update.ConflictsWith;
@@ -345,7 +346,7 @@ namespace Hive.Services.Common
             var mods = CreateModQuery();
 
             // Perform various filtering on our mods
-            if (channelIds != null && channelIds.Length > 0)
+            if (channelIds is { Length: > 0 })
             {
                 var filteredChannels = context.Channels.Where(c => channelIds.Contains(c.Name));
 
