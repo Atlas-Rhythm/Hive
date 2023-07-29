@@ -1,10 +1,12 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
+# Base ASP.NET image
 FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
+# Build Hive
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["NuGet.Config", "."]
@@ -22,10 +24,16 @@ COPY . .
 WORKDIR "/src/src/Hive"
 RUN dotnet build "Hive.csproj" -c Release -o /app/build
 
+# Publish Hive
 FROM build AS publish
 RUN dotnet publish "Hive.csproj" -c Release -o /app/publish --framework net6.0
 
+# Pull in HiveCorePlugins
+FROM ghcr.io/atlas-rhythm/hivecoreplugins:master AS plugins
+
+# Copy files into final image and run
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY --from=plugins /Plugins /app/plugins
 ENTRYPOINT ["dotnet", "Hive.dll"]
