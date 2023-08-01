@@ -63,7 +63,7 @@ Configuration for Hive's core is done through the `appsettings.json` file at the
 
 By default, configuring Hive *plugins* is also done through `appsettings.json`, using a format that looks like this:
 
-```json
+```jsonc
 {
 	"Plugins": {
 		"PluginConfigurations": {
@@ -79,7 +79,8 @@ By default, configuring Hive *plugins* is also done through `appsettings.json`, 
 			// ...and so on.
 		}
 	}
-}```
+}
+```
 
 Plugin configuration can also be done through environment variables, using the format `PLUGIN__<Plugin name, "." replaced with "_">__<Configuration key>`.
 
