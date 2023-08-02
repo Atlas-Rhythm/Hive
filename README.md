@@ -2,6 +2,10 @@
 
 A general backend project for modding communities.
 
+## Setup
+
+To setup an instance of Hive, you can follow our [Setup guide](docs/Hive/Setup.md).
+
 ## Building
 
 ### Dependencies
@@ -49,4 +53,4 @@ Update the password fields in `docker-compose.yml`, as well as any other setting
 
 Run the compose file with `docker-compose up`.
 
-Plugins are loaded by mapping a volume with a host machine. See the commented out line in the compose file example.
+Plugins are loaded by mapping a volume with a host machine. See the compose file example.

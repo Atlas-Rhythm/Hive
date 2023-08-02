@@ -17,14 +17,31 @@ services:
       # Make sure that User ID matches POSTGRES_USER in the [db] service environment.
       # Make sure that Password matches POSTGRES_PASSWORD in the [db] service environment.
       - ConnectionStrings__Default=User ID=postgres;Password=please-change-me;Host=db;Port=5432;Database=hive;Pooling=true;
+      
+      # Plugin configuration can be done using environment variables, formatted as PLUGIN__<Plugin name, "." replaced with "_">__<Configuration key>
+      
+      # See Hive.FileSystemCdnProvider configuration at https://github.com/Atlas-Rhythm/HiveCorePlugins/blob/master/docs/Hive.FileSystemCdnProvider/Configuration.md
+      #   This particular configuration entry defines the public URL that is used to construct download links. Please change it to your public facing URL.
+      - PLUGIN__Hive_FileSystemCdnProvider__PublicUrlBase=please-change-me
     depends_on:
       - db
     ports:
       # 21034 is the port that Hive can be accessed from the host machine. You are free to change it to something that works for you.
       - "21034:80"
 
-    # volumes:
-    #  - /path/to/hive/plugins:/app/plugins
+    # Please re-map these volumes to directories on your machine.
+    volumes:
+      # Where CDN objects (actual plugins) are stored
+      - /path/to/cdn/objects:/app/cdn/objects
+      
+      # Where metadata about CDN objects are stored
+      - /path/to/cdn/metadata:/app/cdn/metadata 
+      
+      # Where Hive permission rules are stored
+      - /path/to/rules:/app/Rules
+      
+      # Where external Hive plugins will be loaded from
+      #- /path/to/hive/plugins:/app/plugins
   db:
     image: postgres:12.8
     restart: unless-stopped
