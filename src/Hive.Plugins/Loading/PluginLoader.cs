@@ -34,6 +34,10 @@ namespace Hive.Plugins.Loading
             /// </summary>
             public Dictionary<string, ConfigurationSection> PluginConfigurations { get; set; } = new();
             */
+            /// <summary>
+            /// Alternative folders to also load plugins from.
+            /// </summary>
+            public string[] ExtraPluginPaths { get; set; } = Array.Empty<string>();
         }
 
         private readonly LoaderConfig config;
@@ -54,8 +58,12 @@ namespace Hive.Plugins.Loading
         public void LoadPlugins(IServiceCollection services, IHostEnvironment hostEnv)
         {
             var pluginDir = new DirectoryInfo(config.PluginPath);
+            var extraPluginDirs = config.ExtraPluginPaths.Select(path => new DirectoryInfo(path));
 
-            var pluginsToLoad = FindPluginsToLoad(pluginDir);
+            List<DirectoryInfo> pluginDirs = new() { pluginDir };
+            pluginDirs.AddRange(extraPluginDirs);
+
+            var pluginsToLoad = FindPluginsToLoad(pluginDirs);
 
             var exceptions = new List<(Exception Exception, string PluginName)>();
 
@@ -133,9 +141,9 @@ namespace Hive.Plugins.Loading
             }
         }
 
-        private IEnumerable<DirectoryInfo> FindPluginsToLoad(DirectoryInfo pluginDir)
-            => FindPotentialPluginsToLoad(pluginDir)
-                    .Where(d => !config.ExcludePlugins.Contains(d.Name));
+        private IEnumerable<DirectoryInfo> FindPluginsToLoad(IEnumerable<DirectoryInfo> pluginDirs)
+            => pluginDirs.SelectMany(dir => FindPotentialPluginsToLoad(dir)
+                    .Where(d => !config.ExcludePlugins.Contains(d.Name)));
 
         private IEnumerable<DirectoryInfo> FindPotentialPluginsToLoad(DirectoryInfo pluginDir)
         {
