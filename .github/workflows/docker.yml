@@ -1,50 +1,50 @@
-name: Docker Upload
-
-on:
-  push:
-    branches:
-      - master
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+name: Docker Build
+on: [push, pull_request]
 
 jobs:
-  build-and-upload:
+  build:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      packages: write
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: recursive
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
+      - name: Prepare
+        id: prepare
+        run: |
+          IMAGE_NAME=hive
+
+          GIT_REPO='https://github.com/${{ github.repository }}'
+          DOCKER_USER=`echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]'`
+          DOCKER_IMAGE=ghcr.io/$DOCKER_USER/$IMAGE_NAME
+
+          VERSION=`git rev-parse --short HEAD`
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+
+          echo "git_repo=${GIT_REPO}" >> $GITHUB_OUTPUT
+          echo "docker_user=${DOCKER_USER}" >> $GITHUB_OUTPUT
+          echo "docker_image=${DOCKER_IMAGE}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to Docker Registry
+        uses: docker/login-action@v2
         with:
-          dotnet-version: "6.0.100"
-      - name: Setup .NET Core 3.1
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: "3.1.404"
-      - name: Log in to the Container registry
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
+          registry: ghcr.io
+          username: ${{ steps.prepare.outputs.docker_user }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-      - name: Build and push Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+      - name: Build and Push
+        uses: docker/build-push-action@v3
         with:
           context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          push: ${{ (github.ref == 'refs/heads/master') || (contains(github.ref, 'refs/tags/') == true) }}
+          tags: |
+            ${{ steps.prepare.outputs.docker_image }}:latest
+            ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
+          build-args: |
+            GIT_VERSION=${{ steps.prepare.outputs.version }}
+            GIT_REPO=${{ steps.prepare.outputs.git_repo }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
